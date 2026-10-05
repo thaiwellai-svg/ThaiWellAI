@@ -475,10 +475,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           <li key={t} className={i < step ? "is-done" : i === step ? "is-now" : undefined}>
             <button type="button" disabled={i > step && !valid} onClick={() => setStep(i)}>
               <i>{i < step ? <Check size={13} strokeWidth={3} /> : i + 1}</i>
-              <span>
-                {t}
-                {i === 1 && <small>ข้ามได้</small>}
-              </span>
+              <span>{t}</span>
             </button>
           </li>
         ))}
