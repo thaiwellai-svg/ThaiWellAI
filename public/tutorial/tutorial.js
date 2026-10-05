@@ -1,16 +1,20 @@
 /* ThaiWell Academy — chapters, synced video steps, screenshots, progress */
 const INFO = {
-  home: { title: "หน้าหลักและคำขอจองคิว", short: "หน้าหลัก", color: "#4c845a", icon: "⌂", desc: "ภาพรวมของวันนี้ รายการงาน และการอนุมัติคำขอจองคิวที่ผู้ป่วยส่งมาจากแอป" },
-  register: { title: "ลงทะเบียนผู้รับบริการใหม่", short: "ลงทะเบียน", color: "#3b82c4", icon: "✚", desc: "อ่านบัตรประชาชน คัดกรองด้วยหุ่น 3D ตอบคำถามก่อนนวด และตรวจหน้าสรุปพร้อมวิเคราะห์ธาตุ" },
-  patient: { title: "ค้นหาและดูประวัติผู้ป่วย", short: "ประวัติผู้ป่วย", color: "#2f6fa3", icon: "☺", desc: "ค้นด้วยชื่อหรือเลขบัตร เสียบบัตรเปิดประวัติ ดูข้อมูลสุขภาพบนหุ่น 3D และพิมพ์ใบสรุป" },
-  aiplan: { title: "แผนการรักษาโดย AI", short: "แผน AI", color: "#7a5af0", icon: "✦", desc: "ให้ AI ร่างแผนนวด ประคบ สมุนไพร แล้วแพทย์แผนไทยตรวจ อนุมัติ และจองนัดตามแผน" },
-  visit: { title: "รับบริการ: เรียกคิวถึงเริ่มนวด", short: "เรียกคิว", color: "#2f8f9a", icon: "◷", desc: "เรียกคิว คัดกรองก่อนนวดทุกครั้ง เลือกเตียง และเริ่มจับเวลา" },
-  record: { title: "บันทึกการรักษา", short: "บันทึกการรักษา", color: "#d08a3c", icon: "✎", desc: "บันทึกวินิจฉัย หัตถการ (รหัส ICD อัตโนมัติ) และ Pain Score หลังนวด" },
-  payment: { title: "รับชำระเงิน", short: "ชำระเงิน", color: "#c2482b", icon: "฿", desc: "เลือกวิธีชำระ เงินสด พร้อมเพย์ บิลในแอป หรือหักเครดิตคอร์ส แล้วออกใบเสร็จ" },
-  billing: { title: "คิดเงินและรายงาน", short: "คิดเงิน", color: "#b0739a", icon: "▤", desc: "ดูยอดรับชำระ ใบเสร็จ ยกเลิก/คืนเงิน และส่งออกรายงานเป็น Excel" },
-  settings: { title: "ตั้งค่าและสำรองข้อมูล", short: "ตั้งค่า", color: "#66756b", icon: "⚙", desc: "ข้อมูลคลินิก กฎคัดกรองความปลอดภัย การสำรอง/กู้คืน และคู่มือการใช้งาน" },
+  home: { group: "หน้าหลัก", title: "ภาพรวมวันนี้และคำขอจองคิว", short: "ภาพรวม · อนุมัติคำขอคิว", color: "#4c845a", icon: "⌂", desc: "ดูภาพรวมของวันนี้ จัดวางวิดเจ็ต และอนุมัติคำขอจองคิวที่ผู้ป่วยส่งมาจากแอป" },
+  visit: { group: "รับบริการ", title: "เรียกคิว คัดกรอง และเริ่มนวด", short: "เรียกคิว · คัดกรอง · เริ่มนวด", color: "#2f8f9a", icon: "◷", desc: "เรียกคิวพร้อมเสียงประกาศ คัดกรองก่อนนวดทุกครั้ง เลือกเตียง และเริ่มจับเวลา" },
+  record: { group: "รับบริการ", title: "บันทึกการรักษา", short: "บันทึกการรักษา", color: "#2f8f9a", icon: "✎", desc: "บันทึกวินิจฉัย หัตถการ (รหัส ICD อัตโนมัติ) และ Pain Score หลังนวด" },
+  payment: { group: "รับบริการ", title: "รับชำระเงิน", short: "รับชำระเงิน", color: "#2f8f9a", icon: "฿", desc: "เลือกวิธีชำระ เงินสด พร้อมเพย์ บิลในแอป หรือหักเครดิตคอร์ส แล้วออกใบเสร็จ" },
+  register: { group: "ผู้มารับบริการ", title: "ลงทะเบียนผู้รับบริการใหม่", short: "ลงทะเบียนใหม่", color: "#3b82c4", icon: "✚", desc: "อ่านบัตรประชาชน คัดกรองด้วยหุ่น 3D ตอบคำถามก่อนนวด และตรวจหน้าสรุปพร้อมวิเคราะห์ธาตุ" },
+  patient: { group: "ผู้มารับบริการ", title: "ค้นหาและดูประวัติผู้ป่วย", short: "ค้นหา · ประวัติ · พิมพ์", color: "#3b82c4", icon: "☺", desc: "ค้นด้วยชื่อหรือเลขบัตร เสียบบัตรเปิดประวัติ ดูข้อมูลสุขภาพบนหุ่น 3D และพิมพ์ใบสรุป" },
+  aiplan: { group: "ผู้มารับบริการ", title: "แผนการรักษาโดย AI", short: "แผนการรักษาโดย AI", color: "#3b82c4", icon: "✦", desc: "ให้ AI ร่างแผนนวด ประคบ สมุนไพร แล้วแพทย์แผนไทยตรวจ อนุมัติ และจองนัดตามแผน" },
+  appointments: { group: "ตารางนัด", title: "ตารางนัดและเพิ่มคิวนัด", short: "ดูนัด · เพิ่มคิวนัด", color: "#d08a3c", icon: "▦", desc: "ดูนัดรายวันตามผู้บำบัด และเพิ่มคิวนัดใหม่ทั้งนัดล่วงหน้าและ Walk-in" },
+  billing: { group: "คิดเงิน", title: "ใบเสร็จ คืนเงิน และรายงาน", short: "ใบเสร็จ · รายงาน", color: "#b0739a", icon: "▤", desc: "ดูยอดรับชำระ เปิดใบเสร็จ ยกเลิก/คืนเงิน และส่งออกรายงานเป็น Excel" },
+  planner: { group: "จัดตารางงาน", title: "ตารางงานผู้บำบัด", short: "ตารางงานผู้บำบัด", color: "#7c5cc4", icon: "☷", desc: "ดูเส้นเวลางานของผู้บำบัดทุกคน ตารางรายคน และกำหนดวันเวลาทำงาน" },
+  settings: { group: "ตั้งค่า", title: "ตั้งค่าและสำรองข้อมูล", short: "ตั้งค่า · สำรองข้อมูล", color: "#66756b", icon: "⚙", desc: "ข้อมูลคลินิก กฎคัดกรองความปลอดภัย การสำรอง/กู้คืน และคู่มือการใช้งาน" },
+  assistant: { group: "ผู้ช่วย AI", title: "ผู้ช่วย AI", short: "ถามผู้ช่วย AI", color: "#7a5af0", icon: "✧", desc: "เปิดผู้ช่วย AI ได้ทุกหน้า ถามเรื่องคิว เครดิต หรือสรุปอาการผู้ป่วย" },
 };
-const ORDER = ["home", "register", "patient", "aiplan", "visit", "record", "payment", "billing", "settings"];
+const ORDER = ["home", "visit", "record", "payment", "register", "patient", "aiplan", "appointments", "billing", "planner", "settings", "assistant"];
+const GROUPS = [...new Set(ORDER.map((id) => INFO[id].group))];
 
 const $ = (s, el = document) => el.querySelector(s);
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
@@ -46,12 +50,11 @@ fetch("chapters.json")
   });
 
 function renderStats() {
-  const total = ORDER.reduce((a, id) => a + (DATA[id]?.steps.reduce((t, s) => t + 4 + s.actions.length * 2.6, 0) || 0), 0);
   const steps = ORDER.reduce((a, id) => a + (DATA[id]?.steps.length || 0), 0);
   $("#stats").innerHTML = `
-    <div><b>${ORDER.length}</b><small>บทเรียน</small></div>
-    <div><b>${steps}</b><small>ขั้นตอน</small></div>
-    <div><b>${Math.round(total / 60)}</b><small>นาที</small></div>`;
+    <div><b>${GROUPS.length}</b><small>เมนู</small></div>
+    <div><b>${ORDER.length}</b><small>ฟีเจอร์</small></div>
+    <div><b>${steps}</b><small>ขั้นตอน</small></div>`;
 }
 
 function renderHeroCards() {
@@ -61,17 +64,27 @@ function renderHeroCards() {
 }
 
 function renderToc() {
-  const seen = store.get();
   $("#toc").innerHTML =
-    `<p class="toc__h">บทเรียน</p>` +
-    ORDER.map((id, i) => {
-      const c = INFO[id];
-      return `<button class="toc__item" data-id="${id}" style="--c:${c.color}">
-        <span class="toc__no">${seen[id] ? "✓" : i + 1}</span>
-        <span class="toc__t"><b>${c.short}</b><small>${DATA[id]?.steps.length || 0} ขั้นตอน</small></span>
-      </button>`;
-    }).join("");
+    `<label class="toc__search"><span>⌕</span><input id="q" placeholder="ค้นหาฟีเจอร์ เช่น คืนเงิน" /></label>` +
+    GROUPS.map(
+      (g) => `<div class="toc__group" data-g="${g}"><p class="toc__h">${g}</p>` +
+        ORDER.filter((id) => INFO[id].group === g)
+          .map((id) => {
+            const c = INFO[id];
+            const words = [c.title, c.short, c.desc, ...(DATA[id]?.steps || []).map((s) => s.title + " " + s.detail)].join(" ").toLowerCase();
+            return `<button class="toc__item" data-id="${id}" data-words="${words.replace(/"/g, "")}" style="--c:${c.color}">
+              <span class="toc__no">${c.icon}</span>
+              <span class="toc__t"><b>${c.short}</b><small>${DATA[id]?.steps.length || 0} ขั้นตอน</small></span>
+            </button>`;
+          })
+          .join("") + `</div>`,
+    ).join("");
   $("#toc").querySelectorAll(".toc__item").forEach((b) => b.addEventListener("click", () => open(b.dataset.id)));
+  $("#q").addEventListener("input", (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    $("#toc").querySelectorAll(".toc__item").forEach((b) => (b.hidden = !!q && !b.dataset.words.includes(q)));
+    $("#toc").querySelectorAll(".toc__group").forEach((g) => (g.hidden = ![...g.querySelectorAll(".toc__item")].some((b) => !b.hidden)));
+  });
 }
 
 function open(id, scroll = true) {
@@ -85,25 +98,28 @@ function open(id, scroll = true) {
   const next = ORDER[i + 1];
   const L = $("#lesson");
   L.style.setProperty("--c", c.color);
+  const related = ORDER.filter((x) => x !== id && INFO[x].group === c.group).concat(ORDER.filter((x) => x !== id && INFO[x].group !== c.group)).slice(0, 3);
   L.innerHTML = `
-    <div class="lesson__head reveal">
-      <span class="lesson__icon">${c.icon}</span>
-      <div>
-        <small>บทที่ ${i + 1} จาก ${ORDER.length}</small>
-        <h2>${c.title}</h2>
-        <p>${c.desc}</p>
-      </div>
-    </div>
+    <article class="doc">
+      <nav class="doc__crumb reveal"><span>คู่มือการใช้งาน</span> › <span>${c.group}</span></nav>
+      <header class="doc__head reveal">
+        <span class="doc__icon">${c.icon}</span>
+        <h1>${c.title}</h1>
+        <p class="doc__lead">${c.desc}</p>
+        <p class="doc__meta">${d.steps.length} ขั้นตอน · อ่านประมาณ ${Math.max(1, Math.round(d.steps.length * 0.5))} นาที</p>
+      </header>
 
-    <div class="strip reveal">
-      ${d.steps.map((x) => `<button data-jump="${x.n}"><span>${x.n}</span>${x.title}</button>`).join("")}
-    </div>
+      <aside class="doc__toc reveal">
+        <b>ในบทความนี้</b>
+        <ol>${d.steps.map((x) => `<li><a href="#s-${x.n}" data-jump="${x.n}">${x.title}</a></li>`).join("")}</ol>
+      </aside>
 
-    <div class="flow">
       ${d.steps
         .map(
-          (x, k) => `<article class="flow__step reveal${k % 2 ? " is-alt" : ""}" id="s-${x.n}">
-          <div class="flow__anim">
+          (x, k) => `<section class="doc__sec reveal" id="s-${x.n}">
+          <h2><span>${x.n}</span>${x.title}</h2>
+          <p>${x.detail || ""}</p>
+          <figure class="doc__fig">
             <div class="device">
               <div class="anim" data-k="${k}">
                 <div class="anim__cam">
@@ -117,25 +133,26 @@ function open(id, scroll = true) {
               </div>
               <span class="device__loop"><i></i></span>
             </div>
-          </div>
-          <div class="flow__text">
-            <span class="flow__no">${x.n}</span>
-            <small>ขั้นตอนที่ ${x.n} จาก ${d.steps.length}</small>
-            <h3>${x.title}</h3>
-            <p>${x.detail || ""}</p>
-          </div>
-        </article>`,
+            <figcaption>ภาพที่ ${x.n} · ${x.title}</figcaption>
+          </figure>
+        </section>`,
         )
         .join("")}
-    </div>
 
-    <nav class="pager reveal">
-      ${prev ? `<button class="pager__btn" data-go="${prev}"><small>← บทก่อนหน้า</small><b>${INFO[prev].short}</b></button>` : "<span></span>"}
-      ${next ? `<button class="pager__btn is-next" data-go="${next}"><small>บทถัดไป →</small><b>${INFO[next].short}</b></button>` : `<a class="pager__btn is-next" href="../"><small>เรียนครบแล้ว 🎉</small><b>กลับเข้าระบบ</b></a>`}
-    </nav>`;
+      <footer class="doc__foot reveal">
+        <b>หัวข้อที่เกี่ยวข้อง</b>
+        <div class="doc__rel">
+          ${related.map((r) => `<button data-go="${r}" style="--c:${INFO[r].color}"><span>${INFO[r].icon}</span><div><small>${INFO[r].group}</small><b>${INFO[r].title}</b></div></button>`).join("")}
+        </div>
+        <nav class="pager">
+          ${prev ? `<button class="pager__btn" data-go="${prev}"><small>← ก่อนหน้า</small><b>${INFO[prev].title}</b></button>` : "<span></span>"}
+          ${next ? `<button class="pager__btn is-next" data-go="${next}"><small>ถัดไป →</small><b>${INFO[next].title}</b></button>` : `<a class="pager__btn is-next" href="../"><small>ดูครบทุกหัวข้อแล้ว</small><b>กลับเข้าระบบ</b></a>`}
+        </nav>
+      </footer>
+    </article>`;
   wireFlow();
   L.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => open(b.dataset.go)));
-  L.querySelectorAll("[data-jump]").forEach((b) => b.addEventListener("click", () => $("#s-" + b.dataset.jump).scrollIntoView({ behavior: "smooth", block: "center" })));
+  L.querySelectorAll("[data-jump]").forEach((b) => b.addEventListener("click", (e) => (e.preventDefault(), $("#s-" + b.dataset.jump).scrollIntoView({ behavior: "smooth", block: "start" }))));
   reveal();
   if (scroll) $(".layout").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -239,14 +256,14 @@ function makeRunner(el, step) {
     start() {
       if (run) return;
       run = { alive: true, timers: [] };
-      el.closest(".flow__step")?.classList.add("is-live");
+      el.closest(".doc__sec")?.classList.add("is-live");
       // warm the frames, then play
       Promise.all([step.start, ...step.actions.map((a) => a.frame)].map(preload)).then(() => run && loop(run).catch(() => {}));
     },
     stop() {
       if (!run) return;
       run.alive = false; run.timers.forEach(clearTimeout); run = null;
-      el.closest(".flow__step")?.classList.remove("is-live");
+      el.closest(".doc__sec")?.classList.remove("is-live");
     },
   };
 }
@@ -267,24 +284,12 @@ function wireFlow() {
   runners.forEach((r, el) => (r.stop(), vio.unobserve(el)));
   runners.clear();
   const d = DATA[current];
-  document.querySelectorAll(".flow .anim").forEach((el) => {
+  document.querySelectorAll(".doc .anim").forEach((el) => {
     const r = makeRunner(el, d.steps[+el.dataset.k]);
     runners.set(el, r);
     vio.observe(el);
   });
-  const last = document.querySelector(".flow__step:last-child");
-  if (last) {
-    const done = new IntersectionObserver((es) => {
-      if (es[0].isIntersecting) {
-        store.done(current);
-        const on = current;
-        renderToc();
-        document.querySelector(`.toc__item[data-id="${on}"]`)?.classList.add("is-on");
-        done.disconnect();
-      }
-    });
-    done.observe(last);
-  }
+
 }
 
 function lightbox(src, cap) {
@@ -300,7 +305,7 @@ $("#lightbox").addEventListener("click", () => {
   setTimeout(() => (lb.hidden = true), 250);
 });
 addEventListener("keydown", (e) => e.key === "Escape" && !$("#lightbox").hidden && $("#lightbox").click());
-$("#start").addEventListener("click", () => open(ORDER[0]));
+$("#start").addEventListener("click", () => $(".layout").scrollIntoView({ behavior: "smooth" }));
 
 const io = new IntersectionObserver(
   (es) =>

@@ -123,7 +123,7 @@ export function UserGuide() {
         </div>
         <div className="ug-hero__btns">
           <a className="is-main" href={`${import.meta.env.BASE_URL}tutorial/`} target="_blank" rel="noopener">
-            <MonitorPlay size={16} /> ดูแบบเต็ม · วิดีโอสอน
+            <MonitorPlay size={16} /> ดูคู่มือฉบับเต็ม
           </a>
           <button type="button" onClick={startTour}>
             <PlayCircle size={16} /> แนะนำเมนู

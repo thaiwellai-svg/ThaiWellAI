@@ -1,13 +1,13 @@
 {
  "home": {
   "id": "home",
-  "poster": "media/home-f4.jpg",
+  "poster": "media/home-f4.webp",
   "steps": [
    {
     "n": 1,
     "title": "ภาพรวมของวันนี้",
     "detail": "การ์ดฝั่งซ้ายสรุปจำนวนผู้มารับบริการ สถานะคิว รายได้ และเครดิตคอร์สของวันนี้",
-    "start": "media/home-f1.jpg",
+    "start": "media/home-f1.webp",
     "actions": [
      {
       "kind": "point",
@@ -15,7 +15,7 @@
       "y": 24.39,
       "w": 6,
       "h": 6,
-      "frame": "media/home-f2.jpg"
+      "frame": "media/home-f2.webp"
      },
      {
       "kind": "point",
@@ -23,7 +23,7 @@
       "y": 57.32,
       "w": 6,
       "h": 6,
-      "frame": "media/home-f3.jpg"
+      "frame": "media/home-f3.webp"
      }
     ]
    },
@@ -31,7 +31,7 @@
     "n": 2,
     "title": "รายการงานวันนี้",
     "detail": "ฝั่งขวาเรียงคิวตามเวลา ปุ่มท้ายการ์ด (จบ / บันทึก / คิดเงิน) พาไปทำขั้นถัดไปได้ทันที",
-    "start": "media/home-f4.jpg",
+    "start": "media/home-f4.webp",
     "actions": [
      {
       "kind": "point",
@@ -39,7 +39,7 @@
       "y": 24.39,
       "w": 6,
       "h": 6,
-      "frame": "media/home-f5.jpg"
+      "frame": "media/home-f5.webp"
      },
      {
       "kind": "point",
@@ -47,7 +47,7 @@
       "y": 34.15,
       "w": 6,
       "h": 6,
-      "frame": "media/home-f6.jpg"
+      "frame": "media/home-f6.webp"
      }
     ]
    },
@@ -55,7 +55,7 @@
     "n": 3,
     "title": "ปรับวิดเจ็ตเองได้",
     "detail": "แตะจุด ••• ด้านบนกล่องเพื่อเลือก แล้วลากขอบปรับความกว้าง หรือลากย้ายตำแหน่ง",
-    "start": "media/home-f7.jpg",
+    "start": "media/home-f7.webp",
     "actions": [
      {
       "kind": "tap",
@@ -63,7 +63,7 @@
       "y": 10.43,
       "w": 4.58,
       "h": 1.1,
-      "frame": "media/home-f8.jpg"
+      "frame": "media/home-f8.webp"
      },
      {
       "kind": "tap",
@@ -71,7 +71,7 @@
       "y": 9.76,
       "w": 4.24,
       "h": 1.71,
-      "frame": "media/home-f9.jpg"
+      "frame": "media/home-f9.webp"
      }
     ]
    },
@@ -79,7 +79,7 @@
     "n": 4,
     "title": "คำขอจองคิวจากแอป",
     "detail": "ผู้ป่วยจองและทำแบบคัดกรองมาจากแอป เจ้าหน้าที่ตรวจแล้วกดอนุมัติ",
-    "start": "media/home-f10.jpg",
+    "start": "media/home-f10.webp",
     "actions": [
      {
       "kind": "tap",
@@ -87,7 +87,7 @@
       "y": 22.2,
       "w": 27.12,
       "h": 9.63,
-      "frame": "media/home-f11.jpg"
+      "frame": "media/home-f11.webp"
      }
     ]
    },
@@ -95,7 +95,7 @@
     "n": 5,
     "title": "อนุมัติและจัดคิว",
     "detail": "ตรวจผลคัดกรองแล้วกด “อนุมัติและจัดคิว” ระบบส่งแจ้งเตือนกลับไปที่แอปผู้ป่วย",
-    "start": "media/home-f12.jpg",
+    "start": "media/home-f12.webp",
     "actions": [
      {
       "kind": "tap",
@@ -103,7 +103,7 @@
       "y": 84.88,
       "w": 13.02,
       "h": 5.37,
-      "frame": "media/home-f13.jpg"
+      "frame": "media/home-f13.webp"
      }
     ]
    }
@@ -111,13 +111,13 @@
  },
  "register": {
   "id": "register",
-  "poster": "media/register-f3.jpg",
+  "poster": "media/register-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "เพิ่มผู้รับบริการใหม่",
     "detail": "กดไอคอนเพิ่มคนมุมขวาบน เพื่อเปิดหน้าลงทะเบียน 3 ขั้นตอน",
-    "start": "media/register-f1.jpg",
+    "start": "media/register-f1.webp",
     "actions": [
      {
       "kind": "tap",
@@ -125,7 +125,7 @@
       "y": 5.85,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/register-f2.jpg"
+      "frame": "media/register-f2.webp"
      }
     ]
    },
@@ -133,7 +133,7 @@
     "n": 2,
     "title": "อ่านข้อมูลจากบัตรประชาชน",
     "detail": "กด “อ่านบัตร” แล้วเสียบบัตรที่เครื่องอ่าน ระบบกรอก ชื่อ วันเกิด เลขบัตร และที่อยู่ให้",
-    "start": "media/register-f3.jpg",
+    "start": "media/register-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -141,7 +141,7 @@
       "y": 25,
       "w": 46.27,
       "h": 8.29,
-      "frame": "media/register-f4.jpg"
+      "frame": "media/register-f4.webp"
      },
      {
       "kind": "tap",
@@ -149,7 +149,7 @@
       "y": 84.09,
       "w": 21.49,
       "h": 5.85,
-      "frame": "media/register-f5.jpg"
+      "frame": "media/register-f5.webp"
      }
     ]
    },
@@ -157,7 +157,7 @@
     "n": 3,
     "title": "กรอกช่องทางติดต่อ",
     "detail": "เบอร์โทร อีเมล และผู้ติดต่อฉุกเฉิน · เบอร์โทรไม่บังคับ",
-    "start": "media/register-f6.jpg",
+    "start": "media/register-f6.webp",
     "actions": [
      {
       "kind": "type",
@@ -166,7 +166,7 @@
       "y": 42.44,
       "w": 43.9,
       "h": 5.37,
-      "frame": "media/register-f7.jpg"
+      "frame": "media/register-f7.webp"
      }
     ]
    },
@@ -174,7 +174,7 @@
     "n": 4,
     "title": "ไปขั้นคัดกรอง",
     "detail": "กด “ถัดไป” · ถ้ายังไม่พร้อม กด “ข้ามการคัดกรอง” แล้วทำทีหลังได้",
-    "start": "media/register-f8.jpg",
+    "start": "media/register-f8.webp",
     "actions": [
      {
       "kind": "tap",
@@ -182,7 +182,7 @@
       "y": 14.39,
       "w": 8.81,
       "h": 4.39,
-      "frame": "media/register-f9.jpg"
+      "frame": "media/register-f9.webp"
      }
     ]
    },
@@ -190,7 +190,7 @@
     "n": 5,
     "title": "แตะจุดที่ปวดบนหุ่น",
     "detail": "แตะ 1 ครั้ง = จุดที่ปวด (สีส้ม) · ลากเพื่อหมุนดูรอบตัว",
-    "start": "media/register-f10.jpg",
+    "start": "media/register-f10.webp",
     "actions": [
      {
       "kind": "tap",
@@ -198,7 +198,7 @@
       "y": 42.09,
       "w": 4,
       "h": 5,
-      "frame": "media/register-f11.jpg"
+      "frame": "media/register-f11.webp"
      }
     ]
    },
@@ -206,7 +206,7 @@
     "n": 6,
     "title": "กดค้าง = ห้ามนวด",
     "detail": "กดค้างครึ่งวินาทีที่บริเวณนั้น แล้วเลือก “ห้ามนวด” (สีม่วง)",
-    "start": "media/register-f12.jpg",
+    "start": "media/register-f12.webp",
     "actions": [
      {
       "kind": "hold",
@@ -214,7 +214,7 @@
       "y": 54.09,
       "w": 4,
       "h": 5,
-      "frame": "media/register-f13.jpg"
+      "frame": "media/register-f13.webp"
      },
      {
       "kind": "tap",
@@ -222,7 +222,7 @@
       "y": 46.16,
       "w": 8.73,
       "h": 8.41,
-      "frame": "media/register-f14.jpg"
+      "frame": "media/register-f14.webp"
      }
     ]
    },
@@ -230,7 +230,7 @@
     "n": 7,
     "title": "ระดับความปวดและอาการ",
     "detail": "เลือกระดับปวด 0–10 แตะ chip อาการ และเลือกโรคประจำตัวได้หลายรายการ",
-    "start": "media/register-f15.jpg",
+    "start": "media/register-f15.webp",
     "actions": [
      {
       "kind": "tap",
@@ -238,7 +238,7 @@
       "y": 29.27,
       "w": 3.68,
       "h": 4.15,
-      "frame": "media/register-f16.jpg"
+      "frame": "media/register-f16.webp"
      },
      {
       "kind": "tap",
@@ -246,7 +246,7 @@
       "y": 56.95,
       "w": 6.13,
       "h": 3.66,
-      "frame": "media/register-f17.jpg"
+      "frame": "media/register-f17.webp"
      },
      {
       "kind": "tap",
@@ -254,7 +254,7 @@
       "y": 69.88,
       "w": 43.9,
       "h": 5.37,
-      "frame": "media/register-f18.jpg"
+      "frame": "media/register-f18.webp"
      },
      {
       "kind": "tap",
@@ -262,7 +262,7 @@
       "y": 38.66,
       "w": 42.54,
       "h": 4.88,
-      "frame": "media/register-f19.jpg"
+      "frame": "media/register-f19.webp"
      },
      {
       "kind": "tap",
@@ -270,7 +270,7 @@
       "y": 63.29,
       "w": 4.83,
       "h": 3.9,
-      "frame": "media/register-f20.jpg"
+      "frame": "media/register-f20.webp"
      }
     ]
    },
@@ -278,7 +278,7 @@
     "n": 8,
     "title": "สัญญาณชีพและคำถามก่อนนวด",
     "detail": "กรอกความดัน ชีพจร เลือกแรงนวด และตอบ ใช่ / ไม่ใช่ ทีละข้อ",
-    "start": "media/register-f21.jpg",
+    "start": "media/register-f21.webp",
     "actions": [
      {
       "kind": "type",
@@ -287,7 +287,7 @@
       "y": 92.93,
       "w": 11.73,
       "h": 5.37,
-      "frame": "media/register-f22.jpg"
+      "frame": "media/register-f22.webp"
      },
      {
       "kind": "type",
@@ -296,7 +296,7 @@
       "y": 92.93,
       "w": 11.73,
       "h": 5.37,
-      "frame": "media/register-f23.jpg"
+      "frame": "media/register-f23.webp"
      },
      {
       "kind": "type",
@@ -305,15 +305,15 @@
       "y": 92.93,
       "w": 17.87,
       "h": 5.37,
-      "frame": "media/register-f24.jpg"
+      "frame": "media/register-f24.webp"
      },
      {
       "kind": "tap",
       "x": 91.61,
-      "y": 69.63,
+      "y": 76.59,
       "w": 6.27,
       "h": 4.39,
-      "frame": "media/register-f25.jpg"
+      "frame": "media/register-f25.webp"
      }
     ]
    },
@@ -321,7 +321,7 @@
     "n": 9,
     "title": "ตรวจหน้าสรุป",
     "detail": "สรุปผลคัดกรอง หุ่นแสดงจุดที่เลือก และวิเคราะห์ธาตุเจ้าเรือนเทียบกับอาการวันนี้",
-    "start": "media/register-f26.jpg",
+    "start": "media/register-f26.webp",
     "actions": [
      {
       "kind": "tap",
@@ -329,7 +329,7 @@
       "y": 14.39,
       "w": 8.81,
       "h": 4.39,
-      "frame": "media/register-f27.jpg"
+      "frame": "media/register-f27.webp"
      }
     ]
    },
@@ -337,7 +337,7 @@
     "n": 10,
     "title": "บันทึก",
     "detail": "กด “บันทึก” ระบบเปิดประวัติผู้ป่วยใหม่ให้ทันที",
-    "start": "media/register-f28.jpg",
+    "start": "media/register-f28.webp",
     "actions": [
      {
       "kind": "tap",
@@ -345,7 +345,7 @@
       "y": 14.39,
       "w": 8.81,
       "h": 4.39,
-      "frame": "media/register-f29.jpg"
+      "frame": "media/register-f29.webp"
      }
     ]
    }
@@ -353,13 +353,13 @@
  },
  "patient": {
   "id": "patient",
-  "poster": "media/patient-f3.jpg",
+  "poster": "media/patient-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "ค้นหาผู้ป่วย",
     "detail": "พิมพ์ชื่อ HN เบอร์โทร หรือเลขบัตรประชาชนบางส่วนในช่องค้นหา",
-    "start": "media/patient-f1.jpg",
+    "start": "media/patient-f1.webp",
     "actions": [
      {
       "kind": "type",
@@ -368,7 +368,7 @@
       "y": 5.85,
       "w": 15.47,
       "h": 5.37,
-      "frame": "media/patient-f2.jpg"
+      "frame": "media/patient-f2.webp"
      }
     ]
    },
@@ -376,7 +376,7 @@
     "n": 2,
     "title": "เปิดประวัติ",
     "detail": "แตะชื่อในรายการ ด้านขวาแสดงข้อมูล Pain Score คอร์ส และธาตุเจ้าเรือน",
-    "start": "media/patient-f3.jpg",
+    "start": "media/patient-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -384,7 +384,7 @@
       "y": 17.01,
       "w": 25.42,
       "h": 10.12,
-      "frame": "media/patient-f4.jpg"
+      "frame": "media/patient-f4.webp"
      }
     ]
    },
@@ -392,7 +392,7 @@
     "n": 3,
     "title": "ดูข้อมูลสุขภาพ",
     "detail": "กดไอคอนหัวใจ กล่องข้อมูลสุขภาพเปิดทางขวา พร้อมหุ่น 3D บริเวณที่ควรเน้นและห้ามนวด",
-    "start": "media/patient-f5.jpg",
+    "start": "media/patient-f5.webp",
     "actions": [
      {
       "kind": "tap",
@@ -400,7 +400,7 @@
       "y": 19.27,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/patient-f6.jpg"
+      "frame": "media/patient-f6.webp"
      }
     ]
    },
@@ -408,7 +408,7 @@
     "n": 4,
     "title": "หมุนดูรอบตัว",
     "detail": "ลากบนหุ่นเพื่อหมุน 360° หรือกด หน้า / ขวา / หลัง / ซ้าย",
-    "start": "media/patient-f7.jpg",
+    "start": "media/patient-f7.webp",
     "actions": [
      {
       "kind": "drag",
@@ -416,7 +416,7 @@
       "y": 51.46,
       "x2": 90.42,
       "y2": 51.46,
-      "frame": "media/patient-f8.jpg"
+      "frame": "media/patient-f8.webp"
      }
     ]
    },
@@ -424,7 +424,7 @@
     "n": 5,
     "title": "เสียบบัตรเพื่อเปิดประวัติ",
     "detail": "กดไอคอนบัตรประชาชนบนหัวหน้า ถ้ามีประวัติแล้วระบบเปิดให้ทันที ถ้ายังไม่มีจะพาไปลงทะเบียน",
-    "start": "media/patient-f9.jpg",
+    "start": "media/patient-f9.webp",
     "actions": [
      {
       "kind": "tap",
@@ -432,7 +432,7 @@
       "y": 5.85,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/patient-f10.jpg"
+      "frame": "media/patient-f10.webp"
      }
     ]
    },
@@ -440,7 +440,7 @@
     "n": 6,
     "title": "พิมพ์ / บันทึก PDF",
     "detail": "ไอคอนเครื่องพิมพ์ในหัวข้อมูลผู้ป่วย พิมพ์ใบสรุปผลคัดกรองและแผนการรักษา",
-    "start": "media/patient-f11.jpg",
+    "start": "media/patient-f11.webp",
     "actions": [
      {
       "kind": "point",
@@ -448,7 +448,7 @@
       "y": 19.27,
       "w": 6,
       "h": 6,
-      "frame": "media/patient-f12.jpg"
+      "frame": "media/patient-f12.webp"
      }
     ]
    }
@@ -456,13 +456,13 @@
  },
  "aiplan": {
   "id": "aiplan",
-  "poster": "media/aiplan-f3.jpg",
+  "poster": "media/aiplan-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "เลือกผู้ป่วย",
     "detail": "เปิดประวัติผู้ป่วยที่ต้องการวางแผนการรักษา",
-    "start": "media/aiplan-f1.jpg",
+    "start": "media/aiplan-f1.webp",
     "actions": [
      {
       "kind": "tap",
@@ -470,7 +470,7 @@
       "y": 17.01,
       "w": 25.42,
       "h": 10.12,
-      "frame": "media/aiplan-f2.jpg"
+      "frame": "media/aiplan-f2.webp"
      }
     ]
    },
@@ -478,7 +478,7 @@
     "n": 2,
     "title": "แผนการรักษาโดย AI",
     "detail": "กดการ์ด “แผนการรักษาโดย AI” · AI อ่านอาการ ประวัติ ธาตุ และเอกสารที่แนบ แล้วร่างแผน",
-    "start": "media/aiplan-f3.jpg",
+    "start": "media/aiplan-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -486,7 +486,7 @@
       "y": 42.68,
       "w": 65.42,
       "h": 8.29,
-      "frame": "media/aiplan-f4.jpg"
+      "frame": "media/aiplan-f4.webp"
      }
     ]
    },
@@ -494,7 +494,7 @@
     "n": 3,
     "title": "ภาพรวมและเป้าหมาย",
     "detail": "จำนวนครั้ง ความถี่ และเป้าหมายการรักษา",
-    "start": "media/aiplan-f5.jpg",
+    "start": "media/aiplan-f5.webp",
     "actions": [
      {
       "kind": "point",
@@ -502,7 +502,7 @@
       "y": 48.78,
       "w": 6,
       "h": 6,
-      "frame": "media/aiplan-f6.jpg"
+      "frame": "media/aiplan-f6.webp"
      }
     ]
    },
@@ -510,13 +510,13 @@
     "n": 4,
     "title": "แผนแต่ละระยะ",
     "detail": "แต่ละระยะบอกบริการ จุดที่เน้น และเทคนิค · ต่อด้วยสมุนไพร การดูแลที่บ้าน และข้อควรระวัง",
-    "start": "media/aiplan-f7.jpg",
+    "start": "media/aiplan-f7.webp",
     "actions": [
      {
       "kind": "scroll",
       "x": 97.46,
       "y": 60.98,
-      "frame": "media/aiplan-f8.jpg"
+      "frame": "media/aiplan-f8.webp"
      }
     ]
    },
@@ -524,13 +524,13 @@
     "n": 5,
     "title": "อนุมัติและจองนัด",
     "detail": "แพทย์แผนไทยตรวจแล้วกด “แพทย์อนุมัติ” จากนั้น “จองนัดตามแผน”",
-    "start": "media/aiplan-f9.jpg",
+    "start": "media/aiplan-f9.webp",
     "actions": [
      {
       "kind": "scroll",
       "x": 97.46,
       "y": 60.98,
-      "frame": "media/aiplan-f10.jpg"
+      "frame": "media/aiplan-f10.webp"
      },
      {
       "kind": "tap",
@@ -538,7 +538,7 @@
       "y": 77.8,
       "w": 14.66,
       "h": 4.39,
-      "frame": "media/aiplan-f11.jpg"
+      "frame": "media/aiplan-f11.webp"
      }
     ]
    }
@@ -546,13 +546,13 @@
  },
  "visit": {
   "id": "visit",
-  "poster": "media/visit-f3.jpg",
+  "poster": "media/visit-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "เลือกคิวที่รอรับบริการ",
     "detail": "รายการฝั่งซ้ายเรียงตามเวลานัด สีบอกสถานะของแต่ละคิว",
-    "start": "media/visit-f1.jpg",
+    "start": "media/visit-f1.webp",
     "actions": [
      {
       "kind": "tap",
@@ -560,7 +560,7 @@
       "y": 62.93,
       "w": 5.98,
       "h": 2.68,
-      "frame": "media/visit-f2.jpg"
+      "frame": "media/visit-f2.webp"
      }
     ]
    },
@@ -568,7 +568,7 @@
     "n": 2,
     "title": "เรียกคิว",
     "detail": "กด “เรียกคิว” ระบบประกาศเสียงเรียกชื่อและเลขคิว",
-    "start": "media/visit-f3.jpg",
+    "start": "media/visit-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -576,7 +576,7 @@
       "y": 16.59,
       "w": 8.46,
       "h": 5.37,
-      "frame": "media/visit-f4.jpg"
+      "frame": "media/visit-f4.webp"
      }
     ]
    },
@@ -584,7 +584,7 @@
     "n": 3,
     "title": "คัดกรองก่อนนวด",
     "detail": "วัดความดัน ชีพจร ถามอาการวันนี้ ทุกครั้งก่อนเริ่มนวด",
-    "start": "media/visit-f5.jpg",
+    "start": "media/visit-f5.webp",
     "actions": [
      {
       "kind": "tap",
@@ -592,7 +592,7 @@
       "y": 42.8,
       "w": 9.86,
       "h": 4.15,
-      "frame": "media/visit-f6.jpg"
+      "frame": "media/visit-f6.webp"
      },
      {
       "kind": "type",
@@ -601,7 +601,7 @@
       "y": 18.05,
       "w": 12.39,
       "h": 5.37,
-      "frame": "media/visit-f7.jpg"
+      "frame": "media/visit-f7.webp"
      },
      {
       "kind": "type",
@@ -610,7 +610,7 @@
       "y": 18.05,
       "w": 12.39,
       "h": 5.37,
-      "frame": "media/visit-f8.jpg"
+      "frame": "media/visit-f8.webp"
      },
      {
       "kind": "type",
@@ -619,7 +619,7 @@
       "y": 18.05,
       "w": 19.07,
       "h": 5.37,
-      "frame": "media/visit-f9.jpg"
+      "frame": "media/visit-f9.webp"
      },
      {
       "kind": "tap",
@@ -627,7 +627,7 @@
       "y": 27.32,
       "w": 3.94,
       "h": 4.39,
-      "frame": "media/visit-f10.jpg"
+      "frame": "media/visit-f10.webp"
      }
     ]
    },
@@ -635,7 +635,7 @@
     "n": 4,
     "title": "บันทึกผลคัดกรอง",
     "detail": "ผลจะขึ้นเป็นแถบสีเขียว / ส้ม / แดง บนหน้ารับบริการ",
-    "start": "media/visit-f11.jpg",
+    "start": "media/visit-f11.webp",
     "actions": [
      {
       "kind": "tap",
@@ -643,7 +643,7 @@
       "y": 91.95,
       "w": 10.52,
       "h": 4.39,
-      "frame": "media/visit-f12.jpg"
+      "frame": "media/visit-f12.webp"
      }
     ]
    },
@@ -651,7 +651,7 @@
     "n": 5,
     "title": "เลือกเตียงแล้วเริ่ม",
     "detail": "เลือกเตียงที่ว่าง แล้วกด “เริ่ม” ระบบจับเวลาการนวดให้",
-    "start": "media/visit-f13.jpg",
+    "start": "media/visit-f13.webp",
     "actions": [
      {
       "kind": "tap",
@@ -659,7 +659,7 @@
       "y": 65.73,
       "w": 6.1,
       "h": 7.07,
-      "frame": "media/visit-f14.jpg"
+      "frame": "media/visit-f14.webp"
      },
      {
       "kind": "tap",
@@ -667,7 +667,7 @@
       "y": 16.59,
       "w": 9.03,
       "h": 5.37,
-      "frame": "media/visit-f15.jpg"
+      "frame": "media/visit-f15.webp"
      }
     ]
    }
@@ -675,13 +675,13 @@
  },
  "record": {
   "id": "record",
-  "poster": "media/record-f3.jpg",
+  "poster": "media/record-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "เลือกคิวที่รอบันทึก",
     "detail": "หลังนวดเสร็จ คิวจะเปลี่ยนเป็น “รอบันทึกการรักษา”",
-    "start": "media/record-f1.jpg",
+    "start": "media/record-f1.webp",
     "actions": [
      {
       "kind": "tap",
@@ -689,7 +689,7 @@
       "y": 30.37,
       "w": 8.37,
       "h": 2.68,
-      "frame": "media/record-f2.jpg"
+      "frame": "media/record-f2.webp"
      }
     ]
    },
@@ -697,13 +697,13 @@
     "n": 2,
     "title": "บันทึกการรักษา",
     "detail": "กรอกการวินิจฉัย หัตถการ และบริเวณที่นวด ระบบใส่รหัส ICD-10 / ICD-9-CM ให้อัตโนมัติ",
-    "start": "media/record-f3.jpg",
+    "start": "media/record-f3.webp",
     "actions": [
      {
       "kind": "scroll",
       "x": 64.41,
       "y": 60.98,
-      "frame": "media/record-f4.jpg"
+      "frame": "media/record-f4.webp"
      }
     ]
    },
@@ -711,13 +711,13 @@
     "n": 3,
     "title": "Pain Score หลังนวด",
     "detail": "เลือกระดับปวดหลังนวด ระบบแสดงการเปลี่ยนแปลงเทียบกับก่อนนวด",
-    "start": "media/record-f5.jpg",
+    "start": "media/record-f5.webp",
     "actions": [
      {
       "kind": "scroll",
       "x": 64.41,
       "y": 60.98,
-      "frame": "media/record-f6.jpg"
+      "frame": "media/record-f6.webp"
      }
     ]
    }
@@ -725,13 +725,13 @@
  },
  "payment": {
   "id": "payment",
-  "poster": "media/payment-f3.jpg",
+  "poster": "media/payment-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "เลือกคิวที่รอชำระเงิน",
     "detail": "คิวที่บันทึกการรักษาแล้วจะรอชำระเงิน ยอดค่าบริการขึ้นให้อัตโนมัติ",
-    "start": "media/payment-f1.jpg",
+    "start": "media/payment-f1.webp",
     "actions": [
      {
       "kind": "tap",
@@ -739,7 +739,7 @@
       "y": 41.22,
       "w": 5.74,
       "h": 2.68,
-      "frame": "media/payment-f2.jpg"
+      "frame": "media/payment-f2.webp"
      }
     ]
    },
@@ -747,7 +747,7 @@
     "n": 2,
     "title": "เลือกวิธีชำระ",
     "detail": "เงินสด พร้อมเพย์ หรือบิลในแอป · ถ้ามีคอร์สที่ตรงกับบริการ เลือกหักเครดิตได้",
-    "start": "media/payment-f3.jpg",
+    "start": "media/payment-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -755,7 +755,7 @@
       "y": 81.89,
       "w": 12.35,
       "h": 9.63,
-      "frame": "media/payment-f4.jpg"
+      "frame": "media/payment-f4.webp"
      }
     ]
    },
@@ -763,7 +763,7 @@
     "n": 3,
     "title": "รับเงินและออกใบเสร็จ",
     "detail": "ลูกค้าสแกน QR แล้วกด “รับเงินแล้ว” ระบบออกใบเสร็จและส่งสลิปเข้าแอปได้",
-    "start": "media/payment-f5.jpg",
+    "start": "media/payment-f5.webp",
     "actions": [
      {
       "kind": "tap",
@@ -771,7 +771,7 @@
       "y": 16.59,
       "w": 9.86,
       "h": 5.37,
-      "frame": "media/payment-f6.jpg"
+      "frame": "media/payment-f6.webp"
      }
     ]
    }
@@ -779,13 +779,13 @@
  },
  "billing": {
   "id": "billing",
-  "poster": "media/billing-f3.jpg",
+  "poster": "media/billing-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "ยอดรับชำระวันนี้",
     "detail": "สรุปยอดตามวิธีชำระ และรายการที่ยังค้างชำระ",
-    "start": "media/billing-f1.jpg",
+    "start": "media/billing-f1.webp",
     "actions": [
      {
       "kind": "point",
@@ -793,7 +793,7 @@
       "y": 36.59,
       "w": 6,
       "h": 6,
-      "frame": "media/billing-f2.jpg"
+      "frame": "media/billing-f2.webp"
      }
     ]
    },
@@ -801,7 +801,7 @@
     "n": 2,
     "title": "เปิดใบเสร็จ",
     "detail": "แท็บ “ประวัติการชำระ” แตะรายการเพื่อดูใบเสร็จ พิมพ์ หรือส่งเข้าแอป",
-    "start": "media/billing-f3.jpg",
+    "start": "media/billing-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -809,7 +809,7 @@
       "y": 15.85,
       "w": 9.91,
       "h": 4.15,
-      "frame": "media/billing-f4.jpg"
+      "frame": "media/billing-f4.webp"
      },
      {
       "kind": "tap",
@@ -817,7 +817,7 @@
       "y": 55.12,
       "w": 65.42,
       "h": 6.83,
-      "frame": "media/billing-f5.jpg"
+      "frame": "media/billing-f5.webp"
      }
     ]
    },
@@ -825,7 +825,7 @@
     "n": 3,
     "title": "ยกเลิกใบเสร็จ / คืนเงิน",
     "detail": "กด “ยกเลิกใบเสร็จ” แล้วระบุเหตุผล ถ้าชำระด้วยเครดิต ระบบคืนเครดิตให้",
-    "start": "media/billing-f6.jpg",
+    "start": "media/billing-f6.webp",
     "actions": [
      {
       "kind": "tap",
@@ -833,7 +833,7 @@
       "y": 89.33,
       "w": 7.54,
       "h": 5.85,
-      "frame": "media/billing-f7.jpg"
+      "frame": "media/billing-f7.webp"
      }
     ]
    },
@@ -841,7 +841,7 @@
     "n": 4,
     "title": "รายงานและส่งออก",
     "detail": "กด “รายงาน” เลือกช่วงวันที่ แล้วดาวน์โหลด CSV เปิดใน Excel",
-    "start": "media/billing-f8.jpg",
+    "start": "media/billing-f8.webp",
     "actions": [
      {
       "kind": "tap",
@@ -849,7 +849,7 @@
       "y": 5.85,
       "w": 7.11,
       "h": 3.41,
-      "frame": "media/billing-f9.jpg"
+      "frame": "media/billing-f9.webp"
      }
     ]
    }
@@ -857,13 +857,13 @@
  },
  "settings": {
   "id": "settings",
-  "poster": "media/settings-f3.jpg",
+  "poster": "media/settings-f3.webp",
   "steps": [
    {
     "n": 1,
     "title": "ข้อมูลคลินิก",
     "detail": "ชื่อหน่วยบริการ พื้นหลังแอป เวลาทำการ บริการและราคา",
-    "start": "media/settings-f1.jpg",
+    "start": "media/settings-f1.webp",
     "actions": [
      {
       "kind": "tap",
@@ -871,7 +871,7 @@
       "y": 27.56,
       "w": 24.75,
       "h": 5.85,
-      "frame": "media/settings-f2.jpg"
+      "frame": "media/settings-f2.webp"
      }
     ]
    },
@@ -879,7 +879,7 @@
     "n": 2,
     "title": "กฎคัดกรองความปลอดภัย",
     "detail": "กำหนดเกณฑ์ความดันห้ามนวด และจำนวนวันหลังผ่าตัด",
-    "start": "media/settings-f3.jpg",
+    "start": "media/settings-f3.webp",
     "actions": [
      {
       "kind": "tap",
@@ -887,7 +887,7 @@
       "y": 56.1,
       "w": 24.75,
       "h": 5.85,
-      "frame": "media/settings-f4.jpg"
+      "frame": "media/settings-f4.webp"
      }
     ]
    },
@@ -895,7 +895,7 @@
     "n": 3,
     "title": "สำรองและกู้คืนข้อมูล",
     "detail": "ดาวน์โหลดไฟล์สำรองเป็นประจำ และกู้คืนเมื่อเปลี่ยนเครื่อง",
-    "start": "media/settings-f5.jpg",
+    "start": "media/settings-f5.webp",
     "actions": [
      {
       "kind": "tap",
@@ -903,7 +903,7 @@
       "y": 84.63,
       "w": 24.75,
       "h": 5.85,
-      "frame": "media/settings-f6.jpg"
+      "frame": "media/settings-f6.webp"
      }
     ]
    },
@@ -911,7 +911,7 @@
     "n": 4,
     "title": "คู่มือการใช้งาน",
     "detail": "วิธีใช้ทุกเมนูแบบทีละขั้น ค้นหาได้ และเปิด Tutorial ฉบับเต็มได้จากที่นี่",
-    "start": "media/settings-f7.jpg",
+    "start": "media/settings-f7.webp",
     "actions": [
      {
       "kind": "tap",
@@ -919,7 +919,138 @@
       "y": 95.61,
       "w": 24.75,
       "h": 5.85,
-      "frame": "media/settings-f8.jpg"
+      "frame": "media/settings-f8.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "appointments": {
+  "id": "appointments",
+  "poster": "media/appointments-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "ดูตารางนัด",
+    "detail": "นัดของแต่ละวันเรียงตามเวลา เลือกวันจากแถบด้านบนได้",
+    "start": "media/appointments-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 50.85,
+      "y": 36.59,
+      "w": 6,
+      "h": 6,
+      "frame": "media/appointments-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "เพิ่มคิวนัดใหม่",
+    "detail": "กดไอคอนเพิ่มคิวมุมขวาบน เลือกผู้ป่วย บริการ วัน เวลา และผู้บำบัด ระบบเช็คเตียงว่างให้",
+    "start": "media/appointments-f3.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 96.78,
+      "y": 5.85,
+      "w": 3.73,
+      "h": 5.37,
+      "frame": "media/appointments-f4.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "planner": {
+  "id": "planner",
+  "poster": "media/planner-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "ตารางงานวันนี้",
+    "detail": "เส้นเวลาของผู้บำบัดทุกคน เห็นช่วงที่มีนัดและช่วงว่าง · ด้านซ้ายคือบริการที่เปิดและผู้ที่เข้างานวันนี้",
+    "start": "media/planner-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 76.27,
+      "y": 40.24,
+      "w": 6,
+      "h": 6,
+      "frame": "media/planner-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "ดูตารางรายคน",
+    "detail": "แตะชื่อผู้บำบัด เพื่อดูตารางทั้งสัปดาห์ของคนนั้น",
+    "start": "media/planner-f3.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 40.42,
+      "y": 39.21,
+      "w": 9.66,
+      "h": 1.95,
+      "frame": "media/planner-f4.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "กำหนดวันเวลาทำงาน",
+    "detail": "กด “กำหนดตาราง” เลือกวันและช่วงเวลา · ระบบจะไม่ให้จองนัดนอกเวลางาน",
+    "start": "media/planner-f5.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 90.63,
+      "y": 15.85,
+      "w": 11.61,
+      "h": 4.88,
+      "frame": "media/planner-f6.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "assistant": {
+  "id": "assistant",
+  "poster": "media/assistant-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "เปิดผู้ช่วย AI",
+    "detail": "กดลูกแก้วเรืองแสงท้ายแถบเมนู ได้ทุกหน้า",
+    "start": "media/assistant-f1.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 68.6,
+      "y": 95.37,
+      "w": 3.73,
+      "h": 5.37,
+      "frame": "media/assistant-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "ถามคำถาม",
+    "detail": "พิมพ์คำถามเกี่ยวกับคลินิก เช่น คิววันนี้ ใครเครดิตใกล้หมด หรือสรุปอาการผู้ป่วย",
+    "start": "media/assistant-f3.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "วันนี้มีคิวกี่คน",
+      "x": 48.39,
+      "y": 47.26,
+      "w": 45.93,
+      "h": 5.37,
+      "frame": "media/assistant-f4.webp"
      }
     ]
    }
