@@ -3,9 +3,9 @@ import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { ElementIcon } from "./ElementIcon";
 import { ageFrom, thaiBirth } from "./BirthDateField";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand } from "lucide-react";
+import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House } from "lucide-react";
 import { useStore } from "../store/store";
-import { Badge, Button, useToast } from "../design-system";
+import { Button, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
 import { addISODays, thaiDate, todayISO } from "../data/thaiDate";
 import type { AIPlan, Patient } from "../data/types";
@@ -234,103 +234,167 @@ ${THAI_MASSAGE_KNOWLEDGE}
             </ol>
           </motion.div>
         ) : plan ? (
-          <motion.div key={plan.at} className="ai-plan" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="ai-top">
-              <Badge tone={plan.massageType === "นวดเพื่อการรักษา" ? "info" : "neutral"}>{plan.massageType}</Badge>
-              <Badge tone="neutral">
-                {plan.sessions} ครั้ง · {plan.frequency}
-              </Badge>
-              {plan.approved && (
-                <Badge tone="success">
-                  <Check size={12} /> แพทย์อนุมัติแล้ว
-                </Badge>
-              )}
+          <motion.div key={plan.at} className="aip" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            {/* overview */}
+            <div className="aip-hero">
+              <div className="aip-hero__tags">
+                <span className={plan.approved ? "aip-status is-ok" : "aip-status"}>
+                  {plan.approved ? <Check size={12} strokeWidth={3} /> : <span className="aip-dot" />}
+                  {plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}
+                </span>
+                <span className="aip-type">{plan.massageType}</span>
+              </div>
+              <p className="aip-hero__sum">{plan.summary}</p>
+              <div className="aip-hero__stats">
+                <div>
+                  <b>{plan.sessions}</b>
+                  <small>ครั้ง</small>
+                </div>
+                <div>
+                  <b className="is-txt">{plan.frequency || "—"}</b>
+                  <small>ความถี่</small>
+                </div>
+                <div>
+                  <b>{plan.phases.length}</b>
+                  <small>ระยะ</small>
+                </div>
+              </div>
             </div>
-            <p className="ai-summary">{plan.summary}</p>
+
             {plan.referToDoctor && (
-              <div className="alert alert--stop">
-                <ShieldAlert size={16} />
+              <div className="aip-refer">
+                <ShieldAlert size={18} />
                 <div>
                   <b>ควรให้แพทย์แผนไทยประเมินก่อนเริ่มแผน</b>
-                  ดูข้อควรระวังด้านล่าง
+                  <small>ดูข้อควรระวังด้านล่าง</small>
                 </div>
               </div>
             )}
-            {plan.elementNote && (
-              <p className="ai-element">
-                <Leaf size={14} /> {plan.elementNote}
-              </p>
-            )}
+
             {plan.goals.length > 0 && (
-              <ul className="ai-goals">
-                {plan.goals.map((g) => (
-                  <li key={g}>{g}</li>
-                ))}
-              </ul>
+              <section className="aip-sec">
+                <h4>
+                  <Target size={14} /> เป้าหมาย
+                </h4>
+                <ul className="aip-goals">
+                  {plan.goals.map((g) => (
+                    <li key={g}>
+                      <i>
+                        <Check size={11} strokeWidth={3} />
+                      </i>
+                      {g}
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
-            <ol className="ai-phases">
-              {plan.phases.map((ph, i) => (
-                <li key={i}>
-                  <span className="ai-phase-no">{i + 1}</span>
-                  <div>
-                    <b>
-                      {ph.title} <small>{ph.weeks}</small>
-                    </b>
-                    <span className="ai-svc">{store.serviceById(ph.serviceId).name}</span>
-                    <p>
-                      <em>เน้น</em> {ph.focus}
-                    </p>
-                    <p>
-                      <em>เทคนิค</em> {ph.technique}
-                    </p>
+
+            {plan.phases.length > 0 && (
+              <section className="aip-sec">
+                <h4>
+                  <Route size={14} /> แผนแต่ละระยะ
+                </h4>
+                <ol className="aip-phases">
+                  {plan.phases.map((ph, i) => (
+                    <li key={i}>
+                      <span className="aip-phases__no">{i + 1}</span>
+                      <div className="aip-phases__card">
+                        <div className="aip-phases__head">
+                          <b>{ph.title}</b>
+                          <small>{ph.weeks}</small>
+                        </div>
+                        <span className="aip-svc">{store.serviceById(ph.serviceId).name}</span>
+                        <dl>
+                          <div>
+                            <dt>
+                              <Crosshair size={12} /> เน้น
+                            </dt>
+                            <dd>{ph.focus}</dd>
+                          </div>
+                          <div>
+                            <dt>
+                              <Hand size={12} /> เทคนิค
+                            </dt>
+                            <dd>{ph.technique}</dd>
+                          </div>
+                        </dl>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+
+            {plan.elementNote &&
+              (() => {
+                const el = elementProfile(p).birth;
+                const info = ELEMENT_INFO[el];
+                return (
+                  <div className="aip-el" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
+                    <span>
+                      <ElementIcon element={el} size={18} />
+                    </span>
+                    <div>
+                      <small>มุมมองธาตุ · ธาตุ{el}</small>
+                      <p>{plan.elementNote}</p>
+                    </div>
                   </div>
-                </li>
-              ))}
-            </ol>
-            <div className="ai-cols">
-              {plan.herbs.length > 0 && (
-                <div>
-                  <h4>สมุนไพร / ลูกประคบ</h4>
-                  <div className="ai-tags">
-                    {plan.herbs.map((h) => (
-                      <span key={h}>{h}</span>
-                    ))}
-                  </div>
+                );
+              })()}
+
+            {plan.herbs.length > 0 && (
+              <section className="aip-sec">
+                <h4>
+                  <Leaf size={14} /> สมุนไพร / ลูกประคบ
+                </h4>
+                <div className="aip-herbs">
+                  {plan.herbs.map((h) => (
+                    <span key={h}>{h}</span>
+                  ))}
                 </div>
-              )}
-              {plan.homeCare.length > 0 && (
-                <div>
-                  <h4>ดูแลที่บ้าน · ฤาษีดัดตน</h4>
-                  <ul>
-                    {plan.homeCare.map((h) => (
-                      <li key={h}>{h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {plan.precautions.length > 0 && (
-                <div className="ai-warn">
-                  <h4>ข้อควรระวัง</h4>
-                  <ul>
-                    {plan.precautions.map((h) => (
-                      <li key={h}>{h}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-            <div className="ai-foot">
+              </section>
+            )}
+
+            {plan.homeCare.length > 0 && (
+              <section className="aip-sec">
+                <h4>
+                  <House size={14} /> ดูแลที่บ้าน · ฤาษีดัดตน
+                </h4>
+                <ul className="aip-list">
+                  {plan.homeCare.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {plan.precautions.length > 0 && (
+              <section className="aip-sec aip-warn">
+                <h4>
+                  <TriangleAlert size={14} /> ข้อควรระวัง
+                </h4>
+                <ul className="aip-list">
+                  {plan.precautions.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <div className="aip-foot">
               <small>
-                ร่างโดย {plan.model} · {thaiDate(plan.at.slice(0, 10))} · ต้องให้แพทย์แผนไทยตรวจสอบก่อนใช้
+                <Sparkles size={12} /> ร่างโดย AI · {thaiDate(plan.at.slice(0, 10))} · ต้องให้แพทย์แผนไทยตรวจสอบก่อนใช้
               </small>
-              {!plan.approved && (
-                <Button variant="outline" size="md" leading={<Stethoscope size={15} />} onClick={approve}>
-                  แพทย์อนุมัติแผน
+              <div>
+                {!plan.approved && (
+                  <Button variant="outline" size="md" leading={<Stethoscope size={15} />} onClick={approve}>
+                    แพทย์อนุมัติ
+                  </Button>
+                )}
+                <Button size="md" leading={<CalendarPlus size={15} />} onClick={() => setPlanFor(p.id)}>
+                  จองนัดตามแผน
                 </Button>
-              )}
-              <Button size="md" leading={<CalendarPlus size={15} />} onClick={() => setPlanFor(p.id)}>
-                จองนัดตามแผน
-              </Button>
+              </div>
             </div>
           </motion.div>
         ) : (
