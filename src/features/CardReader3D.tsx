@@ -1031,6 +1031,7 @@ export function CardReader3D({
     >
       <Canvas
         style={{ width, height, background: "transparent" }}
+        dpr={Math.min(3, window.devicePixelRatio || 1)}
         gl={{ alpha: true, antialias: true }}
         camera={{
           position: [0, FRAME.reader.y, 26],
