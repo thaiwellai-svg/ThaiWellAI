@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { ElementIcon } from "./ElementIcon";
-import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "./BirthDateField";
+import { ageFrom, thaiBirth } from "./BirthDateField";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand } from "lucide-react";
 import { useStore } from "../store/store";
@@ -15,9 +15,6 @@ import "./aiplan.css";
 
 /** ธาตุเจ้าเรือน · อายุสมุฏฐาน · อุตุสมุฏฐาน of the patient */
 export function ElementCard({ p }: { p: Patient }) {
-  const store = useStore();
-  const [editing, setEditing] = useState(false);
-  const [dob, setDob] = useState(p.birthDate ?? "");
   const prof = elementProfile(p);
   const info = ELEMENT_INFO[prof.birth];
   return (
@@ -30,33 +27,11 @@ export function ElementCard({ p }: { p: Patient }) {
           ธาตุเจ้าเรือน
         </h3>
         <div className="el2__born">
-          {editing ? (
-            <>
-              <BirthDateField value={dob} onChange={setDob} />
-              <button
-                type="button"
-                className="el2__save"
-                disabled={!isFullDate(dob)}
-                onClick={() => {
-                  store.dispatch({ type: "updatePatient", id: p.id, patch: { birthDate: dob, birthMonth: Number(dob.slice(5, 7)), age: ageFrom(dob) ?? p.age } });
-                  setEditing(false);
-                }}
-              >
-                บันทึก
-              </button>
-            </>
-          ) : (
-            <>
-              <span>
-                <small>เกิด</small>
-                <b>{p.birthDate ? thaiBirth(p.birthDate) : "ยังไม่ระบุวันเกิด"}</b>
-                {p.birthDate && <em>อายุ {ageFrom(p.birthDate) ?? p.age} ปี</em>}
-              </span>
-              <button type="button" className="el2__edit" onClick={() => (setDob(p.birthDate ?? ""), setEditing(true))}>
-                แก้ไข
-              </button>
-            </>
-          )}
+          <span>
+            <small>เกิด</small>
+            <b>{p.birthDate ? thaiBirth(p.birthDate) : "ยังไม่ระบุวันเกิด · แก้ได้ที่ “แก้ไขข้อมูล”"}</b>
+            {p.birthDate && <em>อายุ {ageFrom(p.birthDate) ?? p.age} ปี</em>}
+          </span>
         </div>
       </div>
       <div className="el2__body">
