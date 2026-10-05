@@ -2064,3 +2064,17 @@
   padding: 0 20px;
   font-size: 13px;
 }
+/* questionnaire answer pill on each contraindication tile */
+.ap-ci .ap-ci__tick {
+  width: auto;
+  min-width: 36px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  font: 700 11px/24px var(--font-sans);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.ap-ci button[aria-pressed="true"] .ap-ci__tick {
+  color: var(--white);
+}

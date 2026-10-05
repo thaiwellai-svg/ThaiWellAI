@@ -425,12 +425,12 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
   const bpThreshold = store.settings.bpThreshold ?? 160;
   const bpState = !sys ? { tone: "idle", label: "" } : sys >= bpThreshold ? { tone: "stop", label: "สูง · ห้ามนวด" } : sys >= 140 || sys < 90 ? { tone: "warn", label: sys < 90 ? "ต่ำ" : "ค่อนข้างสูง" } : { tone: "ok", label: "ปกติ" };
   const contra = [
-    { key: "fever", label: "มีไข้ / ติดเชื้อ", hint: "ห้ามนวด", level: "stop", Icon: Thermometer },
-    { key: "recentSurgery", label: "ผ่าตัดภายใน 30 วัน", hint: `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วัน`, level: "stop", Icon: Scissors },
-    { key: "bloodThinner", label: "ยาละลายลิ่มเลือด", hint: "ลดแรงนวด", level: "warn", Icon: Droplet },
-    { key: "numbness", label: "ชา / อ่อนแรง", hint: "ระวัง", level: "warn", Icon: Zap },
-    { key: "skinProblem", label: "แผล / ผื่น / โรคผิวหนัง", hint: "เลี่ยงบริเวณนั้น", level: "warn", Icon: Bandage },
-    ...(f.gender === "หญิง" ? [{ key: "pregnant", label: "ตั้งครรภ์ / อาจตั้งครรภ์", hint: "ระวัง", level: "warn", Icon: Baby }] : []),
+    { key: "fever", label: "มีไข้ หรือกำลังติดเชื้อ?", hint: "ถ้าใช่ · ห้ามนวด", level: "stop", Icon: Thermometer },
+    { key: "recentSurgery", label: `ผ่าตัดมาภายใน ${store.settings.surgeryRecoveryDays ?? 30} วัน?`, hint: "ถ้าใช่ · ห้ามนวด", level: "stop", Icon: Scissors },
+    { key: "bloodThinner", label: "กินยาละลายลิ่มเลือดอยู่?", hint: "ถ้าใช่ · ลดแรงนวด", level: "warn", Icon: Droplet },
+    { key: "numbness", label: "มีอาการชา หรืออ่อนแรง?", hint: "ถ้าใช่ · นวดอย่างระวัง", level: "warn", Icon: Zap },
+    { key: "skinProblem", label: "มีแผล ผื่น หรือโรคผิวหนัง?", hint: "ถ้าใช่ · เลี่ยงบริเวณนั้น", level: "warn", Icon: Bandage },
+    ...(f.gender === "หญิง" ? [{ key: "pregnant", label: "ตั้งครรภ์ หรืออาจตั้งครรภ์?", hint: "ถ้าใช่ · นวดอย่างระวัง", level: "warn", Icon: Baby }] : []),
   ].map((c) => ({ ...c, key: c.key as "fever" | "recentSurgery" | "bloodThinner" | "numbness" | "skinProblem" | "pregnant", on: !!scr[c.key as keyof typeof scr] }));
   const row = (k: string, v?: string) => (
     <div>
@@ -697,7 +697,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 <span style={{ ["--c" as string]: "#e0603a" }}>
                   <Activity size={14} />
                 </span>
-                ระดับความปวด
+                ตอนนี้ปวดมากแค่ไหน?
                 {scr.pain != null && <em className="ap-pain__lbl" style={{ ["--pc" as string]: scr.pain >= 7 ? "#d8392a" : scr.pain >= 4 ? "#e08a1e" : "#2f9a5b" }}>{scr.pain === 0 ? "ไม่ปวด" : scr.pain <= 3 ? "เล็กน้อย" : scr.pain <= 6 ? "ปานกลาง" : "มาก"}</em>}
               </h4>
               <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
@@ -716,7 +716,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 ข้อมูลสุขภาพ
               </h4>
               <div className="ap-health">
-                <Field label="อาการสำคัญ">
+                <Field label="วันนี้มีอาการอะไรมา?">
                   <Textarea rows={2} value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
                 </Field>
                 <div className="ap-quick">
@@ -730,10 +730,10 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                     );
                   })}
                 </div>
-                <Field label="โรคประจำตัว">
+                <Field label="มีโรคประจำตัวไหม?">
                   <MultiSelect value={splitList(f.conditions)} onChange={(v) => setF({ ...f, conditions: v.join(", ") })} options={CONDITIONS} placeholder="เลือกโรคประจำตัว" none="ไม่มีโรคประจำตัว" />
                 </Field>
-                <Field label="การแพ้ยา / น้ำมัน / สมุนไพร">
+                <Field label="แพ้ยา น้ำมัน หรือสมุนไพรอะไรไหม?">
                   <MultiSelect value={splitList(f.allergies)} onChange={(v) => setF({ ...f, allergies: v.join(", ") })} options={ALLERGIES} placeholder="เลือกสิ่งที่แพ้" none="ไม่มีประวัติแพ้" />
                 </Field>
               </div>
@@ -746,19 +746,19 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 สัญญาณชีพ
               </h4>
               <div className="ap-vitals">
-                <Field label="ความดัน (mmHg)">
+                <Field label="ความดันวัดได้เท่าไร? (mmHg)">
                   <div className="ap-bp">
                     <Input inputMode="numeric" placeholder="120" aria-label="ความดันตัวบน" aria-invalid={bpState.tone === "stop"} value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                     <span>/</span>
                     <Input inputMode="numeric" placeholder="80" aria-label="ความดันตัวล่าง" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                   </div>
                 </Field>
-                <Field label="ชีพจร (ครั้ง/นาที)">
+                <Field label="ชีพจรกี่ครั้งต่อนาที?">
                   <Input inputMode="numeric" placeholder="72" aria-label="ชีพจร" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                 </Field>
               </div>
               {bpState.tone === "stop" && <p className="ap-vwarn">ความดันสูงเกินเกณฑ์ · ห้ามนวด</p>}
-              <Field label="แรงนวดที่ต้องการ">
+              <Field label="ชอบแรงนวดแบบไหน?">
                 <div className="ap-press2">
                   {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
                     <button key={x} type="button" className="tw-chip" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
@@ -773,9 +773,9 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 <span style={{ ["--c" as string]: "#d97706" }}>
                   <ShieldCheck size={14} />
                 </span>
-                ข้อห้ามก่อนนวด
+                ก่อนนวด มีข้อไหนตรงกับคุณบ้าง?
                 <em className={`ap-ci__sum ${contra.some((c) => c.on && c.level === "stop") ? "is-stop" : contra.some((c) => c.on) ? "is-warn" : "is-ok"}`}>
-                  {contra.some((c) => c.on) ? `พบ ${contra.filter((c) => c.on).length} ข้อ` : "ไม่พบ"}
+                  {contra.some((c) => c.on) ? `ใช่ ${contra.filter((c) => c.on).length} ข้อ` : "ไม่มีข้อไหนตรง"}
                 </em>
               </h4>
               <div className="ap-ci">
@@ -788,7 +788,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                       <b>{c.label}</b>
                       <small>{c.hint}</small>
                     </span>
-                    <span className="ap-ci__tick">{c.on && <Check size={12} strokeWidth={3} />}</span>
+                    <span className="ap-ci__tick">{c.on ? "ใช่" : "ไม่"}</span>
                   </button>
                 ))}
               </div>
