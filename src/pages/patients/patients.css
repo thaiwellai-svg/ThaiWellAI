@@ -1483,3 +1483,23 @@
   white-space: nowrap;
   font-size: 12px;
 }
+/* reader card: button flush right, over the card art */
+.ap-card {
+  padding-right: 14px;
+}
+.ap-card__art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 168px;
+}
+.ap-card__id {
+  left: 8px;
+  width: 88px;
+}
+.ap-card em {
+  position: relative;
+  z-index: 2;
+  margin-left: auto;
+}
