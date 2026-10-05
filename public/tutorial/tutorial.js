@@ -42,7 +42,6 @@ fetch("chapters.json")
   .then((r) => r.json())
   .then((d) => {
     DATA = d;
-    renderStats();
     renderHeroCards();
     renderToc();
     const want = location.hash.slice(1);
@@ -65,17 +64,13 @@ function renderHeroCards() {
 
 const GROUP_ICON = { "หน้าหลัก": "house", "รับบริการ": "clipboard-check", "ผู้มารับบริการ": "users", "ตารางนัด": "calendar-days", "คิดเงิน": "receipt", "จัดตารางงาน": "calendar-clock", "ตั้งค่า": "sliders-horizontal", "ผู้ช่วย AI": "sparkles" };
 function renderToc() {
-  const total = ORDER.length;
   $("#toc").innerHTML =
-    `<div class="nav__top">
-       <b>สารบัญ</b><small>${total} หัวข้อ</small>
-     </div>
-` +
+    `<p class="nav__title">สารบัญ</p>` +
     GROUPS.map((g) => {
       const ids = ORDER.filter((id) => INFO[id].group === g);
       const col = INFO[ids[0]].color;
       return `<section class="nav__group" data-g="${g}" style="--c:${col}">
-        <button class="nav__gh" aria-expanded="true"><span class="nav__gi">${icon(GROUP_ICON[g], 15)}</span><b>${g}</b><i>${ids.length}</i><em>${icon("chevron-down", 15)}</em></button>
+        <p class="nav__gh">${g}</p>
         <div class="nav__items">
           ${ids
             .map((id) => {
@@ -92,13 +87,6 @@ function renderToc() {
     }).join("");
   const T = $("#toc");
   T.querySelectorAll(".nav__link").forEach((b) => b.addEventListener("click", () => open(b.parentElement.dataset.id)));
-  T.querySelectorAll(".nav__gh").forEach((b) =>
-    b.addEventListener("click", () => {
-      const g = b.parentElement;
-      g.classList.toggle("is-closed");
-      b.setAttribute("aria-expanded", String(!g.classList.contains("is-closed")));
-    }),
-  );
   T.querySelectorAll(".nav__sub a").forEach((a) =>
     a.addEventListener("click", (e) => {
       e.preventDefault();
@@ -409,7 +397,6 @@ function reveal() {
   });
   clear.addEventListener("click", () => ((q.value = ""), render(), q.focus()));
   document.addEventListener("pointerdown", (e) => !e.target.closest(".hsearch") && (box.hidden = true));
-  document.querySelectorAll(".hsearch__chips button").forEach((b) => b.addEventListener("click", () => ((q.value = b.textContent), render(), q.focus())));
   $("#hqi").innerHTML = icon("search", 20);
   clear.innerHTML = icon("x", 14);
 })();

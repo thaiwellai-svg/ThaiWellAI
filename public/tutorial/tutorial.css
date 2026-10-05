@@ -1757,3 +1757,87 @@ img {
 .hsearch__chips button:hover {
   background: rgba(255, 255, 255, 0.24);
 }
+
+/* ── minimal sidebar ───────────────── */
+.toc {
+  padding: 30px 8px 18px 4px;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.nav__title {
+  margin: 0 0 14px 14px;
+  font: 800 13px/1 var(--font);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.nav__group,
+.nav__group + .nav__group {
+  border: 0;
+  padding: 0;
+  margin-bottom: 18px;
+}
+p.nav__gh {
+  margin: 0 0 6px 14px;
+  padding: 0;
+  font: 600 11.5px/1 var(--font);
+  letter-spacing: 0.05em;
+  color: #98a39c;
+}
+.nav__items {
+  padding-left: 0;
+}
+.nav__it {
+  border-left: 0;
+}
+.nav__link {
+  position: relative;
+  padding: 6px 10px 6px 14px;
+  border-radius: 8px;
+  font: 500 14px/1.45 var(--font);
+  color: #56625a;
+}
+.nav__link:hover {
+  background: rgba(0, 0, 0, 0.035);
+  color: var(--ink);
+}
+.nav__it.is-on .nav__link {
+  color: var(--ink);
+  font-weight: 700;
+}
+.nav__it.is-on .nav__link::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--c);
+}
+.nav__sub {
+  margin: 2px 0 6px 14px;
+  padding: 0 0 0 10px;
+  border-left: 1px solid #e3e9e5;
+}
+.nav__sub a {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font: 400 13px/1.45 var(--font);
+  color: #8a958e;
+}
+.nav__sub a.is-on {
+  background: none;
+  color: var(--c);
+  font-weight: 600;
+}
+.layout {
+  margin-top: 0;
+  padding-top: 8px;
+}
+.nav__group:first-of-type {
+  margin-top: 0;
+}
+p.nav__gh {
+  margin-top: 4px;
+}
