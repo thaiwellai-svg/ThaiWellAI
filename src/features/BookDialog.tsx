@@ -231,12 +231,15 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
               <span className="book__name">
                 {patient.name}
                 <small>
-                  {patient.hn} · {patient.phone}
+                  {patient.hn}
+                  {patient.phone ? ` · ${patient.phone}` : ""}
                 </small>
               </span>
-              <Button variant="outline" size="md" leading={<Phone size={14} />} onClick={() => (window.location.href = `tel:${patient.phone.replace(/-/g, "")}`)}>
-                โทร
-              </Button>
+              {patient.phone && (
+                <Button variant="outline" size="md" leading={<Phone size={14} />} onClick={() => (window.location.href = `tel:${patient.phone.replace(/-/g, "")}`)}>
+                  โทร
+                </Button>
+              )}
             </div>
             {request && (
               <div className="book__req">

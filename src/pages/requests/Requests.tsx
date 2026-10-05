@@ -282,9 +282,11 @@ function PatientHead({ pid, sub }: { pid: string; sub: React.ReactNode }) {
           ))}
         </div>
       </div>
-      <a className="rq__call" href={`tel:${p.phone}`}>
-        <Phone size={16} /> {p.phone}
-      </a>
+      {p.phone && (
+        <a className="rq__call" href={`tel:${p.phone}`}>
+          <Phone size={16} /> {p.phone}
+        </a>
+      )}
     </header>
   );
 }

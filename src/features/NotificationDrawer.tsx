@@ -214,9 +214,11 @@ export function useNotificationDetail(id: string | null, onDone: () => void): De
             {p.hn} · {p.gender} {p.age} ปี
           </small>
         </span>
-        <a className="nd__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
-          <Phone size={16} />
-        </a>
+        {p.phone && (
+          <a className="nd__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
+            <Phone size={16} />
+          </a>
+        )}
       </section>
     );
   }

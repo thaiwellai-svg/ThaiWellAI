@@ -248,9 +248,11 @@ export function AppointmentDrawer({
               <b>{timeRange(appt.start, s.minutes)} น.</b>
               <small>{thaiDateLong(appt.date)}</small>
             </div>
-            <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
-              <Phone size={16} />
-            </a>
+            {p.phone && (
+              <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
+                <Phone size={16} />
+              </a>
+            )}
             {(onHistory || onOpenPatient) && (
               <button
                 type="button"

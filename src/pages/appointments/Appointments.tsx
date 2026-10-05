@@ -309,9 +309,11 @@ export default function Appointments() {
                         ))}
                       </div>
                       <div className="pcard__actions">
-                        <Button variant="outline" size="md" fill leading={<Phone size={14} />} onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)}>
-                          โทร
-                        </Button>
+                        {p.phone && (
+                          <Button variant="outline" size="md" fill leading={<Phone size={14} />} onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)}>
+                            โทร
+                          </Button>
+                        )}
                         <Button
                           size="md"
                           fill

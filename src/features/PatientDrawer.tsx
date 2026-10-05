@@ -37,9 +37,11 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
       subtitle={`${p.hn} · ${p.gender} ${p.age} ปี · ลงทะเบียน ${thaiDate(p.registeredOn)}`}
       footer={
         <>
-          <Button variant="outline" size="lg" fill leading={<Phone size={16} />} onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)}>
-            {p.phone}
-          </Button>
+          {p.phone && (
+            <Button variant="outline" size="lg" fill leading={<Phone size={16} />} onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)}>
+              {p.phone}
+            </Button>
+          )}
           <Button size="lg" fill leading={<CalendarPlus size={16} />} onClick={() => setPlanFor(p.id)}>
             จัดตารางงาน
           </Button>

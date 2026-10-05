@@ -123,9 +123,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: str
                 <PenLine size={18} />
               </button>
             )}
-            <button type="button" className="pd__ib" onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)} aria-label={`โทร ${p.phone}`} title={`โทร ${p.phone}`}>
-              <Phone size={18} />
-            </button>
+            {p.phone && (
+              <button type="button" className="pd__ib" onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)} aria-label={`โทร ${p.phone}`} title={`โทร ${p.phone}`}>
+                <Phone size={18} />
+              </button>
+            )}
             <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
               <CalendarPlus size={18} />
             </button>

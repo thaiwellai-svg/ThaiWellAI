@@ -337,7 +337,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   const age = ageFrom(f.dob);
   const cidDigits = f.cid.replace(/\D/g, "");
   const cidOk = !cidDigits || validCitizenId(cidDigits);
-  const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && /^[0-9-]{9,12}$/.test(f.phone) && cidOk;
+  const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && (!f.phone.trim() || /^[0-9-]{9,12}$/.test(f.phone)) && cidOk;
 
   const screening: CounterScreening | undefined = skipScr
     ? edit?.screening
@@ -372,7 +372,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           citizenId: cidDigits || undefined,
           allergies: f.allergies.split(",").map((x) => x.trim()).filter(Boolean),
           emergency: f.ecName.trim() ? { name: f.ecName.trim(), phone: f.ecPhone.trim(), relation: f.ecRel.trim() || undefined } : undefined,
-          phone: f.phone,
+          phone: f.phone.trim(),
           email: f.email.trim() || undefined,
           complaint: f.complaint.trim() || edit.complaint,
           conditions: f.conditions.split(",").map((x) => x.trim()).filter(Boolean),
@@ -399,7 +399,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         citizenId: cidDigits || undefined,
         allergies: f.allergies.split(",").map((x) => x.trim()).filter(Boolean),
         emergency: f.ecName.trim() ? { name: f.ecName.trim(), phone: f.ecPhone.trim(), relation: f.ecRel.trim() || undefined } : undefined,
-        phone: f.phone,
+        phone: f.phone.trim(),
         email: f.email.trim() || undefined,
         complaint: f.complaint.trim() || "ต้องการนวดผ่อนคลาย",
         conditions: f.conditions
@@ -590,7 +590,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 ช่องทางติดต่อ
               </h4>
               <div className="ap-grid">
-                <Field label="เบอร์โทรศัพท์ *" className="span-3">
+                <Field label="เบอร์โทรศัพท์" className="span-3">
                   <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
                 </Field>
                 <Field label="อีเมล" className="span-3">
