@@ -63,34 +63,91 @@ function renderHeroCards() {
     .join("");
 }
 
+const GROUP_ICON = { "หน้าหลัก": "⌂", "รับบริการ": "◷", "ผู้มารับบริการ": "☺", "ตารางนัด": "▦", "คิดเงิน": "▤", "จัดตารางงาน": "☷", "ตั้งค่า": "⚙", "ผู้ช่วย AI": "✧" };
 function renderToc() {
+  const total = ORDER.length;
   $("#toc").innerHTML =
-    `<label class="toc__search"><span>⌕</span><input id="q" placeholder="ค้นหาฟีเจอร์ เช่น คืนเงิน" /></label>` +
-    GROUPS.map(
-      (g) => `<div class="toc__group" data-g="${g}"><p class="toc__h">${g}</p>` +
-        ORDER.filter((id) => INFO[id].group === g)
-          .map((id) => {
-            const c = INFO[id];
-            const words = [c.title, c.short, c.desc, ...(DATA[id]?.steps || []).map((s) => s.title + " " + s.detail)].join(" ").toLowerCase();
-            return `<button class="toc__item" data-id="${id}" data-words="${words.replace(/"/g, "")}" style="--c:${c.color}">
-              <span class="toc__no">${c.icon}</span>
-              <span class="toc__t"><b>${c.short}</b><small>${DATA[id]?.steps.length || 0} ขั้นตอน</small></span>
-            </button>`;
-          })
-          .join("") + `</div>`,
-    ).join("");
-  $("#toc").querySelectorAll(".toc__item").forEach((b) => b.addEventListener("click", () => open(b.dataset.id)));
-  $("#q").addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    $("#toc").querySelectorAll(".toc__item").forEach((b) => (b.hidden = !!q && !b.dataset.words.includes(q)));
-    $("#toc").querySelectorAll(".toc__group").forEach((g) => (g.hidden = ![...g.querySelectorAll(".toc__item")].some((b) => !b.hidden)));
-  });
+    `<div class="nav__top">
+       <b>สารบัญ</b><small>${total} หัวข้อ</small>
+     </div>
+     <label class="nav__search"><span>⌕</span><input id="q" placeholder="ค้นหา เช่น คืนเงิน, หุ่น 3D" /><kbd id="qx" hidden>✕</kbd></label>
+     <p class="nav__empty" id="qe" hidden>ไม่พบหัวข้อที่ค้นหา</p>` +
+    GROUPS.map((g) => {
+      const ids = ORDER.filter((id) => INFO[id].group === g);
+      const col = INFO[ids[0]].color;
+      return `<section class="nav__group" data-g="${g}" style="--c:${col}">
+        <button class="nav__gh" aria-expanded="true"><span class="nav__gi">${GROUP_ICON[g] || "•"}</span><b>${g}</b><i>${ids.length}</i><em>⌄</em></button>
+        <div class="nav__items">
+          ${ids
+            .map((id) => {
+              const c = INFO[id];
+              const words = [c.title, c.short, c.desc, ...(DATA[id]?.steps || []).map((s) => s.title + " " + s.detail)].join(" ").toLowerCase().replace(/"/g, "");
+              return `<div class="nav__it" data-id="${id}" data-words="${words}">
+                <button class="nav__link">${c.title}</button>
+                <ol class="nav__sub">${(DATA[id]?.steps || []).map((s) => `<li><a href="#s-${s.n}" data-n="${s.n}">${s.title}</a></li>`).join("")}</ol>
+              </div>`;
+            })
+            .join("")}
+        </div>
+      </section>`;
+    }).join("");
+  const T = $("#toc");
+  T.querySelectorAll(".nav__link").forEach((b) => b.addEventListener("click", () => open(b.parentElement.dataset.id)));
+  T.querySelectorAll(".nav__gh").forEach((b) =>
+    b.addEventListener("click", () => {
+      const g = b.parentElement;
+      g.classList.toggle("is-closed");
+      b.setAttribute("aria-expanded", String(!g.classList.contains("is-closed")));
+    }),
+  );
+  T.querySelectorAll(".nav__sub a").forEach((a) =>
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      $("#s-" + a.dataset.n)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }),
+  );
+  const q = $("#q");
+  const filter = () => {
+    const v = q.value.trim().toLowerCase();
+    let any = false;
+    T.querySelectorAll(".nav__it").forEach((it) => {
+      const hit = !v || it.dataset.words.includes(v);
+      it.hidden = !hit;
+      any ||= hit;
+    });
+    T.querySelectorAll(".nav__group").forEach((g) => {
+      g.hidden = ![...g.querySelectorAll(".nav__it")].some((x) => !x.hidden);
+      if (v) g.classList.remove("is-closed");
+    });
+    $("#qe").hidden = any;
+    $("#qx").hidden = !v;
+  };
+  q.addEventListener("input", filter);
+  $("#qx").addEventListener("click", () => ((q.value = ""), filter(), q.focus()));
+}
+
+/* highlight the section being read in the sidebar */
+let spy = null;
+function scrollSpy() {
+  spy?.disconnect();
+  const links = [...document.querySelectorAll(`.nav__it[data-id="${current}"] .nav__sub a`)];
+  spy = new IntersectionObserver(
+    (es) =>
+      es.forEach((e) => {
+        if (!e.isIntersecting) return;
+        const n = e.target.id.slice(2);
+        links.forEach((a) => a.classList.toggle("is-on", a.dataset.n === n));
+      }),
+    { rootMargin: "-30% 0px -60% 0px" },
+  );
+  document.querySelectorAll(".doc__sec").forEach((s) => spy.observe(s));
 }
 
 function open(id, scroll = true) {
   current = id;
   history.replaceState(null, "", "#" + id);
-  document.querySelectorAll(".toc__item").forEach((b) => b.classList.toggle("is-on", b.dataset.id === id));
+  document.querySelectorAll(".nav__it").forEach((b) => b.classList.toggle("is-on", b.dataset.id === id));
+  document.querySelector(`.nav__it[data-id="${id}"]`)?.closest(".nav__group")?.classList.remove("is-closed");
   const c = INFO[id];
   const d = DATA[id];
   const i = ORDER.indexOf(id);
@@ -151,6 +208,7 @@ function open(id, scroll = true) {
       </footer>
     </article>`;
   wireFlow();
+  scrollSpy();
   L.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => open(b.dataset.go)));
   L.querySelectorAll("[data-jump]").forEach((b) => b.addEventListener("click", (e) => (e.preventDefault(), $("#s-" + b.dataset.jump).scrollIntoView({ behavior: "smooth", block: "start" }))));
   reveal();
