@@ -116,6 +116,7 @@ export function AppShell() {
             <Route path="/patients" element={<Page><Patients /></Page>} />
             <Route path="/patients/new" element={<Page><PatientFormPage /></Page>} />
             <Route path="/patients/:id/edit" element={<Page><PatientFormPage /></Page>} />
+            <Route path="/patients/:id/screen" element={<Page><PatientFormPage screen /></Page>} />
             <Route path="/settings" element={<Page><Settings /></Page>} />
             <Route path="/visits" element={<Page><Visits /></Page>} />
             <Route path="/billing" element={<Page><Billing /></Page>} />
@@ -127,7 +128,7 @@ export function AppShell() {
       </AnimatePresence>
 
       {/* sub-pages (register / edit / booking requests) are full-screen tasks: no dock, they have their own back button */}
-      {!/^\/(patients\/(new|[^/]+\/edit)|requests)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
+      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
       <Tour />
         </>

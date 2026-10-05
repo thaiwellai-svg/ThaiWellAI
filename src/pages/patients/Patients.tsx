@@ -356,7 +356,7 @@ export default function Patients() {
   );
 }
 
-function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null }) {
+function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null; /** before-massage re-screening: only the screening step */ screenOnly?: boolean }) {
   const store = useStore();
   const toast = useToast();
   const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", email: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "", address: "" };
@@ -406,9 +406,16 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
   const cardIn = (location.state as { card?: IdCardData } | null)?.card;
   useEffect(() => {
     setF(edit ? fromPatient(edit) : cardIn ? { ...empty, title: cardIn.title, first: cardIn.first, last: cardIn.last, gender: cardIn.gender, dob: cardIn.dob, cid: formatCid(cardIn.cid), address: cardIn.address } : empty);
-    setStep(0);
+    setStep(screenOnly ? 1 : 0);
     setFromCard(!edit && !!cardIn);
     const sc = edit?.screening;
+    // re-screening today: keep body areas and standing answers, measure vitals / fever / skin / pain again
+    if (screenOnly) {
+      setScr({ ...emptyScr, pregnant: !!sc?.pregnant, recentSurgery: !!sc?.recentSurgery, numbness: !!sc?.numbness, bloodThinner: !!sc?.bloodThinner, pressure: sc?.pressure ?? "ปานกลาง", painAreas: areasOf(sc?.painAreas ?? []), avoidAreas: areasOf((sc?.avoid ?? "").split(/[,·]\s*/)) });
+      setHold(null);
+      setSkipScr(false);
+      return;
+    }
     setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, painAreas: areasOf(sc.painAreas ?? []), avoidAreas: areasOf(sc.avoid.split(/[,·]\s*/)), pain: sc.pain ?? null } : emptyScr);
     setHold(null);
     setSkipScr(!!edit && !sc);
@@ -464,7 +471,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
           ...(screening?.pain != null ? { painHistory: [...edit.painHistory.filter((x) => x.date !== todayISO()), { date: todayISO(), score: screening.pain }] } : {}),
         },
       });
-      toast({ message: "บันทึกข้อมูลผู้รับบริการแล้ว" });
+      toast({ message: screenOnly ? (flags.some((x) => x.level === "stop") ? "บันทึกผลคัดกรองแล้ว · พบข้อห้าม ต้องให้แพทย์ประเมินก่อนนวด" : "บันทึกผลคัดกรองแล้ว") : "บันทึกข้อมูลผู้รับบริการแล้ว", tone: screenOnly && flags.some((x) => x.level === "stop") ? "danger" : undefined });
       onClose();
       return;
     }
@@ -520,10 +527,22 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
       eyebrow={edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}
       title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
       bell={false}
-      lead={<BackLead eyebrow={edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"} title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"} onBack={onClose} />}
+      lead={
+        <BackLead
+          eyebrow={screenOnly && edit ? `รับบริการ · ${edit.name}` : edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}
+          title={screenOnly ? "คัดกรองก่อนนวด" : edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
+          onBack={onClose}
+        />
+      }
     >
       <div className="apg ap">
         <div className="apg__bar">
+          {screenOnly ? (
+            <div className={flags.some((x) => x.level === "stop") ? "apg__verdict is-stop" : flags.length ? "apg__verdict is-warn" : "apg__verdict"}>
+              {flags.length ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
+              {flags.some((x) => x.level === "stop") ? "พบข้อห้าม · ต้องให้แพทย์ประเมินก่อนนวด" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ยังไม่พบข้อห้าม"}
+            </div>
+          ) : (
           <ol className="ap-steps">
             {STEPS.map((t, i) => (
               <li key={t} className={i < step ? "is-done" : i === step ? "is-now" : undefined}>
@@ -534,7 +553,19 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
               </li>
             ))}
           </ol>
+          )}
           <div className="apg__actions">
+            {screenOnly ? (
+              <>
+                <Button variant="outline" size="md" onClick={onClose}>
+                  ยกเลิก
+                </Button>
+                <Button size="md" disabled={!valid} onClick={submit}>
+                  บันทึกผลคัดกรอง
+                </Button>
+              </>
+            ) : (
+              <>
                 <Button variant="outline" size="md" onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
                   {step === 0 ? "ยกเลิก" : "ย้อนกลับ"}
                 </Button>
@@ -566,6 +597,8 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                     บันทึก
                   </Button>
                 )}
+              </>
+            )}
           </div>
         </div>
         <div className={step === 1 ? "apg__body is-split" : "apg__body scroll-y"}>
@@ -1119,7 +1152,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
 }
 
 /** /patients/new and /patients/:id/edit — registration as a full page */
-export function PatientFormPage() {
+export function PatientFormPage({ screen }: { screen?: boolean }) {
   const { id } = useParams();
   const store = useStore();
   const navigate = useNavigate();
@@ -1127,7 +1160,8 @@ export function PatientFormPage() {
   return (
     <PatientForm
       edit={edit}
-      onClose={() => navigate(edit ? `/patients?id=${edit.id}` : "/patients")}
+      screenOnly={screen}
+      onClose={() => (screen ? navigate(-1) : navigate(edit ? `/patients?id=${edit.id}` : "/patients"))}
       onCreated={(nid) => navigate(`/patients?id=${nid}`)}
     />
   );

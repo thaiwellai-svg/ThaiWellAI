@@ -572,9 +572,9 @@
     "actions": [
      {
       "kind": "tap",
-      "x": 10.11,
-      "y": 62.93,
-      "w": 5.98,
+      "x": 9.43,
+      "y": 73.78,
+      "w": 4.62,
       "h": 2.68,
       "frame": "media/visit-f2.webp"
      }
@@ -599,7 +599,7 @@
    {
     "n": 3,
     "title": "คัดกรองก่อนนวด",
-    "detail": "วัดความดัน ชีพจร ถามอาการวันนี้ ทุกครั้งก่อนเริ่มนวด",
+    "detail": "กด “คัดกรองก่อนนวด” เปิดหน้าคัดกรองแบบเดียวกับตอนลงทะเบียน ทำทุกครั้งก่อนเริ่มนวด",
     "start": "media/visit-f5.webp",
     "actions": [
      {
@@ -609,65 +609,89 @@
       "w": 9.86,
       "h": 4.15,
       "frame": "media/visit-f6.webp"
-     },
-     {
-      "kind": "type",
-      "text": "124",
-      "x": 32.8,
-      "y": 18.05,
-      "w": 12.39,
-      "h": 5.37,
-      "frame": "media/visit-f7.webp"
-     },
-     {
-      "kind": "type",
-      "text": "80",
-      "x": 47.11,
-      "y": 18.05,
-      "w": 12.39,
-      "h": 5.37,
-      "frame": "media/visit-f8.webp"
-     },
-     {
-      "kind": "type",
-      "text": "72",
-      "x": 63.86,
-      "y": 18.05,
-      "w": 19.07,
-      "h": 5.37,
-      "frame": "media/visit-f9.webp"
-     },
-     {
-      "kind": "tap",
-      "x": 50,
-      "y": 27.32,
-      "w": 3.94,
-      "h": 4.39,
-      "frame": "media/visit-f10.webp"
      }
     ]
    },
    {
     "n": 4,
-    "title": "บันทึกผลคัดกรอง",
-    "detail": "ผลจะขึ้นเป็นแถบสีเขียว / ส้ม / แดง บนหน้ารับบริการ",
-    "start": "media/visit-f11.webp",
+    "title": "แตะจุดที่ปวดและระดับปวดวันนี้",
+    "detail": "แตะบนหุ่น = จุดที่ปวด · กดค้าง = ห้ามนวด · เลือกระดับปวด 0–10",
+    "start": "media/visit-f7.webp",
     "actions": [
      {
       "kind": "tap",
-      "x": 68.13,
-      "y": 91.95,
-      "w": 10.52,
-      "h": 4.39,
-      "frame": "media/visit-f12.webp"
+      "x": 26.19,
+      "y": 42.26,
+      "w": 4,
+      "h": 5,
+      "frame": "media/visit-f8.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 73.81,
+      "y": 29.51,
+      "w": 3.68,
+      "h": 4.15,
+      "frame": "media/visit-f9.webp"
      }
     ]
    },
    {
     "n": 5,
+    "title": "วัดสัญญาณชีพ",
+    "detail": "กรอกความดันและชีพจรที่วัดวันนี้ แล้วตอบคำถามก่อนนวดทีละข้อ",
+    "start": "media/visit-f10.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "124",
+      "x": 57.73,
+      "y": 92.93,
+      "w": 11.73,
+      "h": 5.37,
+      "frame": "media/visit-f11.webp"
+     },
+     {
+      "kind": "type",
+      "text": "80",
+      "x": 71.01,
+      "y": 92.93,
+      "w": 11.73,
+      "h": 5.37,
+      "frame": "media/visit-f12.webp"
+     },
+     {
+      "kind": "type",
+      "text": "72",
+      "x": 86.83,
+      "y": 92.93,
+      "w": 17.87,
+      "h": 5.37,
+      "frame": "media/visit-f13.webp"
+     }
+    ]
+   },
+   {
+    "n": 6,
+    "title": "บันทึกผลคัดกรอง",
+    "detail": "กด “บันทึกผลคัดกรอง” ระบบพากลับหน้ารับบริการ แถบสถานะเป็นสีเขียว / ส้ม / แดง",
+    "start": "media/visit-f14.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 91.69,
+      "y": 14.51,
+      "w": 10.52,
+      "h": 4.39,
+      "frame": "media/visit-f15.webp"
+     }
+    ]
+   },
+   {
+    "n": 7,
     "title": "เลือกเตียงแล้วเริ่ม",
     "detail": "เลือกเตียงที่ว่าง แล้วกด “เริ่ม” ระบบจับเวลาการนวดให้",
-    "start": "media/visit-f13.webp",
+    "start": "media/visit-f16.webp",
     "actions": [
      {
       "kind": "tap",
@@ -675,7 +699,7 @@
       "y": 65.73,
       "w": 6.1,
       "h": 7.07,
-      "frame": "media/visit-f14.webp"
+      "frame": "media/visit-f17.webp"
      },
      {
       "kind": "tap",
@@ -683,7 +707,7 @@
       "y": 16.59,
       "w": 9.03,
       "h": 5.37,
-      "frame": "media/visit-f15.webp"
+      "frame": "media/visit-f18.webp"
      }
     ]
    }

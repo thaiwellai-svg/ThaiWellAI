@@ -2638,3 +2638,18 @@
   font: 700 12px/1 var(--font-sans);
   color: #d23a2a;
 }
+.apg__verdict {
+  --vc: #2f8a52;
+  --vt: #eaf7ef;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--vt);
+  font: 700 13px/1 var(--font-sans);
+  color: var(--vc);
+}
+.apg__verdict.is-warn { --vc: #b06a0c; --vt: #fdf4e3; }
+.apg__verdict.is-stop { --vc: #d23a2a; --vt: #fdecea; }

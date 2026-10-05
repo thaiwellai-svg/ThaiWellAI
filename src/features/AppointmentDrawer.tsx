@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Ban, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
@@ -17,7 +18,6 @@ import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
 import { VisitScreening } from "./ScreeningAlert";
-import { ScreeningDialog } from "./ScreeningDialog";
 
 export { stageOf, type Stage } from "../data/domain";
 
@@ -57,6 +57,7 @@ export function AppointmentDrawer({
   historyOpen?: boolean;
 }) {
   const store = useStore();
+  const navigate = useNavigate();
   const toast = useToast();
   const shownId = useLatest(id);
   const appt = store.appointments.find((a) => a.id === shownId);
@@ -82,7 +83,6 @@ export function AppointmentDrawer({
   }, [id]);
 
   const stage = appt ? stageOf(appt) : "waiting";
-  const [screenOpen, setScreenOpen] = useState(false);
   useEffect(() => {
     if (stage !== "treating") return;
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -287,8 +287,7 @@ export function AppointmentDrawer({
             </span>
           </div>
 
-          {(stage === "waiting" || stage === "called" || stage === "treating") && <VisitScreening p={p} onScreen={() => setScreenOpen(true)} />}
-          <ScreeningDialog p={p} open={screenOpen} onClose={() => setScreenOpen(false)} />
+          {(stage === "waiting" || stage === "called" || stage === "treating") && <VisitScreening p={p} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
 
           {stepIdx >= 0 ? (
             <ol className="vs__steps">
