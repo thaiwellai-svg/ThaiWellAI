@@ -173,3 +173,45 @@
 .vs__panel:empty {
   display: none;
 }
+.cx__hint {
+  margin: 2px 0 -2px;
+  font: 500 12px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.cx__dates button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--color-text);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.cx__dates button i {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px #c3ccc5;
+  color: var(--white);
+  font-style: normal;
+}
+.cx__dates button[aria-pressed="true"] {
+  background: #fdeeec;
+  box-shadow: inset 0 0 0 1.5px #d23a2a;
+  color: #b83224;
+  text-decoration: line-through;
+  text-decoration-color: rgba(184, 50, 36, 0.5);
+}
+.cx__dates button[aria-pressed="true"] i {
+  background: #d23a2a;
+  box-shadow: none;
+}
+.cx__dates button.is-this {
+  font-weight: 800;
+}

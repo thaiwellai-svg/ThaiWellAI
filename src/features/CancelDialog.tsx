@@ -20,14 +20,15 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
   const [by, setBy] = useState<"patient" | "clinic">("patient");
   const [reason, setReason] = useState(REASONS.patient[0]);
   const [note, setNote] = useState("");
-  const [scope, setScope] = useState<"one" | "plan">("one");
+  // ids of plan sessions picked for cancelling (any subset of the plan)
+  const [picked, setPicked] = useState<string[]>([]);
   const [notify, setNotify] = useState(true);
   useEffect(() => {
     if (!appt) return;
     setBy("patient");
     setReason(REASONS.patient[0]);
     setNote("");
-    setScope(planFirst ? "plan" : "one");
+    setPicked([]);
     setNotify(true);
   }, [appt?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -40,9 +41,15 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
       .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.startedAt && !a.calledAt && a.date >= todayISO())
       .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   }, [appt, p, store.appointments]);
+  useEffect(() => {
+    if (!appt) return;
+    setPicked(planFirst ? plan.map((a) => a.id) : [appt.id]);
+  }, [appt?.id, plan.length]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!appt || !p) return null;
   const s = store.serviceById(appt.serviceId);
-  const targets = scope === "plan" && plan.length > 1 ? plan : [appt];
+  const targets = plan.length > 1 ? plan.filter((a) => picked.includes(a.id)) : [appt];
+  const all = plan.length > 1 && targets.length === plan.length;
+  const toggle = (id: string) => setPicked((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
   const paid = targets.filter((a) => a.paid && a.payment);
 
   const confirm = () => {
@@ -60,7 +67,7 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
       });
     }
     toast({
-      message: targets.length > 1 ? `ยกเลิกนัดตามแผน ${targets.length} นัดแล้ว${p.course ? ` · คืนเครดิตให้ ${targets.length} ครั้ง` : ""}` : `ยกเลิกนัด ${thaiDateShort(appt.date)} ${appt.start} น. แล้ว${notify ? " · แจ้งผู้ป่วยผ่านแอปแล้ว" : ""}`,
+      message: targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว${p.course ? ` · คืนเครดิตให้ ${targets.length} ครั้ง` : ""}` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว${notify ? " · แจ้งผู้ป่วยผ่านแอปแล้ว" : ""}`,
       action: { label: "เลิกทำ", onClick: () => before.forEach((a) => store.dispatch({ type: "restoreAppointment", appointment: a })) },
     });
     onClose();
@@ -80,8 +87,8 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
           <Button variant="outline" size="md" onClick={onClose}>
             กลับ
           </Button>
-          <Button variant="danger" size="md" leading={<CalendarX2 size={16} />} onClick={confirm}>
-            {targets.length > 1 ? `ยกเลิก ${targets.length} นัด` : "ยืนยันยกเลิกนัด"}
+          <Button variant="danger" size="md" leading={<CalendarX2 size={16} />} disabled={targets.length === 0} onClick={confirm}>
+            {targets.length === 0 ? "เลือกวันที่จะยกเลิก" : targets.length > 1 ? `ยกเลิก ${targets.length} นัด` : "ยืนยันยกเลิกนัด"}
           </Button>
         </>
       }
@@ -90,32 +97,35 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
         <section className="cx__sec">
           <h3>นัดนี้อยู่ในแผนการรักษา · {p.course!.name}</h3>
           <div className="cx__scope">
-            <button type="button" aria-pressed={scope === "one"} onClick={() => setScope("one")}>
-              <i>{scope === "one" && <Check size={12} strokeWidth={3} />}</i>
+            <button type="button" aria-pressed={targets.length === 1 && picked[0] === appt.id} onClick={() => setPicked([appt.id])}>
+              <i>{targets.length === 1 && picked[0] === appt.id && <Check size={12} strokeWidth={3} />}</i>
               <span>
                 <b>เฉพาะนัดนี้</b>
                 <small>
-                  {thaiDateShort(appt.date)} {appt.start} น. · นัดอื่นในแผนยังอยู่
+                  {thaiDateShort(appt.date)} {appt.start} น.
                 </small>
               </span>
             </button>
-            <button type="button" aria-pressed={scope === "plan"} onClick={() => setScope("plan")}>
-              <i>{scope === "plan" && <Check size={12} strokeWidth={3} />}</i>
+            <button type="button" aria-pressed={all} onClick={() => setPicked(plan.map((a) => a.id))}>
+              <i>{all && <Check size={12} strokeWidth={3} />}</i>
               <span>
-                <b>ยกเลิกนัดที่เหลือทั้งหมด · {plan.length} นัด</b>
+                <b>ทั้งหมด · {plan.length} นัด</b>
                 <small>ทุกนัดตามแผนที่ยังไม่ได้รับบริการ</small>
               </span>
             </button>
           </div>
-          {scope === "plan" && (
-            <div className="cx__dates">
-              {plan.map((a) => (
-                <span key={a.id} className={a.id === appt.id ? "is-this" : undefined}>
+          <p className="cx__hint">หรือแตะเลือกวันที่ต้องการยกเลิก · เลือกแล้ว {targets.length} จาก {plan.length} นัด</p>
+          <div className="cx__dates">
+            {plan.map((a) => {
+              const on = picked.includes(a.id);
+              return (
+                <button key={a.id} type="button" aria-pressed={on} className={a.id === appt.id ? "is-this" : undefined} onClick={() => toggle(a.id)}>
+                  <i>{on && <Check size={11} strokeWidth={3} />}</i>
                   {thaiDateShort(a.date)} · {a.start}
-                </span>
-              ))}
-            </div>
-          )}
+                </button>
+              );
+            })}
+          </div>
         </section>
       )}
 
