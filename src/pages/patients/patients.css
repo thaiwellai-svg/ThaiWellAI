@@ -1494,3 +1494,97 @@
   z-index: 2;
   margin-left: auto;
 }
+/* screening: body map */
+.ap-scr .ap-col > .ap-sec + .ap-sec {
+  margin-top: 0;
+}
+.ap-body .b3 {
+  margin: -4px -6px 0;
+}
+.ap-body__mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.ap-body__mode button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  border-radius: 10px;
+  font: 600 13px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.ap-body__mode i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mc);
+}
+.ap-body__mode .is-pain,
+.ap-body__picked .is-pain {
+  --mc: #e0603a;
+}
+.ap-body__mode .is-avoid,
+.ap-body__picked .is-avoid {
+  --mc: #7c6cd4;
+}
+.ap-body__mode button[aria-checked="true"] {
+  background: var(--white);
+  color: var(--color-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.ap-body__mode b {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--mc);
+  font: 700 10.5px/18px var(--font-sans);
+  color: var(--white);
+}
+.ap-body__hint {
+  margin-top: -2px;
+  text-align: center;
+  font: 500 11.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-body__picked {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ap-body__picked button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--mc) 12%, white);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--mc);
+}
+.ap-pain {
+  display: grid;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+  gap: 4px;
+}
+.ap-pain button {
+  height: 34px;
+  border-radius: 10px;
+  background: var(--sage-50);
+  font: 700 12.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.ap-pain button[aria-pressed="true"] {
+  background: var(--pc);
+  color: var(--white);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--pc) 35%, transparent);
+}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, PersonStanding, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -21,9 +21,12 @@ import { CardReaderDialog } from "../../features/CardReaderDialog";
 import { PhotoSlot } from "../../features/PhotoSlot";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
+import { Body3D } from "../../features/Body3D";
+import { toArea, type BodyArea } from "../../features/BodyMap";
 import idFace from "../../assets/cardreader/id_face.png";
 import "./patients.css";
 
+const areasOf = (xs: string[]) => [...new Set(xs.map((x) => toArea(x.trim())).filter((x): x is BodyArea => !!x))];
 const RELATIONS = ["บิดา", "มารดา", "สามี", "ภรรยา", "บุตร", "พี่", "น้อง", "ญาติ", "เพื่อน", "ผู้ดูแล", "อื่น ๆ"];
 
 type Filter = "all" | "course" | "low" | "week";
@@ -305,9 +308,16 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   };
   const [f, setF] = useState(empty);
   const [step, setStep] = useState(0);
-  const emptyScr = { bpSys: "", bpDia: "", pulse: "", fever: false, pregnant: false, recentSurgery: false, numbness: false, bloodThinner: false, skinProblem: false, pressure: "ปานกลาง" as CounterScreening["pressure"], avoid: "" };
+  const emptyScr = { bpSys: "", bpDia: "", pulse: "", fever: false, pregnant: false, recentSurgery: false, numbness: false, bloodThinner: false, skinProblem: false, pressure: "ปานกลาง" as CounterScreening["pressure"], painAreas: [] as BodyArea[], avoidAreas: [] as BodyArea[], pain: null as number | null };
   const [scr, setScr] = useState(emptyScr);
   const [skipScr, setSkipScr] = useState(false);
+  const [bodyMode, setBodyMode] = useState<"pain" | "avoid">("pain");
+  // tapping an area on the body toggles it in the current mode (an area is either painful or no-massage)
+  const toggleArea = (a: BodyArea) =>
+    setScr((x) => {
+      const [own, other] = bodyMode === "pain" ? (["painAreas", "avoidAreas"] as const) : (["avoidAreas", "painAreas"] as const);
+      return { ...x, [own]: x[own].includes(a) ? x[own].filter((y) => y !== a) : [...x[own], a], [other]: x[other].filter((y) => y !== a) };
+    });
   const [reader, setReader] = useState(false);
   const [fromCard, setFromCard] = useState(false);
   // load the patient when the edit dialog opens
@@ -317,7 +327,8 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     setStep(0);
     setFromCard(false);
     const sc = edit?.screening;
-    setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, avoid: sc.avoid } : emptyScr);
+    setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, painAreas: areasOf(sc.painAreas ?? []), avoidAreas: areasOf(sc.avoid.split(/[,·]\s*/)), pain: sc.pain ?? null } : emptyScr);
+    setBodyMode("pain");
     setSkipScr(!!edit && !sc);
   }, [open, edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const age = ageFrom(f.dob);
@@ -339,7 +350,9 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         bloodThinner: scr.bloodThinner,
         skinProblem: scr.skinProblem,
         pressure: scr.pressure,
-        avoid: scr.avoid.trim(),
+        avoid: scr.avoidAreas.join(", "),
+        painAreas: scr.painAreas.length ? scr.painAreas : undefined,
+        pain: scr.pain ?? undefined,
       };
   const flags = screening ? screeningFlags(screening, store.settings.bpThreshold) : [];
   const submit = () => {
@@ -599,10 +612,55 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       )}
 
       {step === 1 && (
-        <div className="ap-pane">
-          <p className="ap-lead">คัดกรองความปลอดภัยก่อนนวด · ถ้ายังไม่พร้อม กด “ข้ามการคัดกรอง” แล้วทำทีหลังได้</p>
-          <div className="ap-cols">
-            <div className="ap-col">
+        <div className="ap-pane ap-cols ap-scr">
+          <div className="ap-col">
+            <section className="ap-sec ap-body">
+              <h4>
+                <span style={{ ["--c" as string]: "#3b82c4" }}>
+                  <PersonStanding size={14} />
+                </span>
+                ตำแหน่งบนร่างกาย
+              </h4>
+              <div className="ap-body__mode" role="radiogroup" aria-label="โหมดการเลือก">
+                <button type="button" role="radio" aria-checked={bodyMode === "pain"} className="is-pain" onClick={() => setBodyMode("pain")}>
+                  <i /> จุดที่ปวด
+                  {scr.painAreas.length > 0 && <b>{scr.painAreas.length}</b>}
+                </button>
+                <button type="button" role="radio" aria-checked={bodyMode === "avoid"} className="is-avoid" onClick={() => setBodyMode("avoid")}>
+                  <i /> ห้ามนวด
+                  {scr.avoidAreas.length > 0 && <b>{scr.avoidAreas.length}</b>}
+                </button>
+              </div>
+              <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} onToggle={toggleArea} />
+              <p className="ap-body__hint">{bodyMode === "pain" ? "แตะบริเวณที่ปวดบนร่างกาย" : "แตะบริเวณที่ไม่ต้องการให้นวด"}</p>
+              {(scr.painAreas.length > 0 || scr.avoidAreas.length > 0) && (
+                <div className="ap-body__picked">
+                  {scr.painAreas.map((x) => (
+                    <button key={x} type="button" className="is-pain" onClick={() => setScr({ ...scr, painAreas: scr.painAreas.filter((y) => y !== x) })}>
+                      {x}
+                      <X size={11} strokeWidth={2.6} />
+                    </button>
+                  ))}
+                  {scr.avoidAreas.map((x) => (
+                    <button key={x} type="button" className="is-avoid" onClick={() => setScr({ ...scr, avoidAreas: scr.avoidAreas.filter((y) => y !== x) })}>
+                      {x}
+                      <X size={11} strokeWidth={2.6} />
+                    </button>
+                  ))}
+                </div>
+              )}
+              <Field label="ระดับความปวด (0–10)">
+                <div className="ap-pain">
+                  {Array.from({ length: 11 }, (_, n) => (
+                    <button key={n} type="button" aria-pressed={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </section>
+          </div>
+          <div className="ap-col">
             <section className="ap-sec">
               <h4>
                 <span style={{ ["--c" as string]: "#c2482b" }}>
@@ -612,7 +670,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               </h4>
               <div className="ap-grid">
                 <Field label="อาการสำคัญ" className="span-3">
-                  <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
+                  <Textarea rows={2} value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
                 </Field>
                 <Field label="โรคประจำตัว" className="span-3">
                   <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
@@ -622,8 +680,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 </Field>
               </div>
             </section>
-            </div>
-            <div className="ap-col">
             <section className="ap-sec">
               <h4>
                 <span style={{ ["--c" as string]: "#d97706" }}>
@@ -631,40 +687,36 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 </span>
                 สัญญาณชีพและข้อห้ามก่อนนวด
               </h4>
-            <div className="ap-vitals">
-              <Field label="ความดัน (mmHg)">
-                <div className="ap-bp">
-                  <Input inputMode="numeric" placeholder="120" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                  <span>/</span>
-                  <Input inputMode="numeric" placeholder="80" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                </div>
-              </Field>
-              <Field label="ชีพจร (ครั้ง/นาที)">
-                <Input inputMode="numeric" placeholder="72" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-              </Field>
-              <Field label="แรงนวดที่ต้องการ">
-                <div className="ap-seg">
-                  {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
-                    <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
-                      {x}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-            </div>
-            <div className="ap-qs">
-              {yes("fever", "มีไข้ หรือการติดเชื้อ", "ห้ามนวด")}
-              {yes("recentSurgery", "ผ่าตัดภายใน 30 วัน", `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วันหลังผ่าตัด`)}
-              {yes("bloodThinner", "ใช้ยาละลายลิ่มเลือด / ต้านเกล็ดเลือด", "ลดแรงนวด")}
-              {yes("numbness", "อาการชา หรืออ่อนแรง")}
-              {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
-              {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
-            </div>
-            <Field label="บริเวณที่ไม่ต้องการให้นวด">
-              <Input value={scr.avoid} onChange={(e) => setScr({ ...scr, avoid: e.target.value })} placeholder="เช่น เอวส่วนล่าง, หน้าท้อง" />
-            </Field>
+              <div className="ap-vitals">
+                <Field label="ความดัน (mmHg)">
+                  <div className="ap-bp">
+                    <Input inputMode="numeric" placeholder="120" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                    <span>/</span>
+                    <Input inputMode="numeric" placeholder="80" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                  </div>
+                </Field>
+                <Field label="ชีพจร (ครั้ง/นาที)">
+                  <Input inputMode="numeric" placeholder="72" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                </Field>
+                <Field label="แรงนวดที่ต้องการ">
+                  <div className="ap-seg">
+                    {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
+                      <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
+                        {x}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+              <div className="ap-qs">
+                {yes("fever", "มีไข้ หรือการติดเชื้อ", "ห้ามนวด")}
+                {yes("recentSurgery", "ผ่าตัดภายใน 30 วัน", `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วันหลังผ่าตัด`)}
+                {yes("bloodThinner", "ใช้ยาละลายลิ่มเลือด / ต้านเกล็ดเลือด", "ลดแรงนวด")}
+                {yes("numbness", "อาการชา หรืออ่อนแรง")}
+                {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
+                {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
+              </div>
             </section>
-            </div>
           </div>
         </div>
       )}
@@ -731,6 +783,8 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 )}
                 <p className="ap-mini">
                   ความดัน {screening?.bpSys ? `${screening.bpSys}/${screening.bpDia ?? "—"}` : "—"} · ชีพจร {screening?.pulse ?? "—"} · แรงนวด {screening?.pressure}
+                  {screening?.pain != null ? ` · ปวด ${screening.pain}/10` : ""}
+                  {screening?.painAreas?.length ? ` · จุดที่ปวด ${screening.painAreas.join(", ")}` : ""}
                   {screening?.avoid ? ` · ไม่นวด ${screening.avoid}` : ""}
                 </p>
               </>

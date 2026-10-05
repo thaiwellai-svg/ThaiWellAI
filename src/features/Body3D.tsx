@@ -812,7 +812,7 @@ export function Body3D({
         {tip && (
           <span className="b3__tip" style={{ left: tip.x, top: tip.y }} onAnimationEnd={() => setTip(null)}>
             {tip.label}
-            {onToggle ? (selected.includes(tip.label) ? " · เลือกแล้ว" : " · ไม่ได้เลือก") : heatmap[tip.label as BodyArea] ? " · ปวด/เน้น" : avoid.includes(tip.label as BodyArea) ? " · ไม่นวด" : ""}
+            {selected.includes(tip.label) ? " · เลือกแล้ว" : heatmap[tip.label as BodyArea] ? " · ปวด/เน้น" : avoid.includes(tip.label as BodyArea) ? " · ไม่นวด" : onToggle ? " · ไม่ได้เลือก" : ""}
           </span>
         )}
       </div>

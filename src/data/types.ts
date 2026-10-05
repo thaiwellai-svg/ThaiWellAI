@@ -102,6 +102,10 @@ export interface CounterScreening {
   skinProblem: boolean;
   pressure: "เบา" | "ปานกลาง" | "หนัก";
   avoid: string;
+  /** areas marked as painful on the body at the counter */
+  painAreas?: string[];
+  /** pain score 0–10 */
+  pain?: number;
 }
 
 export interface Course {

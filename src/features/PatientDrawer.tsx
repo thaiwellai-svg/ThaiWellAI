@@ -93,8 +93,13 @@ export function PatientHealth({ id }: { id: string }) {
   const treated = Object.entries(treatedCount).sort((a, b) => b[1] - a[1]);
   const fromIntake = intake ? intakeBody(intake) : null;
   const maxT = treated[0]?.[1] ?? 1;
-  const bodyHeat: Partial<Record<BodyArea, number>> = fromIntake ? fromIntake.heatmap : Object.fromEntries(treated.map(([a, n]) => [a, 0.3 + (n / maxT) * 0.35]));
-  const bodyAvoid = fromIntake?.avoid ?? [];
+  // counter screening (body marked at registration) when there is no app intake
+  const sc = p.screening;
+  const scAreas = (xs: string[]) => xs.map((x) => toArea(x.trim())).filter((x): x is BodyArea => !!x);
+  const fromScreening = !fromIntake && sc && (sc.painAreas?.length || sc.avoid) ? { heatmap: Object.fromEntries(scAreas(sc.painAreas ?? []).map((a) => [a, Math.max(0.35, (sc.pain ?? 6) / 10)])) as Partial<Record<BodyArea, number>>, avoid: scAreas(sc.avoid.split(/[,·]\s*/)) } : null;
+  const fromApp = fromIntake ?? fromScreening;
+  const bodyHeat: Partial<Record<BodyArea, number>> = fromApp && Object.keys(fromApp.heatmap).length ? fromApp.heatmap : Object.fromEntries(treated.map(([a, n]) => [a, 0.3 + (n / maxT) * 0.35]));
+  const bodyAvoid = fromApp?.avoid ?? [];
   const focusList = (Object.entries(bodyHeat) as [BodyArea, number][]).sort((a, b) => b[1] - a[1]).map(([a]) => a);
   const delta = first ? Math.round(((first - last) / Math.max(1, first)) * 100) : 0;
   const tone = (v: number) => (v >= 7 ? "#d4583f" : v >= 4 ? "#e0a32a" : "#3f9a5f");
