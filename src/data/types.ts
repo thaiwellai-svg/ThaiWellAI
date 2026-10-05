@@ -132,6 +132,8 @@ export interface Patient {
   birthMonth?: number;
   /** ISO date of birth (age + birth month are derived from it when present) */
   birthDate?: string;
+  /** address as printed on the ID card */
+  address?: string;
   /** เลขบัตรประชาชน 13 หลัก */
   citizenId?: string;
   /** drug / massage-oil / herb allergies */

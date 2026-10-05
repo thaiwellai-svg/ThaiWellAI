@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -18,6 +18,7 @@ import { AIPlanCard } from "../../features/AIPlan";
 import "../visits/visits.css";
 import { FilterMenu } from "../../features/FilterMenu";
 import { Workspace } from "../../features/Workspace";
+import { CardReaderDialog } from "../../features/CardReaderDialog";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import "./patients.css";
@@ -276,7 +277,7 @@ export default function Patients() {
 function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null }) {
   const store = useStore();
   const toast = useToast();
-  const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "" };
+  const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "", address: "" };
   const fromPatient = (p: Patient) => {
     const m = p.name.match(/^(นางสาว|นาง|นาย)\s*(\S+)\s*(.*)$/);
     const d = p.citizenId ?? "";
@@ -295,6 +296,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       ecName: p.emergency?.name ?? "",
       ecPhone: p.emergency?.phone ?? "",
       ecRel: p.emergency?.relation ?? "",
+      address: p.address ?? "",
     };
   };
   const [f, setF] = useState(empty);
@@ -302,11 +304,14 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   const emptyScr = { bpSys: "", bpDia: "", pulse: "", fever: false, pregnant: false, recentSurgery: false, numbness: false, bloodThinner: false, skinProblem: false, pressure: "ปานกลาง" as CounterScreening["pressure"], avoid: "" };
   const [scr, setScr] = useState(emptyScr);
   const [skipScr, setSkipScr] = useState(false);
+  const [reader, setReader] = useState(false);
+  const [fromCard, setFromCard] = useState(false);
   // load the patient when the edit dialog opens
   useEffect(() => {
     if (!open) return;
     setF(edit ? fromPatient(edit) : empty);
     setStep(0);
+    setFromCard(false);
     const sc = edit?.screening;
     setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, avoid: sc.avoid } : emptyScr);
     setSkipScr(!!edit && !sc);
@@ -351,6 +356,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           complaint: f.complaint.trim() || edit.complaint,
           conditions: f.conditions.split(",").map((x) => x.trim()).filter(Boolean),
           photo: f.photo || undefined,
+          address: f.address.trim() || undefined,
           screening,
         },
       });
@@ -381,6 +387,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         painHistory: [],
         registeredOn: todayISO(),
         photo: f.photo || undefined,
+        address: f.address.trim() || undefined,
         screening,
       },
     });
@@ -475,6 +482,18 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
 
       {step === 0 && (
         <div className="ap-pane">
+          {!edit && (
+            <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
+              <span className="ap-card__icon">
+                <CreditCard size={20} />
+              </span>
+              <span>
+                <b>{fromCard ? "อ่านข้อมูลจากบัตรแล้ว" : "อ่านข้อมูลจากบัตรประชาชน"}</b>
+                <small>{fromCard ? "ตรวจสอบข้อมูลด้านล่าง หรือแตะเพื่ออ่านบัตรใหม่" : "เสียบบัตรที่เครื่องอ่าน ระบบจะเติม ชื่อ วันเกิด เลขบัตร และที่อยู่ให้"}</small>
+              </span>
+              <em>{fromCard ? "อ่านใหม่" : "อ่านบัตร"}</em>
+            </button>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
             <PhotoPicker name={`${f.first || "?"}`} src={f.photo || undefined} size="xl" onPick={(photo) => setF({ ...f, photo })} />
             <p className="tw-meta" style={{ lineHeight: 1.5, whiteSpace: "normal" }}>
@@ -505,6 +524,9 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
             </Field>
             <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? "ไม่บังคับ · 13 หลัก" : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
               <Input inputMode="numeric" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
+            </Field>
+            <Field label="ที่อยู่ตามบัตร" className="span-3" hint="ไม่บังคับ">
+              <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
             </Field>
           </div>
           <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
@@ -569,6 +591,16 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         </div>
       )}
 
+      <CardReaderDialog
+        open={reader}
+        onClose={() => setReader(false)}
+        onRead={(d) => {
+          setF((x) => ({ ...x, title: d.title, first: d.first, last: d.last, gender: d.gender, dob: d.dob, cid: formatCid(d.cid), address: d.address }));
+          setFromCard(true);
+          toast({ message: `อ่านบัตรของ ${d.title} ${d.first} ${d.last} แล้ว · ตรวจสอบข้อมูลก่อนไปขั้นถัดไป` });
+        }}
+      />
+
       {step === 2 && (
         <div className="ap-pane ap-sum">
           <div className="ap-sum__who">
@@ -588,6 +620,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           <dl className="ap-kv">
             {row("เบอร์โทร", f.phone)}
             {row("เลขบัตรประชาชน", f.cid)}
+            {row("ที่อยู่", f.address)}
             {row("อาการสำคัญ", f.complaint)}
             {row("โรคประจำตัว", f.conditions)}
             {row("การแพ้", f.allergies)}
