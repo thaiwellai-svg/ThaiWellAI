@@ -1154,11 +1154,12 @@
 .ap-card {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  min-height: 96px;
+  min-height: 68px;
   margin-bottom: 14px;
-  padding: 12px 0 12px 16px;
+  padding: 10px 0 10px 16px;
   overflow: hidden;
   border-radius: 18px;
   text-align: left;
@@ -1178,7 +1179,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 7px;
+  gap: 6px;
   min-width: 0;
 }
 .ap-card b {
@@ -1216,8 +1217,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
-  margin-top: auto;
+  flex-shrink: 0;
+  height: 32px;
   padding: 0 14px;
   border-radius: var(--radius-pill);
   background: #2d7fd6;
@@ -1228,30 +1229,31 @@
 }
 .ap-card__art {
   position: relative;
-  width: 124px;
+  align-self: stretch;
+  width: 92px;
   flex-shrink: 0;
 }
 .ap-card__ring {
   position: absolute;
-  right: -36px;
+  right: -30px;
   top: 50%;
-  width: 150px;
-  height: 150px;
+  width: 110px;
+  height: 110px;
   translate: 0 -50%;
   border-radius: 50%;
   background: radial-gradient(circle, transparent 38%, rgba(45, 127, 214, 0.07) 39%, rgba(45, 127, 214, 0.07) 54%, transparent 55%, transparent 66%, rgba(45, 127, 214, 0.05) 67%, rgba(45, 127, 214, 0.05) 80%, transparent 81%);
 }
 .ap-card__id {
   position: absolute;
-  left: 4px;
+  left: 2px;
   top: 50%;
-  width: 108px;
+  width: 80px;
   aspect-ratio: 516 / 324;
   translate: 0 -50%;
   rotate: -9deg;
   overflow: hidden;
-  border-radius: 7px;
-  box-shadow: 0 8px 18px rgba(30, 80, 150, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  border-radius: 5px;
+  box-shadow: 0 6px 14px rgba(30, 80, 150, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 .ap-card__id img {
   display: block;
@@ -1274,12 +1276,12 @@
 }
 .ap-card__ok {
   position: absolute;
-  right: 4px;
-  top: 4px;
+  right: 3px;
+  top: 3px;
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #2fb36a;
   color: var(--white);
