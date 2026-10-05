@@ -46,7 +46,7 @@ fetch("chapters.json")
   });
 
 function renderStats() {
-  const total = ORDER.reduce((a, id) => a + (DATA[id]?.duration || 0), 0);
+  const total = ORDER.reduce((a, id) => a + (DATA[id]?.steps.reduce((t, s) => t + 4 + s.actions.length * 2.6, 0) || 0), 0);
   const steps = ORDER.reduce((a, id) => a + (DATA[id]?.steps.length || 0), 0);
   $("#stats").innerHTML = `
     <div><b>${ORDER.length}</b><small>บทเรียน</small></div>
@@ -56,7 +56,7 @@ function renderStats() {
 
 function renderHeroCards() {
   $("#heroCards").innerHTML = ["register", "visit", "aiplan"]
-    .map((id, i) => `<video src="${DATA[id]?.steps[1]?.clip}" poster="${DATA[id]?.poster}" style="--i:${i}" muted loop playsinline autoplay></video>`)
+    .map((id, i) => `<img src="${DATA[id]?.poster}" style="--i:${i}" alt="" />`)
     .join("");
 }
 
@@ -105,10 +105,19 @@ function open(id, scroll = true) {
           (x, k) => `<article class="flow__step reveal${k % 2 ? " is-alt" : ""}" id="s-${x.n}">
           <div class="flow__anim">
             <div class="device">
-              <video src="${x.clip}" poster="${x.shot}" muted loop playsinline preload="none" aria-label="${x.title}"></video>
-              <span class="device__loop"><i style="animation-duration:${x.len}s"></i></span>
+              <div class="anim" data-k="${k}">
+                <div class="anim__cam">
+                  <img class="anim__a" src="${x.start}" alt="${x.title}" />
+                  <img class="anim__b" alt="" />
+                </div>
+                <span class="anim__ring"></span>
+                <span class="anim__trail"></span>
+                <span class="anim__finger"><i></i></span>
+                <span class="anim__bubble"></span>
+              </div>
+              <span class="device__loop"><i></i></span>
             </div>
-            <button class="flow__zoom" data-src="${x.shot}" data-cap="${x.n}. ${x.title}" aria-label="ขยายภาพ">⤢</button>
+            <button class="flow__zoom" data-src="${x.actions.length ? x.actions[x.actions.length - 1].frame : x.start}" data-cap="${x.n}. ${x.title}" aria-label="ขยายภาพ">⤢</button>
           </div>
           <div class="flow__text">
             <span class="flow__no">${x.n}</span>
@@ -133,36 +142,138 @@ function open(id, scroll = true) {
   if (scroll) $(".layout").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* each step loops like a GIF while it is on screen; off-screen clips pause to save battery */
-const vio = new IntersectionObserver(
-  (es) =>
-    es.forEach((e) => {
-      const v = e.target;
-      if (e.isIntersecting) {
-        v.preload = "auto";
-        v.play().catch(() => {});
-        v.closest(".flow__step")?.classList.add("is-live");
-      } else {
-        v.pause();
-        v.closest(".flow__step")?.classList.remove("is-live");
+/* ── tap-demo animation engine: still frames + animated finger, looping like a GIF ── */
+const sleep = (ms, run) =>
+  new Promise((res, rej) => {
+    const t = setTimeout(() => (run.alive ? res() : rej(0)), ms);
+    run.timers.push(t);
+  });
+const preload = (src) => new Promise((r) => { const i = new Image(); i.onload = i.onerror = r; i.src = src; });
+
+function makeRunner(el, step) {
+  const cam = el.querySelector(".anim__cam");
+  let A = el.querySelector(".anim__a");
+  let B = el.querySelector(".anim__b");
+  const finger = el.querySelector(".anim__finger");
+  const ring = el.querySelector(".anim__ring");
+  const trail = el.querySelector(".anim__trail");
+  const bubble = el.querySelector(".anim__bubble");
+  const bar = el.parentElement.querySelector(".device__loop i");
+  let run = null;
+  const pos = (n, x, y) => { n.style.left = x + "%"; n.style.top = y + "%"; };
+  const show = (src, run, ms = 450) => new Promise(async (res) => {
+    await preload(src);
+    B.src = src;
+    B.style.transition = `opacity ${ms}ms ease`;
+    B.style.opacity = 1;
+    await sleep(ms, run).catch(() => {});
+    A.src = src;
+    B.style.transition = "none";
+    B.style.opacity = 0;
+    res();
+  });
+  const zoom = (a, on) => {
+    cam.style.transformOrigin = `${a.x}% ${a.y}%`;
+    cam.style.transform = on ? "scale(1.08)" : "scale(1)";
+  };
+  const ringAt = (a, on) => {
+    const w = Math.max(a.w || 6, 5), h = Math.max(a.h || 6, 6);
+    ring.style.left = a.x - w / 2 - 0.8 + "%";
+    ring.style.top = a.y - h / 2 - 1.2 + "%";
+    ring.style.width = w + 1.6 + "%";
+    ring.style.height = h + 2.4 + "%";
+    ring.classList.toggle("is-on", on);
+  };
+  async function loop(r) {
+    const acts = step.actions;
+    const total = 1200 + acts.length * 2600 + 1800;
+    for (;;) {
+      bar.style.transition = "none"; bar.style.transform = "scaleX(0)"; void bar.offsetWidth;
+      bar.style.transition = `transform ${total}ms linear`; bar.style.transform = "scaleX(1)";
+      A.src = step.start; B.style.opacity = 0; zoom({ x: 50, y: 50 }, false); ringAt({ x: -50, y: -50 }, false);
+      finger.className = "anim__finger"; pos(finger, 50, 112);
+      await sleep(900, r);
+      for (const a of acts) {
+        finger.classList.add("is-on");
+        pos(finger, a.x, a.y);
+        await sleep(750, r);
+        if (a.kind === "point") {
+          ringAt(a, true); zoom(a, true);
+          await sleep(1300, r);
+        } else if (a.kind === "drag") {
+          finger.classList.add("is-down");
+          trail.style.left = a.x + "%"; trail.style.top = a.y + "%"; trail.style.width = "0%"; trail.classList.add("is-on");
+          await sleep(150, r);
+          finger.style.transition = "left .9s cubic-bezier(.45,0,.2,1), top .9s cubic-bezier(.45,0,.2,1)";
+          trail.style.width = Math.abs(a.x2 - a.x) + "%";
+          pos(finger, a.x2, a.y2);
+          await sleep(950, r);
+          finger.style.transition = ""; finger.classList.remove("is-down"); trail.classList.remove("is-on");
+        } else if (a.kind === "scroll") {
+          finger.classList.add("is-down");
+          finger.style.transition = "top .8s cubic-bezier(.45,0,.2,1)";
+          pos(finger, a.x, a.y - 18);
+          await sleep(850, r);
+          finger.style.transition = ""; finger.classList.remove("is-down");
+        } else {
+          ringAt(a, true); zoom(a, true);
+          finger.classList.add("is-down");
+          ripple(el, a);
+          if (a.kind === "hold") { finger.classList.add("is-hold"); await sleep(900, r); finger.classList.remove("is-hold"); }
+          else await sleep(180, r);
+          finger.classList.remove("is-down");
+          if (a.kind === "type") {
+            bubble.style.left = a.x + "%"; bubble.style.top = a.y + "%"; bubble.textContent = ""; bubble.classList.add("is-on");
+            for (const ch of a.text) { bubble.textContent += ch; await sleep(70, r); }
+            await sleep(400, r);
+            bubble.classList.remove("is-on");
+          } else await sleep(350, r);
+        }
+        await show(a.frame, r);
+        zoom(a, false); ringAt(a, false);
+        await sleep(700, r);
       }
-    }),
+      finger.classList.remove("is-on");
+      await sleep(1800, r);
+    }
+  }
+  return {
+    start() {
+      if (run) return;
+      run = { alive: true, timers: [] };
+      el.closest(".flow__step")?.classList.add("is-live");
+      // warm the frames, then play
+      Promise.all([step.start, ...step.actions.map((a) => a.frame)].map(preload)).then(() => run && loop(run).catch(() => {}));
+    },
+    stop() {
+      if (!run) return;
+      run.alive = false; run.timers.forEach(clearTimeout); run = null;
+      el.closest(".flow__step")?.classList.remove("is-live");
+    },
+  };
+}
+function ripple(el, a) {
+  const r = document.createElement("span");
+  r.className = "anim__ripple";
+  r.style.left = a.x + "%"; r.style.top = a.y + "%";
+  el.appendChild(r);
+  setTimeout(() => r.remove(), 800);
+}
+
+const runners = new Map();
+const vio = new IntersectionObserver(
+  (es) => es.forEach((e) => { const r = runners.get(e.target); if (r) e.isIntersecting ? r.start() : r.stop(); }),
   { threshold: 0.35 },
 );
 function wireFlow() {
-  document.querySelectorAll(".flow video").forEach((v) => {
-    v.addEventListener("ended", () => ((v.currentTime = 0), v.play()));
-    v.addEventListener("playing", () => {
-      const i = v.parentElement.querySelector(".device__loop i");
-      if (i) {
-        i.style.animationName = "none";
-        void i.offsetWidth;
-        i.style.animationName = "";
-      }
-    });
-    vio.observe(v);
+  runners.forEach((r, el) => (r.stop(), vio.unobserve(el)));
+  runners.clear();
+  const d = DATA[current];
+  document.querySelectorAll(".flow .anim").forEach((el) => {
+    const r = makeRunner(el, d.steps[+el.dataset.k]);
+    runners.set(el, r);
+    vio.observe(el);
   });
-  // mark the chapter as learnt once the last step has been seen
   const last = document.querySelector(".flow__step:last-child");
   if (last) {
     const done = new IntersectionObserver((es) => {

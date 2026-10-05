@@ -174,7 +174,7 @@ img {
   max-width: 560px;
   height: 340px;
 }
-.hero__cards video {
+.hero__cards img {
   position: absolute;
   width: 78%;
   border-radius: 16px;
@@ -182,18 +182,18 @@ img {
   animation: float 7s ease-in-out infinite, cardIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: calc(var(--i) * -2.2s), calc(0.2s + var(--i) * 0.15s);
 }
-.hero__cards video:nth-child(1) {
+.hero__cards img:nth-child(1) {
   left: 0;
   top: 40px;
   rotate: -6deg;
   z-index: 1;
 }
-.hero__cards video:nth-child(2) {
+.hero__cards img:nth-child(2) {
   right: 0;
   top: 0;
   rotate: 5deg;
 }
-.hero__cards video:nth-child(3) {
+.hero__cards img:nth-child(3) {
   left: 16%;
   top: 150px;
   rotate: 1deg;
@@ -797,7 +797,7 @@ img {
 .lightbox[hidden] {
   display: none;
 }
-.hero__cards video {
+.hero__cards img {
   display: block;
   aspect-ratio: 1180 / 820;
   object-fit: cover;
@@ -1011,4 +1011,142 @@ img {
     font-size: 18px;
     border-radius: 14px;
   }
+}
+
+/* tap-demo animation */
+.anim {
+  position: relative;
+  overflow: hidden;
+  border-radius: 15px;
+  aspect-ratio: 1180 / 820;
+  background: #0f1712;
+}
+.anim__cam {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.anim__cam img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.anim__b {
+  opacity: 0;
+}
+.anim__finger {
+  position: absolute;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  transition: left 0.7s cubic-bezier(0.45, 0, 0.2, 1), top 0.7s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.3s ease;
+}
+.anim__finger.is-on {
+  opacity: 1;
+}
+.anim__finger i {
+  position: absolute;
+  left: -19px;
+  top: -19px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 2.5px #fff, 0 6px 16px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+.anim__finger.is-down i {
+  transform: scale(0.72);
+  background: color-mix(in srgb, var(--c) 65%, white);
+}
+.anim__finger.is-hold i::after {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: #fff;
+  border-right-color: #fff;
+  animation: holdspin 0.9s linear;
+}
+@keyframes holdspin {
+  to { rotate: 360deg; }
+}
+.anim__ripple {
+  position: absolute;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  animation: rip 0.75s ease-out forwards;
+}
+@keyframes rip {
+  to { transform: scale(4.2); opacity: 0; }
+}
+.anim__ring {
+  position: absolute;
+  z-index: 2;
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 85%, white), 0 0 0 9999px rgba(10, 20, 14, 0.28);
+  opacity: 0;
+  transform: scale(1.15);
+  transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.anim__ring.is-on {
+  opacity: 1;
+  transform: none;
+}
+.anim__trail {
+  position: absolute;
+  z-index: 2;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9));
+  opacity: 0;
+  transition: width 0.9s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.3s;
+}
+.anim__trail.is-on {
+  opacity: 1;
+}
+.anim__bubble {
+  position: absolute;
+  z-index: 4;
+  min-width: 40px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  translate: -50% calc(-100% - 28px);
+  background: #fff;
+  color: var(--ink);
+  font: 700 15px/1 var(--font);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+.anim__bubble::after {
+  content: "|";
+  margin-left: 2px;
+  color: var(--c);
+  animation: blink 0.8s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+.anim__bubble.is-on {
+  opacity: 1;
+}
+.device__loop i {
+  animation: none !important;
+  transform: scaleX(0);
 }
