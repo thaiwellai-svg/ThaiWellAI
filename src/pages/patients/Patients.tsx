@@ -433,15 +433,14 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       subtitle={edit ? `${edit.hn} · การแก้ไขจะบันทึกในประวัติการแก้ไข` : "ลงทะเบียน 3 ขั้นตอน · ผู้ป่วยรายใหม่ต้องพบแพทย์แผนไทยก่อนเริ่มแผนการรักษา"}
       footer={
         <>
-          <Button variant="outline" size="lg" fill onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
+          <Button variant="outline" size="md" onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
             {step === 0 ? "ยกเลิก" : "ย้อนกลับ"}
           </Button>
           {step === 1 && (
             <Button
               variant="outline"
-              size="lg"
-              fill
-              onClick={() => {
+              size="md"
+                            onClick={() => {
                 setSkipScr(true);
                 setStep(2);
               }}
@@ -451,9 +450,8 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           )}
           {step < 2 ? (
             <Button
-              size="lg"
-              fill
-              disabled={step === 0 && !valid}
+                            size="md"
+                            disabled={step === 0 && !valid}
               onClick={() => {
                 if (step === 1) setSkipScr(false);
                 setStep(step + 1);
@@ -462,7 +460,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               ถัดไป
             </Button>
           ) : (
-            <Button size="lg" fill disabled={!valid} onClick={submit}>
+            <Button size="md" disabled={!valid} onClick={submit}>
               บันทึก
             </Button>
           )}
@@ -484,184 +482,192 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       </ol>
 
       {step === 0 && (
-        <div className="ap-pane">
-          <PhotoSlot name={f.first} value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
-          {!edit && (
-            <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
-              <span className="ap-card__body">
-                <b>{fromCard ? "อ่านข้อมูลจากบัตรแล้ว" : "อ่านข้อมูลจากบัตรประชาชน"}</b>
-                <span className="ap-card__steps">
-                  {["เสียบบัตร", "อ่านชิป", "กรอกให้อัตโนมัติ"].map((t, i) => (
-                    <span key={t} className={fromCard ? "is-done" : undefined}>
-                      <i>{fromCard ? <Check size={11} strokeWidth={3} /> : i + 1}</i>
-                      {t}
-                    </span>
-                  ))}
-                </span>
-              </span>
-              <em>
-                <CreditCard size={14} />
-                {fromCard ? "อ่านบัตรใหม่" : "อ่านบัตร"}
-              </em>
-              <span className="ap-card__art" aria-hidden>
-                <span className="ap-card__ring" />
-                <span className="ap-card__id">
-                  <img src={idFace} alt="" />
-                  <span className="ap-card__scan" />
-                  {fromCard && (
-                    <span className="ap-card__ok">
-                      <Check size={10} strokeWidth={3} />
-                    </span>
-                  )}
-                </span>
-              </span>
-            </button>
-          )}
-          <section className="ap-sec">
-            <h4>
-              <span style={{ ["--c" as string]: "#3b82c4" }}>
-                <IdCard size={14} />
-              </span>
-              ข้อมูลตามบัตรประชาชน
-            </h4>
-            <div className="ap-grid">
-              <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
-                <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
-              </Field>
-              <Field label="คำนำหน้า">
-                <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
-                  <option>นาย</option>
-                  <option>นาง</option>
-                  <option>นางสาว</option>
-                </Select>
-              </Field>
-              <Field label="ชื่อ *">
-                <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} />
-              </Field>
-              <Field label="นามสกุล *">
-                <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
-              </Field>
-              <Field label="เพศ *">
-                <div className="ap-gender">
-                  {(["ชาย", "หญิง"] as const).map((g) => (
-                    <motion.button
-                      key={g}
-                      type="button"
-                      className="tw-chip"
-                      aria-pressed={f.gender === g}
-                      whileTap={{ scale: 0.92 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 26 }}
-                      onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
-                    >
-                      {f.gender === g && (
-                        <motion.span layoutId="ap-gender-pill" className="ap-gender__pill" transition={{ type: "spring", stiffness: 420, damping: 32 }} />
-                      )}
-                      <span className="ap-gender__t">{g}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </Field>
-              <Field label="วัน เดือน ปีเกิด *" className="span-2">
-                <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
-              </Field>
-              <Field label="ที่อยู่ตามบัตร" className="span-3">
-                <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
-              </Field>
-            </div>
-          </section>
-
-          <section className="ap-sec">
-            <h4>
-              <span style={{ ["--c" as string]: "#2f8a52" }}>
-                <PhoneCall size={14} />
-              </span>
-              ช่องทางติดต่อ
-            </h4>
-            <div className="ap-grid">
-              <Field label="เบอร์โทรศัพท์ *" className="span-3">
-                <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-              </Field>
-              <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3">
-                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
-                  <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
-                  <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
-                  <Select value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} aria-label="ความเกี่ยวข้อง">
-                    <option value="">เกี่ยวข้องเป็น</option>
-                    {(RELATIONS.includes(f.ecRel) || !f.ecRel ? RELATIONS : [f.ecRel, ...RELATIONS]).map((r) => (
-                      <option key={r}>{r}</option>
+        <div className="ap-pane ap-cols">
+          <div className="ap-col">
+            <PhotoSlot name={f.first} value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
+            {!edit && (
+              <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
+                <span className="ap-card__body">
+                  <b>{fromCard ? "อ่านข้อมูลจากบัตรแล้ว" : "อ่านข้อมูลจากบัตรประชาชน"}</b>
+                  <span className="ap-card__steps">
+                    {["เสียบบัตร", "อ่านชิป", "กรอกอัตโนมัติ"].map((t, i) => (
+                      <span key={t} className={fromCard ? "is-done" : undefined}>
+                        <i>{fromCard ? <Check size={11} strokeWidth={3} /> : i + 1}</i>
+                        {t}
+                      </span>
                     ))}
+                  </span>
+                </span>
+                <em>
+                  <CreditCard size={14} />
+                  {fromCard ? "อ่านบัตรใหม่" : "อ่านบัตร"}
+                </em>
+                <span className="ap-card__art" aria-hidden>
+                  <span className="ap-card__ring" />
+                  <span className="ap-card__id">
+                    <img src={idFace} alt="" />
+                    <span className="ap-card__scan" />
+                    {fromCard && (
+                      <span className="ap-card__ok">
+                        <Check size={10} strokeWidth={3} />
+                      </span>
+                    )}
+                  </span>
+                </span>
+              </button>
+            )}
+            <section className="ap-sec">
+              <h4>
+                <span style={{ ["--c" as string]: "#2f8a52" }}>
+                  <PhoneCall size={14} />
+                </span>
+                ช่องทางติดต่อ
+              </h4>
+              <div className="ap-grid">
+                <Field label="เบอร์โทรศัพท์ *" className="span-3">
+                  <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+                </Field>
+                <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3">
+                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 8 }}>
+                    <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
+                    <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
+                    <Select value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} aria-label="ความเกี่ยวข้อง">
+                      <option value="">เกี่ยวข้องเป็น</option>
+                      {(RELATIONS.includes(f.ecRel) || !f.ecRel ? RELATIONS : [f.ecRel, ...RELATIONS]).map((r) => (
+                        <option key={r}>{r}</option>
+                      ))}
+                    </Select>
+                  </div>
+                </Field>
+              </div>
+            </section>
+          </div>
+          <div className="ap-col">
+            <section className="ap-sec">
+              <h4>
+                <span style={{ ["--c" as string]: "#3b82c4" }}>
+                  <IdCard size={14} />
+                </span>
+                ข้อมูลตามบัตรประชาชน
+              </h4>
+              <div className="ap-grid">
+                <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
+                  <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
+                </Field>
+                <Field label="คำนำหน้า">
+                  <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
+                    <option>นาย</option>
+                    <option>นาง</option>
+                    <option>นางสาว</option>
                   </Select>
-                </div>
-              </Field>
-            </div>
-          </section>
-
-          {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
+                </Field>
+                <Field label="ชื่อ *">
+                  <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} />
+                </Field>
+                <Field label="นามสกุล *">
+                  <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
+                </Field>
+                <Field label="เพศ *">
+                  <div className="ap-gender">
+                    {(["ชาย", "หญิง"] as const).map((g) => (
+                      <motion.button
+                        key={g}
+                        type="button"
+                        className="tw-chip"
+                        aria-pressed={f.gender === g}
+                        whileTap={{ scale: 0.92 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 26 }}
+                        onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
+                      >
+                        {f.gender === g && (
+                          <motion.span layoutId="ap-gender-pill" className="ap-gender__pill" transition={{ type: "spring", stiffness: 420, damping: 32 }} />
+                        )}
+                        <span className="ap-gender__t">{g}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="วัน เดือน ปีเกิด *" className="span-2">
+                  <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
+                </Field>
+                <Field label="ที่อยู่ตามบัตร" className="span-3">
+                  <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
+                </Field>
+              </div>
+            </section>
+            {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
+          </div>
         </div>
       )}
 
       {step === 1 && (
         <div className="ap-pane">
           <p className="ap-lead">คัดกรองความปลอดภัยก่อนนวด · ถ้ายังไม่พร้อม กด “ข้ามการคัดกรอง” แล้วทำทีหลังได้</p>
-          <section className="ap-sec">
-            <h4>
-              <span style={{ ["--c" as string]: "#c2482b" }}>
-                <HeartPulse size={14} />
-              </span>
-              ข้อมูลสุขภาพ
-            </h4>
-            <div className="ap-grid">
-              <Field label="อาการสำคัญ" className="span-3">
-                <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
+          <div className="ap-cols">
+            <div className="ap-col">
+            <section className="ap-sec">
+              <h4>
+                <span style={{ ["--c" as string]: "#c2482b" }}>
+                  <HeartPulse size={14} />
+                </span>
+                ข้อมูลสุขภาพ
+              </h4>
+              <div className="ap-grid">
+                <Field label="อาการสำคัญ" className="span-3">
+                  <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
+                </Field>
+                <Field label="โรคประจำตัว" className="span-3">
+                  <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
+                </Field>
+                <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" className="span-3">
+                  <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
+                </Field>
+              </div>
+            </section>
+            </div>
+            <div className="ap-col">
+            <section className="ap-sec">
+              <h4>
+                <span style={{ ["--c" as string]: "#d97706" }}>
+                  <ShieldCheck size={14} />
+                </span>
+                สัญญาณชีพและข้อห้ามก่อนนวด
+              </h4>
+            <div className="ap-vitals">
+              <Field label="ความดัน (mmHg)">
+                <div className="ap-bp">
+                  <Input inputMode="numeric" placeholder="120" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                  <span>/</span>
+                  <Input inputMode="numeric" placeholder="80" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                </div>
               </Field>
-              <Field label="โรคประจำตัว" className="span-3">
-                <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
+              <Field label="ชีพจร (ครั้ง/นาที)">
+                <Input inputMode="numeric" placeholder="72" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
               </Field>
-              <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" className="span-3">
-                <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
+              <Field label="แรงนวดที่ต้องการ">
+                <div className="ap-seg">
+                  {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
+                    <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
+                      {x}
+                    </button>
+                  ))}
+                </div>
               </Field>
             </div>
-          </section>
-          <section className="ap-sec">
-            <h4>
-              <span style={{ ["--c" as string]: "#d97706" }}>
-                <ShieldCheck size={14} />
-              </span>
-              สัญญาณชีพและข้อห้ามก่อนนวด
-            </h4>
-          <div className="ap-vitals">
-            <Field label="ความดัน (mmHg)">
-              <div className="ap-bp">
-                <Input inputMode="numeric" placeholder="120" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                <span>/</span>
-                <Input inputMode="numeric" placeholder="80" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-              </div>
+            <div className="ap-qs">
+              {yes("fever", "มีไข้ หรือการติดเชื้อ", "ห้ามนวด")}
+              {yes("recentSurgery", "ผ่าตัดภายใน 30 วัน", `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วันหลังผ่าตัด`)}
+              {yes("bloodThinner", "ใช้ยาละลายลิ่มเลือด / ต้านเกล็ดเลือด", "ลดแรงนวด")}
+              {yes("numbness", "อาการชา หรืออ่อนแรง")}
+              {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
+              {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
+            </div>
+            <Field label="บริเวณที่ไม่ต้องการให้นวด">
+              <Input value={scr.avoid} onChange={(e) => setScr({ ...scr, avoid: e.target.value })} placeholder="เช่น เอวส่วนล่าง, หน้าท้อง" />
             </Field>
-            <Field label="ชีพจร (ครั้ง/นาที)">
-              <Input inputMode="numeric" placeholder="72" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-            </Field>
-            <Field label="แรงนวดที่ต้องการ">
-              <div className="ap-seg">
-                {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
-                  <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
-                    {x}
-                  </button>
-                ))}
-              </div>
-            </Field>
+            </section>
+            </div>
           </div>
-          <div className="ap-qs">
-            {yes("fever", "มีไข้ หรือการติดเชื้อ", "ห้ามนวด")}
-            {yes("recentSurgery", "ผ่าตัดภายใน 30 วัน", `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วันหลังผ่าตัด`)}
-            {yes("bloodThinner", "ใช้ยาละลายลิ่มเลือด / ต้านเกล็ดเลือด", "ลดแรงนวด")}
-            {yes("numbness", "อาการชา หรืออ่อนแรง")}
-            {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
-            {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
-          </div>
-          <Field label="บริเวณที่ไม่ต้องการให้นวด">
-            <Input value={scr.avoid} onChange={(e) => setScr({ ...scr, avoid: e.target.value })} placeholder="เช่น เอวส่วนล่าง, หน้าท้อง" />
-          </Field>
-          </section>
         </div>
       )}
 

@@ -1364,3 +1364,62 @@
   border-radius: inherit;
   background: var(--color-text);
 }
+/* registration: wide modal, two columns */
+.tw-dialog.ap {
+  width: min(1000px, 100%);
+}
+.ap-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.ap-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ap-col > .ap-sec:last-child,
+.ap-col > .ap-need:last-child {
+  margin-bottom: 0;
+}
+.ap-sum {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: "who scr" "kv scr";
+  align-items: start;
+  gap: 12px 16px;
+}
+.ap-sum > .ap-sum__who { grid-area: who; }
+.ap-sum > .ap-kv { grid-area: kv; }
+.ap-sum > .ap-sum__scr { grid-area: scr; }
+.ap-card__steps {
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+.ap-card__steps > span {
+  gap: 4px;
+  font-size: 11px;
+}
+.ap-card__steps i {
+  width: 16px;
+  height: 16px;
+}
+.ap-card__art {
+  width: 84px;
+}
+@media (max-width: 760px) {
+  .ap-sum {
+    grid-template-columns: 1fr;
+    grid-template-areas: "who" "kv" "scr";
+  }
+  .ap-cols {
+    grid-template-columns: 1fr;
+  }
+}
+.tw-dialog.ap .tw-overlay-foot {
+  justify-content: flex-end;
+}
+.tw-dialog.ap .tw-overlay-foot > .tw-btn {
+  min-width: 112px;
+}
