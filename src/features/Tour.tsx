@@ -28,7 +28,8 @@ const TIPS: { Icon: Icon; text: string }[] = [
   { Icon: SettingsIcon, text: "เปิดคู่มือนี้อีกครั้งได้ที่ ตั้งค่า → คู่มือการใช้งาน" },
 ];
 
-const KEY = "thaiwell.tour.done";
+// bump the version to show the guide again on every device after it changes
+const KEY = "thaiwell.tour.v2";
 export const TOUR_EVENT = "thaiwell:tour";
 export const startTour = () => window.dispatchEvent(new Event(TOUR_EVENT));
 
