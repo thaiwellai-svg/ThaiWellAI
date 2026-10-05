@@ -1254,25 +1254,16 @@
   height: 40px;
 }
 /* gender choice */
-.ap-gender button {
-  --c: #3b82c4;
+.ap-gender {
   display: flex;
   align-items: center;
+  gap: 6px;
+  height: 48px;
+}
+.ap-gender .tw-chip {
+  flex: 1;
   justify-content: center;
-  gap: 4px;
-  height: 40px;
+  height: 36px;
+  padding: 0;
   font-size: 13.5px;
-}
-.ap-gender .is-f {
-  --c: #d0548a;
-}
-.ap-gender svg {
-  color: var(--c);
-  opacity: 0.55;
-}
-.ap-gender button[aria-pressed="true"] {
-  color: var(--c);
-}
-.ap-gender button[aria-pressed="true"] svg {
-  opacity: 1;
 }

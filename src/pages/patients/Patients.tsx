@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Mars, Venus, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -520,16 +520,15 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
               </Field>
               <Field label="เพศ *">
-                <div className="ap-seg ap-seg--2 ap-gender">
+                <div className="ap-gender">
                   {(["ชาย", "หญิง"] as const).map((g) => (
                     <button
                       key={g}
                       type="button"
-                      className={g === "ชาย" ? "is-m" : "is-f"}
+                      className="tw-chip"
                       aria-pressed={f.gender === g}
                       onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
                     >
-                      {g === "ชาย" ? <Mars size={13} strokeWidth={2.4} /> : <Venus size={13} strokeWidth={2.4} />}
                       {g}
                     </button>
                   ))}
