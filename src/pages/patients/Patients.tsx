@@ -424,8 +424,6 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
   const sys = Number(scr.bpSys) || 0;
   const bpThreshold = store.settings.bpThreshold ?? 160;
   const bpState = !sys ? { tone: "idle", label: "" } : sys >= bpThreshold ? { tone: "stop", label: "สูง · ห้ามนวด" } : sys >= 140 || sys < 90 ? { tone: "warn", label: sys < 90 ? "ต่ำ" : "ค่อนข้างสูง" } : { tone: "ok", label: "ปกติ" };
-  const pr = Number(scr.pulse) || 0;
-  const pulseState = !pr ? { tone: "idle", label: "" } : pr > 100 ? { tone: "warn", label: "เร็ว" } : pr < 50 ? { tone: "warn", label: "ช้า" } : { tone: "ok", label: "ปกติ" };
   const contra = [
     { key: "fever", label: "มีไข้ / ติดเชื้อ", hint: "ห้ามนวด", level: "stop", Icon: Thermometer },
     { key: "recentSurgery", label: "ผ่าตัดภายใน 30 วัน", hint: `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วัน`, level: "stop", Icon: Scissors },
@@ -747,40 +745,28 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 </span>
                 สัญญาณชีพ
               </h4>
-              <div className="ap-vt">
-                <label className={`ap-vt__tile is-${bpState.tone}`}>
-                  <span className="ap-vt__top">
-                    <small>ความดัน</small>
-                    {bpState.label && <em>{bpState.label}</em>}
-                  </span>
-                  <span className="ap-vt__val">
-                    <input inputMode="numeric" placeholder="120" aria-label="ความดันตัวบน" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                    <i>/</i>
-                    <input inputMode="numeric" placeholder="80" aria-label="ความดันตัวล่าง" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                    <u>mmHg</u>
-                  </span>
-                </label>
-                <label className={`ap-vt__tile is-${pulseState.tone}`}>
-                  <span className="ap-vt__top">
-                    <small>ชีพจร</small>
-                    {pulseState.label && <em>{pulseState.label}</em>}
-                  </span>
-                  <span className="ap-vt__val">
-                    <input inputMode="numeric" placeholder="72" aria-label="ชีพจร" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                    <u>ครั้ง/นาที</u>
-                  </span>
-                </label>
+              <div className="ap-vitals">
+                <Field label="ความดัน (mmHg)">
+                  <div className="ap-bp">
+                    <Input inputMode="numeric" placeholder="120" aria-label="ความดันตัวบน" aria-invalid={bpState.tone === "stop"} value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                    <span>/</span>
+                    <Input inputMode="numeric" placeholder="80" aria-label="ความดันตัวล่าง" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                  </div>
+                </Field>
+                <Field label="ชีพจร (ครั้ง/นาที)">
+                  <Input inputMode="numeric" placeholder="72" aria-label="ชีพจร" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                </Field>
+                <Field label="แรงนวดที่ต้องการ">
+                  <div className="ap-seg">
+                    {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
+                      <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
+                        {x}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
               </div>
-              <div className="ap-press">
-                <small>แรงนวดที่ต้องการ</small>
-                <div className="ap-seg">
-                  {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
-                    <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
-                      {x}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {bpState.tone === "stop" && <p className="ap-vwarn">ความดันสูงเกินเกณฑ์ · ห้ามนวด</p>}
             </section>
             <section className="ap-sec">
               <h4>
