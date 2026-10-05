@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { X, Activity, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
-import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
+import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
 import { PatientDrawer } from "../../features/PatientDrawer";
 import { PainMini } from "../../features/RecordCards";
@@ -61,7 +61,6 @@ export default function Patients() {
   const [solo, setSolo] = useState(false);
   // AI treatment plan opens as a third column, like the health box on รับบริการ
   const [aiOpen, setAiOpen] = useState(false);
-  const [editing, setEditing] = useState<string | null>(null);
   // narrow list: photo + name only (same switch as รับบริการ)
   const [slim, setSlim] = useState(() => {
     try {
@@ -79,7 +78,7 @@ export default function Patients() {
   }, [slim]);
   const [selected, setSelected] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<string | null>(null);
-  const [adding, setAdding] = useState(false);
+  const navigate = useNavigate();
   const wide = useWide();
   const today = todayISO();
   const weekEnd = addISODays(today, 7);
@@ -123,6 +122,14 @@ export default function Patients() {
   const current = selected && visible.some((r) => r.p.id === selected) ? selected : visible[0]?.p.id ?? null;
 
   const open = (id: string) => (wide ? setSelected(id) : setDrawer(id));
+  // coming back from the registration page: /patients?id=… opens that patient
+  const backTo = params.get("id");
+  useEffect(() => {
+    if (!backTo) return;
+    open(backTo);
+    setQuery("");
+    setParams({}, { replace: true });
+  }, [backTo]); // eslint-disable-line react-hooks/exhaustive-deps
   const setFilter = (f: Filter) => setParams(f === "all" ? {} : { filter: f });
 
   const STAT: { key: Filter; label: string; icon: typeof ListFilter }[] = [
@@ -201,7 +208,7 @@ export default function Patients() {
         <>
           <SearchField className="phead-search" value={query} onChange={setQuery} />
           <FilterMenu value={filter} onChange={setFilter} options={STAT.map((f) => ({ value: f.key, label: f.label, count: stats[f.key], icon: f.icon }))} />
-          <IconButton label="เพิ่มผู้รับบริการ" variant="white" className="padd-btn" onClick={() => setAdding(true)}>
+          <IconButton label="เพิ่มผู้รับบริการ" variant="white" className="padd-btn" onClick={() => navigate("/patients/new")}>
             <UserPlus size={20} strokeWidth={1.8} />
           </IconButton>
         </>
@@ -225,7 +232,7 @@ export default function Patients() {
               node: (
                 <div className="panel pdetail">
                   <div className="sheet">
-                    <PatientDetail id={current} onAdd={() => setAdding(true)} onEdit={() => setEditing(current)} onAIPlan={() => setAiOpen((v) => !v)} aiOpen={aiOpen && !!current} />
+                    <PatientDetail id={current} onAdd={() => navigate("/patients/new")} onEdit={() => current && navigate(`/patients/${current}/edit`)} onAIPlan={() => setAiOpen((v) => !v)} aiOpen={aiOpen && !!current} />
                   </div>
                 </div>
               ),
@@ -266,21 +273,11 @@ export default function Patients() {
       )}
 
       <PatientDrawer id={drawer} onClose={() => setDrawer(null)} />
-      <AddPatientDialog open={!!editing} edit={editing ? store.patientById(editing) : null} onClose={() => setEditing(null)} onCreated={() => {}} />
-      <AddPatientDialog
-        open={adding}
-        onClose={() => setAdding(false)}
-        onCreated={(id) => {
-          setParams({});
-          setQuery("");
-          open(id);
-        }}
-      />
     </WorkPage>
   );
 }
 
-function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null }) {
+function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null }) {
   const store = useStore();
   const toast = useToast();
   const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", email: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "", address: "" };
@@ -325,7 +322,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   const [fromCard, setFromCard] = useState(false);
   // load the patient when the edit dialog opens
   useEffect(() => {
-    if (!open) return;
     setF(edit ? fromPatient(edit) : empty);
     setStep(0);
     setFromCard(false);
@@ -333,7 +329,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, painAreas: areasOf(sc.painAreas ?? []), avoidAreas: areasOf(sc.avoid.split(/[,·]\s*/)), pain: sc.pain ?? null } : emptyScr);
     setHold(null);
     setSkipScr(!!edit && !sc);
-  }, [open, edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const age = ageFrom(f.dob);
   const cidDigits = f.cid.replace(/\D/g, "");
   const cidOk = !cidDigits || validCitizenId(cidDigits);
@@ -415,7 +411,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     });
     toast({ message: `ลงทะเบียน ${f.title} ${f.first} ${f.last} แล้ว` });
     setF(empty);
-    onClose();
     onCreated(id);
   };
 
@@ -442,58 +437,63 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   );
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      className="ap"
+    <WorkPage
+      eyebrow={edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}
       title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
-      subtitle={edit ? `${edit.hn} · การแก้ไขจะบันทึกในประวัติการแก้ไข` : "ลงทะเบียน 3 ขั้นตอน · ผู้ป่วยรายใหม่ต้องพบแพทย์แผนไทยก่อนเริ่มแผนการรักษา"}
-      footer={
-        <>
-          <Button variant="outline" size="md" onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
-            {step === 0 ? "ยกเลิก" : "ย้อนกลับ"}
-          </Button>
-          {step === 1 && (
-            <Button
-              variant="outline"
-              size="md"
-                            onClick={() => {
-                setSkipScr(true);
-                setStep(2);
-              }}
-            >
-              ข้ามการคัดกรอง
-            </Button>
-          )}
-          {step < 2 ? (
-            <Button
-                            size="md"
-                            disabled={step === 0 && !valid}
-              onClick={() => {
-                if (step === 1) setSkipScr(false);
-                setStep(step + 1);
-              }}
-            >
-              ถัดไป
-            </Button>
-          ) : (
-            <Button size="md" disabled={!valid} onClick={submit}>
-              บันทึก
-            </Button>
-          )}
-        </>
+      bell={false}
+      actions={
+        <IconButton label="ปิด" variant="white" onClick={onClose}>
+          <X size={20} strokeWidth={1.8} />
+        </IconButton>
       }
     >
-      <ol className="ap-steps">
-        {STEPS.map((t, i) => (
-          <li key={t} className={i < step ? "is-done" : i === step ? "is-now" : undefined}>
-            <button type="button" disabled={i > step && !valid} onClick={() => setStep(i)}>
-              <i>{i < step ? <Check size={13} strokeWidth={3} /> : i + 1}</i>
-              <span>{t}</span>
-            </button>
-          </li>
-        ))}
-      </ol>
+      <div className="apg ap">
+        <div className="apg__bar">
+          <ol className="ap-steps">
+            {STEPS.map((t, i) => (
+              <li key={t} className={i < step ? "is-done" : i === step ? "is-now" : undefined}>
+                <button type="button" disabled={i > step && !valid} onClick={() => setStep(i)}>
+                  <i>{i < step ? <Check size={13} strokeWidth={3} /> : i + 1}</i>
+                  <span>{t}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+          <div className="apg__actions">
+                <Button variant="outline" size="md" onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
+                  {step === 0 ? "ยกเลิก" : "ย้อนกลับ"}
+                </Button>
+                {step === 1 && (
+                  <Button
+                    variant="outline"
+                    size="md"
+                    onClick={() => {
+                      setSkipScr(true);
+                      setStep(2);
+                    }}
+                  >
+                    ข้ามการคัดกรอง
+                  </Button>
+                )}
+                {step < 2 ? (
+                  <Button
+                    size="md"
+                    disabled={step === 0 && !valid}
+                    onClick={() => {
+                      if (step === 1) setSkipScr(false);
+                      setStep(step + 1);
+                    }}
+                  >
+                    ถัดไป
+                  </Button>
+                ) : (
+                  <Button size="md" disabled={!valid} onClick={submit}>
+                    บันทึก
+                  </Button>
+                )}
+          </div>
+        </div>
+        <div className="apg__body scroll-y">
 
       {step === 0 && (
         <div className="ap-pane ap-cols">
@@ -825,7 +825,24 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           </div>
         </div>
       )}
-    </Dialog>
+        </div>
+      </div>
+    </WorkPage>
+  );
+}
+
+/** /patients/new and /patients/:id/edit — registration as a full page */
+export function PatientFormPage() {
+  const { id } = useParams();
+  const store = useStore();
+  const navigate = useNavigate();
+  const edit = id ? store.patients.find((p) => p.id === id) ?? null : null;
+  return (
+    <PatientForm
+      edit={edit}
+      onClose={() => navigate(edit ? `/patients?id=${edit.id}` : "/patients")}
+      onCreated={(nid) => navigate(`/patients?id=${nid}`)}
+    />
   );
 }
 

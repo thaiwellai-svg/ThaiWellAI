@@ -16,6 +16,7 @@ import "./shell.css";
 const Appointments = lazy(() => import("../pages/appointments/Appointments"));
 const Planner = lazy(() => import("../pages/planner/Planner"));
 const Patients = lazy(() => import("../pages/patients/Patients"));
+const PatientFormPage = lazy(() => import("../pages/patients/Patients").then((m) => ({ default: m.PatientFormPage })));
 const Settings = lazy(() => import("../pages/settings/Settings"));
 const DesignSystem = lazy(() => import("../pages/design-system/DesignSystem"));
 const AISpotlight = lazy(() => import("../pages/ai/Assistant").then((m) => ({ default: m.AISpotlight })));
@@ -112,6 +113,8 @@ export function AppShell() {
             <Route path="/appointments" element={<Page><Appointments /></Page>} />
             <Route path="/planner" element={<Page><Planner /></Page>} />
             <Route path="/patients" element={<Page><Patients /></Page>} />
+            <Route path="/patients/new" element={<Page><PatientFormPage /></Page>} />
+            <Route path="/patients/:id/edit" element={<Page><PatientFormPage /></Page>} />
             <Route path="/settings" element={<Page><Settings /></Page>} />
             <Route path="/visits" element={<Page><Visits /></Page>} />
             <Route path="/billing" element={<Page><Billing /></Page>} />
