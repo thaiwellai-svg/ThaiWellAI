@@ -497,7 +497,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                   ))}
                 </span>
                 <em>
-                  <CreditCard size={15} />
+                  <CreditCard size={14} />
                   {fromCard ? "อ่านบัตรใหม่" : "อ่านบัตร"}
                 </em>
               </span>
@@ -508,7 +508,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                   <span className="ap-card__scan" />
                   {fromCard && (
                     <span className="ap-card__ok">
-                      <Check size={14} strokeWidth={3} />
+                      <Check size={12} strokeWidth={3} />
                     </span>
                   )}
                 </span>
