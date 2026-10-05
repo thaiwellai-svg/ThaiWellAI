@@ -756,17 +756,17 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 <Field label="ชีพจร (ครั้ง/นาที)">
                   <Input inputMode="numeric" placeholder="72" aria-label="ชีพจร" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                 </Field>
-                <Field label="แรงนวดที่ต้องการ">
-                  <div className="ap-seg">
-                    {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
-                      <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
-                        {x}
-                      </button>
-                    ))}
-                  </div>
-                </Field>
               </div>
               {bpState.tone === "stop" && <p className="ap-vwarn">ความดันสูงเกินเกณฑ์ · ห้ามนวด</p>}
+              <Field label="แรงนวดที่ต้องการ">
+                <div className="ap-press2">
+                  {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
+                    <button key={x} type="button" className="tw-chip" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
+                      {x}
+                    </button>
+                  ))}
+                </div>
+              </Field>
             </section>
             <section className="ap-sec">
               <h4>
