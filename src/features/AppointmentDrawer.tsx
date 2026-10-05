@@ -167,6 +167,9 @@ export function AppointmentDrawer({
   else if (stage === "called")
     footer = (
       <>
+        <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
+          ยกเลิกนัด
+        </Button>
         <Button variant="outline" size="lg" leading={<BellRing size={16} />} onClick={() => call(true)}>
           เรียกซ้ำ
         </Button>

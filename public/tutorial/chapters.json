@@ -1051,9 +1051,25 @@
    },
    {
     "n": 4,
+    "title": "ยกเลิกนัด",
+    "detail": "ในหน้ารายละเอียดนัด กด “ยกเลิกนัด” เลือกผู้ยกเลิกและเหตุผล · ถ้าอยู่ในแผนการรักษาเลือกได้ว่ายกเลิกวันไหนบ้าง",
+    "start": "media/appointments-f8.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 79.82,
+      "y": 18.29,
+      "w": 9.03,
+      "h": 4.39,
+      "frame": "media/appointments-f9.webp"
+     }
+    ]
+   },
+   {
+    "n": 5,
     "title": "เพิ่มคิวนัดใหม่",
     "detail": "กลับหน้าตารางนัด กดไอคอนเพิ่มคิวมุมขวาบน เลือกผู้ป่วย บริการ วัน เวลา และผู้บำบัด",
-    "start": "media/appointments-f8.webp",
+    "start": "media/appointments-f10.webp",
     "actions": [
      {
       "kind": "tap",
@@ -1061,7 +1077,7 @@
       "y": 5.85,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/appointments-f9.webp"
+      "frame": "media/appointments-f11.webp"
      }
     ]
    }

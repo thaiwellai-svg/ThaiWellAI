@@ -43,7 +43,8 @@ export default function AppointmentDetail() {
   const t = store.therapistById(a.therapistId);
   const meta = stageMeta(a);
   const credits = creditInfo(p, store.appointments);
-  const notStarted = a.status === "waiting" && !a.calledAt;
+  // can still be moved / cancelled until the massage starts (even after the queue was called)
+  const notStarted = a.status === "waiting";
   const d = new Date(a.date + "T00:00:00");
   const flags = p.screening ? screeningFlags(p.screening, store.settings.bpThreshold) : [];
   const stop = flags.some((f) => f.level === "stop");
