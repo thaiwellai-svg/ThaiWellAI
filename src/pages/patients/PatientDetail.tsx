@@ -1,10 +1,12 @@
+import type { Appointment } from "../../data/types";
 import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { ScreeningAlert } from "../../features/ScreeningAlert";
 import { MoreMenu } from "../../features/MoreMenu";
+import { CancelDialog } from "../../features/CancelDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { CalendarX2, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -62,6 +64,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
   const today = todayISO();
   const [print, printNode] = usePatientPrint(p ?? null);
+  const [cancelPlan, setCancelPlan] = useState<Appointment | null>(null);
+  const planNext = p?.course
+    ? store.appointments
+        .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && a.date >= today)
+        .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))[0]
+    : undefined;
 
   const visits = useMemo(
     () => (p ? store.appointments.filter((a) => a.patientId === p.id).sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start)) : []),
@@ -135,6 +143,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               ]}
             />
             {printNode}
+            <CancelDialog appt={cancelPlan} planFirst onClose={() => setCancelPlan(null)} />
             <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
               <CalendarPlus size={18} />
             </button>
@@ -262,6 +271,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <small className="pd2__muted">
                   {thaiDate(p.course.startedOn)} – {thaiDate(p.course.expiresOn)}
                 </small>
+                {planNext && (
+                  <button type="button" className="pd2__cancel" onClick={() => setCancelPlan(planNext)}>
+                    <CalendarX2 size={14} /> ยกเลิกนัดตามแผน
+                  </button>
+                )}
               </>
             ) : (
               <p className="pd2__muted">ไม่มีคอร์ส — รับบริการแบบชำระรายครั้ง</p>

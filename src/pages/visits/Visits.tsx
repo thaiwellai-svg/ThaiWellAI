@@ -59,7 +59,7 @@ export default function Visits() {
   const today = store.appointments.find((a) => a.id === selected)?.date ?? todayISO();
   const isToday = today === todayISO();
 
-  const todays = useMemo(() => store.appointments.filter((a) => a.date === today && a.status !== "cancelled"), [store.appointments, today]);
+  const todays = useMemo(() => store.appointments.filter((a) => a.date === today), [store.appointments, today]);
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
     return todays

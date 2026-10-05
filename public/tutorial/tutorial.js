@@ -8,12 +8,13 @@ const INFO = {
   patient: { group: "ผู้มารับบริการ", title: "ค้นหาและดูประวัติผู้ป่วย", short: "ค้นหา · ประวัติ · พิมพ์", color: "#3b82c4", icon: "user-search", desc: "ค้นด้วยชื่อหรือเลขบัตร เสียบบัตรเปิดประวัติ ดูข้อมูลสุขภาพบนหุ่น 3D และพิมพ์ใบสรุป" },
   aiplan: { group: "ผู้มารับบริการ", title: "แผนการรักษาโดย AI", short: "แผนการรักษาโดย AI", color: "#3b82c4", icon: "wand-sparkles", desc: "ให้ AI ร่างแผนนวด ประคบ สมุนไพร แล้วแพทย์แผนไทยตรวจ อนุมัติ และจองนัดตามแผน" },
   appointments: { group: "ตารางนัด", title: "ตารางนัดและเพิ่มคิวนัด", short: "ดูนัด · เพิ่มคิวนัด", color: "#d08a3c", icon: "calendar-plus", desc: "ดูนัดรายวันตามผู้บำบัด และเพิ่มคิวนัดใหม่ทั้งนัดล่วงหน้าและ Walk-in" },
+  cancel: { group: "ตารางนัด", title: "ยกเลิกนัด รายครั้งหรือทั้งแผน", short: "ยกเลิกนัด", color: "#d08a3c", icon: "calendar-clock", desc: "ยกเลิกนัดพร้อมเหตุผล คืนเตียงและเครดิตคอร์สอัตโนมัติ และยกเลิกนัดตามแผนการรักษาได้ทั้งรายครั้งหรือทั้งหมด" },
   billing: { group: "คิดเงิน", title: "ใบเสร็จ คืนเงิน และรายงาน", short: "ใบเสร็จ · รายงาน", color: "#b0739a", icon: "receipt-text", desc: "ดูยอดรับชำระ เปิดใบเสร็จ ยกเลิก/คืนเงิน และส่งออกรายงานเป็น Excel" },
   planner: { group: "จัดตารางงาน", title: "ตารางงานผู้บำบัด", short: "ตารางงานผู้บำบัด", color: "#7c5cc4", icon: "calendar-clock", desc: "ดูเส้นเวลางานของผู้บำบัดทุกคน ตารางรายคน และกำหนดวันเวลาทำงาน" },
   settings: { group: "ตั้งค่า", title: "ตั้งค่าและสำรองข้อมูล", short: "ตั้งค่า · สำรองข้อมูล", color: "#66756b", icon: "settings", desc: "ข้อมูลคลินิก กฎคัดกรองความปลอดภัย การสำรอง/กู้คืน และคู่มือการใช้งาน" },
   assistant: { group: "ผู้ช่วย AI", title: "ผู้ช่วย AI", short: "ถามผู้ช่วย AI", color: "#7a5af0", icon: "bot", desc: "เปิดผู้ช่วย AI ได้ทุกหน้า ถามเรื่องคิว เครดิต หรือสรุปอาการผู้ป่วย" },
 };
-const ORDER = ["home", "visit", "record", "payment", "register", "patient", "aiplan", "appointments", "billing", "planner", "settings", "assistant"];
+const ORDER = ["home", "visit", "record", "payment", "register", "patient", "aiplan", "appointments", "cancel", "billing", "planner", "settings", "assistant"];
 const GROUPS = [...new Set(ORDER.map((id) => INFO[id].group))];
 
 const $ = (s, el = document) => el.querySelector(s);

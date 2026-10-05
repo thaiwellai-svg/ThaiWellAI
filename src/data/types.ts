@@ -196,6 +196,8 @@ export interface Appointment {
   diagnoses?: Diagnosis[];
   /** หัตถการ performed in this session */
   procedures?: Procedure[];
+  /** set when the appointment was cancelled */
+  cancel?: { at: string; by: "patient" | "clinic"; reason: string; note?: string; staff: string; batch?: string };
   payment?: Payment;
   /** cancelled receipts for this visit, kept for the record */
   voidedPayments?: Payment[];

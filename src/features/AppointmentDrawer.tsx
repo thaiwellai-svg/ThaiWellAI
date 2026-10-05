@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Ban, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ArrowRight, Ban, CalendarX2, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, IconButton, Textarea, useToast } from "../design-system";
@@ -18,6 +18,7 @@ import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
 import { VisitScreening } from "./ScreeningAlert";
+import { CancelDialog } from "./CancelDialog";
 
 export { stageOf, type Stage } from "../data/domain";
 
@@ -83,6 +84,7 @@ export function AppointmentDrawer({
   }, [id]);
 
   const stage = appt ? stageOf(appt) : "waiting";
+  const [cancelling, setCancelling] = useState(false);
   useEffect(() => {
     if (stage !== "treating") return;
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -149,9 +151,14 @@ export function AppointmentDrawer({
   if (stage === "waiting")
     footer = (
       <>
-        <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `บันทึก ${p.name} ไม่มาตามนัด`)}>
-          ไม่มา
+        <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
+          ยกเลิกนัด
         </Button>
+        {appt.date <= todayISO() && (
+          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `บันทึก ${p.name} ไม่มาตามนัด`)}>
+            ไม่มา
+          </Button>
+        )}
         <Button size="lg" fill leading={<Megaphone size={16} />} onClick={() => call()}>
           เรียกคิว
         </Button>
@@ -215,7 +222,7 @@ export function AppointmentDrawer({
     );
   else if (stage === "absent" || stage === "cancelled")
     footer = (
-      <Button variant="outline" size="lg" fill leading={<Undo2 size={16} />} onClick={() => step({ status: "waiting", calledAt: undefined }, "ย้อนเป็นรอรับบริการ")}>
+      <Button variant="outline" size="lg" fill leading={<Undo2 size={16} />} onClick={() => step({ status: "waiting", calledAt: undefined, cancel: undefined }, stage === "cancelled" ? "เลิกยกเลิกนัด" : "ย้อนเป็นรอรับบริการ")}>
         ย้อนกลับ
       </Button>
     );
@@ -300,13 +307,29 @@ export function AppointmentDrawer({
               ))}
             </ol>
           ) : (
+            stage === "cancelled" ? (
+              <div className="cxb">
+                <CalendarX2 size={18} />
+                <div>
+                  <b>ยกเลิกนัดแล้ว · {appt.cancel ? (appt.cancel.by === "patient" ? "ผู้ป่วยแจ้งยกเลิก" : "คลินิกยกเลิก") : "ยกเลิก"}</b>
+                  {appt.cancel && (
+                    <small>
+                      {appt.cancel.reason}
+                      {appt.cancel.note ? ` · ${appt.cancel.note}` : ""} · โดย {appt.cancel.staff} ·{" "}
+                      {new Date(appt.cancel.at).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} น.
+                    </small>
+                  )}
+                </div>
+              </div>
+            ) : (
             <div className="alert alert--stop">
               <UserX size={16} />
               <div>
-                <b>{stage === "absent" ? "ไม่มารับบริการ" : "ยกเลิกนัด"}</b>
+                <b>ไม่มารับบริการ</b>
                 ย้อนกลับได้ถ้าผู้ป่วยมาถึงแล้ว
               </div>
             </div>
+            )
           )}
 
           <AnimatePresence mode="wait" initial={false}>
@@ -574,6 +597,7 @@ export function AppointmentDrawer({
         <Textarea value={earlyEnd ?? ""} onChange={(e) => setEarlyEnd(e.target.value)} placeholder="หรือพิมพ์เหตุผล…" />
       </Dialog>
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
+      <CancelDialog appt={cancelling ? appt : null} onClose={() => setCancelling(false)} />
     </>
   );
 }
