@@ -3,6 +3,8 @@
   position: fixed;
   inset: 0;
   overflow: hidden;
+  /* clip, not just hide: a focused control must never scroll the whole app frame */
+  overflow: clip;
   isolation: isolate;
 }
 /* Photo fill: Figma places the image at 157.36% width, offset −42.92% / −18.95%.

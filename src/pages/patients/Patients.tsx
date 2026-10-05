@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Plus, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Plus, Sparkles, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -23,6 +23,8 @@ import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/B
 import { ListModeMenu } from "../../features/ListModeMenu";
 import { Body3D } from "../../features/Body3D";
 import { MultiSelect } from "../../features/MultiSelect";
+import { ElementIcon } from "../../features/ElementIcon";
+import { ELEMENT_INFO, TH_MONTH, birthElement, type Element } from "../../data/elements";
 import { toArea, type BodyArea } from "../../features/BodyMap";
 import idFace from "../../assets/cardreader/id_face.png";
 import "./patients.css";
@@ -32,6 +34,22 @@ const splitList = (s: string) => s.split(/\s*,\s*/).map((x) => x.trim()).filter(
 const COMPLAINTS = ["ปวดคอ", "ปวดบ่า", "ปวดไหล่", "ปวดหลัง", "ปวดเอว", "ปวดเข่า", "ปวดศีรษะ", "ชามือ/เท้า", "นอนไม่หลับ", "ต้องการผ่อนคลาย"];
 const CONDITIONS = ["ความดันโลหิตสูง", "เบาหวาน", "ไขมันในเลือดสูง", "โรคหัวใจ", "โรคหลอดเลือดสมอง", "หอบหืด", "ภูมิแพ้", "ไทรอยด์", "โรคไต", "โรคตับ", "กระดูกพรุน", "ข้อเข่าเสื่อม", "หมอนรองกระดูกทับเส้นประสาท", "ไมเกรน", "เส้นเลือดขอด", "ลมชัก", "มะเร็ง"];
 const ALLERGIES = ["ยาหม่อง", "น้ำมันไพล", "น้ำมันยูคาลิปตัส", "การบูร", "เมนทอล", "ลูกประคบสมุนไพร", "น้ำมันงา", "ลาเทกซ์ (ยาง)", "แอสไพริน", "เพนิซิลลิน", "ยาซัลฟา", "ยากลุ่ม NSAIDs", "อาหารทะเล", "ถั่ว"];
+/** quick cross-check of today's answers against the birth element */
+const EL_SIGNS: Record<Element, RegExp> = {
+  ดิน: /ปวด|เมื่อย|ข้อ|เข่า|อ้วน|ไขมัน|ท้องอืด/,
+  น้ำ: /บวม|หนัก|เย็น|หอบหืด|ภูมิแพ้|น้ำมูก/,
+  ลม: /ชา|เวียน|ตามเส้น|นอนไม่หลับ|เครียด|คอ|บ่า|หลัง|เอว|ไมเกรน/,
+  ไฟ: /ร้อน|ผื่น|ศีรษะ|ความดัน|อักเสบ/,
+};
+const EL_PRESSURE: Record<Element, CounterScreening["pressure"][]> = { ดิน: ["ปานกลาง", "หนัก"], น้ำ: ["ปานกลาง"], ลม: ["เบา", "ปานกลาง"], ไฟ: ["เบา", "ปานกลาง"] };
+function elementNotes(el: Element, items: string[], pressure?: CounterScreening["pressure"]) {
+  const out: string[] = [];
+  const hit = items.filter((x) => EL_SIGNS[el].test(x));
+  if (hit.length) out.push(`${hit.slice(0, 3).join(", ")} สอดคล้องกับธาตุ${el}ที่มักเสียสมดุล`);
+  if (pressure && !EL_PRESSURE[el].includes(pressure)) out.push(`ต้องการแรงนวด${pressure} แต่ธาตุ${el}เหมาะกับแรง${EL_PRESSURE[el].join("–")}`);
+  else if (pressure) out.push(`แรงนวด${pressure}เหมาะกับธาตุ${el}`);
+  return out;
+}
 const RELATIONS = ["บิดา", "มารดา", "สามี", "ภรรยา", "บุตร", "พี่", "น้อง", "ญาติ", "เพื่อน", "ผู้ดูแล", "อื่น ๆ"];
 
 type Filter = "all" | "course" | "low" | "week";
@@ -930,10 +948,11 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                     <b className="is-txt">{screening?.pressure ?? "—"}</b>
                   </div>
                 </div>
-                {(scr.painAreas.length > 0 || scr.avoidAreas.length > 0) && (
+                {(
                   <section className="sm-card sm-body">
                     <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} />
                     <div className="sm-body__lists">
+                      {scr.painAreas.length === 0 && scr.avoidAreas.length === 0 && <p className="sm-body__none">ไม่ได้ระบุจุดที่ปวดหรือบริเวณห้ามนวด</p>}
                       {scr.painAreas.length > 0 && (
                         <div>
                           <small>จุดที่ปวด</small>
@@ -963,6 +982,57 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 )}
               </>
             )}
+            {(() => {
+              const month = f.dob && isFullDate(f.dob) ? Number(f.dob.slice(5, 7)) : 0;
+              if (!month)
+                return (
+                  <section className="sm-el is-empty">
+                    <b>วิเคราะห์ธาตุเจ้าเรือน</b>
+                    <small>ระบุวันเกิดเพื่อดูธาตุเจ้าเรือนและแนวทางการนวด</small>
+                  </section>
+                );
+              const el = birthElement(month);
+              const info = ELEMENT_INFO[el];
+              const notes = elementNotes(el, [...splitList(f.complaint), ...splitList(f.conditions)], skipScr && !screening ? undefined : scr.pressure);
+              return (
+                <section className="sm-el" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
+                  <div className="sm-el__head">
+                    <span className="sm-el__badge">
+                      <ElementIcon element={el} size={26} strokeWidth={2} />
+                    </span>
+                    <div>
+                      <small>ธาตุเจ้าเรือน · เกิดเดือน{TH_MONTH[month - 1]}</small>
+                      <b>ธาตุ{el}</b>
+                      <p>{info.trait}</p>
+                    </div>
+                  </div>
+                  {notes.length > 0 && (
+                    <ul className="sm-el__notes">
+                      {notes.map((n) => (
+                        <li key={n}>
+                          <Sparkles size={13} />
+                          {n}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <dl className="sm-el__kv">
+                    <div>
+                      <dt>มักพบ</dt>
+                      <dd>{info.risk}</dd>
+                    </div>
+                    <div>
+                      <dt>แนวทางนวด</dt>
+                      <dd>{info.care}</dd>
+                    </div>
+                    <div>
+                      <dt>รสยาที่เหมาะ</dt>
+                      <dd>{info.taste}</dd>
+                    </div>
+                  </dl>
+                </section>
+              );
+            })()}
           </div>
         </div>
       )}
