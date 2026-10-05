@@ -5,7 +5,7 @@ import { X, Plus, Sparkles, Hand, Leaf, TriangleAlert, ChevronLeft, Activity, Ba
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
-import { PatientDrawer } from "../../features/PatientDrawer";
+import { PatientDrawer, PatientHealth } from "../../features/PatientDrawer";
 import { PainMini } from "../../features/RecordCards";
 import { creditInfo } from "../../data/domain";
 import type { CreditInfo } from "../../data/domain";
@@ -84,6 +84,9 @@ export default function Patients() {
   const [solo, setSolo] = useState(false);
   // AI treatment plan opens as a third column, like the health box on รับบริการ
   const [aiOpen, setAiOpen] = useState(false);
+  // health box (same as on รับบริการ); only one side panel at a time
+  const [healthOpen, setHealthOpen] = useState(false);
+  const sideOpen = aiOpen || healthOpen;
   // narrow list: photo + name only (same switch as รับบริการ)
   const [slim, setSlim] = useState(() => {
     try {
@@ -171,7 +174,7 @@ export default function Patients() {
                 <motion.button
                   key={r.p.id}
                   className="prow"
-                  title={wide && (slim || (aiOpen && current)) ? r.p.name : undefined}
+                  title={wide && (slim || (sideOpen && current)) ? r.p.name : undefined}
                   aria-pressed={sel}
                   onClick={() => open(r.p.id)}
                   initial={{ opacity: 0, y: 6 }}
@@ -198,7 +201,7 @@ export default function Patients() {
                       {r.pain !== undefined && <PainMini score={r.pain} />}
                     </span>
                   </span>
-                  {(slim || (aiOpen && current)) && (
+                  {(slim || (sideOpen && current)) && (
                     <span className="prow__slim">
                       <b>{r.p.name.replace(/^(นางสาว|นาง|นาย|ด\.ช\.|ด\.ญ\.)\s*/, "").split(/\s+/)[0]}</b>
                       <small>{r.next ? r.next.start : "—"}</small>
@@ -241,9 +244,9 @@ export default function Patients() {
         <Workspace
           storageKey="thaiwell.patients.layout"
           flexMin={380}
-          className={slim || (aiOpen && current) ? "pws is-slim" : "pws"}
+          className={slim || (sideOpen && current) ? "pws is-slim" : "pws"}
           panes={[
-            ...(solo ? [] : [{ id: "list", width: slim || (aiOpen && current) ? 96 : 300, min: slim || (aiOpen && current) ? 96 : undefined, fixed: true, collapsible: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: listPane }]),
+            ...(solo ? [] : [{ id: "list", width: slim || (sideOpen && current) ? 96 : 300, min: slim || (sideOpen && current) ? 96 : undefined, fixed: true, collapsible: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: listPane }]),
             {
               id: "detail",
               // ••• → resize against the AI panel (edge grip), move, or expand to full screen
@@ -255,7 +258,7 @@ export default function Patients() {
               node: (
                 <div className="panel pdetail">
                   <div className="sheet">
-                    <PatientDetail id={current} onAdd={() => navigate("/patients/new")} onEdit={() => current && navigate(`/patients/${current}/edit`)} onAIPlan={() => setAiOpen((v) => !v)} aiOpen={aiOpen && !!current} />
+                    <PatientDetail id={current} onAdd={() => navigate("/patients/new")} onEdit={() => current && navigate(`/patients/${current}/edit`)} onAIPlan={() => (setHealthOpen(false), setAiOpen((v) => !v))} aiOpen={aiOpen && !!current} onHealth={() => (setAiOpen(false), setHealthOpen((v) => !v))} healthOpen={healthOpen && !!current} />
                   </div>
                 </div>
               ),
@@ -282,6 +285,35 @@ export default function Patients() {
                           </div>
                           <div className="vp__hist-body scroll-y scroll-y--light">
                             <AIPlanCard key={current} p={store.patientById(current)} panel />
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+            ...(healthOpen && current
+              ? [
+                  {
+                    id: "health",
+                    width: 340,
+                    min: 280,
+                    max: 520,
+                    collapsible: true,
+                    node: (
+                      <div className="panel vp__hist">
+                        <div className="sheet">
+                          <div className="vp__hist-head">
+                            <div>
+                              <b>ข้อมูลสุขภาพ</b>
+                              <small>{store.patientById(current).name}</small>
+                            </div>
+                            <IconButton label="ปิด" variant="soft" onClick={() => setHealthOpen(false)}>
+                              <X size={18} />
+                            </IconButton>
+                          </div>
+                          <div className="vp__hist-body scroll-y scroll-y--light">
+                            <PatientHealth key={current} id={current} />
                           </div>
                         </div>
                       </div>

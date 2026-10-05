@@ -2,6 +2,7 @@ import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import "../../features/visit.css";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -53,7 +54,7 @@ function PainChart({ points }: { points: { date: string; score: number }[] }) {
   );
 }
 
-export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: string | null; onAdd: () => void; onEdit?: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean }) {
+export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, healthOpen }: { id: string | null; onAdd: () => void; onEdit?: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean; /** opens the health side panel, like on รับบริการ */ onHealth?: () => void; healthOpen?: boolean }) {
   const store = useStore();
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
@@ -118,6 +119,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: str
             </div>
           </div>
           <div className="pd__actions pd__icons">
+            {onHealth && (
+              <button type="button" className={healthOpen ? "vs__hbtn is-on" : "vs__hbtn"} aria-pressed={!!healthOpen} onClick={onHealth} title={healthOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}>
+                <HeartPulse size={16} />
+                <span>ข้อมูลสุขภาพ</span>
+              </button>
+            )}
             {onEdit && (
               <button type="button" className="pd__ib" onClick={onEdit} aria-label="แก้ไขข้อมูล" title="แก้ไขข้อมูล">
                 <PenLine size={18} />
