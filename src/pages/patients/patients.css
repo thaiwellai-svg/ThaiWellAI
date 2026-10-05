@@ -855,3 +855,298 @@
   color: var(--white);
   box-shadow: 0 6px 14px rgba(76, 132, 90, 0.3);
 }
+
+/* ═════ add / edit patient stepper ═════ */
+.ap-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.ap-steps button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--sage-50);
+  text-align: left;
+}
+.ap-steps button:disabled {
+  opacity: 0.6;
+}
+.ap-steps i {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--sage-100);
+  font: 800 12px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.ap-steps span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font: 700 12.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-steps small {
+  font: 500 10px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-steps .is-now button {
+  background: var(--color-brand-tint);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+.ap-steps .is-now i {
+  background: var(--color-brand);
+  box-shadow: none;
+  color: var(--white);
+}
+.ap-steps .is-now span {
+  color: var(--color-text);
+}
+.ap-steps .is-done i {
+  background: var(--color-brand);
+  box-shadow: none;
+  color: var(--white);
+}
+.ap-steps .is-done span {
+  color: var(--color-brand);
+}
+.ap-need {
+  margin-top: 10px;
+  font: 600 11.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-lead {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-info-tint);
+  font: 500 12.5px/1.45 var(--font-sans);
+  color: var(--color-info);
+}
+.ap-vitals {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1.2fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.ap-bp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ap-bp span {
+  font: 700 16px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.ap-seg button {
+  height: 36px;
+  border-radius: 10px;
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-seg button[aria-pressed="true"] {
+  background: var(--white);
+  color: var(--color-brand);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.ap-qs {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.ap-q {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sage-50);
+}
+.ap-q:last-child {
+  border-bottom: 0;
+}
+.ap-q > span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ap-q b {
+  font: 600 13.5px/1.35 var(--font-sans);
+  color: var(--color-text);
+}
+.ap-q small {
+  font: 500 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-yn {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--sage-50);
+}
+.ap-yn button {
+  min-width: 64px;
+  height: 34px;
+  border-radius: 9px;
+  font: 700 12.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-yn button[aria-pressed="true"] {
+  background: var(--white);
+  color: #2f8a52;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.ap-yn .is-yes[aria-pressed="true"] {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+/* summary */
+.ap-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ap-sum__who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--sage-50);
+}
+.ap-sum__who > div {
+  flex: 1;
+  min-width: 0;
+}
+.ap-sum__who b {
+  display: block;
+  font: 800 16px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.ap-sum__who small {
+  font: 500 12px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-sum__who button,
+.ap-sum__h button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.ap-kv {
+  margin: 0;
+  padding: 4px 14px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.ap-kv div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--sage-50);
+}
+.ap-kv div:last-child {
+  border-bottom: 0;
+}
+.ap-kv dt {
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.ap-kv dd {
+  margin: 0;
+  font: 600 12.5px/1.4 var(--font-sans);
+  color: var(--color-text);
+  text-align: right;
+}
+.ap-sum__scr {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.ap-sum__h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ap-sum__h b {
+  font: 700 13.5px/1 var(--font-sans);
+}
+.ap-res {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font: 700 12.5px/1.3 var(--font-sans);
+}
+.ap-res.is-ok {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.ap-res.is-warn {
+  background: #fdf1dc;
+  color: #a2620a;
+}
+.ap-res.is-stop {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+.ap-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ap-flags li {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font: 600 11.5px/1.3 var(--font-sans);
+}
+.ap-flags .is-stop {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+.ap-flags .is-warn {
+  background: #fdf1dc;
+  color: #a2620a;
+}
+.ap-mini,
+.ap-skip {
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}

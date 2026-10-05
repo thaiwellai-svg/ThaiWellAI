@@ -88,6 +88,22 @@ export interface Intake {
   history?: string; // ประวัติการนวด
 }
 
+/** quick safety check at the counter before the first massage */
+export interface CounterScreening {
+  at: string;
+  bpSys?: number;
+  bpDia?: number;
+  pulse?: number;
+  fever: boolean;
+  pregnant: boolean | null;
+  recentSurgery: boolean;
+  numbness: boolean;
+  bloodThinner: boolean;
+  skinProblem: boolean;
+  pressure: "เบา" | "ปานกลาง" | "หนัก";
+  avoid: string;
+}
+
 export interface Course {
   name: string;
   serviceId: string;
@@ -121,6 +137,8 @@ export interface Patient {
   /** drug / massage-oil / herb allergies */
   allergies?: string[];
   emergency?: { name: string; phone: string; relation?: string };
+  /** screening done at the counter on registration (optional) */
+  screening?: CounterScreening;
   /** last AI-drafted treatment plan (needs a Thai traditional doctor's review) */
   aiPlan?: AIPlan;
   /** referral letters / lab reports read by OCR */

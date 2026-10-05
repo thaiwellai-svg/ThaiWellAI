@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -9,7 +9,7 @@ import { PatientDrawer } from "../../features/PatientDrawer";
 import { PainMini } from "../../features/RecordCards";
 import { creditInfo } from "../../data/domain";
 import type { CreditInfo } from "../../data/domain";
-import type { Appointment, Patient } from "../../data/types";
+import type { Appointment, CounterScreening, Patient } from "../../data/types";
 import { addISODays, diffDays, relativeDay, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { patientPhoto } from "../../data/avatars";
 import { PhotoPicker } from "../../features/PhotoPicker";
@@ -18,7 +18,7 @@ import { AIPlanCard } from "../../features/AIPlan";
 import "../visits/visits.css";
 import { FilterMenu } from "../../features/FilterMenu";
 import { Workspace } from "../../features/Workspace";
-import { BirthDateField, ageFrom } from "../../features/BirthDateField";
+import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import "./patients.css";
 
@@ -298,15 +298,41 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     };
   };
   const [f, setF] = useState(empty);
+  const [step, setStep] = useState(0);
+  const emptyScr = { bpSys: "", bpDia: "", pulse: "", fever: false, pregnant: false, recentSurgery: false, numbness: false, bloodThinner: false, skinProblem: false, pressure: "ปานกลาง" as CounterScreening["pressure"], avoid: "" };
+  const [scr, setScr] = useState(emptyScr);
+  const [skipScr, setSkipScr] = useState(false);
   // load the patient when the edit dialog opens
   useEffect(() => {
-    if (open) setF(edit ? fromPatient(edit) : empty);
+    if (!open) return;
+    setF(edit ? fromPatient(edit) : empty);
+    setStep(0);
+    const sc = edit?.screening;
+    setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, avoid: sc.avoid } : emptyScr);
+    setSkipScr(!!edit && !sc);
   }, [open, edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const age = ageFrom(f.dob);
   const cidDigits = f.cid.replace(/\D/g, "");
   const cidOk = !cidDigits || validCitizenId(cidDigits);
   const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && /^[0-9-]{9,12}$/.test(f.phone) && cidOk;
 
+  const screening: CounterScreening | undefined = skipScr
+    ? edit?.screening
+    : {
+        at: new Date().toISOString(),
+        bpSys: Number(scr.bpSys) || undefined,
+        bpDia: Number(scr.bpDia) || undefined,
+        pulse: Number(scr.pulse) || undefined,
+        fever: scr.fever,
+        pregnant: f.gender === "หญิง" ? scr.pregnant : null,
+        recentSurgery: scr.recentSurgery,
+        numbness: scr.numbness,
+        bloodThinner: scr.bloodThinner,
+        skinProblem: scr.skinProblem,
+        pressure: scr.pressure,
+        avoid: scr.avoid.trim(),
+      };
+  const flags = screening ? screeningFlags(screening, store.settings.bpThreshold) : [];
   const submit = () => {
     if (edit) {
       store.dispatch({
@@ -325,6 +351,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           complaint: f.complaint.trim() || edit.complaint,
           conditions: f.conditions.split(",").map((x) => x.trim()).filter(Boolean),
           photo: f.photo || undefined,
+          screening,
         },
       });
       toast({ message: "บันทึกข้อมูลผู้รับบริการแล้ว" });
@@ -354,6 +381,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         painHistory: [],
         registeredOn: todayISO(),
         photo: f.photo || undefined,
+        screening,
       },
     });
     toast({ message: `ลงทะเบียน ${f.title} ${f.first} ${f.last} แล้ว` });
@@ -362,78 +390,242 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     onCreated(id);
   };
 
+  const STEPS = ["ลงทะเบียนข้อมูล", "คัดกรอง", "สรุปข้อมูล"];
+  const yes = (k: keyof typeof scr, label: string, hint?: string) => (
+    <div className="ap-q">
+      <span>
+        <b>{label}</b>
+        {hint && <small>{hint}</small>}
+      </span>
+      <div className="ap-yn">
+        <button type="button" aria-pressed={!scr[k]} onClick={() => setScr({ ...scr, [k]: false })}>
+          ไม่มี
+        </button>
+        <button type="button" className="is-yes" aria-pressed={!!scr[k]} onClick={() => setScr({ ...scr, [k]: true })}>
+          มี
+        </button>
+      </div>
+    </div>
+  );
+  const row = (k: string, v?: string) => (
+    <div>
+      <dt>{k}</dt>
+      <dd>{v || "—"}</dd>
+    </div>
+  );
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
+      className="ap"
       title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
-      subtitle={edit ? `${edit.hn} · การแก้ไขจะบันทึกในประวัติการแก้ไข` : "ผู้ป่วยรายใหม่ต้องพบแพทย์แผนไทยเพื่อประเมินและวางแผนการรักษาก่อน"}
+      subtitle={edit ? `${edit.hn} · การแก้ไขจะบันทึกในประวัติการแก้ไข` : "ลงทะเบียน 3 ขั้นตอน · ผู้ป่วยรายใหม่ต้องพบแพทย์แผนไทยก่อนเริ่มแผนการรักษา"}
       footer={
         <>
-          <Button variant="outline" size="lg" fill onClick={onClose}>
-            ยกเลิก
+          <Button variant="outline" size="lg" fill onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
+            {step === 0 ? "ยกเลิก" : "ย้อนกลับ"}
           </Button>
-          <Button size="lg" fill disabled={!valid} onClick={submit}>
-            บันทึก
-          </Button>
+          {step === 1 && (
+            <Button
+              variant="outline"
+              size="lg"
+              fill
+              onClick={() => {
+                setSkipScr(true);
+                setStep(2);
+              }}
+            >
+              ข้ามการคัดกรอง
+            </Button>
+          )}
+          {step < 2 ? (
+            <Button
+              size="lg"
+              fill
+              disabled={step === 0 && !valid}
+              onClick={() => {
+                if (step === 1) setSkipScr(false);
+                setStep(step + 1);
+              }}
+            >
+              ถัดไป
+            </Button>
+          ) : (
+            <Button size="lg" fill disabled={!valid} onClick={submit}>
+              บันทึก
+            </Button>
+          )}
         </>
       }
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-        <PhotoPicker name={`${f.first || "?"}`} src={f.photo || undefined} size="xl" onPick={(photo) => setF({ ...f, photo })} />
-        <p className="tw-meta" style={{ lineHeight: 1.5, whiteSpace: "normal" }}>
-          แตะเพื่อถ่ายรูปด้วยกล้อง iPad หรือเลือกจากคลังภาพ
-          <br />
-          ถ่ายเฉพาะเมื่อผู้ป่วยยินยอม · รูปใช้ยืนยันตัวตนในคลินิกเท่านั้น
-        </p>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr", gap: 12 }}>
-        <Field label="คำนำหน้า">
-          <Select
-            value={f.title}
-            onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}
-          >
-            <option>นาย</option>
-            <option>นาง</option>
-            <option>นางสาว</option>
-          </Select>
-        </Field>
-        <Field label="ชื่อ">
-          <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} autoFocus />
-        </Field>
-        <Field label="นามสกุล">
-          <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
-        </Field>
-        <Field label="วัน เดือน ปีเกิด" className="span-2" hint={age !== null ? `อายุ ${age} ปี · ใช้คำนวณธาตุเจ้าเรือน` : "ใช้คำนวณอายุและธาตุเจ้าเรือน"}>
-          <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
-        </Field>
-        <Field label="เบอร์โทรศัพท์" hint="แจ้งเตือนนัดผ่านแอป">
-          <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-        </Field>
-        <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? "ไม่บังคับ · 13 หลัก" : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
-          <Input inputMode="numeric" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
-        </Field>
-      </div>
-      <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-        <Field label="อาการสำคัญ">
-          <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
-        </Field>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <Field label="โรคประจำตัว" hint="คั่นด้วยเครื่องหมายจุลภาค">
-            <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
-          </Field>
-          <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" hint="สำคัญ · แสดงเตือนตอนรับบริการ">
-            <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
+      <ol className="ap-steps">
+        {STEPS.map((t, i) => (
+          <li key={t} className={i < step ? "is-done" : i === step ? "is-now" : undefined}>
+            <button type="button" disabled={i > step && !valid} onClick={() => setStep(i)}>
+              <i>{i < step ? <Check size={13} strokeWidth={3} /> : i + 1}</i>
+              <span>
+                {t}
+                {i === 1 && <small>ข้ามได้</small>}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      {step === 0 && (
+        <div className="ap-pane">
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+            <PhotoPicker name={`${f.first || "?"}`} src={f.photo || undefined} size="xl" onPick={(photo) => setF({ ...f, photo })} />
+            <p className="tw-meta" style={{ lineHeight: 1.5, whiteSpace: "normal" }}>
+              แตะเพื่อถ่ายรูปด้วยกล้อง iPad หรือเลือกจากคลังภาพ
+              <br />
+              ถ่ายเฉพาะเมื่อผู้ป่วยยินยอม · รูปใช้ยืนยันตัวตนในคลินิกเท่านั้น
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr", gap: 12 }}>
+            <Field label="คำนำหน้า">
+              <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
+                <option>นาย</option>
+                <option>นาง</option>
+                <option>นางสาว</option>
+              </Select>
+            </Field>
+            <Field label="ชื่อ *">
+              <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} autoFocus />
+            </Field>
+            <Field label="นามสกุล *">
+              <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
+            </Field>
+            <Field label="วัน เดือน ปีเกิด *" className="span-2" hint={age !== null ? `อายุ ${age} ปี · ใช้คำนวณธาตุเจ้าเรือน` : "ใช้คำนวณอายุและธาตุเจ้าเรือน"}>
+              <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
+            </Field>
+            <Field label="เบอร์โทรศัพท์ *" hint="แจ้งเตือนนัดผ่านแอป">
+              <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+            </Field>
+            <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? "ไม่บังคับ · 13 หลัก" : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
+              <Input inputMode="numeric" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
+            </Field>
+          </div>
+          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+            <Field label="อาการสำคัญ">
+              <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
+            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <Field label="โรคประจำตัว" hint="คั่นด้วยเครื่องหมายจุลภาค">
+                <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
+              </Field>
+              <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" hint="แสดงเตือนตอนรับบริการ">
+                <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
+              </Field>
+            </div>
+            <Field label="ผู้ติดต่อฉุกเฉิน" hint="ไม่บังคับ">
+              <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
+                <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
+                <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
+                <Input value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} placeholder="เกี่ยวข้องเป็น" />
+              </div>
+            </Field>
+          </div>
+          {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="ap-pane">
+          <p className="ap-lead">คัดกรองความปลอดภัยก่อนนวด · ถ้ายังไม่พร้อม กด “ข้ามการคัดกรอง” แล้วทำทีหลังได้</p>
+          <div className="ap-vitals">
+            <Field label="ความดัน (mmHg)">
+              <div className="ap-bp">
+                <Input inputMode="numeric" placeholder="120" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                <span>/</span>
+                <Input inputMode="numeric" placeholder="80" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+              </div>
+            </Field>
+            <Field label="ชีพจร (ครั้ง/นาที)">
+              <Input inputMode="numeric" placeholder="72" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+            </Field>
+            <Field label="แรงนวดที่ต้องการ">
+              <div className="ap-seg">
+                {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
+                  <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
+                    {x}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
+          <div className="ap-qs">
+            {yes("fever", "มีไข้ หรือการติดเชื้อ", "ห้ามนวด")}
+            {yes("recentSurgery", "ผ่าตัดภายใน 30 วัน", `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วันหลังผ่าตัด`)}
+            {yes("bloodThinner", "ใช้ยาละลายลิ่มเลือด / ต้านเกล็ดเลือด", "ลดแรงนวด")}
+            {yes("numbness", "อาการชา หรืออ่อนแรง")}
+            {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
+            {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
+          </div>
+          <Field label="บริเวณที่ไม่ต้องการให้นวด" hint="ไม่บังคับ">
+            <Input value={scr.avoid} onChange={(e) => setScr({ ...scr, avoid: e.target.value })} placeholder="เช่น เอวส่วนล่าง, หน้าท้อง" />
           </Field>
         </div>
-        <Field label="ผู้ติดต่อฉุกเฉิน" hint="ไม่บังคับ">
-          <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
-            <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
-            <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
-            <Input value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} placeholder="เกี่ยวข้องเป็น" />
+      )}
+
+      {step === 2 && (
+        <div className="ap-pane ap-sum">
+          <div className="ap-sum__who">
+            <Avatar name={f.first || "?"} src={f.photo || undefined} size="lg" shape="squircle" />
+            <div>
+              <b>
+                {f.title} {f.first} {f.last}
+              </b>
+              <small>
+                {f.gender} · {age ?? "—"} ปี{f.dob && isFullDate(f.dob) ? ` · เกิด ${thaiBirth(f.dob)}` : ""}
+              </small>
+            </div>
+            <button type="button" onClick={() => setStep(0)}>
+              แก้ไข
+            </button>
           </div>
-        </Field>
-      </div>
+          <dl className="ap-kv">
+            {row("เบอร์โทร", f.phone)}
+            {row("เลขบัตรประชาชน", f.cid)}
+            {row("อาการสำคัญ", f.complaint)}
+            {row("โรคประจำตัว", f.conditions)}
+            {row("การแพ้", f.allergies)}
+            {row("ผู้ติดต่อฉุกเฉิน", f.ecName ? `${f.ecName}${f.ecRel ? ` (${f.ecRel})` : ""} · ${f.ecPhone}` : "")}
+          </dl>
+          <div className="ap-sum__scr">
+            <div className="ap-sum__h">
+              <b>ผลคัดกรอง</b>
+              <button type="button" onClick={() => setStep(1)}>
+                {skipScr ? "คัดกรองตอนนี้" : "แก้ไข"}
+              </button>
+            </div>
+            {skipScr && !screening ? (
+              <p className="ap-skip">ข้ามการคัดกรอง · คัดกรองได้ตอนผู้ป่วยมารับบริการ</p>
+            ) : (
+              <>
+                <p className={flags.some((x) => x.level === "stop") ? "ap-res is-stop" : flags.length ? "ap-res is-warn" : "ap-res is-ok"}>
+                  {flags.length ? <ShieldAlert size={15} /> : <ShieldCheck size={15} />}
+                  {flags.length ? (flags.some((x) => x.level === "stop") ? "พบข้อห้าม · ต้องให้แพทย์ประเมินก่อนนวด" : `ข้อควรระวัง ${flags.length} ข้อ`) : "ผ่านการคัดกรอง"}
+                </p>
+                {flags.length > 0 && (
+                  <ul className="ap-flags">
+                    {flags.map((x) => (
+                      <li key={x.label} className={`is-${x.level}`}>
+                        {x.label}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="ap-mini">
+                  ความดัน {screening?.bpSys ? `${screening.bpSys}/${screening.bpDia ?? "—"}` : "—"} · ชีพจร {screening?.pulse ?? "—"} · แรงนวด {screening?.pressure}
+                  {screening?.avoid ? ` · ไม่นวด ${screening.avoid}` : ""}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </Dialog>
   );
 }
@@ -448,4 +640,17 @@ function validCitizenId(d: string) {
 function formatCid(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 13);
   return [d.slice(0, 1), d.slice(1, 5), d.slice(5, 10), d.slice(10, 12), d.slice(12)].filter(Boolean).join("-");
+}
+
+/** flags from the counter screening (stop = do not massage today) */
+function screeningFlags(s: CounterScreening, bpThreshold = 160): { label: string; level: "stop" | "warn" }[] {
+  const out: { label: string; level: "stop" | "warn" }[] = [];
+  if (s.fever) out.push({ label: "มีไข้ / การติดเชื้อ", level: "stop" });
+  if (s.bpSys && s.bpSys >= bpThreshold) out.push({ label: `ความดันสูง ${s.bpSys}/${s.bpDia ?? "—"}`, level: "stop" });
+  if (s.recentSurgery) out.push({ label: "ผ่าตัดภายใน 30 วัน", level: "stop" });
+  if (s.pregnant) out.push({ label: "ตั้งครรภ์", level: "warn" });
+  if (s.bloodThinner) out.push({ label: "ใช้ยาละลายลิ่มเลือด · ลดแรงนวด", level: "warn" });
+  if (s.numbness) out.push({ label: "มีอาการชา / อ่อนแรง", level: "warn" });
+  if (s.skinProblem) out.push({ label: "มีแผล / ผื่นบริเวณที่นวด", level: "warn" });
+  return out;
 }
