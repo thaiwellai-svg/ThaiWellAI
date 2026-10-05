@@ -125,7 +125,7 @@ npx vite preview --host 0.0.0.0 --port 5188
 | Frontend | React 19, TypeScript, Vite |
 | UI / Motion | CSS design system ของโปรเจกต์ (`src/design-system/`), framer-motion, Lucide icons |
 | 3D | three.js, @react-three/fiber |
-| AI | Gemma (แชต / แผนการรักษา / OCR), VoxCPM (เสียงเรียกคิว) |
+| AI | Gemma (ผู้ช่วย AI / แผนการรักษา), บริการ OCR (อ่านเอกสารที่แนบ), VoxCPM (เสียงเรียกคิว) |
 | ข้อมูล | `useReducer` + localStorage (ยังไม่มีเซิร์ฟเวอร์) |
 
 ## โครงสร้างโปรเจกต์
