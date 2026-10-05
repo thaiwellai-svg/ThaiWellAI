@@ -519,8 +519,8 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               <Field label="นามสกุล *">
                 <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
               </Field>
-              <Field label="เพศ *" className="span-3">
-                <div className="ap-gender">
+              <Field label="เพศ *">
+                <div className="ap-seg ap-seg--2 ap-gender">
                   {(["ชาย", "หญิง"] as const).map((g) => (
                     <button
                       key={g}
@@ -529,13 +529,13 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                       aria-pressed={f.gender === g}
                       onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
                     >
-                      <i>{g === "ชาย" ? <Mars size={15} strokeWidth={2.4} /> : <Venus size={15} strokeWidth={2.4} />}</i>
+                      {g === "ชาย" ? <Mars size={13} strokeWidth={2.4} /> : <Venus size={13} strokeWidth={2.4} />}
                       {g}
                     </button>
                   ))}
                 </div>
               </Field>
-              <Field label="วัน เดือน ปีเกิด *" className="span-3">
+              <Field label="วัน เดือน ปีเกิด *" className="span-2">
                 <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
               </Field>
               <Field label="ที่อยู่ตามบัตร" className="span-3">
