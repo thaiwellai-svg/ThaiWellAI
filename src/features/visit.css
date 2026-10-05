@@ -1462,3 +1462,28 @@
   background: #fde8e4;
   color: var(--color-danger);
 }
+/* health-info: plain round icon button, same as the call button */
+.vs__hbtn,
+.has-history .vs__hbtn {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.vs__hbtn:hover {
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+  transform: none;
+}
+.vs__hbtn svg {
+  animation: none;
+}
+.vs__hbtn.is-on {
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}

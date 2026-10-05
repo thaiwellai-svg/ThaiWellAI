@@ -259,10 +259,10 @@ export function AppointmentDrawer({
                 className={clsx("vs__hbtn", onHistory && historyOpen && "is-on")}
                 aria-pressed={!!(onHistory && historyOpen)}
                 onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
+                aria-label="ข้อมูลสุขภาพ"
                 title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
               >
                 <HeartPulse size={16} />
-                <span>ข้อมูลสุขภาพ</span>
               </button>
             )}
           </section>
