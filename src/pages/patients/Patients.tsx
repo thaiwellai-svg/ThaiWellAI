@@ -24,6 +24,8 @@ import { ListModeMenu } from "../../features/ListModeMenu";
 import idFace from "../../assets/cardreader/id_face.png";
 import "./patients.css";
 
+const RELATIONS = ["บิดา", "มารดา", "สามี", "ภรรยา", "บุตร", "พี่", "น้อง", "ญาติ", "เพื่อน", "ผู้ดูแล", "อื่น ๆ"];
+
 type Filter = "all" | "course" | "low" | "week";
 
 interface Row {
@@ -583,7 +585,12 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
                   <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
                   <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
-                  <Input value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} placeholder="เกี่ยวข้องเป็น" />
+                  <Select value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} aria-label="ความเกี่ยวข้อง">
+                    <option value="">เกี่ยวข้องเป็น</option>
+                    {(RELATIONS.includes(f.ecRel) || !f.ecRel ? RELATIONS : [f.ecRel, ...RELATIONS]).map((r) => (
+                      <option key={r}>{r}</option>
+                    ))}
+                  </Select>
                 </div>
               </Field>
             </div>
