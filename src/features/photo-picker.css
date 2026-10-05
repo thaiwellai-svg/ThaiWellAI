@@ -1,0 +1,32 @@
+.photo-pick {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 30%;
+}
+.photo-pick__badge {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--white);
+  box-shadow:
+    0 0 0 2.5px var(--white),
+    0 3px 8px rgba(0, 0, 0, 0.2);
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+.photo-pick:hover .photo-pick__badge {
+  transform: scale(1.1);
+}
+.photo-pick__badge[data-busy] {
+  animation: photo-busy 0.9s linear infinite;
+}
+@keyframes photo-busy {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,157 @@
+/* ── Tighter density: less padding inside boxes, smaller gaps, shorter line spacing.
+   `html` prefix wins over page CSS that lazy-loads later with the same specificity. ── */
+
+/* visit record (รับบริการ) */
+html .vsp__head {
+  padding: 14px 18px;
+  gap: 12px;
+}
+html .vsp__body {
+  padding-top: 14px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+html .vsp__body .vs {
+  gap: 12px;
+}
+html .vs__summary {
+  padding: 10px 12px;
+  gap: 12px;
+}
+html .vs__panel {
+  padding: 14px;
+  gap: 10px;
+}
+html .vs__ctx {
+  gap: 6px;
+}
+html .vs__log li {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+html .vs__health {
+  padding: 10px;
+}
+
+/* treatment record */
+html .rs {
+  padding: 12px 0;
+  gap: 8px;
+}
+html .rs-stack > .rs:first-child {
+  padding-top: 4px;
+}
+html .cr__item {
+  padding: 9px 10px;
+}
+html .cr__item-main {
+  gap: 4px;
+}
+html .cr__proc {
+  padding: 10px 12px 12px;
+  gap: 8px;
+}
+html .cr__add {
+  gap: 6px;
+}
+html .bm {
+  padding: 8px 6px 8px;
+  gap: 6px;
+}
+
+/* health box + panel */
+html .vp__hist-head {
+  padding: 12px 12px 10px 16px;
+}
+html .vp__hist-body {
+  padding-top: 12px !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  gap: 12px;
+}
+html .hx {
+  gap: 6px;
+}
+html .hx-label {
+  margin-top: 8px;
+}
+html .hx-card {
+  padding: 12px;
+  gap: 8px;
+}
+html .hx-hero {
+  padding: 14px;
+  gap: 10px;
+}
+html .hx-complaint p {
+  line-height: 1.45;
+}
+html .hx-next {
+  gap: 5px;
+}
+html .hx-next__item {
+  padding: 8px 10px 8px 8px;
+}
+html .hx-hist li {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* pre-visit assessment */
+html .ik {
+  padding: 12px;
+  gap: 9px;
+}
+html .ik--compact,
+html .ph .ik {
+  padding: 12px;
+  gap: 8px;
+}
+html .ik__vitals > div {
+  padding: 8px 9px;
+}
+html .ik__rows {
+  padding: 2px 12px;
+}
+html .ik__rows > div {
+  padding: 7px 0;
+}
+html .ik__rows dd {
+  line-height: 1.35;
+}
+
+/* requests detail */
+html .rq__card {
+  padding: 12px 14px;
+  gap: 8px;
+}
+html .rq__grid {
+  gap: 10px;
+}
+
+/* patients detail */
+html .pd {
+  padding: 18px 20px 22px;
+}
+html .pd__hero {
+  gap: 14px;
+}
+html .pd__stat {
+  padding: 10px 12px;
+}
+html .pd__grid {
+  gap: 10px;
+}
+html .pd__card {
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+/* settings */
+html .st-head {
+  padding: 14px 18px;
+  gap: 12px;
+}
+html .st-body {
+  padding: 16px 18px;
+}

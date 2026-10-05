@@ -1,0 +1,402 @@
+.b3 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 18px;
+  background: radial-gradient(90% 70% at 50% 35%, #ffffff 0%, #eef3f0 70%, #e6ede9 100%);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.b3__stage {
+  position: relative;
+  height: 500px;
+  border-radius: 14px;
+  overflow: hidden;
+  touch-action: none;
+}
+.b3--compact .b3__stage {
+  height: 440px;
+}
+.b3__stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.b3__stage canvas:active {
+  cursor: grabbing;
+}
+.b3__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.b3__hint {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.8);
+  font: 500 10.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.b3__tip {
+  position: absolute;
+  z-index: 2;
+  translate: -50% calc(-100% - 12px);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(30, 36, 32, 0.9);
+  font: 700 12px/1 var(--font-sans);
+  color: var(--white);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: b3-tip 1.6s ease forwards;
+}
+.b3__tip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  background: inherit;
+  rotate: 45deg;
+}
+@keyframes b3-tip {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.b3__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.b3__views {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: rgba(47, 64, 52, 0.06);
+}
+.b3__views button {
+  height: 28px;
+  border-radius: var(--radius-pill);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.b3__views button[aria-pressed="true"] {
+  background: var(--white);
+  color: var(--color-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.b3__reset {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  color: var(--color-text);
+}
+.b3__legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font: 500 10.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.b3__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.b3__scale i {
+  width: 44px;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f6d35b, #f08a2c, #e2452f);
+}
+.b3__no {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7c6cd4;
+}
+/* quiet label under the arrow ring */
+.b3__spin {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  translate: -50% 0;
+  font: 500 10.5px/1 var(--font-sans);
+  color: rgba(47, 64, 52, 0.5);
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* no box around the figure — it stands directly on the page */
+.b3 {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+.b3__stage {
+  border-radius: 0;
+  background: none !important;
+}
+/* reset sits in the top-right corner of the stage */
+.b3__stage .b3__reset {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 0 0 1px var(--sage-100);
+}
+/* pain + element badges on the stage */
+.b3__badges {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+.b3__pain,
+.b3__el {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 5px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07), inset 0 0 0 1px rgba(47, 64, 52, 0.06);
+}
+.b3__pain > span,
+.b3__el > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.b3__badges small {
+  font: 500 9.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.b3__badges strong {
+  font: 800 13px/1 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.b3__badges strong em {
+  margin-left: 1px;
+  font: 600 10px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+/* mini ring gauge */
+.b3__pain i {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: conic-gradient(var(--pc) var(--pv), rgba(47, 64, 52, 0.1) 0);
+}
+.b3__pain i b {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  font: 800 11px/1 var(--font-sans);
+  color: var(--pc);
+}
+.b3__pain strong {
+  color: var(--pc);
+}
+.b3__el i {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ec);
+  color: var(--white);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--ec) 40%, transparent);
+}
+.b3__el strong {
+  color: var(--ec);
+}
+/* pain gauge */
+.b3__gauge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.b3__gauge svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.b3__gauge b {
+  position: relative;
+  font: 800 14px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.b3__gauge-arc {
+  animation: b3-gauge 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes b3-gauge {
+  from {
+    stroke-dashoffset: var(--c);
+  }
+}
+.b3__pain {
+  padding-left: 4px;
+}
+.b3__pain strong {
+  font-size: 12.5px;
+}
+.b3__pain > .b3__gauge {
+  display: grid;
+  place-items: center;
+}
+/* badges sit in a row above the figure — never over it */
+.b3__badges {
+  position: static;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.b3__pain,
+.b3__el {
+  padding: 4px 12px 4px 4px;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background: var(--white);
+}
+.b3__pain {
+  padding-left: 4px;
+}
+.b3__gauge b {
+  font-size: 11.5px;
+}
+/* back on the stage, stacked top-left and compact so they stay clear of the body */
+.b3__stage .b3__badges {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.b3__stage .b3__pain,
+.b3__stage .b3__el {
+  padding: 3px 10px 3px 3px;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.9);
+}
+.b3__stage .b3__badges small {
+  font-size: 9px;
+}
+.b3__stage .b3__badges strong {
+  font-size: 12px;
+}
+.b3__badges .b3__trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  font: 700 9.5px/1.2 var(--font-sans);
+  font-style: normal;
+  white-space: nowrap;
+}
+.b3__trend.is-good {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.b3__trend.is-bad {
+  background: #fdf1dc;
+  color: #a2620a;
+}
+.b3__stage .b3__pain {
+  border-radius: 18px;
+}
+/* split: pain top-left, element top-right (reset tucked under it) */
+.b3__stage .b3__badges {
+  inset: 6px 6px auto 6px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.b3__stage .b3__el {
+  margin-left: auto;
+  flex-direction: row-reverse;
+  padding: 3px 3px 3px 10px;
+  text-align: right;
+}
+.b3__stage .b3__el > span {
+  align-items: flex-end;
+}
+.b3__stage.has-el .b3__reset {
+  top: 48px;
+}
+/* element badge in the bottom-right corner; reset back to the top-right */
+.b3__stage .b3__badges {
+  inset: 6px;
+}
+.b3__stage .b3__el {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+.b3__stage.has-el .b3__reset {
+  top: 6px;
+}
+/* icon on the left, text left-aligned */
+.b3__stage .b3__el {
+  flex-direction: row;
+  padding: 3px 10px 3px 3px;
+  text-align: left;
+}
+.b3__stage .b3__el > span {
+  align-items: flex-start;
+}
+/* lifted above the ring + label, beside the legs */
+.b3__stage .b3__el {
+  bottom: 22%;
+}

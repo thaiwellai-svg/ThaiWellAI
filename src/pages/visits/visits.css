@@ -1,0 +1,328 @@
+.vp__side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.vp__list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: -12px -16px calc(-1 * var(--space-4));
+  padding: 12px 16px calc(var(--dock-height) + 8px) !important;
+}
+/* rows mirror the patients list (.prow) so every list column reads the same */
+.vp__row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  text-align: left;
+  isolation: isolate;
+  flex-shrink: 0;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.vp__row:hover {
+  background: var(--white);
+}
+.vp__row .tw-avatar {
+  flex: 0 0 auto;
+}
+.vp__sel {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--white);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16), inset 0 0 0 2px var(--color-brand);
+}
+.vp__who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.vp__who b {
+  font: 700 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vp__who small {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vp__chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+}
+.vp__q {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.vp__q b {
+  font: 700 12px/1.2 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.vp__q small {
+  font: 400 10px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vp__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  font: 600 11px/1 var(--font-sans);
+  font-style: normal;
+  background: var(--sage-50);
+  color: var(--color-text-muted);
+}
+.vp__tag.is-warning {
+  background: #fdf1dc;
+  color: #a2620a;
+}
+.vp__tag.is-info {
+  background: var(--color-info-tint);
+  color: var(--color-info);
+}
+.vp__tag.is-success {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.vp__tag.is-danger {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+.vp__dx {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  font: 600 11px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.vp__pane {
+  display: flex;
+  flex-direction: column;
+}
+.vp__none {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+/* history opens as its own box beside the record */
+.appt.vp.has-history {
+  grid-template-columns: 300px minmax(0, 1fr) 340px;
+}
+.vp__hist {
+  min-width: 0;
+  margin-bottom: calc(-1 * var(--space-4) + 0px);
+}
+.vp__hist .hp {
+  width: 100%;
+}
+.vp__hist .sheet {
+  overflow: hidden;
+}
+.vp__hist .sheet {
+  display: flex;
+  flex-direction: column;
+}
+.vp__hist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px 20px;
+  border-bottom: 1px solid var(--sage-100);
+}
+.vp__hist-head b {
+  display: block;
+  font: 800 15px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.vp__hist-head small {
+  font: 400 12px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vp__hist-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px calc(var(--dock-height) + 8px) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+/* with the health box open: narrower list, record becomes one column */
+.appt.vp.has-history {
+  grid-template-columns: 250px minmax(0, 1fr) 320px;
+}
+.has-history .vsp__body .vs {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.has-history .vsp__body .vs > * {
+  grid-column: 1 !important;
+  grid-row: auto !important;
+}
+/* the health box already shows these */
+.has-history .vsp__body .vs > .credits,
+.has-history .vsp__body .vs > .vs__ctx {
+  display: none;
+}
+/* buttons stay on the name row even with the health box open */
+
+
+/* ── smooth open/close of the health box ── */
+.appt.vp {
+  column-gap: 0;
+  grid-template-columns: 300px minmax(0, 1fr) 0px;
+  transition: grid-template-columns 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.appt.vp.has-history {
+  grid-template-columns: 250px minmax(0, 1fr) 336px;
+}
+.vp__side {
+  margin-right: 16px;
+}
+.vp__histcell {
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.vp__hist {
+  width: 320px;
+  height: 100%;
+  margin-left: 16px;
+}
+/* record content eases between 2 and 1 columns instead of jumping */
+.vsp__body .vs > * {
+  transition: opacity 0.3s ease;
+}
+.has-history .vsp__body .vs {
+  animation: vp-reflow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.vp:not(.has-history) .vsp__body .vs {
+  animation: vp-reflow2 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes vp-reflow {
+  from {
+    opacity: 0.4;
+    transform: translateX(-10px);
+  }
+}
+@keyframes vp-reflow2 {
+  from {
+    opacity: 0.4;
+    transform: translateX(10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .appt.vp,
+  .vsp__body .vs {
+    transition: none;
+    animation: none;
+  }
+}
+/* workspace layout overrides the old fixed grid */
+.vp.ws .vp__side {
+  margin-right: 0;
+}
+.vp.ws .vp__hist {
+  width: 100%;
+  margin: 0 0 calc(-1 * var(--space-4));
+  min-width: 260px;
+}
+.vp.ws .panel.appt__main {
+  height: 100%;
+}
+.vp.ws .vp__list {
+  margin-bottom: calc(-1 * var(--space-4));
+}
+/* chips stay on one line at the 300px list width */
+.vp__chips {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+.vp__tag {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  line-height: 22px;
+}
+.vp__dx {
+  flex: 0 0 22px;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+}
+
+/* ── slim list: photo + first name only ── */
+.ws__pane.is-locked {
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+}
+.vp__side.is-slim .vp__list {
+  gap: 6px;
+}
+.vp__side.is-slim .vp__row {
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 4px 7px;
+  text-align: center;
+}
+.vp__side.is-slim .vp__who,
+.vp__side.is-slim .vp__q {
+  display: none;
+}
+.vp__slim {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 100%;
+  min-width: 0;
+}
+.vp__slim b {
+  max-width: 100%;
+  font: 700 11.5px/1.25 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vp__slim small {
+  font: 700 10px/1.2 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.vp-slim-btn.is-on {
+  background: var(--color-brand);
+  color: var(--white);
+}
+/* room above the first row for the ••• handle */
+.vp.ws .vp__list {
+  padding-top: 24px !important;
+}

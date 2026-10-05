@@ -1,0 +1,320 @@
+/* ── payment slip: printed down out of a slot ── */
+.rcx {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 60);
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: rgba(20, 16, 12, 0.5);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  overflow-y: auto;
+}
+.rcx__stage {
+  position: relative;
+  width: min(380px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rcx__slot {
+  position: relative;
+  z-index: 2;
+  width: calc(100% + 28px);
+  height: 46px;
+  border-radius: 18px 18px 12px 12px;
+  background: linear-gradient(180deg, #3a3631, #24211d);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.rcx__mouth {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 8px;
+  height: 6px;
+  border-radius: 3px;
+  background: #0d0c0a;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8);
+}
+.rcx__led {
+  position: absolute;
+  left: 18px;
+  top: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6ee08f;
+  box-shadow: 0 0 8px #6ee08f;
+  animation: rcx-blink 1.1s ease-in-out 3;
+}
+@keyframes rcx-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.rcx__close {
+  position: absolute;
+  right: 10px;
+  top: 7px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.75);
+}
+.rcx__close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+/* the paper emerges from under the slot */
+.rcx__clip {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: -14px;
+  padding: 0 0 18px;
+  overflow: hidden;
+}
+.rcx__paper {
+  position: relative;
+  padding: 30px 24px 22px;
+  background:
+    radial-gradient(120% 60% at 50% 0%, rgba(0, 0, 0, 0.06), transparent 40%),
+    #fffdf7;
+  color: #2a2620;
+  font: 400 12px/1.5 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  /* zig-zag bottom edge */
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 10px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 10px) no-repeat, conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 16px 10px repeat-x;
+}
+.rcx__stamp {
+  position: absolute;
+  top: 168px;
+  right: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+  font: 800 12px/1 var(--font-sans);
+  letter-spacing: 0.04em;
+}
+.rcx__stamp.is-paid {
+  color: #2f8a52;
+  background: rgba(47, 138, 82, 0.06);
+}
+.rcx__stamp.is-due {
+  color: #c2482b;
+}
+.rcx__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.rcx__logo {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  background: #2f5f3f;
+  color: #f3dcae;
+}
+.rcx__head b {
+  font: 700 14px/1.3 var(--font-sans);
+}
+.rcx__head small {
+  font: 600 10px/1.3 var(--font-sans);
+  letter-spacing: 0.12em;
+  color: #8a8376;
+}
+.rcx__amount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 18px 0 6px;
+}
+.rcx__amount small {
+  font: 600 11px/1 var(--font-sans);
+  color: #8a8376;
+}
+.rcx__amount b {
+  font: 800 38px/1 var(--font-sans);
+  letter-spacing: -0.02em;
+}
+.rcx__amount b span {
+  font: 600 14px/1 var(--font-sans);
+  color: #8a8376;
+}
+.rcx__amount i {
+  margin-top: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f1ece2;
+  font: 600 11px/1.2 var(--font-sans);
+  font-style: normal;
+  color: #5a5348;
+}
+/* punched tear line with notches on both edges */
+.rcx__tear {
+  position: relative;
+  height: 20px;
+  margin: 10px -24px;
+}
+.rcx__tear::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 50%;
+  border-top: 2px dotted #d8cfbf;
+}
+.rcx__tear i {
+  position: absolute;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(20, 16, 12, 0.5);
+}
+.rcx__tear i:first-child {
+  left: -10px;
+}
+.rcx__tear i:last-child {
+  right: -10px;
+}
+.rcx__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 12px;
+  margin: 0;
+}
+.rcx__meta dt {
+  color: #8a8376;
+}
+.rcx__meta dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+.rcx__meta dd small {
+  display: block;
+  font-weight: 400;
+  color: #8a8376;
+}
+.rcx__dash {
+  border: 0;
+  border-top: 1px dashed #d8cfbf;
+  margin: 12px 0;
+}
+.rcx__items > div,
+.rcx__sum > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0;
+}
+.rcx__items small {
+  display: block;
+  color: #8a8376;
+}
+.rcx__items .is-credit b {
+  color: #a2620a;
+}
+.rcx__sum span {
+  color: #8a8376;
+}
+.rcx__sum b {
+  font-weight: 600;
+}
+.rcx__total span {
+  color: #2a2620 !important;
+  font: 700 14px/1.2 var(--font-sans);
+}
+.rcx__total b {
+  font: 800 18px/1.2 var(--font-sans) !important;
+}
+.rcx__foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rcx__foot img {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.rcx__foot p {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font: 700 13px/1.3 var(--font-sans);
+}
+.rcx__foot small {
+  font: 400 11px/1.4 var(--font-sans);
+  color: #8a8376;
+}
+.rcx__foot em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 11px/1.2 var(--font-sans);
+  font-style: normal;
+  color: #2f8a52;
+}
+.rcx__actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+.rcx__btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  font: 700 13px/1 var(--font-sans);
+  color: var(--white);
+}
+.rcx__btn--primary {
+  background: var(--white);
+  color: var(--color-brand);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #receipt-print,
+  #receipt-print * {
+    visibility: visible !important;
+  }
+  #receipt-print {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80mm;
+    transform: none !important;
+    box-shadow: none;
+    -webkit-mask: none;
+    mask: none;
+  }
+  .rcx__tear i {
+    display: none;
+  }
+}

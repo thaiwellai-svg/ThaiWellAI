@@ -1,0 +1,1002 @@
+/* ── Calendar header / nav ───────────────────────────────── */
+.cal-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cal-nav__range {
+  min-width: 190px;
+  text-align: center;
+  font: 600 14px/1 var(--font-sans);
+  color: var(--white);
+}
+.legend {
+  display: inline-flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font: 500 12px/1 var(--font-sans);
+  color: rgba(255, 255, 255, 0.86);
+}
+.legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+/* ── Shared grid scaffolding ──────────────────────────────── */
+.cal {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.cal-grid {
+  display: grid;
+  min-width: 100%;
+}
+.cal-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 12px 12px;
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--sage-100);
+  text-align: left;
+}
+.cal-head__dow {
+  font: 500 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.cal-head__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 18px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.cal-head--today .cal-head__date span {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  color: var(--white);
+}
+.cal-head--closed {
+  opacity: 0.45;
+}
+.cal-corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--sage-100);
+}
+.cal-time {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  padding: 10px 12px 0 16px;
+  background: var(--white);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--sage-50);
+}
+.cal-cell {
+  position: relative;
+  border-left: 1px solid var(--sage-50);
+  border-bottom: 1px solid var(--sage-50);
+  padding: 6px;
+  min-width: 0;
+}
+.cal-cell--closed {
+  background: repeating-linear-gradient(135deg, var(--sage-50) 0 8px, #fff 8px 16px);
+}
+.cal-cell--lunch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sage-50);
+  font: 500 11px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* ── Week view: occupancy cells ───────────────────────────── */
+.wcell {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  text-align: left;
+  background: var(--sage-50);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.wcell:hover {
+  background: var(--white);
+  box-shadow: 0 6px 20px rgba(44, 62, 43, 0.12), inset 0 0 0 1px var(--sage-300);
+}
+.wcell__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.wcell__count {
+  font: 700 13px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.wcell__count small {
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.wcell__bar {
+  display: flex;
+  gap: 2px;
+}
+.wcell__bar span {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sage-300);
+}
+.wcell__names {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.wcell__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 11px/1.2 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wcell__name i {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.wcell__more {
+  font: 500 11px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.wcell--empty {
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--sage-300);
+}
+
+/* ── Day view: therapist resource columns ─────────────────── */
+.dhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dhead__name {
+  font: 700 13px/1.2 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dhead__role {
+  font: var(--text-caption);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dhead__count {
+  margin-left: auto;
+}
+.dblock {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 10px 10px 13px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: 0 4px 16px rgba(44, 62, 43, 0.1), inset 0 0 0 1px var(--sage-100);
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+.dblock::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.dblock:hover {
+  z-index: 2;
+  box-shadow: 0 10px 28px rgba(44, 62, 43, 0.18), inset 0 0 0 1px var(--sage-300);
+}
+.dblock__name {
+  font: 700 12px/1.25 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dblock__meta {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dblock__foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+.dblock--absent,
+.dblock--cancelled {
+  opacity: 0.55;
+}
+.dblock--absent .dblock__name {
+  text-decoration: line-through;
+}
+.now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 2px;
+  background: var(--red-500);
+  pointer-events: none;
+}
+.now-line::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red-500);
+}
+
+/* ── Month view ───────────────────────────────────────────── */
+.month {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(108px, 1fr);
+  min-height: 100%;
+}
+.month__dow {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 14px 14px 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--sage-100);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.mcell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-left: 1px solid var(--sage-50);
+  border-bottom: 1px solid var(--sage-50);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.mcell:nth-child(7n + 1) {
+  border-left: 0;
+}
+.mcell:hover {
+  background: var(--sage-50);
+}
+.mcell--out {
+  opacity: 0.35;
+}
+.mcell__date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 700 14px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.mcell--today .mcell__num {
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  color: var(--white);
+}
+.mcell__load {
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-100);
+  overflow: hidden;
+}
+.mcell__load span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transform-origin: left;
+}
+.mcell__stats {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ── Redesigned layout: left rail + main calendar ─────────── */
+.appt {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  /* pin the row to the page height so panels scroll inside instead of growing (Safari) */
+  grid-template-rows: minmax(0, 1fr);
+  gap: 16px;
+  min-height: 0;
+}
+.appt__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  /* room for card shadows inside the scroll clip, runs to the screen bottom */
+  margin: -12px -16px calc(-1 * var(--space-4));
+  padding: 12px 16px calc(var(--dock-height) + 8px) !important;
+}
+.rail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  flex-shrink: 0;
+}
+.rail-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rail-card__head b {
+  font: 700 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.rail-clear {
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+
+/* mini month */
+.mm__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.mm__head b {
+  flex: 1;
+  font: 700 15px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.mm__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+}
+.mm__dow {
+  padding: 4px 0 6px;
+  text-align: center;
+  font: 600 10px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.mm__day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 38px;
+  border-radius: 12px;
+  isolation: isolate;
+}
+.mm__day:hover {
+  background: var(--sage-50);
+}
+.mm__sel {
+  position: absolute;
+  inset: 1px 3px;
+  z-index: -1;
+  border-radius: 12px;
+  background: var(--color-text);
+}
+.mm__num {
+  font: 600 13px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.mm__day[aria-pressed="true"] .mm__num {
+  color: var(--white);
+}
+.mm__day--today .mm__num {
+  color: var(--color-brand);
+  font-weight: 800;
+}
+.mm__day--out {
+  opacity: 0.35;
+}
+.mm__day--closed .mm__num {
+  color: var(--neutral-400);
+}
+.mm__load {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--sage-100);
+  overflow: hidden;
+}
+.mm__load i {
+  display: block;
+  height: 100%;
+}
+
+/* day summary */
+.rail-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.rail-stat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--sage-50);
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.rail-stat[aria-pressed="true"] {
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--color-brand);
+}
+.rail-stat__icon {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--white);
+}
+.rail-stat__label {
+  font: 500 11px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rail-stat b {
+  font: 700 18px/1.1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* therapists */
+.rail-people {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rail-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 14px;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.rail-person:hover {
+  background: var(--sage-50);
+}
+.rail-person[aria-pressed="true"] {
+  background: var(--color-brand-tint-strong);
+}
+.rail-person__name {
+  flex: 1;
+  min-width: 0;
+  font: 600 13px/1.25 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rail-person__name small {
+  display: block;
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* main */
+.appt__main .sheet {
+  overflow: hidden;
+}
+.appt__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--sage-100);
+}
+.appt__nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.appt__title {
+  margin-left: 6px;
+  font: 700 17px/1.2 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1000px) {
+  .appt {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .appt__rail {
+    display: none;
+  }
+}
+
+/* main panel keeps all four rounded corners and the 16px frame; the dock floats over its bottom */
+.now-line::before {
+  left: -4px;
+}
+.dhead {
+  gap: 8px;
+}
+
+/* one continuous "now" line from the time column across every therapist */
+.now-line--full {
+  left: 0;
+  right: 0;
+}
+.now-line--full::before {
+  display: none;
+}
+.now-line__time {
+  position: absolute;
+  z-index: 6; /* above the hour labels' white backgrounds */
+  left: 8px;
+  padding: 3px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--red-500);
+  color: var(--white);
+  font: 700 10px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+.cal-grid {
+  position: relative;
+}
+/* abspos grid child spanning every column of the day body: the now-line is exactly as wide as the grid */
+.now-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* hour labels stay put while the therapist columns scroll sideways */
+.day-times {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--white);
+  box-shadow: 1px 0 0 var(--sage-100);
+}
+
+/* ── Day blocks v2: status as tinted card + colour rail, no badge ─ */
+.dblock {
+  gap: 4px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 9%, white);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.dblock::before {
+  width: 3px;
+  top: 8px;
+  bottom: 8px;
+  left: 4px;
+  border-radius: 3px;
+}
+.dblock:hover {
+  box-shadow: 0 10px 24px rgba(44, 62, 43, 0.14), inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.dblock__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.dblock__time {
+  font: 700 11px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dblock__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  min-width: 0;
+  font: 600 10px/1 var(--font-thai);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.dblock__status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.dblock__name {
+  font: 700 13px/1.3 var(--font-sans);
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.dblock__meta {
+  font: 400 11px/1.35 var(--font-sans);
+}
+.dblock__tag {
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.8);
+  font: 600 10px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.dblock--done {
+  background: var(--white);
+}
+.dblock--done .dblock__name {
+  color: var(--color-text-muted);
+}
+
+/* ── Day blocks v3 (minimal): white card, short status bar before the time ─ */
+.dblock {
+  padding: 9px 11px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.dblock::before {
+  display: none;
+}
+.dblock:hover {
+  box-shadow: 0 8px 20px rgba(44, 62, 43, 0.1), inset 0 0 0 1px var(--sage-300);
+}
+.dblock__bar {
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.dblock__status i {
+  display: none;
+}
+.dblock--done {
+  background: var(--white);
+}
+
+/* ── Week cells v2 (minimal, matches day cards) ─────────────── */
+.wcell {
+  gap: 6px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.wcell:hover {
+  background: var(--white);
+  box-shadow: 0 8px 20px rgba(44, 62, 43, 0.1), inset 0 0 0 1px var(--sage-300);
+}
+.wcell__top {
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 4px;
+}
+.wcell__count {
+  font: 700 15px/1 var(--font-sans);
+}
+.wcell__cap {
+  font: 500 11px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.wcell__names {
+  gap: 4px;
+}
+.wcell__name {
+  gap: 7px;
+  font: 500 12px/1.3 var(--font-sans);
+}
+.wcell__name i {
+  width: 3px;
+  height: 11px;
+  border-radius: 2px;
+}
+.wcell__name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wcell__more {
+  padding-left: 10px;
+  font: 500 11px/1.3 var(--font-sans);
+}
+.wcell--empty {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px dashed var(--sage-100);
+  border: 1px dashed var(--sage-300);
+}
+.wcell--empty:hover {
+  background: var(--sage-50);
+  box-shadow: none;
+}
+.wcell__free {
+  font: 500 11px/1 var(--font-sans);
+  color: var(--neutral-400);
+}
+
+/* week fits all 7 days: tighter cells */
+.cal-grid:has(.wcell) .cal-cell {
+  padding: 4px;
+}
+.cal-grid:has(.wcell) .cal-time {
+  padding: 10px 6px 0 10px;
+  font-size: 11px;
+}
+.cal-grid:has(.wcell) .cal-head {
+  padding: 12px 8px 10px;
+}
+.wcell {
+  padding: 8px;
+  min-width: 0;
+}
+.wcell__name {
+  font-size: 11px;
+}
+
+/* booking affordances in the week grid */
+.wcell__plus {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--color-brand-tint-strong);
+  color: var(--color-brand);
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.wcell__plus:hover {
+  background: var(--color-brand);
+  color: var(--white);
+}
+.wcell__add {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font: 600 11px/1 var(--font-sans);
+  color: var(--color-brand);
+  opacity: 0.75;
+}
+.wcell--empty:hover .wcell__add {
+  opacity: 1;
+}
+.wcell--empty:hover {
+  border-color: var(--color-brand);
+  background: var(--color-brand-tint);
+}
+
+.wcell__add--past {
+  color: var(--color-text-muted);
+  opacity: 0.6;
+}
+
+/* ── Conflicts needing a call ───────────────────────────── */
+.rail-card--alert {
+  box-shadow: var(--shadow-card), inset 0 0 0 1.5px rgba(220, 38, 38, 0.25);
+}
+.rail-card--alert .rail-card__head b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-danger);
+}
+.rail-count {
+  min-width: 24px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: var(--white);
+  font: 700 11px/1.2 var(--font-sans);
+  text-align: center;
+}
+.clash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.clash {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--sage-50);
+}
+.clash__name {
+  font: 700 13px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.clash__name small {
+  display: block;
+  font: 500 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.clash__tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.clash__actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* conflicts stacked like the dashboard request deck */
+.clash-list {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding-bottom: 6px;
+}
+.clash-list--stacked {
+  gap: 0;
+  padding-bottom: 18px;
+}
+.clash-list--stacked > .clash {
+  grid-area: 1 / 1;
+  align-self: start;
+  box-shadow: 0 6px 18px rgba(44, 62, 43, 0.1);
+}
+.clash {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  min-width: 0;
+}
+.clash-toggle {
+  position: absolute;
+  bottom: -14px;
+  color: var(--color-text);
+}
+.clash-list:not(.clash-list--stacked) .clash-toggle {
+  position: relative;
+  bottom: 0;
+  margin-top: 2px;
+}
+.clash-list--stacked > .clash[aria-hidden] > * {
+  visibility: hidden;
+}
+
+/* conflict cards use the dashboard request-card layout */
+.clash.pcard {
+  gap: 10px;
+  padding: 12px;
+  border-radius: 20px;
+}
+.clash .pcard__head .tw-avatar {
+  width: 44px;
+  height: 44px;
+}
+.clash .pcard__strip {
+  padding: 8px 10px;
+}
+.clash .pcard__actions .tw-btn {
+  height: 34px;
+  font-size: 12px;
+}
+.rail-card--alert .clash-list {
+  margin-inline: -4px;
+}
+.clash.pcard {
+  width: auto;
+}
+
+/* conflict panel = dashboard "คำขอจองคิวใหม่" panel (glass box, white count pill, deck) */
+.clash-panel {
+  flex-shrink: 0;
+  margin-bottom: 22px;
+}
+.clash-panel .clash-list {
+  margin-inline: 0;
+  padding: var(--space-2);
+}
+.clash-panel .clash-list--stacked {
+  padding-bottom: 18px;
+}
+.clash-panel .clash.pcard {
+  box-shadow: none;
+}
+.clash-panel .clash-list--stacked > .clash {
+  box-shadow: none;
+}
+.clash-panel .clash-list--stacked > .clash:first-child {
+  box-shadow: var(--shadow-card);
+}
+.clash-panel .clash-toggle {
+  bottom: -16px;
+}
+.clash-panel .clash-list:not(.clash-list--stacked) .clash-toggle {
+  position: absolute;
+  bottom: -16px;
+}
+
+.clash-panel .clash-list--stacked {
+  padding-bottom: var(--space-2);
+}

@@ -1,0 +1,65 @@
+.live-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out);
+  pointer-events: none;
+}
+.live-bg--on {
+  opacity: 1;
+}
+/* the shader now does the work-page blur/dim; drop the costly CSS backdrop veil */
+.shell--live .shell__veil {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* camera-style focus indicator for tap-to-focus */
+.focus-ring {
+  position: fixed;
+  z-index: 30;
+  width: 68px;
+  height: 68px;
+  margin: -34px 0 0 -34px;
+  border-radius: 18px;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1.5px rgba(255, 236, 200, 0.95),
+    0 0 18px rgba(255, 200, 120, 0.45),
+    inset 0 0 12px rgba(255, 200, 120, 0.25);
+}
+.focus-ring::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: rgba(255, 236, 200, 0.95);
+}
+
+/* 3D room host */
+.room3d {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+.room3d .live-bg {
+  width: 100% !important;
+  height: 100% !important;
+}
+.room3d--on .live-bg {
+  opacity: 1;
+}
+/* in 3D mode the photo poster would flash a different room — show a warm dusk tone instead */
+.shell--room3d .shell__bg {
+  background-image: radial-gradient(120% 90% at 50% 60%, #3a2615 0%, #1b120b 55%, #0f0a06 100%) !important;
+}

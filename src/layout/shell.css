@@ -1,0 +1,670 @@
+/* ── App shell (Figma frame 47:143 · 1366 × 1024) ───────────── */
+.shell {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+/* Photo fill: Figma places the image at 157.36% width, offset −42.92% / −18.95%.
+   Equivalent CSS: size = 157.36% of frame width, anchor = 74.8% / 100%. */
+.shell__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-color: #2a2118;
+  background-image: var(--bg-image);
+  background-repeat: no-repeat;
+  background-size: max(157.36vw, calc(118.95dvh * 1.7648)) auto;
+  background-position: 74.8% 100%;
+  transform-origin: 70% 60%;
+}
+.shell__veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(24, 18, 12, 0);
+  -webkit-backdrop-filter: blur(0px);
+  backdrop-filter: blur(0px);
+  transition:
+    background-color 600ms var(--ease-out),
+    backdrop-filter 600ms var(--ease-out),
+    -webkit-backdrop-filter 600ms var(--ease-out);
+  pointer-events: none;
+}
+.shell__veil--work {
+  background: rgba(24, 18, 12, 0.34);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  backdrop-filter: blur(18px) saturate(1.1);
+}
+.shell__page {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Dock ─────────────────────────────────────────────────── */
+.dock-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-dock);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 var(--space-4) var(--dock-gap);
+  pointer-events: none;
+}
+.dock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+  pointer-events: auto;
+}
+.dock__item {
+  position: relative;
+  display: flex;
+  border-radius: var(--radius-pill);
+}
+.dock__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--control-lg);
+  min-width: var(--control-lg);
+  padding: 0 11px;
+  border-radius: var(--radius-pill);
+  color: rgba(44, 62, 43, 0.82);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--dur-base) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+.dock__link:hover {
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--color-text);
+}
+.dock__item--active .dock__link,
+.dock__item--active .dock__link:hover {
+  padding-right: 16px;
+  background: transparent;
+  color: var(--green-700);
+  --icon-fill: rgba(21, 128, 61, 0.16);
+}
+.dock__pill {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+}
+.dock__glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.dock__item--active .dock__glyph {
+  filter: none;
+}
+.dock__label {
+  position: relative;
+  display: block;
+  /* clip only sideways (for the width animation) — Thai marks above/below must stay visible */
+  overflow-x: clip;
+  overflow-y: visible;
+  white-space: nowrap;
+}
+.dock__label span {
+  display: block;
+  padding: 4px 0 4px 8px;
+  font: 600 13px/1.5 var(--font-sans);
+  color: var(--color-text);
+}
+.dock__sep {
+  position: relative; /* paint above the absolutely-positioned frost layer */
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 3px;
+}
+.dock__sep::before {
+  content: "";
+  width: 1px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.35);
+}
+.dock__ai {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--control-lg);
+  height: var(--control-lg);
+  border-radius: var(--radius-pill);
+  color: var(--white);
+  background: linear-gradient(145deg, #7fbf6a 0%, #4c845a 55%, #2f6b45 100%);
+  box-shadow:
+    0 6px 16px rgba(47, 107, 69, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.dock__ai .dock__glyph {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+.dock__tip {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(44, 62, 43, 0.92);
+  color: var(--white);
+  font: 500 12px/1 var(--font-sans);
+  white-space: nowrap;
+  pointer-events: none;
+  translate: -50% 0;
+}
+
+/* ── Work page scaffold (non-dashboard pages) ─────────────── */
+.work {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  /* same 16px frame as the dashboard columns */
+  padding: var(--column-pad-top) max(var(--space-4), env(safe-area-inset-right)) 0 max(var(--space-4), env(safe-area-inset-left));
+  gap: var(--space-4);
+}
+.work__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.work__titles {
+  flex: 1 1 280px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--white);
+}
+.work__eyebrow {
+  font: 500 13px/1.2 var(--font-sans);
+  color: rgba(255, 255, 255, 0.72);
+}
+.work__title {
+  font: 700 28px/1.2 var(--font-sans);
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 16px rgba(0, 0, 0, 0.2);
+}
+.work__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.work__body {
+  flex: 1;
+  min-height: 0;
+  /* panels run down to the screen edge; the floating dock sits over them */
+  padding-bottom: var(--space-4);
+}
+/* …so every scroll area leaves room to scroll its last item clear of the dock */
+.work__body .scroll-y {
+  padding-bottom: calc(var(--dock-height) + 8px) !important;
+}
+.work__body .plan__side-body.scroll-y {
+  padding-bottom: 16px !important;
+}
+.work__body .plan__side-foot {
+  padding-bottom: calc(var(--dock-height) - 8px);
+}
+
+@media (max-width: 720px) {
+  .work__title {
+    font-size: 24px;
+  }
+}
+
+/* ── Glass panel + white sheet used by work pages ─────────── */
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px;
+  border-radius: 30px;
+  background: var(--glass-panel-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+.sheet {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.toolbar__spacer {
+  flex: 1;
+}
+.toolbar .tw-search {
+  flex: 0 1 280px;
+}
+.glass-select {
+  height: 32px;
+  padding: 0 34px 0 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background-color: var(--glass-chip-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--white);
+  font: 500 12px/1 var(--font-sans);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 14 9'%3E%3Cpath d='M7 9c.2 0 .4-.1.5-.2l6.3-6.7c.1-.2.2-.4.2-.6 0-.4-.3-.8-.7-.8-.2 0-.4.1-.5.2L7 7.6 1.3 1a.7.7 0 0 0-.6-.3C.3.7 0 1.1 0 1.5c0 .2.1.4.2.5l6.3 6.8c.1.1.3.2.5.2Z' fill='white'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+.glass-select option {
+  color: var(--color-text);
+}
+
+@media (max-width: 520px) {
+  .dock__label {
+    display: none;
+  }
+  .dock__item--active .dock__link {
+    padding-right: 11px;
+  }
+}
+
+/* header search — same pill as the dashboard's, beside the add button */
+.work__actions .phead-search {
+  flex: 0 1 280px;
+  width: 280px;
+}
+.work__actions:has(.phead-search) {
+  flex: 0 1 400px;
+  flex-wrap: nowrap;
+}
+
+/* primary action: solid white so it stands out from the glass controls */
+.padd-btn {
+  color: var(--color-brand);
+  box-shadow: var(--shadow-float);
+}
+/* header controls hug the right edge even without the bell */
+.work__actions {
+  justify-content: flex-end;
+}
+/* ── AI button v2: living orb inside a rotating rainbow ring ── */
+.dock__ai {
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+  isolation: isolate;
+}
+.dock__ai-ring {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #4fd18b, #49b3ff, #9a7bff, #ff7ab6, #ffc35a, #4fd18b);
+  animation: dock-ai-spin 5s linear infinite;
+  box-shadow: 0 6px 18px rgba(73, 140, 200, 0.4);
+}
+.dock__ai-ring::after {
+  /* white gap between ring and orb */
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 50%;
+  background: var(--white);
+}
+.dock__ai-orb {
+  position: absolute !important;
+  inset: 5px;
+  width: auto !important;
+  height: auto !important;
+}
+.dock__ai-orb .orb__glow {
+  opacity: 0.35;
+}
+.dock__ai-star {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+.dock__ai-star svg {
+  width: 18px;
+  height: 18px;
+}
+.dock__ai:hover .dock__ai-ring {
+  animation-duration: 1.8s;
+}
+@keyframes dock-ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock__ai-ring {
+    animation: none;
+  }
+}
+/* ── AI button v3: glass sphere with drifting pastel light ── */
+.dock__ai {
+  overflow: visible;
+}
+.ai2__aura {
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #7ee0b0, #7cc4ff, #b9a2ff, #ffa6cf, #ffd58a, #7ee0b0);
+  filter: blur(9px);
+  opacity: 0.75;
+  animation: ai2-spin 7s linear infinite, ai2-breathe 3.2s ease-in-out infinite;
+}
+.ai2__ball {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(120% 120% at 30% 20%, #e9fff4 0%, #8fe0bd 30%, #49b38c 62%, #2a7a62 100%);
+  box-shadow:
+    inset 0 -6px 12px rgba(20, 70, 60, 0.35),
+    inset 0 2px 3px rgba(255, 255, 255, 0.7),
+    0 6px 16px rgba(40, 110, 90, 0.35),
+    0 0 0 1.5px rgba(255, 255, 255, 0.85);
+  isolation: isolate;
+}
+/* two soft colour clouds slowly orbiting inside */
+.ai2__swirl {
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(40% 40% at 30% 35%, rgba(124, 196, 255, 0.85), transparent 70%),
+    radial-gradient(35% 35% at 72% 70%, rgba(255, 166, 207, 0.75), transparent 70%);
+  mix-blend-mode: soft-light;
+  animation: ai2-spin 6s linear infinite;
+}
+.ai2__swirl--b {
+  background:
+    radial-gradient(38% 38% at 68% 28%, rgba(185, 162, 255, 0.8), transparent 70%),
+    radial-gradient(32% 32% at 28% 74%, rgba(255, 213, 138, 0.8), transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: ai2-spin 9s linear infinite reverse;
+}
+/* glossy highlight on top */
+.ai2__shine {
+  position: absolute;
+  left: 18%;
+  top: 7%;
+  width: 64%;
+  height: 40%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0));
+  filter: blur(0.5px);
+}
+.ai2__star {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: var(--white);
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.9)) drop-shadow(0 1px 1.5px rgba(10, 60, 45, 0.45));
+  animation: ai2-star 4.5s ease-in-out infinite;
+}
+.ai2__twinkle {
+  position: absolute;
+  right: -7px;
+  top: -5px;
+  animation: ai2-twinkle 2.2s ease-in-out infinite;
+}
+.dock__ai:hover .ai2__aura {
+  opacity: 1;
+  filter: blur(11px);
+}
+.dock__ai:hover .ai2__swirl {
+  animation-duration: 2.5s;
+}
+@keyframes ai2-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ai2-breathe {
+  0%,
+  100% {
+    scale: 0.92;
+  }
+  50% {
+    scale: 1.06;
+  }
+}
+@keyframes ai2-star {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  80% {
+    transform: rotate(45deg) scale(1.15);
+  }
+  90% {
+    transform: rotate(90deg) scale(1);
+  }
+}
+@keyframes ai2-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai2__aura,
+  .ai2__swirl,
+  .ai2__star,
+  .ai2__twinkle {
+    animation: none;
+  }
+}
+/* AI icon v2: three sparkles twinkling in turn */
+.ai2__star {
+  animation: none;
+}
+.ai3__s path {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ai3-tw 3s ease-in-out infinite;
+}
+.ai3__s--1 path {
+  animation-name: ai3-big;
+}
+.ai3__s--2 path {
+  animation-delay: 0.6s;
+}
+.ai3__s--3 path {
+  animation-delay: 1.3s;
+}
+@keyframes ai3-big {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
+  }
+  50% {
+    transform: scale(0.88) rotate(12deg);
+  }
+}
+@keyframes ai3-tw {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.45);
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai3__s path {
+    animation: none;
+  }
+}
+/* ── AI orb v4: deeper, crisper, more glow ── */
+.ai2__aura {
+  inset: -9px;
+  background: conic-gradient(from 0deg, #2fd39a, #3aa8ff, #8b6bff, #e45bd1, #2fd39a);
+  filter: blur(10px);
+  opacity: 0.9;
+}
+.ai2__ball {
+  background:
+    radial-gradient(70% 70% at 70% 80%, rgba(139, 107, 255, 0.95) 0%, transparent 65%),
+    radial-gradient(60% 60% at 25% 75%, rgba(58, 168, 255, 0.9) 0%, transparent 70%),
+    radial-gradient(120% 120% at 35% 15%, #5ff0b8 0%, #14a37a 38%, #0b5e57 72%, #1d2a6b 100%);
+  box-shadow:
+    inset 0 -8px 14px rgba(20, 10, 70, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 8px 20px rgba(40, 60, 160, 0.45),
+    0 0 18px rgba(80, 200, 255, 0.55);
+}
+.ai2__swirl {
+  background:
+    radial-gradient(38% 38% at 30% 35%, rgba(120, 255, 210, 0.9), transparent 70%),
+    radial-gradient(34% 34% at 72% 68%, rgba(228, 91, 209, 0.85), transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  animation-duration: 5s;
+}
+.ai2__swirl--b {
+  background:
+    radial-gradient(36% 36% at 66% 26%, rgba(58, 168, 255, 0.95), transparent 70%),
+    radial-gradient(30% 30% at 26% 76%, rgba(139, 107, 255, 0.9), transparent 70%);
+  opacity: 0.55;
+}
+/* crisp glass highlight + small specular dot */
+.ai2__shine {
+  left: 20%;
+  top: 6%;
+  width: 58%;
+  height: 34%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.05));
+  filter: none;
+}
+.ai2__shine::after {
+  content: "";
+  position: absolute;
+  right: -14%;
+  bottom: -150%;
+  width: 18%;
+  height: 30%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  filter: blur(1px);
+}
+.ai2__star svg {
+  width: 27px;
+  height: 27px;
+}
+.ai2__star {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 1)) drop-shadow(0 0 12px rgba(150, 220, 255, 0.8)) drop-shadow(0 1px 1.5px rgba(10, 20, 60, 0.5));
+}
+/* round halo that fits inside the dock (a big blurred aura got clipped square by the bar) */
+.ai2__aura {
+  inset: -3px;
+  filter: blur(4px);
+  opacity: 0.85;
+  -webkit-mask: radial-gradient(circle, #000 62%, transparent 72%);
+  mask: radial-gradient(circle, #000 62%, transparent 72%);
+}
+.ai2__ball {
+  box-shadow:
+    inset 0 -8px 14px rgba(20, 10, 70, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 4px 10px rgba(40, 60, 160, 0.35);
+}
+/* Safari: overflow:hidden + radius doesn't clip blended/animated children → square edges.
+   Clip the orb with a real circle, and draw the halo as a box-shadow (always round). */
+.ai2__ball {
+  clip-path: circle(50% at 50% 50%);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  transform: translateZ(0);
+}
+.ai2__aura {
+  inset: 0;
+  background: none;
+  filter: none;
+  -webkit-mask: none;
+  mask: none;
+  opacity: 1;
+  animation: ai2-halo 6s linear infinite;
+}
+@keyframes ai2-halo {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(130, 220, 255, 0.55), 0 0 10px 2px rgba(58, 168, 255, 0.55), 0 0 16px 3px rgba(139, 107, 255, 0.35);
+  }
+  33% {
+    box-shadow: 0 0 0 2px rgba(200, 160, 255, 0.55), 0 0 10px 2px rgba(139, 107, 255, 0.55), 0 0 16px 3px rgba(228, 91, 209, 0.35);
+  }
+  66% {
+    box-shadow: 0 0 0 2px rgba(140, 255, 210, 0.55), 0 0 10px 2px rgba(47, 211, 154, 0.55), 0 0 16px 3px rgba(58, 168, 255, 0.35);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai2__aura {
+    animation: none;
+    box-shadow: 0 0 0 2px rgba(130, 220, 255, 0.55), 0 0 10px 2px rgba(58, 168, 255, 0.5);
+  }
+}
+/* standalone orb (AI window) */
+.aib {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+.aib .ai2__star svg {
+  width: auto;
+  height: auto;
+}
+.aib.is-busy .ai2__swirl {
+  animation-duration: 1.4s;
+}
+.aib.is-busy .ai2__aura {
+  animation-duration: 1.6s;
+}

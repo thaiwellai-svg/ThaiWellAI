@@ -1,0 +1,80 @@
+.bm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px 10px;
+  border-radius: 16px;
+  background: radial-gradient(80% 70% at 50% 40%, #ffffff 0%, #f3f6f2 100%);
+}
+.bm__svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+}
+.bm--compact .bm__svg {
+  max-width: 230px;
+}
+/* parts drawn without outlines so they merge into one figure; the soft shadow gives the edge */
+.bm__body {
+  filter: drop-shadow(0 1.5px 2px rgba(47, 64, 52, 0.18));
+}
+.bm__body > * {
+  fill: #e3e9e3;
+}
+.bm__spine {
+  stroke: #cfd8cf;
+  stroke-width: 1;
+  stroke-dasharray: 2 2.5;
+  fill: none;
+}
+.bm__avoid {
+  stroke: #e5533d;
+  stroke-width: 1;
+  stroke-dasharray: 2.5 2;
+}
+.bm__hit {
+  fill: transparent;
+  stroke: none;
+}
+.bm__hit.is-live {
+  cursor: pointer;
+}
+.bm__hit.is-live:hover {
+  fill: rgba(76, 132, 90, 0.15);
+}
+.bm__hit.is-on {
+  fill: rgba(76, 132, 90, 0.5);
+  stroke: var(--color-brand);
+  stroke-width: 1.2;
+}
+.bm__cap {
+  font: 600 9px/1 var(--font-sans);
+  fill: var(--color-text-muted);
+  text-anchor: middle;
+}
+.bm__legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 500 10.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.bm__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bm__scale i {
+  width: 44px;
+  height: 7px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f4c542, #f08a2c, #e5533d);
+}
+.bm__no i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px dashed #e5533d;
+  background: repeating-linear-gradient(45deg, rgba(229, 83, 61, 0.12) 0 2px, #e5533d 2px 3px);
+}

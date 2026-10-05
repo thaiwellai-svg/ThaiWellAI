@@ -1,0 +1,151 @@
+.orb {
+  position: relative;
+  display: inline-block;
+  width: var(--orb);
+  height: var(--orb);
+  flex-shrink: 0;
+}
+/* soft colour bloom around the sphere */
+.orb__glow {
+  position: absolute;
+  inset: -35%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #4fd18b, #49b3ff, #9a7bff, #ff7ab6, #ffc35a, #4fd18b);
+  filter: blur(calc(var(--orb) * 0.28));
+  opacity: 0.55;
+  animation: orb-spin 6s linear infinite;
+}
+.orb__core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 55%, #1b3a3a 0%, #0d1f2a 70%);
+  box-shadow: inset 0 0 calc(var(--orb) * 0.12) rgba(255, 255, 255, 0.35);
+  isolation: isolate;
+}
+/* drifting blobs of light, blended additively */
+.orb__b {
+  position: absolute;
+  width: 75%;
+  height: 75%;
+  border-radius: 50%;
+  filter: blur(calc(var(--orb) * 0.12));
+  mix-blend-mode: screen;
+}
+.orb__b--1 {
+  left: -10%;
+  top: -5%;
+  background: radial-gradient(circle, #4fd18b 0%, rgba(79, 209, 139, 0) 65%);
+  animation: orb-a 4.2s ease-in-out infinite alternate;
+}
+.orb__b--2 {
+  right: -12%;
+  top: 0;
+  background: radial-gradient(circle, #49b3ff 0%, rgba(73, 179, 255, 0) 65%);
+  animation: orb-b 5.1s ease-in-out infinite alternate;
+}
+.orb__b--3 {
+  left: 5%;
+  bottom: -15%;
+  background: radial-gradient(circle, #ff7ab6 0%, rgba(255, 122, 182, 0) 65%);
+  animation: orb-c 4.7s ease-in-out infinite alternate;
+}
+.orb__b--4 {
+  right: 0;
+  bottom: -10%;
+  background: radial-gradient(circle, #ffc35a 0%, rgba(255, 195, 90, 0) 65%);
+  animation: orb-d 5.6s ease-in-out infinite alternate;
+}
+/* a thin swirling ribbon */
+.orb__ring {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 55%, rgba(255, 255, 255, 0.85) 70%, transparent 85%);
+  -webkit-mask: radial-gradient(circle, transparent 54%, #000 58%, #000 64%, transparent 68%);
+  mask: radial-gradient(circle, transparent 54%, #000 58%, #000 64%, transparent 68%);
+  mix-blend-mode: screen;
+  animation: orb-spin 2.8s linear infinite;
+}
+/* glass: top specular + rim */
+.orb__glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 55% 35% at 38% 22%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(circle at 50% 120%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 45%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45), inset 0 calc(var(--orb) * -0.06) calc(var(--orb) * 0.15) rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes orb-a {
+  to {
+    transform: translate(35%, 30%) scale(1.15);
+  }
+}
+@keyframes orb-b {
+  to {
+    transform: translate(-35%, 35%) scale(0.9);
+  }
+}
+@keyframes orb-c {
+  to {
+    transform: translate(30%, -40%) scale(1.2);
+  }
+}
+@keyframes orb-d {
+  to {
+    transform: translate(-30%, -35%) scale(1.05);
+  }
+}
+/* thinking: faster swirl + breathing */
+.orb.is-active {
+  animation: orb-breathe 1.1s ease-in-out infinite;
+}
+.orb.is-active .orb__b {
+  animation-duration: 1.4s;
+}
+.orb.is-active .orb__ring {
+  animation-duration: 0.9s;
+}
+.orb.is-active .orb__glow {
+  opacity: 0.9;
+  animation-duration: 1.6s;
+}
+@keyframes orb-breathe {
+  50% {
+    transform: scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .orb * {
+    animation: none !important;
+  }
+}
+/* brighter, no blend modes (they flatten inside backdrop-filtered parents on Safari) */
+.orb__core {
+  background: conic-gradient(from 210deg, #2fbf7f, #3aa0f0, #8a6cf0, #f06aa8, #f7b84a, #2fbf7f);
+  animation: orb-spin 7s linear infinite reverse;
+}
+.orb__b {
+  mix-blend-mode: normal;
+  opacity: 0.9;
+  width: 80%;
+  height: 80%;
+}
+.orb__ring {
+  mix-blend-mode: normal;
+}
+.orb__glass {
+  background:
+    radial-gradient(ellipse 50% 32% at 36% 24%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(circle at 50% 110%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 40%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 calc(var(--orb) * -0.05) calc(var(--orb) * 0.12) rgba(40, 20, 80, 0.25);
+}

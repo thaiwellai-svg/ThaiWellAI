@@ -1,0 +1,758 @@
+/* Dashboard — Figma frame 47:143 (row 48:692). */
+/* Greeting (48:681) */
+.greet {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  flex-shrink: 0;
+}
+.greet__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--white);
+  white-space: nowrap;
+}
+.greet__hello {
+  font: var(--text-body);
+}
+.greet__name {
+  font: var(--text-title-lg);
+}
+
+/* KPI stack (53:865) */
+.kpis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  flex-shrink: 0;
+}
+.kpis__row {
+  display: flex;
+  gap: var(--space-2-5);
+}
+.kpis__row > * {
+  flex: 1 0 0;
+  min-width: 0;
+}
+.kpi__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 16px;
+}
+.kpi__stats {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+.kpi__stat {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px 0;
+  border-radius: 10px;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.kpi__stat:hover {
+  background: var(--color-surface-sunken);
+}
+.kpi__stat[aria-pressed="true"] {
+  background: var(--color-brand-tint-strong);
+}
+.kpi__stat-value {
+  font: var(--text-stat);
+  color: var(--color-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+.kpi__stat-label {
+  font: var(--text-micro);
+  color: var(--color-text-subtle);
+}
+
+/* Pending requests panel (55:896) */
+.pending {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: var(--glass-panel-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  margin-bottom: 22px;
+}
+.pending__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-4) var(--space-3) var(--space-2) var(--space-4);
+}
+.pending__title {
+  font: var(--text-title);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.pending__count {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font: var(--text-badge-lg);
+  color: var(--color-danger);
+  font-variant-numeric: tabular-nums;
+}
+.deck {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--space-2);
+}
+.deck--stacked > * {
+  grid-area: 1 / 1;
+}
+.deck--list {
+  gap: var(--space-2-5);
+}
+.deck__card {
+  align-self: start;
+  min-width: 0;
+}
+.deck__toggle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -16px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0 auto;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(44, 62, 43, 0.06);
+  -webkit-tap-highlight-color: transparent;
+}
+.deck__toggle::before {
+  /* larger touch target than the visible button */
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: inherit;
+}
+.deck__toggle img {
+  width: 12px;
+  height: 8px;
+  opacity: 0.75;
+}
+.pending__more {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  text-decoration: none;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.pending__more:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Today list (53:866) */
+.today__search {
+  display: flex;
+  gap: var(--space-2-5);
+  align-items: center;
+  flex-shrink: 0;
+}
+.today {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+}
+.today__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  min-height: 24px;
+}
+.today__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font: 500 12px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.today__filter i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.greet__text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+.jobs__divider {
+  margin: 10px 4px 0;
+  font: 700 12px/1 var(--font-sans);
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.jobs__divider {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  margin: 12px 0 2px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(30, 24, 18, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 12px;
+  color: var(--white);
+  text-shadow: none;
+}
+
+/* ── Workspace layout: widgets · room view · today's jobs ── */
+.dash__pane {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* scroll area reaches past the pane so the cards' soft shadows aren't clipped;
+   the top inset leaves room for the ••• handle */
+.dash__scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0 -14px calc(-1 * var(--space-4));
+  padding: 16px 14px calc(var(--dock-height) + 8px) !important;
+  overflow-x: hidden;
+}
+.dash .ws__pane:not(.is-ghost) .ws__dots i {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.dash .ws__pane.is-focused::after {
+  border-radius: 28px;
+}
+.today {
+  gap: var(--space-2-5);
+}
+
+/* widget grid */
+.wboard__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2-5);
+  /* cards sharing a row stretch to the same height */
+  align-items: stretch;
+}
+.wg {
+  position: relative;
+  min-width: 0;
+  touch-action: pan-y;
+}
+.wg.is-full {
+  grid-column: span 2;
+}
+.wg.is-half {
+  grid-column: span 1;
+}
+.wg > .tw-card {
+  height: 100%;
+}
+/* the request deck sizes to its cards; the bottom margin only leaves room for the ⌄ toggle */
+.wg > .pending {
+  height: auto;
+}
+/* edit mode: content is inert, the whole card is the drag target */
+.is-editing .wg {
+  cursor: grab;
+  touch-action: none;
+}
+.is-editing .wg > :not(.wg__edit) {
+  pointer-events: none;
+}
+.is-editing .wg:not(.is-drag) > :not(.wg__edit) {
+  animation: wg-wiggle 0.32s ease-in-out infinite alternate;
+}
+.is-editing .wg:nth-child(2n) > :not(.wg__edit) {
+  animation-delay: -0.16s;
+}
+.wg.is-drag {
+  cursor: grabbing;
+  z-index: 20;
+}
+.wg.is-drag > :not(.wg__edit) {
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.32);
+}
+@keyframes wg-wiggle {
+  from {
+    transform: rotate(-0.35deg);
+  }
+  to {
+    transform: rotate(0.35deg);
+  }
+}
+.wg__edit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 24px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+}
+.wg__btn {
+  position: absolute;
+  top: -8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+}
+.wg__btn--hide {
+  left: -8px;
+  background: var(--color-danger);
+  color: var(--white);
+}
+.wg__btn--size {
+  right: -8px;
+  background: var(--white);
+  color: var(--color-text);
+}
+.wboard__add {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.82);
+  flex-shrink: 0;
+}
+.wboard__add p {
+  font: 700 13px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.wboard__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wboard__chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.wboard__reset {
+  align-self: flex-start;
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  text-decoration: underline;
+}
+
+/* staff widget */
+.wstaff__count {
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.wstaff__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.wstaff__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wstaff__row .tw-avatar {
+  flex: 0 0 auto;
+}
+.wstaff__who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.wstaff__who b {
+  font: 700 13px/1.3 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wstaff__who small {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.wstaff__jobs {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 600 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.wstaff__jobs.is-busy {
+  background: var(--color-info-tint);
+  color: var(--color-info);
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-editing .wg > :not(.wg__edit) {
+    animation: none;
+  }
+}
+/* edit mode: make room for the toolbar so it doesn't cover the first widget */
+.dash .dash__scroll {
+  transition: padding-top 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dash .is-focused .dash__scroll {
+  padding-top: 60px !important;
+}
+/* the dashboard panes have no glass rim, so the highlight sits 10px outside the cards */
+.dash.ws {
+  padding: 8px 16px 0;
+  margin: -8px -16px 0;
+}
+.dash .ws__pane.is-focused::after {
+  inset: -1.5px -11.5px -11.5px;
+  border-radius: 34px;
+}
+.dash .ws__grip.is-right {
+  right: -21px;
+}
+.dash .ws__grip.is-left {
+  left: -21px;
+}
+.wg__btn {
+  top: -6px;
+}
+.wg__btn--hide {
+  left: -6px;
+}
+.wg__btn--size {
+  right: -6px;
+}
+.work__head > .greet {
+  flex: 1 1 280px;
+  min-width: 0;
+  align-self: center;
+}
+.wg > .tw-card {
+  box-sizing: border-box;
+  justify-content: flex-start;
+}
+/* half-width cards: one-line captions so paired cards carry the same rows */
+.wg.is-half .tw-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+/* revenue widget (full width): text left, donut right */
+.wrev {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+.wrev__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+  gap: var(--space-2-5);
+}
+.wrev__text .tw-caption {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wrev__donut {
+  position: relative;
+  flex: 0 0 104px;
+  width: 104px;
+  height: 104px;
+}
+.wrev__donut svg {
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+.wrev__track,
+.wrev__paid,
+.wrev__owed {
+  fill: none;
+  stroke-width: 12;
+}
+.wrev__track {
+  stroke: rgba(47, 64, 52, 0.06);
+}
+.wrev__paid,
+.wrev__owed {
+  stroke-linecap: round;
+}
+.wrev__paid {
+  stroke: url(#wrev-paid);
+  filter: drop-shadow(0 3px 5px rgba(63, 125, 85, 0.35));
+}
+.wrev__owed {
+  stroke: url(#wrev-owed);
+  filter: drop-shadow(0 3px 5px rgba(239, 166, 90, 0.35));
+}
+/* raised white centre */
+.wrev__pct {
+  position: absolute;
+  inset: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(47, 64, 52, 0.05);
+}
+.wrev__pct b {
+  display: flex;
+  align-items: baseline;
+  font: 800 19px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.wrev__pct b i {
+  font: 700 11px/1 var(--font-sans);
+  font-style: normal;
+  margin-left: 1px;
+  color: var(--color-text-muted);
+}
+.wrev__pct small {
+  font: 500 9.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.wrev__legend {
+  display: flex;
+  gap: 14px;
+}
+.wrev__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.wrev__legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.wrev__legend .is-paid {
+  background: linear-gradient(135deg, #8fd3a4, #3f7d55);
+}
+.wrev__legend .is-owed {
+  background: linear-gradient(135deg, #ffd9a3, #efa65a);
+}
+
+/* ── schedule (calendar) widget ── */
+.wcal__nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wcal__nav button {
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  color: var(--color-text);
+}
+.wcal__nav .wcal__today {
+  padding: 0 10px;
+  font: 700 11px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.wcal__week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+.wcal__day {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0 7px;
+  border-radius: 16px;
+  color: var(--color-text-muted);
+}
+.wcal__sel {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--color-brand);
+  box-shadow: 0 6px 16px rgba(63, 125, 85, 0.35);
+}
+.wcal__day small {
+  font: 600 10.5px/1 var(--font-sans);
+}
+.wcal__day b {
+  font: 800 16px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.wcal__day.is-today:not([aria-pressed="true"]) b {
+  color: var(--color-brand);
+}
+.wcal__day.is-today:not([aria-pressed="true"])::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 14px);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-brand);
+}
+.wcal__load {
+  display: flex;
+  align-items: flex-end;
+  width: 6px;
+  height: 22px;
+  border-radius: 3px;
+  background: rgba(47, 64, 52, 0.07);
+  overflow: hidden;
+}
+.wcal__load i {
+  width: 100%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #8fd3a4, #3f7d55);
+}
+.wcal__day em {
+  font: 700 10px/1 var(--font-sans);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+.wcal__day[aria-pressed="true"] small,
+.wcal__day[aria-pressed="true"] b,
+.wcal__day[aria-pressed="true"] em {
+  color: var(--white);
+}
+.wcal__day[aria-pressed="true"] .wcal__load {
+  background: rgba(255, 255, 255, 0.22);
+}
+.wcal__day[aria-pressed="true"] .wcal__load i {
+  background: var(--white);
+}
+.wcal__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid var(--sage-100);
+}
+.wcal__date {
+  margin-bottom: 2px;
+  font: 700 12px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.wcal__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 12px;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.wcal__item:hover {
+  background: var(--sage-50);
+}
+.wcal__time {
+  flex: 0 0 40px;
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.wcal__bar {
+  flex: 0 0 3px;
+  align-self: stretch;
+  border-radius: 2px;
+}
+.wcal__who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.wcal__who b,
+.wcal__who small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wcal__who b {
+  font: 700 13px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.wcal__who small {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.wcal__dot {
+  flex: 0 0 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.wcal__more {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 4px;
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}

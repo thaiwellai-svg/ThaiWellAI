@@ -1,0 +1,518 @@
+.ik {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: var(--sage-50);
+}
+.ik__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ik__head b {
+  display: block;
+  font: 700 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.ik__head small {
+  display: block;
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3f9f68, #3a8ee0);
+  color: var(--white);
+}
+.ik__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: #e3f4ea;
+  font: 600 11.5px/1 var(--font-sans);
+  color: #2f8a52;
+}
+.ik__alerts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ik__alerts li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 4px 10px;
+  border-radius: 13px;
+  font: 600 11.5px/1.3 var(--font-sans);
+}
+.ik__alerts .is-stop {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+.ik__alerts .is-warn {
+  background: #fdf1dc;
+  color: #a2620a;
+}
+.ik__vitals {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.ik__vitals > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  background: var(--white);
+  min-width: 0;
+}
+.ik__vitals small {
+  font: 500 10.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik__vitals b {
+  font: 800 15px/1.1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ik__vitals b i {
+  margin-left: 1px;
+  font: 600 10px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.ik__vitals .is-high {
+  color: var(--color-danger);
+}
+.ik__vitals .is-mid {
+  color: #c27a12;
+}
+.ik__vitals .is-low {
+  color: #2f8a52;
+}
+.ik__areas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+.ik__lbl {
+  font: 600 11px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik__lbl:not(:first-child) {
+  margin-left: 6px;
+}
+.ik__areas em {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  font: 600 11.5px/1 var(--font-sans);
+  font-style: normal;
+}
+.ik__areas .is-focus {
+  background: var(--color-brand);
+  color: var(--white);
+}
+.ik__areas .is-avoid {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px #f2c2b8;
+  color: var(--color-danger);
+  text-decoration: line-through;
+}
+.ik__rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--white);
+  padding: 4px 14px;
+}
+.ik__rows > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--sage-50);
+  min-width: 0;
+}
+.ik__rows dt {
+  font: 500 10.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik__rows dd {
+  font: 600 12.5px/1.4 var(--font-sans);
+  color: var(--color-text);
+}
+.ik__rows .is-flag dd {
+  color: var(--color-danger);
+}
+.ik__more {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+/* compact (visit side column): 2×2 vitals, single-column answers */
+.ik--compact {
+  padding: 14px;
+  gap: 10px;
+}
+.ik--compact .ik__vitals {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.ik--compact .ik__rows {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ik__rows dd {
+  margin: 0;
+}
+.ik__rows {
+  margin: 0;
+}
+/* inside the health box it matches the other health cards */
+.ph .ik {
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.ph .ik__vitals > div,
+.ph .ik__rows {
+  background: var(--sage-50);
+}
+.ph .ik__rows > div {
+  border-bottom-color: var(--white);
+}
+
+/* ── intake card v2 ── */
+.ik2 {
+  gap: 12px;
+}
+.ik2__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ik2__title {
+  flex: 1;
+  min-width: 0;
+}
+.ik2__title b {
+  display: block;
+  font: 700 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ik2__title small {
+  display: block;
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik2__status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  font: 700 11px/1 var(--font-sans);
+}
+.ik2__status.is-ok {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.ik2__status.is-warn {
+  background: #fdf1dc;
+  color: #a2620a;
+}
+.ik2__status.is-stop {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+.ik2__quote {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.ik2__quote p {
+  font: 600 13.5px/1.45 var(--font-sans);
+  color: var(--color-text);
+}
+.ik2__quote small {
+  display: block;
+  margin-top: 3px;
+  font: 400 11px/1.35 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik2__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ik2__stats > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 2px 4px;
+  text-align: center;
+}
+.ik2__stats > span + span {
+  border-left: 1px solid var(--sage-100);
+}
+.ik2__stats svg {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+.ik2__stats small {
+  font: 500 10px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik2__stats b {
+  max-width: 100%;
+  font: 800 13.5px/1.1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ik2__stats b i {
+  font: 600 9.5px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.ik2__stats .is-high {
+  color: var(--color-danger);
+}
+.ik2__stats .is-mid {
+  color: #c27a12;
+}
+.ik2__stats .is-low {
+  color: #2f8a52;
+}
+.ik2__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+.ik2__gtitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  font: 700 11px/1 var(--font-sans);
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+.ik2__gtitle svg {
+  color: var(--color-brand);
+}
+.ik2__row {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--sage-50);
+}
+.ik2__row:last-child {
+  border-bottom: 0;
+}
+.ik2__mark {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border-radius: 50%;
+}
+.ik2__mark.is-ok {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.ik2__mark.is-info {
+  background: var(--color-info-tint);
+  color: var(--color-info);
+}
+.ik2__mark.is-flag {
+  background: #fde8e4;
+  color: var(--color-danger);
+}
+.ik2__k {
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ik2__v {
+  max-width: 160px;
+  font: 600 12px/1.4 var(--font-sans);
+  color: var(--color-text);
+  text-align: right;
+}
+.ik2__row.is-flag .ik2__v {
+  color: var(--color-danger);
+}
+.ik2__more {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 34px;
+  border-radius: 12px;
+  background: var(--sage-50);
+  font: 700 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+/* in the health box it's a plain white card like the others */
+.ph .ik2 {
+  background: var(--white);
+}
+.ph .ik2 .ik2__quote {
+  background: var(--sage-50);
+}
+.ik2__mark.is-plain::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sage-200, #c9d3c9);
+}
+/* full (non-compact) card: answer groups side by side */
+.ik2:not(.ik--compact) .ik2__groups {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--white);
+}
+/* ── measurement tiles ── */
+.ik3 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.ik:not(.ik--compact) .ik3 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.ik3__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 10px 10px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.ik3__icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tc) 14%, white);
+  color: var(--tc);
+}
+.ik3__tile small {
+  font: 500 10.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+  padding-right: 26px;
+}
+.ik3__tile b {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 3px;
+  font: 800 17px/1.15 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.ik3__tile b i {
+  font: 600 9.5px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.ik3__st {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 10.5px/1.2 var(--font-sans);
+  color: var(--tc);
+}
+.ik3__st::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tc);
+}
+.ik3__bar,
+.ik3__steps {
+  display: flex;
+  gap: 2px;
+  margin-top: 3px;
+}
+.ik3__bar em,
+.ik3__steps em {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(47, 64, 52, 0.1);
+}
+.ik3__bar em.on,
+.ik3__steps em.on {
+  background: var(--tc);
+}
+.ik3__steps em {
+  height: 5px;
+}
+.ik3__tile:first-child b {
+  color: var(--tc);
+}
+/* long free-text answers: value under the question */
+.ik2__row.is-plain {
+  grid-template-columns: 16px minmax(0, 1fr);
+}
+.ik2__row.is-plain .ik2__v {
+  grid-column: 2;
+  max-width: none;
+  text-align: left;
+}
+/* full card (requests page) sits on a tinted background: white tiles */
+.ik:not(.ik--compact) .ik3__tile,
+.ik:not(.ik--compact) .ik2__quote {
+  background: var(--white);
+}

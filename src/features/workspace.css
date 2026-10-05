@@ -1,0 +1,335 @@
+.ws {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+}
+.ws__pane {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: 16px;
+  border-radius: 34px;
+  transition: opacity 0.25s ease, filter 0.25s ease, box-shadow 0.25s ease;
+}
+.ws__pane.is-flex {
+  min-width: 420px;
+}
+.ws__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ws__body > * {
+  flex: 1;
+  min-height: 0;
+}
+/* iPad-style ••• handle on the top edge */
+.ws__dots {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 54px;
+  height: 22px;
+  margin-left: -27px;
+  border-radius: var(--radius-pill);
+  touch-action: none;
+  cursor: grab;
+}
+.ws__dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.ws__dots:hover i,
+.is-focused .ws__dots i {
+  background: var(--white);
+  transform: scale(1.15);
+}
+.is-focused .ws__dots {
+  background: var(--color-brand);
+}
+.is-dragging {
+  z-index: 10;
+  cursor: grabbing;
+}
+.is-dragging .ws__body {
+  transform: scale(0.985);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
+  border-radius: 30px;
+  transition: transform 0.2s ease;
+}
+/* focus highlight */
+.ws__pane.is-focused::after {
+  content: "";
+  position: absolute;
+  inset: 14px -4px -4px;
+  border-radius: 34px;
+  box-shadow: 0 0 0 3px var(--color-brand), 0 0 0 9px rgba(76, 132, 90, 0.22), 0 0 40px rgba(76, 132, 90, 0.35);
+  pointer-events: none;
+  animation: ws-in 0.25s ease;
+}
+@keyframes ws-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+.ws__pane.is-dimmed {
+  opacity: 0.55;
+  filter: saturate(0.7);
+}
+.ws__bar {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(30, 36, 32, 0.88);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  max-width: calc(100% - 16px);
+  font: 500 12px/1 var(--font-sans);
+  color: rgba(255, 255, 255, 0.85);
+  translate: -50% 0;
+}
+.ws__bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+  font: 700 12px/1 var(--font-sans);
+  color: var(--white);
+}
+.ws__bar .is-done {
+  background: var(--white);
+  color: var(--color-brand);
+}
+/* resize grip on the edge facing the flexible pane */
+.ws__grip {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 64px;
+  margin-top: -32px;
+  border-radius: 11px;
+  background: var(--color-brand);
+  color: var(--white);
+  box-shadow: 0 6px 16px rgba(47, 95, 63, 0.4);
+  touch-action: none;
+  cursor: ew-resize;
+}
+.ws__grip.is-right {
+  right: -19px;
+}
+.ws__grip.is-left {
+  left: -19px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws__pane,
+  .ws__pane::after {
+    transition: none;
+    animation: none;
+  }
+}
+.ws__bar span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* ••• sits inside the glass rim of the pane */
+.ws__pane {
+  padding-top: 0;
+}
+.ws__pane:not(.is-locked) .ws__body > .panel {
+  padding-top: 22px;
+}
+.ws__dots {
+  top: 4px;
+  height: 14px;
+}
+.ws__dots i {
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.9);
+}
+.is-focused .ws__dots {
+  height: 16px;
+  top: 3px;
+}
+.ws__pane.is-focused::after {
+  inset: -4px;
+}
+.ws__bar {
+  top: 26px;
+}
+/* rim stays the normal 10px on every side; dots sit tight inside it */
+.ws__pane:not(.is-locked) .ws__body > .panel {
+  padding-top: 10px;
+}
+.ws__dots {
+  top: 1px;
+  height: 9px;
+  gap: 3px;
+}
+.ws__dots i {
+  width: 4px;
+  height: 4px;
+}
+.is-focused .ws__dots {
+  top: 0;
+  height: 10px;
+}
+.ws__bar {
+  top: 16px;
+}
+/* white highlight */
+.ws__pane.is-focused::after {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.95), 0 0 0 9px rgba(255, 255, 255, 0.28), 0 0 44px rgba(255, 255, 255, 0.45);
+}
+.is-focused .ws__dots {
+  background: var(--white);
+}
+.is-focused .ws__dots i {
+  background: var(--color-text);
+  box-shadow: none;
+}
+.ws__grip {
+  background: var(--white);
+  color: var(--color-text);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+/* ring sits ON the pane's edge, and the ••• pill is centred on that same line */
+.ws__pane.is-focused::after {
+  inset: -1.5px;
+  border-radius: 31.5px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.95), 0 0 30px rgba(255, 255, 255, 0.45);
+}
+.ws__dots {
+  top: -5px;
+  height: 10px;
+}
+.is-focused .ws__dots {
+  top: -7px;
+  height: 14px;
+  width: 50px;
+  margin-left: -25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.ws__bar {
+  top: 16px;
+}
+/* normal: dots tucked inside the rim · focused: they slide up onto the white line */
+.ws__dots {
+  top: 1px;
+  height: 9px;
+  width: 54px;
+  margin-left: -27px;
+  transition: top 0.25s cubic-bezier(0.22, 1, 0.36, 1), height 0.25s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.is-focused .ws__dots {
+  top: -7px;
+  height: 14px;
+}
+
+.ws {
+  overflow: hidden;
+  padding: 8px 6px 0;
+  margin: -8px -6px 0;
+}
+/* ring drawn as a 3px border centred exactly on the pane edge; dots & grips share that centre line */
+.ws__pane.is-focused::after {
+  inset: -1.5px;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  border-radius: 31.5px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+}
+.is-focused .ws__dots {
+  top: -7px; /* 14px tall → centre on y = 0 (the edge) */
+  height: 14px;
+}
+.ws__grip {
+  width: 22px;
+  height: 64px;
+  margin-top: -32px;
+}
+.ws__grip.is-right {
+  right: -11px; /* centre on the right edge */
+}
+.ws__grip.is-left {
+  left: -11px;
+}
+/* the 8px top padding (room for the ring) must not shorten the panes */
+.ws {
+  height: calc(100% + 8px);
+  box-sizing: border-box;
+}
+/* see-through spacer pane: no ring, no dimming, never steals taps */
+.ws__pane.is-ghost {
+  min-width: 0;
+  pointer-events: none;
+}
+.ws__pane.is-ghost.is-dimmed {
+  opacity: 1;
+  filter: none;
+}
+/* clip only sideways: scroll lists must run past the bottom to the screen edge (under the dock) */
+.ws {
+  overflow: visible;
+  overflow-x: clip;
+}
+/* option buttons inside the toolbar (fixed panes) */
+.ws__bar .ws__opt[aria-pressed="true"] {
+  background: rgba(255, 255, 255, 0.28);
+}
+.ws__bar:has(.ws__opt) {
+  padding-left: 6px;
+}
+/* a fixed pane in slim mode is narrower than its toolbar — let the bar overflow to the right */
+.ws__pane.is-fixed:not(.is-flex) .ws__bar {
+  max-width: none;
+  left: 0;
+  translate: 0 0;
+}
+/* fixed list panes have no glass rim: draw the highlight 8px outside the rows */
+.ws:has(.ws__pane.is-fixed) {
+  padding: 8px 16px 0;
+  margin: -8px -16px 0;
+}
+.ws__pane.is-fixed:not(.is-flex).is-focused::after {
+  inset: -1.5px -9.5px -9.5px;
+  border-radius: 30px;
+}
+/* icon-only toolbar buttons */
+.ws__bar .ws__icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+.ws__bar:not(:has(span)) {
+  padding: 5px;
+}

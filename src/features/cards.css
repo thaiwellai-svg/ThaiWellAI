@@ -1,0 +1,203 @@
+/* Patient record cards — Dashboard today list, request deck, anywhere a visit is listed. */
+.pcard {
+  gap: 12px;
+  width: 100%;
+  padding: 14px 14px 12px;
+  text-align: left;
+}
+.pcard__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.pcard__head > .tw-avatar {
+  margin: 2px; /* room for the status ring */
+}
+.pcard__id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pcard__name {
+  font: 700 15px/1.3 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcard__sub {
+  font: 400 12px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.pcard__time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.pcard__time b {
+  font: 700 18px/1 var(--font-sans);
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+.pcard__time small {
+  font: 500 11px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* inset strip: the "what" of the visit */
+.pcard__strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 8px 8px 12px;
+  border-radius: 14px;
+  background: var(--color-surface-sunken);
+}
+.pcard__svc,
+.pcard__when {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text);
+}
+.pcard__svc svg,
+.pcard__when svg {
+  flex-shrink: 0;
+  color: var(--color-brand);
+}
+.pcard__svc > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcard__when b {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.pcard__when svg + b + svg {
+  margin-left: 4px;
+}
+
+.pcard__foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 2px;
+}
+.pcard__staff {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pcard__staff > span:last-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcard__line {
+  margin-top: -2px;
+  padding: 0 2px;
+  font: 400 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcard__actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* finished / no-show visits recede a little */
+.pcard--done .pcard__name,
+.pcard--done .pcard__time b {
+  color: var(--color-text-muted);
+}
+.pcard--absent .tw-avatar__img {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.pcard--absent .pcard__time b {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* ── Pain mini meter ───────────────────────────────────────── */
+.pain-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 9px 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: 0 1px 2px rgba(44, 62, 43, 0.08);
+  color: var(--pm);
+}
+.pain-mini--danger {
+  --pm: var(--red-600);
+}
+.pain-mini--warning {
+  --pm: #d18a00;
+}
+.pain-mini--success {
+  --pm: var(--green-700);
+}
+.pain-mini__label {
+  font: 500 10px/1 var(--font-thai);
+  color: var(--color-text-muted);
+}
+.pain-mini__pips {
+  display: inline-flex;
+  gap: 2px;
+}
+.pain-mini__pips i {
+  width: 4px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--sage-100);
+}
+.pain-mini__pips i[data-on] {
+  background: var(--pm);
+}
+.pain-mini b {
+  min-width: 12px;
+  font: 700 12px/1 var(--font-sans);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pcard__next {
+  margin-left: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  font: 700 11px/1 var(--font-sans);
+  color: var(--white);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pcard__next:active {
+  transform: scale(0.96);
+}

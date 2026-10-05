@@ -1,0 +1,590 @@
+/* ── Sign-in: full-bleed brand + frosted card over the 3D room ── */
+.lg {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  color: var(--white);
+}
+.lg__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(100deg, rgba(20, 30, 22, 0.78) 0%, rgba(24, 34, 26, 0.55) 42%, rgba(30, 24, 18, 0.18) 75%, rgba(30, 24, 18, 0.3) 100%),
+    radial-gradient(120% 80% at 50% 120%, rgba(10, 14, 10, 0.55), transparent 60%);
+}
+
+/* aurora glows */
+.lg__aurora {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.lg__aurora--a {
+  width: 520px;
+  height: 520px;
+  left: -120px;
+  top: -140px;
+  background: radial-gradient(circle, rgba(120, 190, 140, 0.9), transparent 65%);
+  animation: lg-drift-a 18s ease-in-out infinite alternate;
+}
+.lg__aurora--b {
+  width: 460px;
+  height: 460px;
+  left: 28%;
+  bottom: -200px;
+  background: radial-gradient(circle, rgba(230, 180, 110, 0.75), transparent 65%);
+  animation: lg-drift-b 22s ease-in-out infinite alternate;
+}
+.lg__aurora--c {
+  width: 380px;
+  height: 380px;
+  right: -100px;
+  top: 10%;
+  background: radial-gradient(circle, rgba(255, 230, 190, 0.5), transparent 65%);
+  animation: lg-drift-a 26s ease-in-out infinite alternate-reverse;
+}
+@keyframes lg-drift-a {
+  to {
+    transform: translate(120px, 80px) scale(1.15);
+  }
+}
+@keyframes lg-drift-b {
+  to {
+    transform: translate(-90px, -60px) scale(1.2);
+  }
+}
+
+/* floating motes */
+.lg__motes i {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  background: rgba(255, 238, 200, 0.85);
+  box-shadow: 0 0 8px rgba(255, 230, 180, 0.9);
+  opacity: 0;
+  animation-name: lg-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes lg-rise {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-105vh) translateX(40px);
+    opacity: 0;
+  }
+}
+
+.lg__grid {
+  position: relative;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 440px);
+  align-items: center;
+  gap: 48px;
+  padding: calc(var(--safe-top, 0px) + 36px) clamp(24px, 5vw, 72px) 36px;
+}
+
+/* hero */
+.lg__hero {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
+}
+.lg__clock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.lg__clock b {
+  font: 300 34px/1 var(--font-sans);
+  letter-spacing: -0.02em;
+}
+.lg__clock span {
+  font: 500 13px/1 var(--font-sans);
+  color: rgba(255, 255, 255, 0.75);
+}
+.lg__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lg__mark {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 30px;
+  color: #f3dcae;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 20px 50px rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.lg__brand h1 {
+  font: 800 clamp(56px, 8vw, 104px) / 0.95 var(--font-sans);
+  letter-spacing: -0.02em;
+  background: linear-gradient(100deg, #ffffff 0%, #f6e7c8 45%, #ffffff 70%, #e9d3a6 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lg-sheen 7s ease-in-out infinite;
+  text-shadow: none;
+}
+@keyframes lg-sheen {
+  0%,
+  100% {
+    background-position: 0% 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
+.lg__tag {
+  max-width: 520px;
+  font: 400 clamp(17px, 1.7vw, 21px) / 1.6 var(--font-sans);
+  color: rgba(255, 255, 255, 0.86);
+}
+.lg__tag em {
+  font-style: normal;
+  font-weight: 700;
+  color: #f3dcae;
+}
+.lg__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 440px;
+}
+.lg__features li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.lg__fi {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  color: #f3dcae;
+}
+.lg__features b {
+  display: block;
+  font: 700 15px/1.3 var(--font-sans);
+}
+.lg__features small {
+  font: 400 12px/1.4 var(--font-sans);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* floating stat chips */
+.lg__float {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+.lg__float small {
+  display: block;
+  font: 500 11px/1.2 var(--font-sans);
+  color: rgba(255, 255, 255, 0.75);
+}
+.lg__float b {
+  font: 700 16px/1.2 var(--font-sans);
+}
+.lg__float--a {
+  right: 4%;
+  top: 18%;
+  animation: lg-bob 6s ease-in-out infinite;
+}
+.lg__float--b {
+  right: 14%;
+  bottom: 12%;
+  animation: lg-bob 7s ease-in-out 1s infinite;
+}
+@keyframes lg-bob {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.lg__float-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: var(--color-brand);
+  color: var(--white);
+}
+.lg__float-icon--warm {
+  background: #c99a52;
+}
+
+.lg__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lg__field > span:first-child {
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.lg__input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 8px 0 16px;
+  border-radius: 16px;
+  background: var(--sage-50);
+  box-shadow: inset 0 0 0 1px transparent;
+  color: var(--color-text-muted);
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+.lg__input:focus-within {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand), 0 0 0 4px var(--color-brand-tint);
+  color: var(--color-brand);
+}
+.lg__input input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  outline: none;
+  font: 500 15px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.lg__input input:focus-visible {
+  box-shadow: none;
+}
+.lg__input input::placeholder {
+  color: var(--neutral-400, #a3a9a2);
+  font-weight: 400;
+}
+.lg__input button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: var(--color-text-muted);
+}
+.lg__input button:hover {
+  background: var(--sage-50);
+}
+.lg__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lg__remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 13px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.lg__link {
+  font: 600 13px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.lg__submit {
+  position: relative;
+  height: 58px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #5a9a68 0%, #3d7650 55%, #2f5f3f 100%);
+  color: var(--white);
+  font: 700 16px/1 var(--font-sans);
+  box-shadow: 0 14px 30px rgba(47, 95, 63, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.lg__submit > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.lg__submit::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -40%;
+  width: 30%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  animation: lg-shine 3.2s ease-in-out infinite;
+}
+@keyframes lg-shine {
+  0%,
+  55% {
+    left: -40%;
+  }
+  100% {
+    left: 130%;
+  }
+}
+.lg__submit:active:not(:disabled) {
+  transform: scale(0.985);
+}
+.lg__submit:disabled {
+  background: linear-gradient(135deg, #8db497, #6f9a7b);
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.92);
+}
+.lg__submit:disabled::after {
+  display: none;
+}
+.lg__submit[data-phase="busy"],
+.lg__submit[data-phase="done"] {
+  opacity: 1;
+}
+.lg__submit[data-phase="done"] {
+  background: linear-gradient(135deg, #34c759, #239a45);
+}
+.lg__spin {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--white);
+  animation: lg-rot 0.8s linear infinite;
+}
+@keyframes lg-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.lg__note {
+  text-align: center;
+  font: 400 11px/1.5 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 960px) {
+  .lg__grid {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    align-content: center;
+    gap: 28px;
+    overflow-y: auto;
+  }
+  .lg__hero {
+    height: auto;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .lg__clock,
+  .lg__features,
+  .lg__float {
+    display: none;
+  }
+  .lg__brand {
+    align-items: center;
+  }
+  .lg__card {
+    width: min(440px, 100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg__aurora,
+  .lg__motes,
+  .lg__float,
+    .lg__submit::after,
+  .lg__brand h1 {
+    animation: none !important;
+  }
+}
+
+/* card — minimal */
+.lg__card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 36px 32px 28px;
+  border-radius: 32px;
+  background: var(--white);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  color: var(--color-text);
+}
+.lg__head {
+  margin-bottom: 6px;
+}
+.lg__head small {
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.lg__head h2 {
+  margin: 8px 0 4px;
+  font: 800 28px/1.15 var(--font-sans);
+  color: var(--color-text);
+}
+.lg__head p {
+  font: 400 13px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.lg__field > span:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.lg__input {
+  padding: 0 8px 0 16px;
+}
+.lg__submit {
+  margin-top: 4px;
+  height: 54px;
+  border-radius: 16px;
+  background: var(--color-brand);
+  box-shadow: none;
+}
+.lg__submit::after {
+  display: none;
+}
+.lg__submit:disabled {
+  background: var(--color-brand);
+  opacity: 0.4;
+}
+.lg__submit[data-phase="done"] {
+  background: var(--color-brand);
+}
+.lg__link {
+  font: 600 12px/1 var(--font-sans);
+}
+
+/* ── card: frosted glass (matches the dock & search pill) ── */
+.lg__card {
+  background: rgba(255, 255, 255, 0.14);
+  -webkit-backdrop-filter: blur(32px) saturate(1.3);
+  backdrop-filter: blur(32px) saturate(1.3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 30px 80px rgba(0, 0, 0, 0.28);
+  color: var(--white);
+}
+.lg__head small {
+  color: #f3dcae;
+}
+.lg__head h2 {
+  color: var(--white);
+}
+.lg__head p {
+  color: rgba(255, 255, 255, 0.72);
+}
+.lg__field > span:first-child {
+  color: rgba(255, 255, 255, 0.82);
+}
+.lg__input {
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+  color: rgba(255, 255, 255, 0.8);
+}
+.lg__input:focus-within {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85), 0 0 0 4px rgba(255, 255, 255, 0.14);
+  color: var(--white);
+}
+.lg__input input {
+  color: var(--white);
+}
+.lg__input input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+.lg__input button {
+  color: rgba(255, 255, 255, 0.8);
+}
+.lg__input button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.lg__link {
+  color: #f3dcae;
+}
+.lg__submit,
+.lg__submit:disabled,
+.lg__submit[data-phase="done"] {
+  background: var(--white);
+  color: var(--color-brand);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+.lg__submit:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+}
+.lg__submit[data-phase="busy"],
+.lg__submit[data-phase="done"] {
+  opacity: 1;
+}
+.lg__spin {
+  border-color: rgba(76, 132, 90, 0.25);
+  border-top-color: var(--color-brand);
+}
+.lg__note {
+  color: rgba(255, 255, 255, 0.6);
+}
+/* keep autofill from painting the glass fields yellow/white */
+.lg__input input:-webkit-autofill {
+  -webkit-text-fill-color: var(--white);
+  -webkit-box-shadow: 0 0 0 40px rgba(60, 70, 60, 0.6) inset;
+  transition: background-color 9999s;
+}
+/* blend modes on the glows broke the card's backdrop blur — plain alpha instead */
+.lg__aurora {
+  mix-blend-mode: normal;
+  opacity: 0.38;
+}
+.lg__card {
+  background: rgba(28, 36, 30, 0.22);
+}
+/* lift the glass card off the room */
+.lg__card {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    0 18px 40px rgba(0, 0, 0, 0.26),
+    0 48px 110px rgba(10, 16, 10, 0.42);
+}
+/* let the clinic front show: shade only behind the brand text */
+.lg__shade {
+  background: linear-gradient(100deg, rgba(14, 20, 16, 0.62) 0%, rgba(14, 20, 16, 0.32) 34%, rgba(14, 20, 16, 0) 58%);
+}
+.lg__aurora {
+  opacity: 0.22;
+}
+
+/* over a live 3D scene the animated blurred glows & motes cost too much on iPad (stutter / flicker) */
+.lg__aurora,
+.lg__motes {
+  display: none;
+}

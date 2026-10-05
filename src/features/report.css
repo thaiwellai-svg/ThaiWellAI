@@ -1,0 +1,106 @@
+.rp__bar {
+  margin-bottom: 12px;
+}
+.rp__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.rp__kpis > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.rp__kpis small {
+  font: 600 11px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.rp__kpis b {
+  font: 800 22px/1.1 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.rp__kpis em {
+  font: 500 10.5px/1.3 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.rp__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.rp__grid section {
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.rp__grid h4 {
+  margin-bottom: 8px;
+  font: 700 12.5px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.rp__grid table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 500 12px/1.4 var(--font-sans);
+}
+.rp__grid td {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--sage-50);
+  color: var(--color-text);
+}
+.rp__grid td:not(:first-child) {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 8px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.rp__bar-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 70px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font: 500 12px/1.3 var(--font-sans);
+}
+.rp__bar-row i {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--sage-50);
+  overflow: hidden;
+}
+.rp__bar-row i em {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--color-brand);
+}
+.rp__bar-row b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .rp,
+  .rp * {
+    visibility: visible;
+  }
+  .rp {
+    position: fixed !important;
+    inset: 0 !important;
+    max-height: none !important;
+    box-shadow: none !important;
+  }
+  .rp .tw-overlay-foot,
+  .rp__bar {
+    display: none !important;
+  }
+}
