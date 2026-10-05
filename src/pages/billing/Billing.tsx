@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { BarChart3, FileSpreadsheet, Banknote, CheckCheck, ChevronRight, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
-import { Avatar, Badge, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
+import { Avatar, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
 import { ReceiptDialog } from "../../features/Receipt";
@@ -81,7 +81,21 @@ export default function Billing() {
   const byMethod = (m: PaymentMethod) => paidToday.filter((a) => a.payment!.method === m);
   const pendingApp = store.appointments.filter((a) => a.payment?.status === "pending");
   const counterDue = store.appointments.filter((a) => stageOf(a) === "billing").length;
-  const max = Math.max(1, ...(["cash", "promptpay"] as PaymentMethod[]).map((m) => byMethod(m).reduce((n, a) => n + a.payment!.amount, 0)));
+  // donut of today's income by method
+  const COL: Record<PaymentMethod, string> = { cash: "#2f9a5b", promptpay: "#3b82c4", app: "#7c5cc4", credit: "#d08a3c" };
+  const parts = (["cash", "promptpay", "app"] as PaymentMethod[]).map((m) => ({ m, v: byMethod(m).reduce((n, a) => n + a.payment!.amount, 0) }));
+  let acc = 0;
+  const donut = income
+    ? `conic-gradient(${parts.map(({ m, v }) => { const s0 = acc; acc += (v / income) * 360; return `${COL[m]} ${s0}deg ${acc}deg`; }).join(", ")})`
+    : "conic-gradient(#e6ece8 0deg 360deg)";
+  // last 7 days of takings
+  const paidOn = (d: string) => store.appointments.flatMap((a) => (a.payment && a.payment.status === "paid" && a.payment.at.slice(0, 10) === d ? [a.payment.amount] : [])).reduce((n, x) => n + x, 0);
+  const week = Array.from({ length: 7 }, (_, k) => {
+    const d = addISODays(today, k - 6);
+    return { d, sum: paidOn(d), label: k === 6 ? "วันนี้" : new Date(d + "T00:00:00").toLocaleDateString("th-TH", { weekday: "narrow" }) };
+  });
+  const weekMax = Math.max(1, ...week.map((x) => x.sum));
+  const yesterday = week[5].sum;
 
   return (
     <WorkPage
@@ -115,74 +129,100 @@ export default function Billing() {
       }
     >
       <div className="appt">
-        <aside className="appt__rail scroll-y">
-          <div className="rail-card bl-today">
-            <div className="rail-card__head">
+        <aside className="appt__rail scroll-y bl2-rail">
+          {/* today's income with a method donut */}
+          <section className="bl2-card bl2-income">
+            <header>
               <b>รายรับวันนี้</b>
-              <span className="tw-meta">{thaiDate(today)}</span>
+              <small>{thaiDate(today)}</small>
+            </header>
+            <div className="bl2-income__row">
+              <div className="bl2-donut" style={{ background: donut }}>
+                <span>
+                  <b>{paidToday.length}</b>
+                  <small>ใบเสร็จ</small>
+                </span>
+              </div>
+              <div className="bl2-income__sum">
+                <b>{baht(income)}</b>
+                <small>บาท</small>
+                {yesterday > 0 && (
+                  <em className={income >= yesterday ? "is-up" : "is-down"}>
+                    {income >= yesterday ? "▲" : "▼"} {Math.abs(Math.round(((income - yesterday) / yesterday) * 100))}% จากเมื่อวาน
+                  </em>
+                )}
+              </div>
             </div>
-            <div className="bl-income">
-              {baht(income)}
-              <small> บาท</small>
-            </div>
-            <span className="tw-meta">{paidToday.length} ใบเสร็จ</span>
-            <div className="bl-split">
-              {(["cash", "promptpay"] as PaymentMethod[]).map((m) => {
+            <div className="bl2-legend">
+              {(["cash", "promptpay", "app"] as PaymentMethod[]).map((m) => {
                 const sum = byMethod(m).reduce((n, a) => n + a.payment!.amount, 0);
                 const Ic = ICON[m];
                 return (
-                  <div key={m} className="bl-split__row">
+                  <div key={m}>
                     <span className={`bl-mi bl-mi--${m}`}>
-                      <Ic size={15} />
+                      <Ic size={14} />
                     </span>
-                    <span className="bl-split__label">
+                    <span>
                       {METHOD_LABEL[m]}
                       <small>{byMethod(m).length} รายการ</small>
                     </span>
                     <b>{baht(sum)}</b>
-                    <i>
-                      <motion.i initial={{ width: 0 }} animate={{ width: `${(sum / max) * 100}%` }} className={`bl-bar--${m}`} />
-                    </i>
                   </div>
                 );
               })}
-              <div className="bl-split__row">
+              <div>
                 <span className="bl-mi bl-mi--credit">
-                  <Ticket size={15} />
+                  <Ticket size={14} />
                 </span>
-                <span className="bl-split__label">
+                <span>
                   หักเครดิตคอร์ส
                   <small>ไม่มีรายรับเงินสด</small>
                 </span>
                 <b>{byMethod("credit").length} ครั้ง</b>
               </div>
             </div>
-          </div>
-          <div className="rail-card">
-            <div className="rail-card__head">
-              <b>รอชำระ</b>
+          </section>
+
+          {/* last 7 days */}
+          <section className="bl2-card">
+            <header>
+              <b>7 วันล่าสุด</b>
+              <small>{baht(week.reduce((n, x) => n + x.sum, 0))} บาท</small>
+            </header>
+            <div className="bl2-week">
+              {week.map((x) => (
+                <div key={x.d} className={x.d === today ? "is-today" : undefined}>
+                  <i>
+                    <motion.i initial={{ height: 0 }} animate={{ height: `${(x.sum / weekMax) * 100}%` }} transition={{ duration: 0.5 }} />
+                  </i>
+                  <small>{x.label}</small>
+                </div>
+              ))}
             </div>
-            <button type="button" className="bl-due" onClick={() => setTab("due")}>
-              <span className="bl-mi bl-mi--due">
-                <Wallet size={15} />
-              </span>
-              <span>
-                ที่เคาน์เตอร์
-                <small>รักษาเสร็จแล้ว รอคิดเงิน</small>
-              </span>
-              <b>{counterDue}</b>
-            </button>
-            <button type="button" className="bl-due" onClick={() => setTab("due")}>
-              <span className="bl-mi bl-mi--app">
-                <Smartphone size={15} />
-              </span>
-              <span>
-                บิลในแอป ThaiWell AI
-                <small>{baht(pendingApp.reduce((n, a) => n + a.payment!.amount, 0))} บาท ยังไม่จ่าย</small>
-              </span>
-              <b>{pendingApp.length}</b>
-            </button>
-          </div>
+          </section>
+
+          {/* waiting */}
+          <section className="bl2-card">
+            <header>
+              <b>รอชำระ</b>
+            </header>
+            <div className="bl2-due">
+              <button type="button" onClick={() => setTab("due")}>
+                <span className="bl-mi bl-mi--due">
+                  <Wallet size={15} />
+                </span>
+                <b>{counterDue}</b>
+                <small>ที่เคาน์เตอร์</small>
+              </button>
+              <button type="button" onClick={() => setTab("due")}>
+                <span className="bl-mi bl-mi--app">
+                  <Smartphone size={15} />
+                </span>
+                <b>{pendingApp.length}</b>
+                <small>บิลในแอป · {baht(pendingApp.reduce((n, a) => n + a.payment!.amount, 0))} ฿</small>
+              </button>
+            </div>
+          </section>
         </aside>
 
         <div className="panel appt__main">
@@ -235,20 +275,23 @@ export default function Billing() {
                     const s = store.serviceById(a.serviceId);
                     const pending = a.payment?.status === "pending";
                     return (
-                      <button key={a.id} type="button" className="bl-row" onClick={() => setOpen(a.id)}>
+                      <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")}>
                         <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" />
-                        <span className="bl-row__who">
+                        <span className="bl2-bill__who">
                           <b>{p.name}</b>
                           <small>
                             {s.name} · {thaiDate(a.date)} {a.start} น.
                           </small>
+                          <em>{pending ? "ส่งบิลเข้าแอปแล้ว · รอผู้ป่วยชำระ" : stageOf(a) === "billing" ? "รักษาเสร็จแล้ว · รอคิดเงิน" : "ค้างชำระ"}</em>
                         </span>
-                        <Badge tone={pending ? "info" : stageOf(a) === "billing" ? "warning" : "danger"} compact>
-                          {pending ? "รอชำระในแอป" : stageOf(a) === "billing" ? "รอคิดเงิน" : "ค้างชำระ"}
-                        </Badge>
-                        <b className="bl-amt">{baht(a.payment?.amount ?? s.price)} ฿</b>
-                        <ChevronRight size={16} className="bl-chev" />
-                      </button>
+                        <span className="bl2-bill__amt">
+                          <b>{baht(a.payment?.amount ?? s.price)}</b>
+                          <small>บาท</small>
+                        </span>
+                        <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={() => setOpen(a.id)}>
+                          {pending ? "ดูบิล" : "รับชำระ"}
+                        </Button>
+                      </div>
                     );
                   })
                 ) : (
@@ -267,26 +310,27 @@ export default function Billing() {
                         const p = store.patientById(a.patientId);
                         const Ic = ICON[pay.method];
                         return (
-                          <button key={key} type="button" className={clsx("bl-row", pay.status === "void" && "is-void")} onClick={() => setReceipt(key)}>
+                          <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending")} onClick={() => setReceipt(key)}>
                             <span className={clsx("bl-mi", `bl-mi--${pay.method}`)}>
                               <Ic size={16} />
                             </span>
-                            <span className="bl-row__who">
+                            <span className="bl2-rc__who">
                               <b>{p.name}</b>
                               <small>
-                                {pay.no} · {time(pay.at)} น. · {store.serviceById(a.serviceId).short}
+                                {store.serviceById(a.serviceId).short} · {time(pay.at)} น.
                               </small>
                             </span>
-                            {pay.slipSentAt && (
-                              <span className="bl-sent" title="ส่งสลิปเข้าแอปแล้ว">
-                                <CheckCheck size={13} /> ส่งสลิปแล้ว
-                              </span>
-                            )}
-                            <Badge tone={pay.status === "void" ? "danger" : pay.status === "pending" ? "info" : "neutral"} compact>
+                            <span className="bl2-rc__no">{pay.no}</span>
+                            <span className="bl2-rc__st">
                               {pay.status === "void" ? (pay.voided?.refund ? "ยกเลิก · คืนเงิน" : "ยกเลิก") : pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
-                            </Badge>
-                            <b className="bl-amt">{baht(pay.amount)} ฿</b>
-                            <ReceiptText size={16} className="bl-chev" />
+                              {pay.slipSentAt && pay.status === "paid" && (
+                                <i title="ส่งสลิปเข้าแอปแล้ว">
+                                  <CheckCheck size={12} />
+                                </i>
+                              )}
+                            </span>
+                            <b className="bl2-rc__amt">{pay.method === "credit" ? <span className="bl2-rc__cr">1 ครั้ง</span> : `${baht(pay.amount)} ฿`}</b>
+                            <ChevronRight size={16} className="bl-chev" />
                           </button>
                         );
                       })}
