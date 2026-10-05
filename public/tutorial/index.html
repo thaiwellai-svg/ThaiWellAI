@@ -21,8 +21,16 @@
         <p class="hero__eyebrow">คู่มือการใช้งาน</p>
         <h1>ทุกฟีเจอร์ของ ThaiWell<br /><span>รวมไว้ในที่เดียว</span></h1>
         <p class="hero__lead">วิธีใช้ทุกฟีเจอร์ แยกตามเมนูของแอพ ทุกขั้นตอนมีภาพเคลื่อนไหวสาธิตว่าต้องกดตรงไหน</p>
+        <div class="hsearch">
+          <label class="hsearch__box">
+            <span id="hqi"></span>
+            <input id="hq" type="search" placeholder="ค้นหาวิธีใช้ เช่น ลงทะเบียน, คืนเงิน, หุ่น 3D" autocomplete="off" />
+            <button id="hqx" type="button" aria-label="ล้าง" hidden></button>
+          </label>
+          <div class="hres" id="hres" hidden></div>
+          <div class="hsearch__chips"><small>ค้นหาบ่อย:</small><button type="button">ลงทะเบียน</button><button type="button">คัดกรอง</button><button type="button">คืนเงิน</button><button type="button">แผน AI</button></div>
+        </div>
         <div class="hero__stats" id="stats"></div>
-        <button class="btn btn--light" id="start">ดูฟีเจอร์ทั้งหมด ↓</button>
       </div>
       <div class="hero__cards" id="heroCards" aria-hidden="true"></div>
     </header>
@@ -38,6 +46,7 @@
       <p></p>
     </div>
 
+    <script src="icons.js"></script>
     <script src="tutorial.js"></script>
   </body>
 </html>

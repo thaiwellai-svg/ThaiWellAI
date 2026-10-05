@@ -1,17 +1,17 @@
 /* ThaiWell Academy — chapters, synced video steps, screenshots, progress */
 const INFO = {
-  home: { group: "หน้าหลัก", title: "ภาพรวมวันนี้และคำขอจองคิว", short: "ภาพรวม · อนุมัติคำขอคิว", color: "#4c845a", icon: "⌂", desc: "ดูภาพรวมของวันนี้ จัดวางวิดเจ็ต และอนุมัติคำขอจองคิวที่ผู้ป่วยส่งมาจากแอป" },
-  visit: { group: "รับบริการ", title: "เรียกคิว คัดกรอง และเริ่มนวด", short: "เรียกคิว · คัดกรอง · เริ่มนวด", color: "#2f8f9a", icon: "◷", desc: "เรียกคิวพร้อมเสียงประกาศ คัดกรองก่อนนวดทุกครั้ง เลือกเตียง และเริ่มจับเวลา" },
-  record: { group: "รับบริการ", title: "บันทึกการรักษา", short: "บันทึกการรักษา", color: "#2f8f9a", icon: "✎", desc: "บันทึกวินิจฉัย หัตถการ (รหัส ICD อัตโนมัติ) และ Pain Score หลังนวด" },
-  payment: { group: "รับบริการ", title: "รับชำระเงิน", short: "รับชำระเงิน", color: "#2f8f9a", icon: "฿", desc: "เลือกวิธีชำระ เงินสด พร้อมเพย์ บิลในแอป หรือหักเครดิตคอร์ส แล้วออกใบเสร็จ" },
-  register: { group: "ผู้มารับบริการ", title: "ลงทะเบียนผู้รับบริการใหม่", short: "ลงทะเบียนใหม่", color: "#3b82c4", icon: "✚", desc: "อ่านบัตรประชาชน คัดกรองด้วยหุ่น 3D ตอบคำถามก่อนนวด และตรวจหน้าสรุปพร้อมวิเคราะห์ธาตุ" },
-  patient: { group: "ผู้มารับบริการ", title: "ค้นหาและดูประวัติผู้ป่วย", short: "ค้นหา · ประวัติ · พิมพ์", color: "#3b82c4", icon: "☺", desc: "ค้นด้วยชื่อหรือเลขบัตร เสียบบัตรเปิดประวัติ ดูข้อมูลสุขภาพบนหุ่น 3D และพิมพ์ใบสรุป" },
-  aiplan: { group: "ผู้มารับบริการ", title: "แผนการรักษาโดย AI", short: "แผนการรักษาโดย AI", color: "#3b82c4", icon: "✦", desc: "ให้ AI ร่างแผนนวด ประคบ สมุนไพร แล้วแพทย์แผนไทยตรวจ อนุมัติ และจองนัดตามแผน" },
-  appointments: { group: "ตารางนัด", title: "ตารางนัดและเพิ่มคิวนัด", short: "ดูนัด · เพิ่มคิวนัด", color: "#d08a3c", icon: "▦", desc: "ดูนัดรายวันตามผู้บำบัด และเพิ่มคิวนัดใหม่ทั้งนัดล่วงหน้าและ Walk-in" },
-  billing: { group: "คิดเงิน", title: "ใบเสร็จ คืนเงิน และรายงาน", short: "ใบเสร็จ · รายงาน", color: "#b0739a", icon: "▤", desc: "ดูยอดรับชำระ เปิดใบเสร็จ ยกเลิก/คืนเงิน และส่งออกรายงานเป็น Excel" },
-  planner: { group: "จัดตารางงาน", title: "ตารางงานผู้บำบัด", short: "ตารางงานผู้บำบัด", color: "#7c5cc4", icon: "☷", desc: "ดูเส้นเวลางานของผู้บำบัดทุกคน ตารางรายคน และกำหนดวันเวลาทำงาน" },
-  settings: { group: "ตั้งค่า", title: "ตั้งค่าและสำรองข้อมูล", short: "ตั้งค่า · สำรองข้อมูล", color: "#66756b", icon: "⚙", desc: "ข้อมูลคลินิก กฎคัดกรองความปลอดภัย การสำรอง/กู้คืน และคู่มือการใช้งาน" },
-  assistant: { group: "ผู้ช่วย AI", title: "ผู้ช่วย AI", short: "ถามผู้ช่วย AI", color: "#7a5af0", icon: "✧", desc: "เปิดผู้ช่วย AI ได้ทุกหน้า ถามเรื่องคิว เครดิต หรือสรุปอาการผู้ป่วย" },
+  home: { group: "หน้าหลัก", title: "ภาพรวมวันนี้และคำขอจองคิว", short: "ภาพรวม · อนุมัติคำขอคิว", color: "#4c845a", icon: "layout-dashboard", desc: "ดูภาพรวมของวันนี้ จัดวางวิดเจ็ต และอนุมัติคำขอจองคิวที่ผู้ป่วยส่งมาจากแอป" },
+  visit: { group: "รับบริการ", title: "เรียกคิว คัดกรอง และเริ่มนวด", short: "เรียกคิว · คัดกรอง · เริ่มนวด", color: "#2f8f9a", icon: "megaphone", desc: "เรียกคิวพร้อมเสียงประกาศ คัดกรองก่อนนวดทุกครั้ง เลือกเตียง และเริ่มจับเวลา" },
+  record: { group: "รับบริการ", title: "บันทึกการรักษา", short: "บันทึกการรักษา", color: "#2f8f9a", icon: "notebook-pen", desc: "บันทึกวินิจฉัย หัตถการ (รหัส ICD อัตโนมัติ) และ Pain Score หลังนวด" },
+  payment: { group: "รับบริการ", title: "รับชำระเงิน", short: "รับชำระเงิน", color: "#2f8f9a", icon: "wallet", desc: "เลือกวิธีชำระ เงินสด พร้อมเพย์ บิลในแอป หรือหักเครดิตคอร์ส แล้วออกใบเสร็จ" },
+  register: { group: "ผู้มารับบริการ", title: "ลงทะเบียนผู้รับบริการใหม่", short: "ลงทะเบียนใหม่", color: "#3b82c4", icon: "user-plus", desc: "อ่านบัตรประชาชน คัดกรองด้วยหุ่น 3D ตอบคำถามก่อนนวด และตรวจหน้าสรุปพร้อมวิเคราะห์ธาตุ" },
+  patient: { group: "ผู้มารับบริการ", title: "ค้นหาและดูประวัติผู้ป่วย", short: "ค้นหา · ประวัติ · พิมพ์", color: "#3b82c4", icon: "user-search", desc: "ค้นด้วยชื่อหรือเลขบัตร เสียบบัตรเปิดประวัติ ดูข้อมูลสุขภาพบนหุ่น 3D และพิมพ์ใบสรุป" },
+  aiplan: { group: "ผู้มารับบริการ", title: "แผนการรักษาโดย AI", short: "แผนการรักษาโดย AI", color: "#3b82c4", icon: "wand-sparkles", desc: "ให้ AI ร่างแผนนวด ประคบ สมุนไพร แล้วแพทย์แผนไทยตรวจ อนุมัติ และจองนัดตามแผน" },
+  appointments: { group: "ตารางนัด", title: "ตารางนัดและเพิ่มคิวนัด", short: "ดูนัด · เพิ่มคิวนัด", color: "#d08a3c", icon: "calendar-plus", desc: "ดูนัดรายวันตามผู้บำบัด และเพิ่มคิวนัดใหม่ทั้งนัดล่วงหน้าและ Walk-in" },
+  billing: { group: "คิดเงิน", title: "ใบเสร็จ คืนเงิน และรายงาน", short: "ใบเสร็จ · รายงาน", color: "#b0739a", icon: "receipt-text", desc: "ดูยอดรับชำระ เปิดใบเสร็จ ยกเลิก/คืนเงิน และส่งออกรายงานเป็น Excel" },
+  planner: { group: "จัดตารางงาน", title: "ตารางงานผู้บำบัด", short: "ตารางงานผู้บำบัด", color: "#7c5cc4", icon: "calendar-clock", desc: "ดูเส้นเวลางานของผู้บำบัดทุกคน ตารางรายคน และกำหนดวันเวลาทำงาน" },
+  settings: { group: "ตั้งค่า", title: "ตั้งค่าและสำรองข้อมูล", short: "ตั้งค่า · สำรองข้อมูล", color: "#66756b", icon: "settings", desc: "ข้อมูลคลินิก กฎคัดกรองความปลอดภัย การสำรอง/กู้คืน และคู่มือการใช้งาน" },
+  assistant: { group: "ผู้ช่วย AI", title: "ผู้ช่วย AI", short: "ถามผู้ช่วย AI", color: "#7a5af0", icon: "bot", desc: "เปิดผู้ช่วย AI ได้ทุกหน้า ถามเรื่องคิว เครดิต หรือสรุปอาการผู้ป่วย" },
 };
 const ORDER = ["home", "visit", "record", "payment", "register", "patient", "aiplan", "appointments", "billing", "planner", "settings", "assistant"];
 const GROUPS = [...new Set(ORDER.map((id) => INFO[id].group))];
@@ -63,20 +63,19 @@ function renderHeroCards() {
     .join("");
 }
 
-const GROUP_ICON = { "หน้าหลัก": "⌂", "รับบริการ": "◷", "ผู้มารับบริการ": "☺", "ตารางนัด": "▦", "คิดเงิน": "▤", "จัดตารางงาน": "☷", "ตั้งค่า": "⚙", "ผู้ช่วย AI": "✧" };
+const GROUP_ICON = { "หน้าหลัก": "house", "รับบริการ": "clipboard-check", "ผู้มารับบริการ": "users", "ตารางนัด": "calendar-days", "คิดเงิน": "receipt", "จัดตารางงาน": "calendar-clock", "ตั้งค่า": "sliders-horizontal", "ผู้ช่วย AI": "sparkles" };
 function renderToc() {
   const total = ORDER.length;
   $("#toc").innerHTML =
     `<div class="nav__top">
        <b>สารบัญ</b><small>${total} หัวข้อ</small>
      </div>
-     <label class="nav__search"><span>⌕</span><input id="q" placeholder="ค้นหา เช่น คืนเงิน, หุ่น 3D" /><kbd id="qx" hidden>✕</kbd></label>
-     <p class="nav__empty" id="qe" hidden>ไม่พบหัวข้อที่ค้นหา</p>` +
+` +
     GROUPS.map((g) => {
       const ids = ORDER.filter((id) => INFO[id].group === g);
       const col = INFO[ids[0]].color;
       return `<section class="nav__group" data-g="${g}" style="--c:${col}">
-        <button class="nav__gh" aria-expanded="true"><span class="nav__gi">${GROUP_ICON[g] || "•"}</span><b>${g}</b><i>${ids.length}</i><em>⌄</em></button>
+        <button class="nav__gh" aria-expanded="true"><span class="nav__gi">${icon(GROUP_ICON[g], 15)}</span><b>${g}</b><i>${ids.length}</i><em>${icon("chevron-down", 15)}</em></button>
         <div class="nav__items">
           ${ids
             .map((id) => {
@@ -106,24 +105,6 @@ function renderToc() {
       $("#s-" + a.dataset.n)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }),
   );
-  const q = $("#q");
-  const filter = () => {
-    const v = q.value.trim().toLowerCase();
-    let any = false;
-    T.querySelectorAll(".nav__it").forEach((it) => {
-      const hit = !v || it.dataset.words.includes(v);
-      it.hidden = !hit;
-      any ||= hit;
-    });
-    T.querySelectorAll(".nav__group").forEach((g) => {
-      g.hidden = ![...g.querySelectorAll(".nav__it")].some((x) => !x.hidden);
-      if (v) g.classList.remove("is-closed");
-    });
-    $("#qe").hidden = any;
-    $("#qx").hidden = !v;
-  };
-  q.addEventListener("input", filter);
-  $("#qx").addEventListener("click", () => ((q.value = ""), filter(), q.focus()));
 }
 
 /* highlight the section being read in the sidebar */
@@ -160,7 +141,7 @@ function open(id, scroll = true) {
     <article class="doc">
       <nav class="doc__crumb reveal"><span>คู่มือการใช้งาน</span> › <span>${c.group}</span></nav>
       <header class="doc__head reveal">
-        <span class="doc__icon">${c.icon}</span>
+        <span class="doc__icon">${icon(c.icon, 26)}</span>
         <h1>${c.title}</h1>
         <p class="doc__lead">${c.desc}</p>
         <p class="doc__meta">${d.steps.length} ขั้นตอน · อ่านประมาณ ${Math.max(1, Math.round(d.steps.length * 0.5))} นาที</p>
@@ -199,11 +180,11 @@ function open(id, scroll = true) {
       <footer class="doc__foot reveal">
         <b>หัวข้อที่เกี่ยวข้อง</b>
         <div class="doc__rel">
-          ${related.map((r) => `<button data-go="${r}" style="--c:${INFO[r].color}"><span>${INFO[r].icon}</span><div><small>${INFO[r].group}</small><b>${INFO[r].title}</b></div></button>`).join("")}
+          ${related.map((r) => `<button data-go="${r}" style="--c:${INFO[r].color}"><span>${icon(INFO[r].icon, 17)}</span><div><small>${INFO[r].group}</small><b>${INFO[r].title}</b></div></button>`).join("")}
         </div>
         <nav class="pager">
-          ${prev ? `<button class="pager__btn" data-go="${prev}"><small>← ก่อนหน้า</small><b>${INFO[prev].title}</b></button>` : "<span></span>"}
-          ${next ? `<button class="pager__btn is-next" data-go="${next}"><small>ถัดไป →</small><b>${INFO[next].title}</b></button>` : `<a class="pager__btn is-next" href="../"><small>ดูครบทุกหัวข้อแล้ว</small><b>กลับเข้าระบบ</b></a>`}
+          ${prev ? `<button class="pager__btn" data-go="${prev}"><small>${icon("arrow-left", 13)} ก่อนหน้า</small><b>${INFO[prev].title}</b></button>` : "<span></span>"}
+          ${next ? `<button class="pager__btn is-next" data-go="${next}"><small>ถัดไป ${icon("arrow-right", 13)}</small><b>${INFO[next].title}</b></button>` : `<a class="pager__btn is-next" href="../"><small>ดูครบทุกหัวข้อแล้ว</small><b>กลับเข้าระบบ</b></a>`}
         </nav>
       </footer>
     </article>`;
@@ -363,7 +344,7 @@ $("#lightbox").addEventListener("click", () => {
   setTimeout(() => (lb.hidden = true), 250);
 });
 addEventListener("keydown", (e) => e.key === "Escape" && !$("#lightbox").hidden && $("#lightbox").click());
-$("#start").addEventListener("click", () => $(".layout").scrollIntoView({ behavior: "smooth" }));
+
 
 const io = new IntersectionObserver(
   (es) =>
@@ -381,3 +362,55 @@ function reveal() {
     io.observe(el);
   });
 }
+
+/* ── hero search: topics + steps ── */
+(function heroSearch() {
+  const q = $("#hq");
+  const box = $("#hres");
+  const clear = $("#hqx");
+  let hits = [];
+  let sel = 0;
+  const norm = (t) => t.toLowerCase();
+  const render = () => {
+    const v = norm(q.value.trim());
+    clear.hidden = !v;
+    if (!v) return (box.hidden = true);
+    hits = [];
+    for (const id of ORDER) {
+      const c = INFO[id];
+      if (norm(c.title + " " + c.desc + " " + c.group).includes(v)) hits.push({ id, title: c.title, sub: c.group, ic: c.icon, color: c.color });
+      for (const s of DATA[id]?.steps || [])
+        if (norm(s.title + " " + (s.detail || "")).includes(v)) hits.push({ id, n: s.n, title: s.title, sub: `${c.title} · ขั้นตอนที่ ${s.n}`, ic: c.icon, color: c.color });
+    }
+    hits = hits.slice(0, 8);
+    sel = 0;
+    box.hidden = false;
+    box.innerHTML = hits.length
+      ? hits.map((h, i) => `<button class="hres__it${i === 0 ? " is-sel" : ""}" data-i="${i}" style="--c:${h.color}"><span>${icon(h.ic, 16)}</span><div><b>${h.title}</b><small>${h.sub}</small></div>${icon("corner-down-left", 14)}</button>`).join("")
+      : `<p class="hres__none">ไม่พบ “${q.value.trim()}” · ลองคำอื่น เช่น ลงทะเบียน, คืนเงิน, หุ่น 3D</p>`;
+    box.querySelectorAll(".hres__it").forEach((b) => b.addEventListener("click", () => go(hits[+b.dataset.i])));
+  };
+  const go = (h) => {
+    if (!h) return;
+    box.hidden = true;
+    open(h.id);
+    if (h.n) setTimeout(() => $("#s-" + h.n)?.scrollIntoView({ behavior: "smooth", block: "start" }), 450);
+  };
+  q.addEventListener("input", render);
+  q.addEventListener("focus", render);
+  q.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") go(hits[sel]);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      sel = (sel + (e.key === "ArrowDown" ? 1 : -1) + hits.length) % Math.max(1, hits.length);
+      box.querySelectorAll(".hres__it").forEach((b, i) => b.classList.toggle("is-sel", i === sel));
+    }
+    if (e.key === "Escape") box.hidden = true;
+  });
+  clear.addEventListener("click", () => ((q.value = ""), render(), q.focus()));
+  document.addEventListener("pointerdown", (e) => !e.target.closest(".hsearch") && (box.hidden = true));
+  document.querySelectorAll(".hsearch__chips button").forEach((b) => b.addEventListener("click", () => ((q.value = b.textContent), render(), q.focus())));
+  $("#hqi").innerHTML = icon("search", 20);
+  clear.innerHTML = icon("x", 14);
+})();
+document.querySelector(".brand__mark").innerHTML = icon("book-open", 18);
