@@ -485,6 +485,61 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         <div className="ap-pane ap-cols">
           <div className="ap-col">
             <PhotoSlot name={f.first} value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
+            <section className="ap-sec">
+              <h4>
+                <span style={{ ["--c" as string]: "#3b82c4" }}>
+                  <IdCard size={14} />
+                </span>
+                ข้อมูลตามบัตรประชาชน
+              </h4>
+              <div className="ap-grid">
+                <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
+                  <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
+                </Field>
+                <Field label="คำนำหน้า">
+                  <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
+                    <option>นาย</option>
+                    <option>นาง</option>
+                    <option>นางสาว</option>
+                  </Select>
+                </Field>
+                <Field label="ชื่อ *">
+                  <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} />
+                </Field>
+                <Field label="นามสกุล *">
+                  <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
+                </Field>
+                <Field label="เพศ *">
+                  <div className="ap-gender">
+                    {(["ชาย", "หญิง"] as const).map((g) => (
+                      <motion.button
+                        key={g}
+                        type="button"
+                        className="tw-chip"
+                        aria-pressed={f.gender === g}
+                        whileTap={{ scale: 0.92 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 26 }}
+                        onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
+                      >
+                        {f.gender === g && (
+                          <motion.span layoutId="ap-gender-pill" className="ap-gender__pill" transition={{ type: "spring", stiffness: 420, damping: 32 }} />
+                        )}
+                        <span className="ap-gender__t">{g}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </Field>
+                <Field label="วัน เดือน ปีเกิด *" className="span-2">
+                  <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
+                </Field>
+                <Field label="ที่อยู่ตามบัตร" className="span-3">
+                  <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
+                </Field>
+              </div>
+            </section>
+            {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
+          </div>
+          <div className="ap-col">
             {!edit && (
               <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
                 <span className="ap-card__body">
@@ -541,61 +596,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 </Field>
               </div>
             </section>
-          </div>
-          <div className="ap-col">
-            <section className="ap-sec">
-              <h4>
-                <span style={{ ["--c" as string]: "#3b82c4" }}>
-                  <IdCard size={14} />
-                </span>
-                ข้อมูลตามบัตรประชาชน
-              </h4>
-              <div className="ap-grid">
-                <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
-                  <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
-                </Field>
-                <Field label="คำนำหน้า">
-                  <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
-                    <option>นาย</option>
-                    <option>นาง</option>
-                    <option>นางสาว</option>
-                  </Select>
-                </Field>
-                <Field label="ชื่อ *">
-                  <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} />
-                </Field>
-                <Field label="นามสกุล *">
-                  <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
-                </Field>
-                <Field label="เพศ *">
-                  <div className="ap-gender">
-                    {(["ชาย", "หญิง"] as const).map((g) => (
-                      <motion.button
-                        key={g}
-                        type="button"
-                        className="tw-chip"
-                        aria-pressed={f.gender === g}
-                        whileTap={{ scale: 0.92 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 26 }}
-                        onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
-                      >
-                        {f.gender === g && (
-                          <motion.span layoutId="ap-gender-pill" className="ap-gender__pill" transition={{ type: "spring", stiffness: 420, damping: 32 }} />
-                        )}
-                        <span className="ap-gender__t">{g}</span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </Field>
-                <Field label="วัน เดือน ปีเกิด *" className="span-2">
-                  <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
-                </Field>
-                <Field label="ที่อยู่ตามบัตร" className="span-3">
-                  <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
-                </Field>
-              </div>
-            </section>
-            {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
           </div>
         </div>
       )}
