@@ -1,49 +1,19 @@
 import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Phone, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
-import { stageMeta, creditInfo, painTone } from "../../data/domain";
+import { stageMeta, creditInfo } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
 import { AIPlanCard, AIPlanTeaser, ElementCard } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
+import "../../features/health.css";
 
 /** Donut showing used / booked / free sessions of a treatment plan. */
-function CreditRing({ total, used, booked }: { total: number; used: number; booked: number }) {
-  const R = 46;
-  const C = 2 * Math.PI * R;
-  const seg = (n: number) => (n / total) * C;
-  const free = Math.max(0, total - used - booked);
-  return (
-    <div className="ring">
-      <svg viewBox="0 0 120 120" width="120" height="120" aria-hidden>
-        <circle cx="60" cy="60" r={R} fill="none" stroke="var(--sage-100)" strokeWidth="12" />
-        <motion.circle
-          cx="60" cy="60" r={R} fill="none" stroke="var(--color-brand)" strokeWidth="12" strokeLinecap="round"
-          transform="rotate(-90 60 60)"
-          initial={{ strokeDasharray: `0 ${C}` }}
-          animate={{ strokeDasharray: `${Math.max(0, seg(used) - 3)} ${C}` }}
-          transition={{ duration: 0.8, ease: ease.out }}
-        />
-        <motion.circle
-          cx="60" cy="60" r={R} fill="none" stroke="var(--status-waiting)" strokeWidth="12" strokeLinecap="round"
-          transform={`rotate(${-90 + (used / total) * 360} 60 60)`}
-          initial={{ strokeDasharray: `0 ${C}` }}
-          animate={{ strokeDasharray: `${Math.max(0, seg(booked) - 3)} ${C}` }}
-          transition={{ duration: 0.8, delay: 0.2, ease: ease.out }}
-        />
-      </svg>
-      <div className="ring__center">
-        <b>{free}</b>
-        <small>คงเหลือ</small>
-      </div>
-    </div>
-  );
-}
 
 /** Pain trend chart with axis, points and value labels. */
 function PainChart({ points }: { points: { date: string; score: number }[] }) {
@@ -186,39 +156,30 @@ export function PatientDetail({ id, onAdd, onAIPlan, aiOpen }: { id: string | nu
 
         <div className="pd__grid">
           {onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}
-          <ElementCard p={p} />
-          {/* Plan */}
-          <section className="pd__card">
-            <h3>แผนการรักษา</h3>
-            {credits ? (
-              <div className="pd__plan">
-                <CreditRing total={credits.total} used={credits.used} booked={credits.booked} />
-                <div className="pd__plan-text">
-                  <b>{p.course!.name}</b>
-                  <p className="tw-meta">
-                    ใช้แล้ว {credits.used} · จองไว้ {credits.booked} · คงเหลือ {credits.remaining} จาก {credits.total} ครั้ง
-                  </p>
-                  <p className="tw-caption">
-                    {thaiDate(p.course!.startedOn)} – {thaiDate(p.course!.expiresOn)}
-                  </p>
-                  {credits.remaining <= 1 && (
-                    <Badge tone="danger" compact>
-                      เครดิตใกล้หมด · นัดพบแพทย์เพื่อต่อแผน
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="tw-meta">ไม่มีแผนการรักษา — รับบริการแบบชำระรายครั้ง</p>
-            )}
-          </section>
-
-          {/* Complaint */}
-          <section className="pd__card">
-            <h3>อาการสำคัญ</h3>
-            <p className="pd__complaint">{p.complaint}</p>
+          {/* ── row: complaint & personal | course ── */}
+          <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
+                <Stethoscope size={15} />
+              </span>
+              อาการสำคัญ
+            </h3>
+            <p className="pd2__quote">{p.complaint}</p>
+            <div className="pd2__chips">
+              {p.conditions.map((c) => (
+                <em key={c} className="is-cond">
+                  <HeartPulse size={12} /> {c}
+                </em>
+              ))}
+              {p.allergies?.map((a) => (
+                <em key={a} className="is-allergy">
+                  <TriangleAlert size={12} /> แพ้ {a}
+                </em>
+              ))}
+              {!p.conditions.length && !p.allergies?.length && <em>ไม่มีโรคประจำตัว · ไม่มีประวัติแพ้</em>}
+            </div>
             {(p.birthDate || p.citizenId || p.emergency) && (
-              <dl className="pd__info">
+              <dl className="pd2__kv">
                 {p.birthDate && (
                   <div>
                     <dt>วันเกิด</dt>
@@ -233,7 +194,7 @@ export function PatientDetail({ id, onAdd, onAIPlan, aiOpen }: { id: string | nu
                 )}
                 {p.emergency && (
                   <div>
-                    <dt>ผู้ติดต่อฉุกเฉิน</dt>
+                    <dt>ติดต่อฉุกเฉิน</dt>
                     <dd>
                       {p.emergency.name}
                       {p.emergency.relation ? ` (${p.emergency.relation})` : ""} · {p.emergency.phone}
@@ -244,67 +205,121 @@ export function PatientDetail({ id, onAdd, onAIPlan, aiOpen }: { id: string | nu
             )}
           </section>
 
-          {/* Pain trend */}
-          <section className="pd__card pd__card--wide">
-            <div className="pd__card-head">
-              <h3>แนวโน้ม Pain Score</h3>
-              {first !== undefined && last !== undefined && h.length > 1 && (
-                <Badge tone={painTone(last) === "danger" ? "danger" : last < first ? "success" : "warning"} compact>
-                  {first} → {last}
-                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
-                </Badge>
-              )}
-            </div>
-            {h.length > 1 ? <PainChart points={h} /> : <p className="tw-meta">ยังไม่มีข้อมูลการประเมิน — จะเริ่มบันทึกหลังรับบริการครั้งแรก</p>}
-          </section>
-
-          {/* Upcoming */}
-          <section className="pd__card">
-            <h3>นัดหมายที่จะถึง ({upcoming.length})</h3>
-            {upcoming.length ? (
-              <ul className="pd__list">
-                {upcoming.map((v) => (
-                  <li key={v.id}>
-                    <span className="pd__date">
-                      <b>{thaiDateShort(v.date)}</b>
-                      <small>{v.start}</small>
-                    </span>
-                    <span className="pd__what">
-                      {store.serviceById(v.serviceId).name}
-                      <small>{store.therapistById(v.therapistId).name}</small>
-                    </span>
-                    <Badge tone={stageMeta(v).tone} compact dot>
-                      {stageMeta(v).label}
-                    </Badge>
-                  </li>
-                ))}
-              </ul>
+          <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#d08a3c" }}>
+                <Ticket size={15} />
+              </span>
+              คอร์สการรักษา
+              {credits && <em className={credits.remaining <= 1 ? "is-low" : undefined}>เหลือ {credits.remaining} ครั้ง</em>}
+            </h3>
+            {credits && p.course ? (
+              <>
+                <b className="pd2__course">{p.course.name}</b>
+                <div className="hx-tix" style={{ gridTemplateColumns: `repeat(${Math.min(credits.total, 10)}, minmax(0, 1fr))` }}>
+                  {Array.from({ length: credits.total }, (_, k) => {
+                    const st = k < credits.used ? "used" : k < credits.used + credits.booked ? "booked" : "free";
+                    return (
+                      <span key={k} className={`hx-tix__t is-${st}`}>
+                        {st === "used" ? <Check size={12} strokeWidth={3} /> : k + 1}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="pd2__legend">
+                  <span>
+                    <i className="is-used" /> ใช้แล้ว {credits.used}
+                  </span>
+                  <span>
+                    <i className="is-booked" /> จองไว้ {credits.booked}
+                  </span>
+                  <span>
+                    <i /> ว่าง {credits.remaining}
+                  </span>
+                </div>
+                <small className="pd2__muted">
+                  {thaiDate(p.course.startedOn)} – {thaiDate(p.course.expiresOn)}
+                </small>
+              </>
             ) : (
-              <p className="tw-meta">ยังไม่มีนัดหมาย</p>
+              <p className="pd2__muted">ไม่มีคอร์ส — รับบริการแบบชำระรายครั้ง</p>
             )}
           </section>
 
-          {/* History */}
-          <section className="pd__card">
-            <h3>ประวัติการรับบริการ</h3>
+          {/* ── element (full width) ── */}
+          <ElementCard p={p} />
+
+          {/* ── pain trend (full width) ── */}
+          <section className="pd__card pd__card--wide pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#c2482b" }}>
+                <Activity size={15} />
+              </span>
+              แนวโน้ม Pain Score
+              {first !== undefined && last !== undefined && h.length > 1 && (
+                <em className={last < first ? "is-good" : "is-bad"}>
+                  {first} → {last}
+                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
+                </em>
+              )}
+            </h3>
+            {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีข้อมูลการประเมิน — จะเริ่มบันทึกหลังรับบริการครั้งแรก</p>}
+          </section>
+
+          {/* ── row: upcoming | history ── */}
+          <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#3b82c4" }}>
+                <CalendarDays size={15} />
+              </span>
+              นัดที่จะถึง
+              {upcoming.length > 0 && <em>{upcoming.length}</em>}
+            </h3>
+            {upcoming.length ? (
+              <div className="hx-next">
+                {upcoming.slice(0, 5).map((v, k) => (
+                  <div key={v.id} className={k === 0 ? "hx-next__item is-first" : "hx-next__item"}>
+                    <span className="hx-next__date">
+                      <small>{thaiDateShort(v.date).split(" ")[1]}</small>
+                      <b>{Number(v.date.slice(8))}</b>
+                    </span>
+                    <span className="hx-next__body">
+                      <b>
+                        {v.start} น. · {store.serviceById(v.serviceId).short}
+                      </b>
+                      <small>{store.therapistById(v.therapistId).name}</small>
+                    </span>
+                    {v.date === today && <em>วันนี้</em>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="pd2__muted">ยังไม่มีนัดหมาย</p>
+            )}
+          </section>
+
+          <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
+                <History size={15} />
+              </span>
+              ประวัติการรับบริการ
+            </h3>
             {past.length ? (
-              <ul className="pd__list">
+              <ol className="hx-hist">
                 {past.map((v) => (
-                  <li key={v.id}>
-                    <span className="pd__date">
-                      <b>{thaiDateShort(v.date)}</b>
-                      <small>{v.start}</small>
+                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined}>
+                    <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
+                    <span className="hx-hist__body">
+                      <b>{store.serviceById(v.serviceId).short}</b>
+                      {v.status === "absent" ? <small>ไม่มารับบริการ</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
                     </span>
-                    <span className="pd__what">
-                      {store.serviceById(v.serviceId).short}
-                      <small>{stageMeta(v).label}</small>
-                    </span>
-                    {v.status === "done" && v.painAfter !== undefined ? <PainMini score={v.painAfter} label="หลัง" /> : <span />}
+                    {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
                   </li>
                 ))}
-              </ul>
+              </ol>
             ) : (
-              <p className="tw-meta">ยังไม่มีประวัติ</p>
+              <p className="pd2__muted">ยังไม่มีประวัติ</p>
             )}
           </section>
         </div>

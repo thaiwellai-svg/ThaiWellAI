@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { intakeOfRequest, intakeOfVisit } from "../data/intake";
+import { ElementIcon } from "./ElementIcon";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X } from "lucide-react";
+import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand } from "lucide-react";
 import { useStore } from "../store/store";
 import { Badge, Button, Select, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile, type Element } from "../data/elements";
@@ -17,16 +18,26 @@ export function ElementCard({ p }: { p: Patient }) {
   const prof = elementProfile(p);
   const info = ELEMENT_INFO[prof.birth];
   const chip = (label: string, el: Element, sub: string) => (
-    <span className="el-chip" style={{ ["--c" as string]: ELEMENT_INFO[el].color, ["--t" as string]: ELEMENT_INFO[el].tint }}>
-      <small>{label}</small>
-      <b>ธาตุ{el}</b>
-      <i>{sub}</i>
+    <span className="el2-chip" style={{ ["--c" as string]: ELEMENT_INFO[el].color, ["--t" as string]: ELEMENT_INFO[el].tint }}>
+      <i>
+        <ElementIcon element={el} size={15} strokeWidth={2.2} />
+      </i>
+      <span>
+        <small>{label}</small>
+        <b>ธาตุ{el}</b>
+        <em>{sub}</em>
+      </span>
     </span>
   );
   return (
-    <section className="pd__card el-card" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
-      <div className="pd__card-head">
-        <h3>ธาตุเจ้าเรือน</h3>
+    <section className="pd__card pd__card--wide el2" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
+      <div className="el2__head">
+        <h3 className="pd2__h">
+          <span className="pd2__i" style={{ ["--c" as string]: info.color }}>
+            <ElementIcon element={prof.birth} size={15} />
+          </span>
+          ธาตุเจ้าเรือน
+        </h3>
         <label className="el-month">
           เกิดเดือน
           <Select value={prof.month} onChange={(e) => store.dispatch({ type: "updatePatient", id: p.id, patch: { birthMonth: Number(e.target.value) } })}>
@@ -38,25 +49,44 @@ export function ElementCard({ p }: { p: Patient }) {
           </Select>
         </label>
       </div>
-      <div className="el-hero">
-        <span className="el-badge">{prof.birth}</span>
-        <div>
-          <b>ธาตุ{prof.birth}</b>
-          <p>{info.trait}</p>
+      <div className="el2__body">
+        <div className="el2__hero">
+          <span className="el2__badge">
+            <ElementIcon element={prof.birth} size={30} strokeWidth={2} />
+          </span>
+          <div>
+            <b>ธาตุ{prof.birth}</b>
+            <p>{info.trait}</p>
+          </div>
+        </div>
+        <div className="el2__chips">
+          {chip("อายุสมุฏฐาน", prof.age.element, prof.age.label)}
+          {chip("อุตุสมุฏฐาน", prof.season.element, prof.season.label)}
         </div>
       </div>
-      <div className="el-chips">
-        {chip("อายุสมุฏฐาน", prof.age.element, prof.age.label)}
-        {chip("อุตุสมุฏฐาน", prof.season.element, prof.season.label)}
+      <div className="el2__kv">
+        <div>
+          <span className="el2__kvi">
+            <TriangleAlert size={14} />
+          </span>
+          <small>มักพบ</small>
+          <p>{info.risk}</p>
+        </div>
+        <div>
+          <span className="el2__kvi">
+            <Leaf size={14} />
+          </span>
+          <small>รสยาที่เหมาะ</small>
+          <p>{info.taste}</p>
+        </div>
+        <div>
+          <span className="el2__kvi">
+            <Hand size={14} />
+          </span>
+          <small>แนวทางนวด</small>
+          <p>{info.care}</p>
+        </div>
       </div>
-      <dl className="el-kv">
-        <dt>มักพบ</dt>
-        <dd>{info.risk}</dd>
-        <dt>รสยาที่เหมาะ</dt>
-        <dd>{info.taste}</dd>
-        <dt>แนวทางนวด</dt>
-        <dd>{info.care}</dd>
-      </dl>
     </section>
   );
 }
