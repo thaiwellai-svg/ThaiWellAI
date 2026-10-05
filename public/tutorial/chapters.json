@@ -874,6 +874,46 @@
       "w": 9.91,
       "h": 4.15,
       "frame": "media/billing-f4.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 64.24,
+      "y": 54.57,
+      "w": 65.42,
+      "h": 6.71,
+      "frame": "media/billing-f5.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ยกเลิกใบเสร็จ / คืนเงิน",
+    "detail": "กด “ยกเลิกใบเสร็จ” แล้วระบุเหตุผล ถ้าชำระด้วยเครดิต ระบบคืนเครดิตให้",
+    "start": "media/billing-f6.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 62.33,
+      "y": 89.33,
+      "w": 7.54,
+      "h": 5.85,
+      "frame": "media/billing-f7.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "รายงานและส่งออก",
+    "detail": "กด “รายงาน” เลือกช่วงวันที่ แล้วดาวน์โหลด CSV เปิดใน Excel",
+    "start": "media/billing-f8.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 90.51,
+      "y": 5.85,
+      "w": 7.11,
+      "h": 3.41,
+      "frame": "media/billing-f9.webp"
      }
     ]
    }
