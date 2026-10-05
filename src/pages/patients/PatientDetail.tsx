@@ -1,5 +1,6 @@
 import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { ScreeningAlert } from "../../features/ScreeningAlert";
+import { MoreMenu } from "../../features/MoreMenu";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -126,19 +127,13 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <HeartPulse size={18} />
               </button>
             )}
-            {onEdit && (
-              <button type="button" className="pd__ib" onClick={onEdit} aria-label="แก้ไขข้อมูล" title="แก้ไขข้อมูล">
-                <PenLine size={18} />
-              </button>
-            )}
-            {p.phone && (
-              <button type="button" className="pd__ib" onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)} aria-label={`โทร ${p.phone}`} title={`โทร ${p.phone}`}>
-                <Phone size={18} />
-              </button>
-            )}
-            <button type="button" className="pd__ib" onClick={print} aria-label="พิมพ์ / PDF" title="พิมพ์สรุปผลคัดกรองและแผนการรักษา">
-              <Printer size={18} />
-            </button>
+            <MoreMenu
+              items={[
+                ...(onEdit ? [{ label: "แก้ไขข้อมูล", icon: <PenLine size={16} />, onClick: onEdit }] : []),
+                ...(p.phone ? [{ label: "โทร", hint: p.phone, icon: <Phone size={16} />, onClick: () => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`) }] : []),
+                { label: "พิมพ์ / บันทึก PDF", icon: <Printer size={16} />, onClick: print },
+              ]}
+            />
             {printNode}
             <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
               <CalendarPlus size={18} />

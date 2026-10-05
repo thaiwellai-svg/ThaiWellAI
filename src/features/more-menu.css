@@ -1,0 +1,36 @@
+.more {
+  position: fixed;
+  z-index: 1200;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: 0 18px 44px rgba(20, 40, 30, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  transform-origin: top right;
+}
+.more button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 11px;
+  text-align: left;
+}
+.more button:hover {
+  background: var(--sage-50);
+}
+.more button span {
+  display: grid;
+  color: var(--color-brand);
+}
+.more button b {
+  flex: 1;
+  font: 600 13.5px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.more button small {
+  font: 500 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
