@@ -1956,3 +1956,41 @@
 .apg__body.scroll-y {
   padding-bottom: 20px !important;
 }
+/* screening: the body column stays put, only the form column scrolls */
+.apg__body.is-split {
+  display: flex;
+  overflow: hidden;
+  padding-bottom: 20px;
+}
+.ap-scr {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  align-items: stretch;
+}
+.ap-scr > .ap-col:first-child {
+  min-height: 0;
+}
+.ap-scr .ap-body {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 0;
+}
+.ap-scr .ap-body .b3 {
+  flex: 1;
+  min-height: 0;
+}
+.ap-scr .ap-body .b3__stage {
+  flex: 1;
+  height: auto;
+  min-height: 240px;
+}
+.ap-scr__side {
+  min-height: 0;
+  overflow-y: auto;
+  margin-right: -8px;
+  padding-right: 8px;
+}
+.apg .ap-scr__side.scroll-y {
+  padding-bottom: 0 !important;
+}

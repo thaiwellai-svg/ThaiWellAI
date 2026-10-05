@@ -499,7 +499,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 )}
           </div>
         </div>
-        <div className="apg__body scroll-y">
+        <div className={step === 1 ? "apg__body is-split" : "apg__body scroll-y"}>
 
       {step === 0 && (
         <div className="ap-pane ap-cols">
@@ -697,7 +697,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
               </Field>
             </section>
           </div>
-          <div className="ap-col">
+          <div className="ap-col ap-scr__side scroll-y">
             <section className="ap-sec">
               <h4>
                 <span style={{ ["--c" as string]: "#c2482b" }}>
