@@ -1,7 +1,7 @@
 import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -53,7 +53,7 @@ function PainChart({ points }: { points: { date: string; score: number }[] }) {
   );
 }
 
-export function PatientDetail({ id, onAdd, onAIPlan, aiOpen }: { id: string | null; onAdd: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean }) {
+export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: string | null; onAdd: () => void; onEdit?: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean }) {
   const store = useStore();
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
@@ -118,6 +118,11 @@ export function PatientDetail({ id, onAdd, onAIPlan, aiOpen }: { id: string | nu
             </div>
           </div>
           <div className="pd__actions">
+            {onEdit && (
+              <Button variant="outline" size="md" leading={<PenLine size={15} />} onClick={onEdit}>
+                แก้ไขข้อมูล
+              </Button>
+            )}
             <Button variant="outline" size="md" leading={<Phone size={15} />} onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)}>
               {p.phone}
             </Button>

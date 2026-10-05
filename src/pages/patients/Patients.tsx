@@ -54,6 +54,7 @@ export default function Patients() {
   const [solo, setSolo] = useState(false);
   // AI treatment plan opens as a third column, like the health box on รับบริการ
   const [aiOpen, setAiOpen] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   // narrow list: photo + name only (same switch as รับบริการ)
   const [slim, setSlim] = useState(() => {
     try {
@@ -217,7 +218,7 @@ export default function Patients() {
               node: (
                 <div className="panel pdetail">
                   <div className="sheet">
-                    <PatientDetail id={current} onAdd={() => setAdding(true)} onAIPlan={() => setAiOpen((v) => !v)} aiOpen={aiOpen && !!current} />
+                    <PatientDetail id={current} onAdd={() => setAdding(true)} onEdit={() => setEditing(current)} onAIPlan={() => setAiOpen((v) => !v)} aiOpen={aiOpen && !!current} />
                   </div>
                 </div>
               ),
@@ -258,6 +259,7 @@ export default function Patients() {
       )}
 
       <PatientDrawer id={drawer} onClose={() => setDrawer(null)} />
+      <AddPatientDialog open={!!editing} edit={editing ? store.patientById(editing) : null} onClose={() => setEditing(null)} onCreated={() => {}} />
       <AddPatientDialog
         open={adding}
         onClose={() => setAdding(false)}
@@ -271,17 +273,64 @@ export default function Patients() {
   );
 }
 
-function AddPatientDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null }) {
   const store = useStore();
   const toast = useToast();
   const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "" };
+  const fromPatient = (p: Patient) => {
+    const m = p.name.match(/^(นางสาว|นาง|นาย)\s*(\S+)\s*(.*)$/);
+    const d = p.citizenId ?? "";
+    return {
+      title: m?.[1] ?? (p.gender === "ชาย" ? "นาย" : "นางสาว"),
+      first: m?.[2] ?? p.name,
+      last: m?.[3] ?? "",
+      gender: p.gender,
+      dob: p.birthDate ?? "",
+      phone: p.phone,
+      complaint: p.complaint,
+      conditions: p.conditions.join(", "),
+      photo: p.photo ?? "",
+      cid: [d.slice(0, 1), d.slice(1, 5), d.slice(5, 10), d.slice(10, 12), d.slice(12)].filter(Boolean).join("-"),
+      allergies: (p.allergies ?? []).join(", "),
+      ecName: p.emergency?.name ?? "",
+      ecPhone: p.emergency?.phone ?? "",
+      ecRel: p.emergency?.relation ?? "",
+    };
+  };
   const [f, setF] = useState(empty);
+  // load the patient when the edit dialog opens
+  useEffect(() => {
+    if (open) setF(edit ? fromPatient(edit) : empty);
+  }, [open, edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const age = ageFrom(f.dob);
   const cidDigits = f.cid.replace(/\D/g, "");
   const cidOk = !cidDigits || validCitizenId(cidDigits);
   const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && /^[0-9-]{9,12}$/.test(f.phone) && cidOk;
 
   const submit = () => {
+    if (edit) {
+      store.dispatch({
+        type: "updatePatient",
+        id: edit.id,
+        patch: {
+          name: `${f.title} ${f.first.trim()} ${f.last.trim()}`,
+          gender: f.gender,
+          age: age ?? edit.age,
+          birthDate: f.dob,
+          birthMonth: Number(f.dob.slice(5, 7)) || undefined,
+          citizenId: cidDigits || undefined,
+          allergies: f.allergies.split(",").map((x) => x.trim()).filter(Boolean),
+          emergency: f.ecName.trim() ? { name: f.ecName.trim(), phone: f.ecPhone.trim(), relation: f.ecRel.trim() || undefined } : undefined,
+          phone: f.phone,
+          complaint: f.complaint.trim() || edit.complaint,
+          conditions: f.conditions.split(",").map((x) => x.trim()).filter(Boolean),
+          photo: f.photo || undefined,
+        },
+      });
+      toast({ message: "บันทึกข้อมูลผู้รับบริการแล้ว" });
+      onClose();
+      return;
+    }
     const id = store.nextId("p");
     store.dispatch({
       type: "addPatient",
@@ -317,8 +366,8 @@ function AddPatientDialog({ open, onClose, onCreated }: { open: boolean; onClose
     <Dialog
       open={open}
       onClose={onClose}
-      title="เพิ่มผู้รับบริการใหม่"
-      subtitle="ผู้ป่วยรายใหม่ต้องพบแพทย์แผนไทยเพื่อประเมินและวางแผนการรักษาก่อน"
+      title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
+      subtitle={edit ? `${edit.hn} · การแก้ไขจะบันทึกในประวัติการแก้ไข` : "ผู้ป่วยรายใหม่ต้องพบแพทย์แผนไทยเพื่อประเมินและวางแผนการรักษาก่อน"}
       footer={
         <>
           <Button variant="outline" size="lg" fill onClick={onClose}>
