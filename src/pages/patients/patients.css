@@ -1668,3 +1668,6 @@
   background: none;
   color: var(--color-text-muted);
 }
+.ap-body .b3__reset {
+  display: none;
+}
