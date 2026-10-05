@@ -432,12 +432,6 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
     { key: "skinProblem", label: "มีแผล ผื่น หรือโรคผิวหนัง?", hint: "ถ้าใช่ · เลี่ยงบริเวณนั้น", level: "warn", Icon: Bandage },
     ...(f.gender === "หญิง" ? [{ key: "pregnant", label: "ตั้งครรภ์ หรืออาจตั้งครรภ์?", hint: "ถ้าใช่ · นวดอย่างระวัง", level: "warn", Icon: Baby }] : []),
   ].map((c) => ({ ...c, key: c.key as "fever" | "recentSurgery" | "bloodThinner" | "numbness" | "skinProblem" | "pregnant", on: !!scr[c.key as keyof typeof scr] }));
-  const row = (k: string, v?: string) => (
-    <div>
-      <dt>{k}</dt>
-      <dd>{v || "—"}</dd>
-    </div>
-  );
 
   return (
     <WorkPage
@@ -814,61 +808,159 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
       />
 
       {step === 2 && (
-        <div className="ap-pane ap-sum">
-          <div className="ap-sum__who">
-            <Avatar name={f.first || "?"} src={f.photo || undefined} size="lg" shape="squircle" />
-            <div>
-              <b>
-                {f.title} {f.first} {f.last}
-              </b>
-              <small>
-                {f.gender} · {age ?? "—"} ปี{f.dob && isFullDate(f.dob) ? ` · เกิด ${thaiBirth(f.dob)}` : ""}
-              </small>
-            </div>
-            <button type="button" onClick={() => setStep(0)}>
-              แก้ไข
-            </button>
-          </div>
-          <dl className="ap-kv">
-            {row("เบอร์โทร", f.phone)}
-            {row("อีเมล", f.email)}
-            {row("เลขบัตรประชาชน", f.cid)}
-            {row("ที่อยู่", f.address)}
-            {row("อาการสำคัญ", f.complaint)}
-            {row("โรคประจำตัว", f.conditions)}
-            {row("การแพ้", f.allergies)}
-            {row("ผู้ติดต่อฉุกเฉิน", f.ecName ? `${f.ecName}${f.ecRel ? ` (${f.ecRel})` : ""} · ${f.ecPhone}` : "")}
-          </dl>
-          <div className="ap-sum__scr">
-            <div className="ap-sum__h">
-              <b>ผลคัดกรอง</b>
-              <button type="button" onClick={() => setStep(1)}>
-                {skipScr ? "คัดกรองตอนนี้" : "แก้ไข"}
+        <div className="ap-pane ap-cols sm">
+          <div className="ap-col">
+            <section className="sm-hero">
+              <Avatar name={f.first || "?"} src={f.photo || undefined} size="xl" shape="squircle" />
+              <div className="sm-hero__main">
+                <small>{edit ? edit.hn : "ผู้รับบริการใหม่"}</small>
+                <h3>
+                  {f.title} {f.first} {f.last}
+                </h3>
+                <div className="sm-tags">
+                  <span>{f.gender}</span>
+                  {age != null && <span>อายุ {age} ปี</span>}
+                  {f.dob && isFullDate(f.dob) && <span>เกิด {thaiBirth(f.dob)}</span>}
+                </div>
+                {f.cid && <p className="sm-hero__cid">{f.cid}</p>}
+              </div>
+              <button type="button" className="sm-edit" onClick={() => setStep(0)}>
+                แก้ไข
               </button>
-            </div>
+            </section>
+
+            <section className="sm-card">
+              <header>
+                <PhoneCall size={14} /> ติดต่อ
+              </header>
+              <dl className="sm-list">
+                <div>
+                  <dt>เบอร์โทร</dt>
+                  <dd>{f.phone || <em>—</em>}</dd>
+                </div>
+                <div>
+                  <dt>อีเมล</dt>
+                  <dd>{f.email || <em>—</em>}</dd>
+                </div>
+                <div>
+                  <dt>ผู้ติดต่อฉุกเฉิน</dt>
+                  <dd>{f.ecName ? `${f.ecName}${f.ecRel ? ` (${f.ecRel})` : ""}${f.ecPhone ? ` · ${f.ecPhone}` : ""}` : <em>—</em>}</dd>
+                </div>
+                <div>
+                  <dt>ที่อยู่</dt>
+                  <dd>{f.address || <em>—</em>}</dd>
+                </div>
+              </dl>
+            </section>
+
+            <section className="sm-card">
+              <header>
+                <HeartPulse size={14} /> สุขภาพ
+                <button type="button" className="sm-edit" onClick={() => setStep(1)}>
+                  แก้ไข
+                </button>
+              </header>
+              {[
+                ["อาการสำคัญ", splitList(f.complaint), "is-c"],
+                ["โรคประจำตัว", splitList(f.conditions), "is-d"],
+                ["แพ้", splitList(f.allergies), "is-a"],
+              ].map(([k, list, cls]) => (
+                <div key={k as string} className="sm-chips">
+                  <small>{k as string}</small>
+                  <span>
+                    {(list as string[]).length ? (list as string[]).map((x) => <em key={x} className={cls as string}>{x}</em>) : <i>ไม่มี</i>}
+                  </span>
+                </div>
+              ))}
+            </section>
+          </div>
+
+          <div className="ap-col">
             {skipScr && !screening ? (
-              <p className="ap-skip">ข้ามการคัดกรอง · คัดกรองได้ตอนผู้ป่วยมารับบริการ</p>
+              <section className="sm-verdict is-skip">
+                <ShieldCheck size={22} />
+                <div>
+                  <b>ยังไม่ได้คัดกรอง</b>
+                  <small>คัดกรองได้ตอนผู้ป่วยมารับบริการ</small>
+                </div>
+                <button type="button" className="sm-edit" onClick={() => setStep(1)}>
+                  คัดกรองตอนนี้
+                </button>
+              </section>
             ) : (
               <>
-                <p className={flags.some((x) => x.level === "stop") ? "ap-res is-stop" : flags.length ? "ap-res is-warn" : "ap-res is-ok"}>
-                  {flags.length ? <ShieldAlert size={15} /> : <ShieldCheck size={15} />}
-                  {flags.length ? (flags.some((x) => x.level === "stop") ? "พบข้อห้าม · ต้องให้แพทย์ประเมินก่อนนวด" : `ข้อควรระวัง ${flags.length} ข้อ`) : "ผ่านการคัดกรอง"}
-                </p>
+                <section className={`sm-verdict ${flags.some((x) => x.level === "stop") ? "is-stop" : flags.length ? "is-warn" : "is-ok"}`}>
+                  {flags.length ? <ShieldAlert size={22} /> : <ShieldCheck size={22} />}
+                  <div>
+                    <b>{flags.length ? (flags.some((x) => x.level === "stop") ? "พบข้อห้าม" : `ข้อควรระวัง ${flags.length} ข้อ`) : "ผ่านการคัดกรอง"}</b>
+                    <small>{flags.some((x) => x.level === "stop") ? "ต้องให้แพทย์แผนไทยประเมินก่อนนวด" : flags.length ? "นวดได้ โดยปรับตามข้อควรระวัง" : "พร้อมรับบริการนวด"}</small>
+                  </div>
+                  <button type="button" className="sm-edit" onClick={() => setStep(1)}>
+                    แก้ไข
+                  </button>
+                </section>
                 {flags.length > 0 && (
-                  <ul className="ap-flags">
+                  <ul className="sm-flags">
                     {flags.map((x) => (
                       <li key={x.label} className={`is-${x.level}`}>
+                        <i />
                         {x.label}
                       </li>
                     ))}
                   </ul>
                 )}
-                <p className="ap-mini">
-                  ความดัน {screening?.bpSys ? `${screening.bpSys}/${screening.bpDia ?? "—"}` : "—"} · ชีพจร {screening?.pulse ?? "—"} · แรงนวด {screening?.pressure}
-                  {screening?.pain != null ? ` · ปวด ${screening.pain}/10` : ""}
-                  {screening?.painAreas?.length ? ` · จุดที่ปวด ${screening.painAreas.join(", ")}` : ""}
-                  {screening?.avoid ? ` · ไม่นวด ${screening.avoid}` : ""}
-                </p>
+                <div className="sm-stats">
+                  <div>
+                    <small>ความดัน</small>
+                    <b>{screening?.bpSys ? `${screening.bpSys}/${screening.bpDia ?? "—"}` : "—"}</b>
+                    <u>mmHg</u>
+                  </div>
+                  <div>
+                    <small>ชีพจร</small>
+                    <b>{screening?.pulse ?? "—"}</b>
+                    <u>ครั้ง/นาที</u>
+                  </div>
+                  <div>
+                    <small>ระดับปวด</small>
+                    <b style={screening?.pain != null ? { color: screening.pain >= 7 ? "#d8392a" : screening.pain >= 4 ? "#e08a1e" : "#2f9a5b" } : undefined}>{screening?.pain ?? "—"}</b>
+                    <u>/10</u>
+                  </div>
+                  <div>
+                    <small>แรงนวด</small>
+                    <b className="is-txt">{screening?.pressure ?? "—"}</b>
+                  </div>
+                </div>
+                {(scr.painAreas.length > 0 || scr.avoidAreas.length > 0) && (
+                  <section className="sm-card sm-body">
+                    <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} />
+                    <div className="sm-body__lists">
+                      {scr.painAreas.length > 0 && (
+                        <div>
+                          <small>จุดที่ปวด</small>
+                          <span>
+                            {scr.painAreas.map((x) => (
+                              <em key={x} className="is-pain">
+                                {x}
+                              </em>
+                            ))}
+                          </span>
+                        </div>
+                      )}
+                      {scr.avoidAreas.length > 0 && (
+                        <div>
+                          <small>ห้ามนวด</small>
+                          <span>
+                            {scr.avoidAreas.map((x) => (
+                              <em key={x} className="is-avoid">
+                                {x}
+                              </em>
+                            ))}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                )}
               </>
             )}
           </div>
