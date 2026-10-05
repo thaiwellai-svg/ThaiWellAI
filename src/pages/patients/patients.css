@@ -1883,3 +1883,16 @@
   min-height: 0;
   padding: 20px;
 }
+.apg__lead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+/* no dock on the registration page: the card runs to the bottom with the normal frame */
+.apg {
+  margin-bottom: 0;
+}
+.apg__body.scroll-y {
+  padding-bottom: 20px !important;
+}

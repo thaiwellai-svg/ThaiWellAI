@@ -125,7 +125,8 @@ export function AppShell() {
         </Suspense>
       </AnimatePresence>
 
-      <Dock onAssistant={() => setSpot(true)} />
+      {/* sub-pages (register / edit) are full-screen tasks: no dock, they have their own back button */}
+      {!/^\/patients\/(new|[^/]+\/edit)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
         </>
       )}
