@@ -1,21 +1,31 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { ArrowLeft, ArrowRight, Check, Hand, LayoutGrid, Sparkles, X } from "lucide-react";
+import { AppointmentsIcon, BillingIcon, HomeIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
 import "./tour.css";
 
 /** quick first-login guide: a spotlight walks over the main menu with one line about each page */
-const STEPS: { target?: string; title: string; body: string }[] = [
-  { title: "ยินดีต้อนรับสู่ ThaiWell", body: "แนะนำเมนูหลักแบบเร็ว ๆ ใช้เวลาไม่ถึง 1 นาที · ข้ามได้ตลอด และเปิดดูอีกครั้งได้ที่หน้าตั้งค่า" },
-  { target: '.dock__link[aria-label="หน้าหลัก"]', title: "หน้าหลัก", body: "ภาพรวมวันนี้ · คิว รายได้ เครดิตคอร์ส และคำขอจองคิวจากแอปผู้ป่วยที่รออนุมัติ" },
-  { target: '.dock__link[aria-label="รับบริการ"]', title: "รับบริการ", body: "ทำงานหน้างานทีละขั้น · เรียกคิว → คัดกรองก่อนนวด → เริ่มนวด → บันทึกการรักษา → รับชำระเงิน" },
-  { target: '.dock__link[aria-label="ผู้มารับบริการ"]', title: "ผู้มารับบริการ", body: "ลงทะเบียนด้วยบัตรประชาชน · ดูประวัติ หุ่น 3D จุดที่ปวด ธาตุเจ้าเรือน และแผนการรักษาโดย AI" },
-  { target: '.dock__link[aria-label="ตารางนัด"]', title: "ตารางนัด", body: "ดูนัดรายวันและรายสัปดาห์ · จองนัดใหม่และนัดตามคอร์สการรักษา" },
-  { target: '.dock__link[aria-label="คิดเงิน"]', title: "คิดเงิน", body: "ใบเสร็จ ยอดรับชำระ พร้อมเพย์ และการคืนเงิน · ส่งออกรายงานได้" },
-  { target: '.dock__link[aria-label="จัดตารางงาน"]', title: "จัดตารางงาน", body: "ตารางผู้บำบัด ห้อง และเตียง · กำหนดวันเวลาทำงานของแต่ละคน" },
-  { target: '.dock__link[aria-label="ตั้งค่า"]', title: "ตั้งค่า", body: "ข้อมูลคลินิก บริการและราคา กฎคัดกรอง สำรองข้อมูล · และเปิดคู่มือนี้อีกครั้ง" },
-  { target: ".dock__ai", title: "ผู้ช่วย AI", body: "ถามได้ทุกเรื่อง เช่น “วันนี้มีคิวกี่คน” หรือ “สรุปอาการคุณพิมพ์ชนก”" },
-  { title: "พร้อมใช้งานแล้ว", body: "เคล็ดลับ: บนหุ่น 3D แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด · จุด ••• บนกล่องใช้จัดตำแหน่งและขยายเต็มจอ" },
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+const AiIcon: Icon = (props) => <Sparkles {...(props as object)} />;
+const STEPS: { target?: string; title: string; body: string; color?: string; Icon?: Icon }[] = [
+  { title: "ยินดีต้อนรับสู่ ThaiWell", body: "มาทำความรู้จักเมนูหลักกันแบบเร็ว ๆ ใช้เวลาไม่ถึง 1 นาที" },
+  { target: '.dock__link[aria-label="หน้าหลัก"]', title: "หน้าหลัก", body: "ภาพรวมวันนี้ · คิว รายได้ เครดิตคอร์ส และคำขอจองคิวจากแอปผู้ป่วยที่รออนุมัติ", color: "#4c845a", Icon: HomeIcon },
+  { target: '.dock__link[aria-label="รับบริการ"]', title: "รับบริการ", body: "ทำงานหน้างานทีละขั้น · เรียกคิว → คัดกรองก่อนนวด → เริ่มนวด → บันทึกการรักษา → รับชำระเงิน", color: "#2f8f9a", Icon: VisitIcon },
+  { target: '.dock__link[aria-label="ผู้มารับบริการ"]', title: "ผู้มารับบริการ", body: "ลงทะเบียนด้วยบัตรประชาชน · ประวัติ หุ่น 3D จุดที่ปวด ธาตุเจ้าเรือน และแผนการรักษาโดย AI", color: "#3b82c4", Icon: PatientsIcon },
+  { target: '.dock__link[aria-label="ตารางนัด"]', title: "ตารางนัด", body: "ดูนัดรายวันและรายสัปดาห์ · จองนัดใหม่และนัดตามคอร์สการรักษา", color: "#d08a3c", Icon: AppointmentsIcon },
+  { target: '.dock__link[aria-label="คิดเงิน"]', title: "คิดเงิน", body: "ใบเสร็จ ยอดรับชำระ พร้อมเพย์ และการคืนเงิน · ส่งออกรายงานได้", color: "#b0739a", Icon: BillingIcon },
+  { target: '.dock__link[aria-label="จัดตารางงาน"]', title: "จัดตารางงาน", body: "ตารางผู้บำบัด ห้อง และเตียง · กำหนดวันเวลาทำงานของแต่ละคน", color: "#7c5cc4", Icon: PlannerIcon },
+  { target: '.dock__link[aria-label="ตั้งค่า"]', title: "ตั้งค่า", body: "ข้อมูลคลินิก บริการและราคา กฎคัดกรอง สำรองข้อมูล · และเปิดคู่มือนี้อีกครั้ง", color: "#66756b", Icon: SettingsIcon },
+  { target: ".dock__ai", title: "ผู้ช่วย AI", body: "ถามได้ทุกเรื่อง เช่น “วันนี้มีคิวกี่คน” หรือ “สรุปอาการคุณพิมพ์ชนก”", color: "#7a5af0", Icon: AiIcon },
+  { title: "พร้อมใช้งานแล้ว", body: "เคล็ดลับเล็ก ๆ ก่อนเริ่ม" },
+];
+const PREVIEW = STEPS.filter((x) => x.Icon);
+const TIPS: { Icon: Icon; text: string }[] = [
+  { Icon: Hand as Icon, text: "หุ่น 3D: แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด" },
+  { Icon: LayoutGrid as Icon, text: "จุด ••• บนกล่อง ใช้จัดตำแหน่งและขยายเต็มจอ" },
+  { Icon: SettingsIcon, text: "เปิดคู่มือนี้อีกครั้งได้ที่ ตั้งค่า → คู่มือการใช้งาน" },
 ];
 
 const KEY = "thaiwell.tour.done";
@@ -96,57 +106,97 @@ export function Tour() {
       }
     : null;
   const last = i === STEPS.length - 1;
+  const first = i === 0;
+  const above = !!box && box.y > vh / 2;
+  // arrow on the card edge pointing at the spotlight's centre
+  const arrowX = box && card ? Math.min(Math.max(box.x + box.w / 2 - card.left, 24), cardW - 24) : null;
 
   return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div className="tour" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
           {box ? (
-            <motion.div className="tour__hole" initial={false} animate={{ left: box.x, top: box.y, width: box.w, height: box.h }} transition={{ type: "spring", stiffness: 260, damping: 30 }} />
+            <motion.div className="tour__hole" style={{ ["--tc" as string]: step.color ?? "#ffffff" }} initial={false} animate={{ left: box.x, top: box.y, width: box.w, height: box.h }} transition={{ type: "spring", stiffness: 260, damping: 30 }} />
           ) : (
             <div className="tour__dim" />
           )}
           <motion.div
             key={i}
-            className={box ? "tour__card" : "tour__card is-center"}
-            style={card ? { ...card, width: cardW } : undefined}
-            initial={{ opacity: 0, y: box && box.y > vh / 2 ? 10 : -10, scale: 0.97 }}
+            className={box ? "tour__card" : first ? "tour__card is-center is-hero" : "tour__card is-center"}
+            style={{ ...(card ? { ...card, width: cardW } : {}), ["--tc" as string]: step.color ?? "#4c845a" }}
+            initial={{ opacity: 0, y: box && box.y > vh / 2 ? 12 : -12, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
             role="dialog"
             aria-label={step.title}
           >
-            {!box && (
-              <span className="tour__badge">
-                {last ? <Check size={22} strokeWidth={2.6} /> : <Sparkles size={22} />}
-              </span>
-            )}
+            {box && arrowX != null && <span className={above ? "tour__arrow is-down" : "tour__arrow"} style={{ left: arrowX }} />}
             <button type="button" className="tour__x" aria-label="ปิดคู่มือ" onClick={close}>
               <X size={16} />
             </button>
-            <small className="tour__count">
-              {i + 1} / {STEPS.length}
-            </small>
-            <b>{step.title}</b>
+
+            {first ? (
+              <div className="tour__hero">
+                <span className="tour__logo">
+                  <Sparkles size={26} />
+                </span>
+                <div className="tour__preview">
+                  {PREVIEW.map((x, k) => (
+                    <motion.span key={k} style={{ ["--tc" as string]: x.color }} initial={{ opacity: 0, y: 10, scale: 0.6 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.15 + k * 0.06, type: "spring", stiffness: 420, damping: 22 }}>
+                      {x.Icon && <x.Icon width={18} height={18} />}
+                    </motion.span>
+                  ))}
+                </div>
+              </div>
+            ) : last ? (
+              <span className="tour__done">
+                <Check size={26} strokeWidth={3} />
+              </span>
+            ) : (
+              <div className="tour__head">
+                <span className="tour__icon">{step.Icon && <step.Icon width={22} height={22} />}</span>
+                <div>
+                  <small>
+                    เมนู {i} จาก {STEPS.length - 2}
+                  </small>
+                  <b>{step.title}</b>
+                </div>
+              </div>
+            )}
+
+            {(first || last) && <b className="tour__title">{step.title}</b>}
             <p>{step.body}</p>
+            {last && (
+              <ul className="tour__tips">
+                {TIPS.map((t) => (
+                  <li key={t.text}>
+                    <span>
+                      <t.Icon width={16} height={16} />
+                    </span>
+                    {t.text}
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <div className="tour__foot">
               <div className="tour__dots">
                 {STEPS.map((_, k) => (
                   <i key={k} className={k === i ? "is-on" : k < i ? "is-done" : undefined} />
                 ))}
               </div>
-              {i > 0 && !last && (
+              {i > 0 && (
                 <button type="button" className="tour__btn is-ghost" onClick={back} aria-label="ย้อนกลับ">
                   <ArrowLeft size={16} />
                 </button>
               )}
-              {i === 0 && (
+              {first && (
                 <button type="button" className="tour__btn is-ghost is-text" onClick={close}>
                   ข้าม
                 </button>
               )}
               <button type="button" className="tour__btn" onClick={next}>
-                {i === 0 ? "เริ่มเลย" : last ? "เริ่มใช้งาน" : "ถัดไป"}
+                {first ? "เริ่มเลย" : last ? "เริ่มใช้งาน" : "ถัดไป"}
                 {!last && <ArrowRight size={15} />}
               </button>
             </div>
