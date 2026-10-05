@@ -390,9 +390,33 @@
    },
    {
     "n": 3,
+    "title": "นัดที่จะถึง",
+    "detail": "แตะนัดในการ์ด “นัดที่จะถึง” หรือประวัติการรับบริการ เพื่อเปิดหน้ารายละเอียดนัด แล้วกดย้อนกลับมาที่ผู้ป่วยคนเดิม",
+    "start": "media/patient-f5.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 46.82,
+      "y": 54.22,
+      "w": 29.92,
+      "h": 7.56,
+      "frame": "media/patient-f6.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 3.22,
+      "y": 5.24,
+      "w": 3.73,
+      "h": 5.37,
+      "frame": "media/patient-f7.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
     "title": "ดูข้อมูลสุขภาพ",
     "detail": "กดไอคอนหัวใจ กล่องข้อมูลสุขภาพเปิดทางขวา พร้อมหุ่น 3D บริเวณที่ควรเน้นและห้ามนวด",
-    "start": "media/patient-f5.webp",
+    "start": "media/patient-f8.webp",
     "actions": [
      {
       "kind": "tap",
@@ -400,15 +424,15 @@
       "y": 19.27,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/patient-f6.webp"
+      "frame": "media/patient-f9.webp"
      }
     ]
    },
    {
-    "n": 4,
+    "n": 5,
     "title": "หมุนดูรอบตัว",
     "detail": "ลากบนหุ่นเพื่อหมุน 360° หรือกด หน้า / ขวา / หลัง / ซ้าย",
-    "start": "media/patient-f7.webp",
+    "start": "media/patient-f10.webp",
     "actions": [
      {
       "kind": "drag",
@@ -416,15 +440,15 @@
       "y": 51.46,
       "x2": 90.42,
       "y2": 51.46,
-      "frame": "media/patient-f8.webp"
+      "frame": "media/patient-f11.webp"
      }
     ]
    },
    {
-    "n": 5,
+    "n": 6,
     "title": "เสียบบัตรเพื่อเปิดประวัติ",
     "detail": "กดไอคอนบัตรประชาชนบนหัวหน้า ถ้ามีประวัติแล้วระบบเปิดให้ทันที ถ้ายังไม่มีจะพาไปลงทะเบียน",
-    "start": "media/patient-f9.webp",
+    "start": "media/patient-f12.webp",
     "actions": [
      {
       "kind": "tap",
@@ -432,15 +456,15 @@
       "y": 5.85,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/patient-f10.webp"
+      "frame": "media/patient-f13.webp"
      }
     ]
    },
    {
-    "n": 6,
+    "n": 7,
     "title": "เมนูเพิ่มเติม ⋯",
     "detail": "ปุ่ม ⋯ ในหัวข้อมูลผู้ป่วยรวม แก้ไขข้อมูล · โทร · พิมพ์ / บันทึก PDF",
-    "start": "media/patient-f11.webp",
+    "start": "media/patient-f14.webp",
     "actions": [
      {
       "kind": "tap",
@@ -448,15 +472,15 @@
       "y": 19.27,
       "w": 3.73,
       "h": 5.37,
-      "frame": "media/patient-f12.webp"
+      "frame": "media/patient-f15.webp"
      }
     ]
    },
    {
-    "n": 7,
+    "n": 8,
     "title": "พิมพ์ / บันทึก PDF",
     "detail": "เลือก “พิมพ์ / บันทึก PDF” เพื่อพิมพ์ใบสรุปผลคัดกรองและแผนการรักษา หรือบันทึกเป็นไฟล์ส่งต่อ",
-    "start": "media/patient-f13.webp",
+    "start": "media/patient-f16.webp",
     "actions": [
      {
       "kind": "point",
@@ -464,7 +488,7 @@
       "y": 36.92,
       "w": 6,
       "h": 6,
-      "frame": "media/patient-f14.webp"
+      "frame": "media/patient-f17.webp"
      }
     ]
    }

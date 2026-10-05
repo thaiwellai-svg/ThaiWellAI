@@ -811,3 +811,35 @@
   align-items: center;
   justify-content: space-between;
 }
+
+/* upcoming / history items open the appointment page */
+button.hx-next__item {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+button.hx-next__item:active {
+  transform: scale(0.98);
+}
+.hx-next__go {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--color-text-muted);
+}
+.hx-next__item em + .hx-next__go {
+  margin-left: 6px;
+}
+.hx-hist li[role="button"] {
+  cursor: pointer;
+  border-radius: 10px;
+}
+.hx-hist li[role="button"]:hover {
+  background: var(--sage-50);
+}
+.pd__stat.is-link {
+  cursor: pointer;
+}
+.pd__stat.is-link:active {
+  transform: scale(0.98);
+}

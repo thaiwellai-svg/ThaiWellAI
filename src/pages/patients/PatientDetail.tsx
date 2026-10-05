@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Appointment } from "../../data/types";
 import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { ScreeningAlert } from "../../features/ScreeningAlert";
@@ -6,7 +7,7 @@ import { CancelDialog } from "../../features/CancelDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarX2, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronRight, CalendarX2, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -60,6 +61,12 @@ function PainChart({ points }: { points: { date: string; score: number }[] }) {
 
 export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, healthOpen }: { id: string | null; onAdd: () => void; onEdit?: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean; /** opens the health side panel, like on รับบริการ */ onHealth?: () => void; healthOpen?: boolean }) {
   const store = useStore();
+  const navigate = useNavigate();
+  // remember the open patient so "back" from the appointment page lands on them again
+  const openAppt = (aid: string) => {
+    if (id) navigate(`/patients?id=${id}`, { replace: true });
+    navigate(`/appointments/${aid}`);
+  };
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
   const today = todayISO();
@@ -172,7 +179,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             </b>
             <span>{delta < 0 ? "ดีขึ้น" : delta > 0 ? "แย่ลง" : ""}</span>
           </div>
-          <div className="pd__stat">
+          <div className={upcoming[0] ? "pd__stat is-link" : "pd__stat"} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
             <small>นัดถัดไป</small>
             <b className="pd__stat-text">{upcoming[0] ? `${thaiDateShort(upcoming[0].date)} ${upcoming[0].start}` : "—"}</b>
             <span>{upcoming[0] ? relativeDay(upcoming[0].date) : "ยังไม่มีนัด"}</span>
@@ -314,7 +321,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             {upcoming.length ? (
               <div className="hx-next">
                 {upcoming.slice(0, 5).map((v, k) => (
-                  <div key={v.id} className={k === 0 ? "hx-next__item is-first" : "hx-next__item"}>
+                  <button type="button" key={v.id} className={k === 0 ? "hx-next__item is-first" : "hx-next__item"} onClick={() => openAppt(v.id)}>
                     <span className="hx-next__date">
                       <small>{thaiDateShort(v.date).split(" ")[1]}</small>
                       <b>{Number(v.date.slice(8))}</b>
@@ -326,7 +333,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                       <small>{store.therapistById(v.therapistId).name}</small>
                     </span>
                     {v.date === today && <em>วันนี้</em>}
-                  </div>
+                    <ChevronRight size={15} className="hx-next__go" />
+                  </button>
                 ))}
               </div>
             ) : (
@@ -344,7 +352,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             {past.length ? (
               <ol className="hx-hist">
                 {past.map((v) => (
-                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined}>
+                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined} role="button" tabIndex={0} onClick={() => openAppt(v.id)}>
                     <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
                     <span className="hx-hist__body">
                       <b>{store.serviceById(v.serviceId).short}</b>

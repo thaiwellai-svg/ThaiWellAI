@@ -1,6 +1,7 @@
+import { useNavigate } from "react-router-dom";
 import { CoursePlanDialog } from "../pages/planner/PatientPlanner";
 import { useMemo, useState } from "react";
-import { ArrowRight, PersonStanding, CalendarDays, CalendarPlus, HeartPulse, History, Phone, Smartphone, Stethoscope, Ticket, TrendingDown, TrendingUp, Check } from "lucide-react";
+import { ChevronRight, ArrowRight, PersonStanding, CalendarDays, CalendarPlus, HeartPulse, History, Phone, Smartphone, Stethoscope, Ticket, TrendingDown, TrendingUp, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -58,6 +59,7 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
 /** the patient's health summary (อาการ · Pain trend · แผน · นัด · ประวัติ) — drawer and the รับบริการ side box */
 export function PatientHealth({ id }: { id: string }) {
   const store = useStore();
+  const navigate = useNavigate();
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = store.patientById(id);
   const visits = useMemo(
@@ -323,7 +325,7 @@ export function PatientHealth({ id }: { id: string }) {
       {upcoming.length ? (
         <div className="hx-next">
           {upcoming.slice(0, 4).map((v, k) => (
-            <div key={v.id} className={clsx("hx-next__item", k === 0 && "is-first")}>
+            <button type="button" key={v.id} className={clsx("hx-next__item", k === 0 && "is-first")} onClick={() => navigate(`/appointments/${v.id}`)}>
               <span className="hx-next__date">
                 <small>{thaiDateShort(v.date).split(" ")[1]}</small>
                 <b>{fromISODate(v.date).getDate()}</b>
@@ -335,7 +337,8 @@ export function PatientHealth({ id }: { id: string }) {
                 <small>{store.therapistById(v.therapistId).name}</small>
               </span>
               {v.date === today && <em>วันนี้</em>}
-            </div>
+              <ChevronRight size={15} className="hx-next__go" />
+            </button>
           ))}
         </div>
       ) : (
