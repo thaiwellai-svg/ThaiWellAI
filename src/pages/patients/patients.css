@@ -2016,3 +2016,34 @@
   white-space: nowrap;
   pointer-events: none;
 }
+/* health info */
+.ap-health {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ap-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -4px;
+}
+.ap-quick button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px 0 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.ap-quick button:active {
+  transform: scale(0.95);
+}
+.ap-quick button[aria-pressed="true"] {
+  background: #fde9e3;
+  color: #c2482b;
+}

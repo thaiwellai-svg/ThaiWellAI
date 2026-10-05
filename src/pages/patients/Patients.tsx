@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Plus, Stethoscope, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -22,11 +22,16 @@ import { PhotoSlot } from "../../features/PhotoSlot";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import { Body3D } from "../../features/Body3D";
+import { MultiSelect } from "../../features/MultiSelect";
 import { toArea, type BodyArea } from "../../features/BodyMap";
 import idFace from "../../assets/cardreader/id_face.png";
 import "./patients.css";
 
 const areasOf = (xs: string[]) => [...new Set(xs.map((x) => toArea(x.trim())).filter((x): x is BodyArea => !!x))];
+const splitList = (s: string) => s.split(/\s*,\s*/).map((x) => x.trim()).filter(Boolean);
+const COMPLAINTS = ["ปวดคอ", "ปวดบ่า", "ปวดไหล่", "ปวดหลัง", "ปวดเอว", "ปวดเข่า", "ปวดศีรษะ", "ชามือ/เท้า", "นอนไม่หลับ", "ต้องการผ่อนคลาย"];
+const CONDITIONS = ["ความดันโลหิตสูง", "เบาหวาน", "ไขมันในเลือดสูง", "โรคหัวใจ", "โรคหลอดเลือดสมอง", "หอบหืด", "ภูมิแพ้", "ไทรอยด์", "โรคไต", "โรคตับ", "กระดูกพรุน", "ข้อเข่าเสื่อม", "หมอนรองกระดูกทับเส้นประสาท", "ไมเกรน", "เส้นเลือดขอด", "ลมชัก", "มะเร็ง"];
+const ALLERGIES = ["ยาหม่อง", "น้ำมันไพล", "น้ำมันยูคาลิปตัส", "การบูร", "เมนทอล", "ลูกประคบสมุนไพร", "น้ำมันงา", "ลาเทกซ์ (ยาง)", "แอสไพริน", "เพนิซิลลิน", "ยาซัลฟา", "ยากลุ่ม NSAIDs", "อาหารทะเล", "ถั่ว"];
 const RELATIONS = ["บิดา", "มารดา", "สามี", "ภรรยา", "บุตร", "พี่", "น้อง", "ญาติ", "เพื่อน", "ผู้ดูแล", "อื่น ๆ"];
 
 type Filter = "all" | "course" | "low" | "week";
@@ -712,15 +717,26 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                 </span>
                 ข้อมูลสุขภาพ
               </h4>
-              <div className="ap-grid">
-                <Field label="อาการสำคัญ" className="span-3">
+              <div className="ap-health">
+                <Field label="อาการสำคัญ">
                   <Textarea rows={2} value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
                 </Field>
-                <Field label="โรคประจำตัว" className="span-3">
-                  <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
+                <div className="ap-quick">
+                  {COMPLAINTS.map((c) => {
+                    const on = splitList(f.complaint).includes(c);
+                    return (
+                      <button key={c} type="button" aria-pressed={on} onClick={() => setF({ ...f, complaint: (on ? splitList(f.complaint).filter((x) => x !== c) : [...splitList(f.complaint), c]).join(", ") })}>
+                        {on ? <Check size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={2.6} />}
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Field label="โรคประจำตัว">
+                  <MultiSelect value={splitList(f.conditions)} onChange={(v) => setF({ ...f, conditions: v.join(", ") })} options={CONDITIONS} placeholder="เลือกโรคประจำตัว" none="ไม่มีโรคประจำตัว" tone="#c2482b" icon={<Stethoscope size={16} />} />
                 </Field>
-                <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" className="span-3">
-                  <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
+                <Field label="การแพ้ยา / น้ำมัน / สมุนไพร">
+                  <MultiSelect value={splitList(f.allergies)} onChange={(v) => setF({ ...f, allergies: v.join(", ") })} options={ALLERGIES} placeholder="เลือกสิ่งที่แพ้" none="ไม่มีประวัติแพ้" tone="#d97706" icon={<ShieldAlert size={16} />} />
                 </Field>
               </div>
             </section>
