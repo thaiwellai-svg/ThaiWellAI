@@ -64,7 +64,7 @@ export function ElementCard({ p }: { p: Patient }) {
 const STEPS = ["อ่านประวัติและอาการ", "ประเมินธาตุและเส้นประธาน", "เลือกบริการและความถี่", "ตรวจข้อห้ามและข้อควรระวัง"];
 
 /** AI-drafted treatment plan from the patient's history (+ OCR'd referral documents). */
-export function AIPlanCard({ p }: { p: Patient }) {
+export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side panel (no card frame) */ panel?: boolean }) {
   const store = useStore();
   const toast = useToast();
   const [planFor, setPlanFor] = useState<string | null>(null);
@@ -169,7 +169,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
   };
 
   return (
-    <section className="pd__card pd__card--wide ai-card">
+    <section className={panel ? "ai-card ai-card--panel" : "pd__card pd__card--wide ai-card"}>
       <div className="pd__card-head">
         <h3 className="ai-title">
           <Sparkles size={16} /> แผนการรักษาแนะนำโดย AI
@@ -327,5 +327,26 @@ ${THAI_MASSAGE_KNOWLEDGE}
       {error && plan && <p className="ai-error">{error}</p>}
       <CoursePlanDialog patientId={planFor} onClose={() => setPlanFor(null)} />
     </section>
+  );
+}
+
+/** compact teaser on the patient page — opens the full AI plan in the side panel */
+export function AIPlanTeaser({ p, open, onOpen }: { p: Patient; open: boolean; onOpen: () => void }) {
+  const plan = p.aiPlan;
+  return (
+    <button type="button" className={"pd__card pd__card--wide ai-teaser" + (open ? " is-open" : "")} onClick={onOpen} aria-expanded={open}>
+      <span className="ai-teaser__icon">
+        <Sparkles size={20} />
+      </span>
+      <span className="ai-teaser__text">
+        <b>แผนการรักษาโดย AI</b>
+        <small>
+          {plan
+            ? `${plan.massageType} · ${plan.sessions} ครั้ง · ${plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}`
+            : "ให้ AI อ่านอาการ ประวัติ ธาตุ และเอกสาร แล้วร่างแผนนวด ประคบ สมุนไพร"}
+        </small>
+      </span>
+      <em>{open ? "ซ่อน" : plan ? "เปิดแผน" : "ให้ AI วางแผน"}</em>
+    </button>
   );
 }

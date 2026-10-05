@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -14,6 +14,8 @@ import { addISODays, diffDays, relativeDay, thaiDateShort, todayISO } from "../.
 import { patientPhoto } from "../../data/avatars";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { PatientDetail } from "./PatientDetail";
+import { AIPlanCard } from "../../features/AIPlan";
+import "../visits/visits.css";
 import { FilterMenu } from "../../features/FilterMenu";
 import { Workspace } from "../../features/Workspace";
 import { ListModeMenu } from "../../features/ListModeMenu";
@@ -49,6 +51,8 @@ export default function Patients() {
   const [query, setQuery] = useState("");
   // detail fills the screen (list hidden) — toggled from the detail box's ••• toolbar
   const [solo, setSolo] = useState(false);
+  // AI treatment plan opens as a third column, like the health box on รับบริการ
+  const [aiOpen, setAiOpen] = useState(false);
   // narrow list: photo + name only (same switch as รับบริการ)
   const [slim, setSlim] = useState(() => {
     try {
@@ -197,12 +201,13 @@ export default function Patients() {
       {wide ? (
         <Workspace
           storageKey="thaiwell.patients.layout"
+          flexMin={380}
           className={slim ? "pws is-slim" : "pws"}
           panes={[
             ...(solo ? [] : [{ id: "list", width: slim ? 96 : 300, min: slim ? 96 : undefined, fixed: true, collapsible: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: listPane }]),
             {
               id: "detail",
-              fixed: true,
+              locked: true,
               menu: (
                 <button type="button" className="ws__icon" onClick={() => setSolo((v) => !v)} aria-label={solo ? "แสดงรายการ" : "ขยายเต็มจอ"} title={solo ? "แสดงรายการ" : "ขยายเต็มจอ"}>
                   {solo ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
@@ -211,11 +216,40 @@ export default function Patients() {
               node: (
                 <div className="panel pdetail">
                   <div className="sheet">
-                    <PatientDetail id={current} onAdd={() => setAdding(true)} />
+                    <PatientDetail id={current} onAdd={() => setAdding(true)} onAIPlan={() => setAiOpen((v) => !v)} aiOpen={aiOpen && !!current} />
                   </div>
                 </div>
               ),
             },
+            ...(aiOpen && current
+              ? [
+                  {
+                    id: "ai",
+                    width: 400,
+                    min: 320,
+                    max: 560,
+                    collapsible: true,
+                    node: (
+                      <div className="panel vp__hist pai">
+                        <div className="sheet">
+                          <div className="vp__hist-head">
+                            <div>
+                              <b>แผนการรักษาโดย AI</b>
+                              <small>{store.patientById(current).name}</small>
+                            </div>
+                            <IconButton label="ปิด" variant="soft" onClick={() => setAiOpen(false)}>
+                              <X size={18} />
+                            </IconButton>
+                          </div>
+                          <div className="vp__hist-body scroll-y scroll-y--light">
+                            <AIPlanCard p={store.patientById(current)} panel />
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
           ]}
         />
       ) : (

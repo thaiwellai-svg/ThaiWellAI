@@ -9,7 +9,7 @@ import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
-import { AIPlanCard, ElementCard } from "../../features/AIPlan";
+import { AIPlanCard, AIPlanTeaser, ElementCard } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
 
 /** Donut showing used / booked / free sessions of a treatment plan. */
@@ -83,7 +83,7 @@ function PainChart({ points }: { points: { date: string; score: number }[] }) {
   );
 }
 
-export function PatientDetail({ id, onAdd }: { id: string | null; onAdd: () => void }) {
+export function PatientDetail({ id, onAdd, onAIPlan, aiOpen }: { id: string | null; onAdd: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean }) {
   const store = useStore();
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
@@ -185,7 +185,7 @@ export function PatientDetail({ id, onAdd }: { id: string | null; onAdd: () => v
         </div>
 
         <div className="pd__grid">
-          <AIPlanCard p={p} />
+          {onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}
           <ElementCard p={p} />
           {/* Plan */}
           <section className="pd__card">
