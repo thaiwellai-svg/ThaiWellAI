@@ -1671,3 +1671,186 @@
 .ap-body .b3__reset {
   display: none;
 }
+/* vitals tiles */
+.ap-vt {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 8px;
+}
+.ap-vt__tile {
+  --tc: var(--color-text-muted);
+  --tb: var(--sage-50);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--tb);
+  box-shadow: inset 0 0 0 1.5px transparent;
+  cursor: text;
+  transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.ap-vt__tile:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+.ap-vt__tile.is-ok { --tc: #2f9a5b; --tb: #eef8f1; }
+.ap-vt__tile.is-warn { --tc: #c47a12; --tb: #fdf5e6; }
+.ap-vt__tile.is-stop { --tc: #d23a2a; --tb: #fdeeec; }
+.ap-vt__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 18px;
+}
+.ap-vt__top small {
+  font: 600 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-vt__top em {
+  padding: 3px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--tc);
+  font: 700 10px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--white);
+  white-space: nowrap;
+}
+.ap-vt__val {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.ap-vt__val input {
+  width: 3.1ch;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 700 26px/1.1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--tc);
+  outline: none;
+}
+.ap-vt__tile.is-idle .ap-vt__val input {
+  color: var(--color-text);
+}
+.ap-vt__val input::placeholder {
+  color: rgba(47, 64, 52, 0.22);
+}
+.ap-vt__val i {
+  font: 500 22px/1 var(--font-sans);
+  font-style: normal;
+  color: rgba(47, 64, 52, 0.3);
+}
+.ap-vt__val u {
+  margin-left: 6px;
+  font: 500 11px/1 var(--font-sans);
+  text-decoration: none;
+  color: var(--color-text-muted);
+}
+.ap-press {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ap-press small {
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.ap-press .ap-seg {
+  flex: 1;
+  max-width: 260px;
+}
+/* contraindication tiles */
+.ap-sec h4 .ap-ci__sum {
+  margin-left: auto;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  font: 700 11px/1 var(--font-sans);
+  font-style: normal;
+}
+.ap-ci__sum.is-ok { background: #eef8f1; color: #2f9a5b; }
+.ap-ci__sum.is-warn { background: #fdf5e6; color: #c47a12; }
+.ap-ci__sum.is-stop { background: #fdeeec; color: #d23a2a; }
+.ap-ci {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ap-ci button {
+  --cc: #c47a12;
+  --ct: #fdf5e6;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  text-align: left;
+  transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.ap-ci button:active {
+  transform: scale(0.97);
+}
+.ap-ci button.is-stop {
+  --cc: #d23a2a;
+  --ct: #fdeeec;
+}
+.ap-ci i {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--sage-50);
+  color: var(--color-text-muted);
+  transition: inherit;
+}
+.ap-ci button > span:not(.ap-ci__tick) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.ap-ci b {
+  font: 600 12.5px/1.25 var(--font-sans);
+  color: var(--color-text);
+}
+.ap-ci small {
+  font: 500 10.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.ap-ci__tick {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--sage-100);
+  color: var(--white);
+}
+.ap-ci button[aria-pressed="true"] {
+  background: var(--ct);
+  box-shadow: inset 0 0 0 1.5px var(--cc);
+}
+.ap-ci button[aria-pressed="true"] i {
+  background: var(--cc);
+  color: var(--white);
+}
+.ap-ci button[aria-pressed="true"] small {
+  color: var(--cc);
+  font-weight: 700;
+}
+.ap-ci button[aria-pressed="true"] .ap-ci__tick {
+  background: var(--cc);
+  box-shadow: none;
+}

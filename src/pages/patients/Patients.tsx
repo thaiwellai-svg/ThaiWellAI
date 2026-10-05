@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Activity, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -420,22 +420,20 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   };
 
   const STEPS = ["ลงทะเบียนข้อมูล", "คัดกรอง", "สรุปข้อมูล"];
-  const yes = (k: keyof typeof scr, label: string, hint?: string) => (
-    <div className="ap-q">
-      <span>
-        <b>{label}</b>
-        {hint && <small>{hint}</small>}
-      </span>
-      <div className="ap-yn">
-        <button type="button" aria-pressed={!scr[k]} onClick={() => setScr({ ...scr, [k]: false })}>
-          ไม่มี
-        </button>
-        <button type="button" className="is-yes" aria-pressed={!!scr[k]} onClick={() => setScr({ ...scr, [k]: true })}>
-          มี
-        </button>
-      </div>
-    </div>
-  );
+  // vital-sign status shown on the tiles
+  const sys = Number(scr.bpSys) || 0;
+  const bpThreshold = store.settings.bpThreshold ?? 160;
+  const bpState = !sys ? { tone: "idle", label: "" } : sys >= bpThreshold ? { tone: "stop", label: "สูง · ห้ามนวด" } : sys >= 140 || sys < 90 ? { tone: "warn", label: sys < 90 ? "ต่ำ" : "ค่อนข้างสูง" } : { tone: "ok", label: "ปกติ" };
+  const pr = Number(scr.pulse) || 0;
+  const pulseState = !pr ? { tone: "idle", label: "" } : pr > 100 ? { tone: "warn", label: "เร็ว" } : pr < 50 ? { tone: "warn", label: "ช้า" } : { tone: "ok", label: "ปกติ" };
+  const contra = [
+    { key: "fever", label: "มีไข้ / ติดเชื้อ", hint: "ห้ามนวด", level: "stop", Icon: Thermometer },
+    { key: "recentSurgery", label: "ผ่าตัดภายใน 30 วัน", hint: `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วัน`, level: "stop", Icon: Scissors },
+    { key: "bloodThinner", label: "ยาละลายลิ่มเลือด", hint: "ลดแรงนวด", level: "warn", Icon: Droplet },
+    { key: "numbness", label: "ชา / อ่อนแรง", hint: "ระวัง", level: "warn", Icon: Zap },
+    { key: "skinProblem", label: "แผล / ผื่น / โรคผิวหนัง", hint: "เลี่ยงบริเวณนั้น", level: "warn", Icon: Bandage },
+    ...(f.gender === "หญิง" ? [{ key: "pregnant", label: "ตั้งครรภ์ / อาจตั้งครรภ์", hint: "ระวัง", level: "warn", Icon: Baby }] : []),
+  ].map((c) => ({ ...c, key: c.key as "fever" | "recentSurgery" | "bloodThinner" | "numbness" | "skinProblem" | "pregnant", on: !!scr[c.key as keyof typeof scr] }));
   const row = (k: string, v?: string) => (
     <div>
       <dt>{k}</dt>
@@ -687,39 +685,69 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
             </section>
             <section className="ap-sec">
               <h4>
+                <span style={{ ["--c" as string]: "#c2482b" }}>
+                  <Activity size={14} />
+                </span>
+                สัญญาณชีพ
+              </h4>
+              <div className="ap-vt">
+                <label className={`ap-vt__tile is-${bpState.tone}`}>
+                  <span className="ap-vt__top">
+                    <small>ความดัน</small>
+                    {bpState.label && <em>{bpState.label}</em>}
+                  </span>
+                  <span className="ap-vt__val">
+                    <input inputMode="numeric" placeholder="120" aria-label="ความดันตัวบน" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                    <i>/</i>
+                    <input inputMode="numeric" placeholder="80" aria-label="ความดันตัวล่าง" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                    <u>mmHg</u>
+                  </span>
+                </label>
+                <label className={`ap-vt__tile is-${pulseState.tone}`}>
+                  <span className="ap-vt__top">
+                    <small>ชีพจร</small>
+                    {pulseState.label && <em>{pulseState.label}</em>}
+                  </span>
+                  <span className="ap-vt__val">
+                    <input inputMode="numeric" placeholder="72" aria-label="ชีพจร" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
+                    <u>ครั้ง/นาที</u>
+                  </span>
+                </label>
+              </div>
+              <div className="ap-press">
+                <small>แรงนวดที่ต้องการ</small>
+                <div className="ap-seg">
+                  {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
+                    <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
+                      {x}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </section>
+            <section className="ap-sec">
+              <h4>
                 <span style={{ ["--c" as string]: "#d97706" }}>
                   <ShieldCheck size={14} />
                 </span>
-                สัญญาณชีพและข้อห้ามก่อนนวด
+                ข้อห้ามก่อนนวด
+                <em className={`ap-ci__sum ${contra.some((c) => c.on && c.level === "stop") ? "is-stop" : contra.some((c) => c.on) ? "is-warn" : "is-ok"}`}>
+                  {contra.some((c) => c.on) ? `พบ ${contra.filter((c) => c.on).length} ข้อ` : "ไม่พบ"}
+                </em>
               </h4>
-              <div className="ap-vitals">
-                <Field label="ความดัน (mmHg)">
-                  <div className="ap-bp">
-                    <Input inputMode="numeric" placeholder="120" value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                    <span>/</span>
-                    <Input inputMode="numeric" placeholder="80" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                  </div>
-                </Field>
-                <Field label="ชีพจร (ครั้ง/นาที)">
-                  <Input inputMode="numeric" placeholder="72" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                </Field>
-                <Field label="แรงนวดที่ต้องการ">
-                  <div className="ap-seg">
-                    {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
-                      <button key={x} type="button" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
-                        {x}
-                      </button>
-                    ))}
-                  </div>
-                </Field>
-              </div>
-              <div className="ap-qs">
-                {yes("fever", "มีไข้ หรือการติดเชื้อ", "ห้ามนวด")}
-                {yes("recentSurgery", "ผ่าตัดภายใน 30 วัน", `ห้ามนวด ${store.settings.surgeryRecoveryDays ?? 30} วันหลังผ่าตัด`)}
-                {yes("bloodThinner", "ใช้ยาละลายลิ่มเลือด / ต้านเกล็ดเลือด", "ลดแรงนวด")}
-                {yes("numbness", "อาการชา หรืออ่อนแรง")}
-                {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
-                {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
+              <div className="ap-ci">
+                {contra.map((c) => (
+                  <button key={c.key} type="button" className={`is-${c.level}`} aria-pressed={c.on} onClick={() => setScr({ ...scr, [c.key]: !c.on })}>
+                    <i>
+                      <c.Icon size={16} strokeWidth={2.2} />
+                    </i>
+                    <span>
+                      <b>{c.label}</b>
+                      <small>{c.hint}</small>
+                    </span>
+                    <span className="ap-ci__tick">{c.on && <Check size={12} strokeWidth={3} />}</span>
+                  </button>
+                ))}
               </div>
             </section>
           </div>
