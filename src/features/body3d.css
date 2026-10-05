@@ -400,3 +400,9 @@
 .b3__stage .b3__el {
   bottom: 22%;
 }
+/* long-press must not trigger the iOS callout / text selection */
+.b3__stage canvas {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
@@ -341,6 +341,8 @@ export function Body3D({
   avoid = [],
   selected = [],
   onToggle,
+  onHold,
+  children,
   compact,
   sex = "ชาย",
   pain,
@@ -359,12 +361,16 @@ export function Body3D({
   avoid?: BodyArea[];
   selected?: string[];
   onToggle?: (area: BodyArea) => void;
+  /** long-press (touch or mouse) or right-click on an area; x/y are stage coordinates */
+  onHold?: (area: BodyArea, at: { x: number; y: number }) => void;
+  /** overlays drawn on the stage (chips, scales, menus) */
+  children?: ReactNode;
   compact?: boolean;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const api = useRef<{ paint: () => void; view: (az: number) => void; render: () => void } | null>(null);
-  const state = useRef({ heatmap, avoid, selected, onToggle, hover: 0 });
-  state.current = { ...state.current, heatmap, avoid, selected, onToggle };
+  const state = useRef({ heatmap, avoid, selected, onToggle, onHold, hover: 0 });
+  state.current = { ...state.current, heatmap, avoid, selected, onToggle, onHold };
   const [ready, setReady] = useState(false);
   const [tip, setTip] = useState<{ x: number; y: number; label: string } | null>(null);
   const [active, setActive] = useState<string>("front");
@@ -668,7 +674,7 @@ export function Body3D({
       // picking
       const ray = new THREE.Raycaster();
       const ndc = new THREE.Vector2();
-      const pick = (e: PointerEvent): { area: number; x: number; y: number } | null => {
+      const pick = (e: { clientX: number; clientY: number }): { area: number; x: number; y: number } | null => {
         const r = renderer.domElement.getBoundingClientRect();
         ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
         ray.setFromCamera(ndc, camera);
@@ -678,8 +684,39 @@ export function Body3D({
         return { area: p.area[hit.face.a], x: e.clientX - r.left, y: e.clientY - r.top };
       };
       let down: { x: number; y: number } | null = null;
-      const onDown = (e: PointerEvent) => (down = { x: e.clientX, y: e.clientY });
+      let holdTimer = 0;
+      let held = false;
+      const hold = (e: { clientX: number; clientY: number }) => {
+        const h = pick(e);
+        if (!h || !state.current.onHold) return false;
+        state.current.onHold(BODY_AREAS[h.area - 1], { x: h.x, y: h.y });
+        return true;
+      };
+      const onDown = (e: PointerEvent) => {
+        down = { x: e.clientX, y: e.clientY };
+        held = false;
+        clearTimeout(holdTimer);
+        if (state.current.onHold && e.button === 0) {
+          const at = { clientX: e.clientX, clientY: e.clientY };
+          holdTimer = window.setTimeout(() => {
+            if (down && hold(at)) {
+              held = true;
+              setTip(null);
+            }
+          }, 480);
+        }
+      };
+      const onDrag = (e: PointerEvent) => {
+        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) clearTimeout(holdTimer);
+      };
+      const onMenu = (e: MouseEvent) => {
+        if (!state.current.onHold) return;
+        e.preventDefault();
+        if ((e as PointerEvent).pointerType !== "touch" && !held) hold(e);
+      };
       const onUp = (e: PointerEvent) => {
+        clearTimeout(holdTimer);
+        if (held) return void (down = null);
         if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
         down = null;
         const h = pick(e);
@@ -712,6 +749,9 @@ export function Body3D({
       cv.addEventListener("pointerdown", onDown);
       cv.addEventListener("pointerup", onUp);
       cv.addEventListener("pointermove", onMove);
+      cv.addEventListener("pointermove", onDrag);
+      cv.addEventListener("pointercancel", () => clearTimeout(holdTimer));
+      cv.addEventListener("contextmenu", onMenu);
       cv.addEventListener("pointerleave", onLeave);
 
       const resize = () => {
@@ -809,6 +849,7 @@ export function Body3D({
           </div>
         )}
         {ready && <span className="b3__spin">ลากเพื่อหมุนดูรอบตัว 360°</span>}
+        {children}
         {tip && (
           <span className="b3__tip" style={{ left: tip.x, top: tip.y }} onAnimationEnd={() => setTip(null)}>
             {tip.label}

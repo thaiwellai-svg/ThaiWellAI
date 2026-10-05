@@ -311,13 +311,16 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
   const emptyScr = { bpSys: "", bpDia: "", pulse: "", fever: false, pregnant: false, recentSurgery: false, numbness: false, bloodThinner: false, skinProblem: false, pressure: "ปานกลาง" as CounterScreening["pressure"], painAreas: [] as BodyArea[], avoidAreas: [] as BodyArea[], pain: null as number | null };
   const [scr, setScr] = useState(emptyScr);
   const [skipScr, setSkipScr] = useState(false);
-  const [bodyMode, setBodyMode] = useState<"pain" | "avoid">("pain");
-  // tapping an area on the body toggles it in the current mode (an area is either painful or no-massage)
-  const toggleArea = (a: BodyArea) =>
-    setScr((x) => {
-      const [own, other] = bodyMode === "pain" ? (["painAreas", "avoidAreas"] as const) : (["avoidAreas", "painAreas"] as const);
-      return { ...x, [own]: x[own].includes(a) ? x[own].filter((y) => y !== a) : [...x[own], a], [other]: x[other].filter((y) => y !== a) };
-    });
+  const [hold, setHold] = useState<{ area: BodyArea; x: number; y: number } | null>(null);
+  // tap = painful area; long-press opens a menu to mark it no-massage (an area is one or the other)
+  const toggleArea = (a: BodyArea) => {
+    setHold(null);
+    setScr((x) => ({ ...x, painAreas: x.painAreas.includes(a) ? x.painAreas.filter((y) => y !== a) : [...x.painAreas, a], avoidAreas: x.avoidAreas.filter((y) => y !== a) }));
+  };
+  const setAvoid = (a: BodyArea, on: boolean) => {
+    setHold(null);
+    setScr((x) => ({ ...x, avoidAreas: on ? [...x.avoidAreas.filter((y) => y !== a), a] : x.avoidAreas.filter((y) => y !== a), painAreas: on ? x.painAreas.filter((y) => y !== a) : x.painAreas }));
+  };
   const [reader, setReader] = useState(false);
   const [fromCard, setFromCard] = useState(false);
   // load the patient when the edit dialog opens
@@ -328,7 +331,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
     setFromCard(false);
     const sc = edit?.screening;
     setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, painAreas: areasOf(sc.painAreas ?? []), avoidAreas: areasOf(sc.avoid.split(/[,·]\s*/)), pain: sc.pain ?? null } : emptyScr);
-    setBodyMode("pain");
+    setHold(null);
     setSkipScr(!!edit && !sc);
   }, [open, edit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const age = ageFrom(f.dob);
@@ -621,43 +624,50 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 </span>
                 ตำแหน่งบนร่างกาย
               </h4>
-              <div className="ap-body__mode" role="radiogroup" aria-label="โหมดการเลือก">
-                <button type="button" role="radio" aria-checked={bodyMode === "pain"} className="is-pain" onClick={() => setBodyMode("pain")}>
-                  <i /> จุดที่ปวด
-                  {scr.painAreas.length > 0 && <b>{scr.painAreas.length}</b>}
-                </button>
-                <button type="button" role="radio" aria-checked={bodyMode === "avoid"} className="is-avoid" onClick={() => setBodyMode("avoid")}>
-                  <i /> ห้ามนวด
-                  {scr.avoidAreas.length > 0 && <b>{scr.avoidAreas.length}</b>}
-                </button>
-              </div>
-              <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} onToggle={toggleArea} />
-              <p className="ap-body__hint">{bodyMode === "pain" ? "แตะบริเวณที่ปวดบนร่างกาย" : "แตะบริเวณที่ไม่ต้องการให้นวด"}</p>
-              {(scr.painAreas.length > 0 || scr.avoidAreas.length > 0) && (
-                <div className="ap-body__picked">
-                  {scr.painAreas.map((x) => (
-                    <button key={x} type="button" className="is-pain" onClick={() => setScr({ ...scr, painAreas: scr.painAreas.filter((y) => y !== x) })}>
-                      {x}
-                      <X size={11} strokeWidth={2.6} />
-                    </button>
-                  ))}
-                  {scr.avoidAreas.map((x) => (
-                    <button key={x} type="button" className="is-avoid" onClick={() => setScr({ ...scr, avoidAreas: scr.avoidAreas.filter((y) => y !== x) })}>
-                      {x}
-                      <X size={11} strokeWidth={2.6} />
-                    </button>
-                  ))}
-                </div>
-              )}
-              <Field label="ระดับความปวด (0–10)">
-                <div className="ap-pain">
-                  {Array.from({ length: 11 }, (_, n) => (
-                    <button key={n} type="button" aria-pressed={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
+              <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} onToggle={toggleArea} onHold={(area, at) => setHold({ area, ...at })}>
+                {(scr.painAreas.length > 0 || scr.avoidAreas.length > 0) && (
+                  <div className="ap-body__picked">
+                    {scr.painAreas.map((x) => (
+                      <button key={x} type="button" className="is-pain" onClick={() => toggleArea(x)}>
+                        {x}
+                        <X size={11} strokeWidth={2.6} />
+                      </button>
+                    ))}
+                    {scr.avoidAreas.map((x) => (
+                      <button key={x} type="button" className="is-avoid" onClick={() => setAvoid(x, false)}>
+                        {x}
+                        <X size={11} strokeWidth={2.6} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
+                  <small>ปวด</small>
+                  {Array.from({ length: 11 }, (_, n) => 10 - n).map((n) => (
+                    <button key={n} type="button" role="radio" aria-checked={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
                       {n}
                     </button>
                   ))}
                 </div>
-              </Field>
+                {hold && (
+                  <motion.div className="ap-hold" style={{ left: hold.x, top: hold.y }} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 30 }}>
+                    <b>{hold.area}</b>
+                    {scr.avoidAreas.includes(hold.area) ? (
+                      <button type="button" onClick={() => setAvoid(hold.area, false)}>
+                        ยกเลิกห้ามนวด
+                      </button>
+                    ) : (
+                      <button type="button" className="is-avoid" onClick={() => setAvoid(hold.area, true)}>
+                        <i /> ห้ามนวด
+                      </button>
+                    )}
+                    <button type="button" className="is-x" aria-label="ปิด" onClick={() => setHold(null)}>
+                      <X size={13} />
+                    </button>
+                  </motion.div>
+                )}
+              </Body3D>
+              <p className="ap-body__hint">แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด</p>
             </section>
           </div>
           <div className="ap-col">
