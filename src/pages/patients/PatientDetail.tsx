@@ -117,18 +117,18 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: str
               ))}
             </div>
           </div>
-          <div className="pd__actions">
+          <div className="pd__actions pd__icons">
             {onEdit && (
-              <Button variant="outline" size="md" leading={<PenLine size={15} />} onClick={onEdit}>
-                แก้ไขข้อมูล
-              </Button>
+              <button type="button" className="pd__ib" onClick={onEdit} aria-label="แก้ไขข้อมูล" title="แก้ไขข้อมูล">
+                <PenLine size={18} />
+              </button>
             )}
-            <Button variant="outline" size="md" leading={<Phone size={15} />} onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)}>
-              {p.phone}
-            </Button>
-            <Button size="md" leading={<CalendarPlus size={15} />} onClick={() => setPlanFor(p.id)}>
-              จัดตารางงาน
-            </Button>
+            <button type="button" className="pd__ib" onClick={() => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`)} aria-label={`โทร ${p.phone}`} title={`โทร ${p.phone}`}>
+              <Phone size={18} />
+            </button>
+            <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
+              <CalendarPlus size={18} />
+            </button>
           </div>
         </header>
 
