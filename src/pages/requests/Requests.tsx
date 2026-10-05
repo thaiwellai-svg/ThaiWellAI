@@ -157,24 +157,22 @@ export default function Requests() {
                         transition={spring.soft}
                       >
                         {selected === r.id && <motion.span layoutId="rq-sel" className="rq__sel" transition={spring.snappy} />}
+                        <i className={clsx("rq2__bar", stop ? "is-stop" : flags.length || clash.length ? "is-warn" : "is-ok")} />
                         <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" />
                         <span className="rq__who">
                           <b>{p.name}</b>
                           <small>
-                            {thaiDateShort(r.date)} · {r.start} น. · {store.serviceById(r.serviceId).short}
+                            {store.serviceById(r.serviceId).short} · {timeAgo(r.submittedAt)}
                           </small>
                           <span className="rq__flags">
-                            {stop ? (
-                              <i className="is-stop">ห้ามนวด/พบแพทย์</i>
-                            ) : flags.length ? (
-                              <i className="is-warn">ข้อควรระวัง</i>
-                            ) : (
-                              <i className="is-ok">ผ่านคัดกรอง</i>
-                            )}
+                            {stop ? <i className="is-stop">ต้องพบแพทย์</i> : flags.length ? <i className="is-warn">ข้อควรระวัง</i> : <i className="is-ok">ผ่านคัดกรอง</i>}
                             {clash.length > 0 && <i className="is-clash">คิวชน</i>}
                           </span>
                         </span>
-                        <span className="rq__ago">{timeAgo(r.submittedAt)}</span>
+                        <span className="rq2__when">
+                          <b>{thaiDateShort(r.date)}</b>
+                          <small>{r.start}</small>
+                        </span>
                       </motion.button>
                     );
                   })
@@ -303,93 +301,127 @@ function RequestDetail({ r }: { r: BookingRequest }) {
   const st = staffState(t, { date: r.date, start: r.start, serviceId: r.serviceId }, store.appointments);
   const visits = store.appointments.filter((a) => a.patientId === p.id && a.status === "done");
   const lastPain = [...p.painHistory].sort((a, b) => b.date.localeCompare(a.date))[0];
+  const tone = stop ? "is-stop" : flags.length || clash.length ? "is-warn" : "is-ok";
+  const d = new Date(r.date + "T00:00:00");
+  const qs: { key: keyof typeof r.screening; label: string }[] = [
+    { key: "fever", label: "มีไข้" },
+    { key: "highBP", label: "ความดันสูง" },
+    { key: "contagious", label: "โรคติดต่อ" },
+    { key: "recentSurgery", label: `ผ่าตัดไม่เกิน ${store.settings.surgeryRecoveryDays} วัน` },
+    { key: "pregnant", label: "ตั้งครรภ์" },
+    { key: "menstruation", label: "มีประจำเดือน" },
+  ];
 
   return (
     <div className="rq__body scroll-y scroll-y--light">
       <PatientHead pid={r.patientId} sub={<span className="rq__src">ส่งผ่านแอป ThaiWell AI · {timeAgo(r.submittedAt)}</span>} />
 
-      {/* verdict */}
-      <div className={clsx("rq__verdict", stop ? "is-stop" : flags.length || clash.length ? "is-warn" : "is-ok")}>
-        {stop ? <ShieldAlert size={20} /> : flags.length || clash.length ? <ShieldAlert size={20} /> : <ShieldCheck size={20} />}
+      <div className={clsx("rq2__verdict", tone)}>
+        <span className="rq2__vi">{stop || flags.length || clash.length ? <ShieldAlert size={20} /> : <ShieldCheck size={20} />}</span>
         <div>
-          <b>{stop ? "ควรให้แพทย์แผนไทยประเมินก่อนอนุมัติ" : clash.length ? "คิวที่ขอชน — โทรยืนยันหรือเลื่อนให้ใหม่" : flags.length ? "มีข้อควรระวัง อนุมัติได้โดยแจ้งผู้บำบัด" : "พร้อมอนุมัติ"}</b>
+          <b>{stop ? "ควรให้แพทย์แผนไทยประเมินก่อนอนุมัติ" : clash.length ? "คิวที่ขอชน · โทรยืนยันหรือเลื่อนให้ใหม่" : flags.length ? "มีข้อควรระวัง · อนุมัติได้โดยแจ้งผู้บำบัด" : "พร้อมอนุมัติ"}</b>
           <span>{[...flags.map((f) => f.label), ...clash.map((c) => c.label)].join(" · ") || "ผ่านแบบคัดกรองและคิวว่าง"}</span>
         </div>
       </div>
 
-      <div className="rq__grid">
-        <section className="rq__card">
-          <h3>ช่วงเวลาที่ขอ</h3>
-          <div className="rq__slot">
-            <span>
-              <b>{thaiDateLong(r.date)}</b>
-              <small>
+      <div className="rq2">
+        <div className="rq2__main">
+          {/* ticket */}
+          <section className={clsx("rq2__ticket", clash.length ? "is-clash" : "")}>
+            <div className="rq2__date">
+              <small>{d.toLocaleDateString("th-TH", { weekday: "short" })}</small>
+              <b>{d.getDate()}</b>
+              <small>{d.toLocaleDateString("th-TH", { month: "short" })}</small>
+            </div>
+            <div className="rq2__slot">
+              <small>ช่วงเวลาที่ขอ</small>
+              <b>
                 {r.start}–{fromMinutes(toMinutes(r.start) + s.minutes)} น.
-              </small>
-            </span>
-            {clash.length ? <Badge tone="danger" compact>คิวชน</Badge> : <Badge tone="success" compact>คิวว่าง</Badge>}
-          </div>
-          <div className="rq__kv">
-            <span>บริการ</span>
-            <b>
-              {s.name} · {s.minutes} นาที
-            </b>
-            <span>ผู้บำบัดที่ขอ</span>
-            <b className="rq__staff">
-              <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
-              {t.name}
-              <em className={`is-${st}`}>{st === "free" ? "ว่าง" : st === "busy" ? "ติดคิว" : st === "service" ? "ไม่รับบริการนี้" : "ไม่เข้าเวร"}</em>
-            </b>
-            <span>ราคา</span>
-            <b>{credits ? `หักเครดิตคอร์ส (เหลือ ${credits.total - credits.used} ครั้ง)` : `${s.price} บาท`}</b>
-          </div>
-        </section>
+              </b>
+              <span className={clash.length ? "rq2__pill is-bad" : "rq2__pill is-good"}>{clash.length ? "คิวชน" : "คิวว่าง"}</span>
+            </div>
+            <dl className="rq2__kv">
+              <div>
+                <dt>บริการ</dt>
+                <dd>
+                  {s.name} · {s.minutes} นาที
+                </dd>
+              </div>
+              <div>
+                <dt>ผู้บำบัด</dt>
+                <dd className="rq__staff">
+                  <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
+                  {t.name}
+                  <em className={`is-${st}`}>{st === "free" ? "ว่าง" : st === "busy" ? "ติดคิว" : st === "service" ? "ไม่รับบริการนี้" : "ไม่เข้าเวร"}</em>
+                </dd>
+              </div>
+              <div>
+                <dt>ค่าบริการ</dt>
+                <dd>{credits ? `หักเครดิตคอร์ส · เหลือ ${credits.total - credits.used} ครั้ง` : `${s.price} บาท`}</dd>
+              </div>
+            </dl>
+          </section>
 
-        <section className="rq__card">
-          <h3>อาการที่แจ้ง</h3>
-          <div className="rq__pain">
-            <PainMini score={r.painScore} />
-            <span>ปวด {r.painScore}/10</span>
-          </div>
-          <p className="rq__complaint">{p.complaint}</p>
-          {r.note && (
-            <p className="rq__note">
-              <MessageSquareText size={14} /> “{r.note}”
-            </p>
-          )}
-          <div className="rq__history">
-            <span>
-              <UserRound size={13} /> มาแล้ว {visits.length} ครั้ง
-            </span>
-            {lastPain && (
-              <span>
-                Pain ล่าสุด {lastPain.score} · {thaiDateShort(lastPain.date)}
-              </span>
+          {/* symptoms */}
+          <section className="rq2__card">
+            <h3>อาการที่แจ้ง</h3>
+            <div className="rq2__pain">
+              <PainMini score={r.painScore} />
+              <b>ปวด {r.painScore}/10</b>
+            </div>
+            <p className="rq2__complaint">{p.complaint}</p>
+            {r.note && (
+              <blockquote className="rq2__note">
+                <MessageSquareText size={14} /> {r.note}
+              </blockquote>
             )}
-            {p.aiPlan && (
+            <div className="rq2__meta">
               <span>
-                <Stethoscope size={13} /> มีแผนการรักษา {p.aiPlan.sessions} ครั้ง
+                <UserRound size={13} /> มาแล้ว {visits.length} ครั้ง
               </span>
-            )}
-          </div>
-        </section>
+              {lastPain && (
+                <span>
+                  Pain ล่าสุด {lastPain.score} · {thaiDateShort(lastPain.date)}
+                </span>
+              )}
+              {p.aiPlan && (
+                <span>
+                  <Stethoscope size={13} /> มีแผนการรักษา {p.aiPlan.sessions} ครั้ง
+                </span>
+              )}
+            </div>
+          </section>
 
-        <section className="rq__card rq__card--wide rq__card--bare">
-          <IntakeCard intake={intakeOfRequest(r, store.patientById(r.patientId))} sex={store.patientById(r.patientId).gender} element={elementProfile(store.patientById(r.patientId)).birth} />
-        </section>
-        <section className="rq__card rq__card--wide">
-          <h3>แบบคัดกรองก่อนนวด</h3>
-          <ScreeningGrid screening={r.screening} flags={flags} />
-          {flags.length > 0 && (
-            <ul className="rq__advice">
-              {flags.map((f) => (
-                <li key={f.key} className={f.level === "stop" ? "is-stop" : "is-warn"}>
-                  <b>{f.label}</b> — {f.advice}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          {/* screening answers */}
+          <section className="rq2__card">
+            <h3>แบบคัดกรองจากแอป</h3>
+            <div className="rq2__qs">
+              {qs.map((q) => {
+                const hit = Boolean(r.screening[q.key]);
+                const f = flags.find((x) => x.key === q.key);
+                return (
+                  <div key={q.key} className={clsx("rq2__q", hit && (f?.level === "stop" ? "is-stop" : "is-warn"))}>
+                    <span>{q.label}</span>
+                    <b>{q.key === "highBP" && r.screening.bpSystolic ? `${r.screening.bpSystolic} mmHg` : hit ? "ใช่" : "ไม่ใช่"}</b>
+                  </div>
+                );
+              })}
+            </div>
+            {flags.length > 0 && (
+              <ul className="rq2__advice">
+                {flags.map((f) => (
+                  <li key={f.key} className={f.level === "stop" ? "is-stop" : "is-warn"}>
+                    <b>{f.label}</b> · {f.advice}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+
+        <aside className="rq2__side">
+          <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
+        </aside>
       </div>
     </div>
   );
