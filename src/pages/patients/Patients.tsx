@@ -778,18 +778,24 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                   {contra.some((c) => c.on) ? `ใช่ ${contra.filter((c) => c.on).length} ข้อ` : "ไม่มีข้อไหนตรง"}
                 </em>
               </h4>
-              <div className="ap-ci">
+              <div className="ap-qn">
                 {contra.map((c) => (
-                  <button key={c.key} type="button" className={`is-${c.level}`} aria-pressed={c.on} onClick={() => setScr({ ...scr, [c.key]: !c.on })}>
+                  <div key={c.key} className={`ap-qn__row is-${c.level}${c.on ? " is-on" : ""}`} role="radiogroup" aria-label={c.label}>
                     <i>
                       <c.Icon size={16} strokeWidth={2.2} />
                     </i>
-                    <span>
+                    <span className="ap-qn__q">
                       <b>{c.label}</b>
                       <small>{c.hint}</small>
                     </span>
-                    <span className="ap-ci__tick">{c.on ? "ใช่" : "ไม่"}</span>
-                  </button>
+                    {([false, true] as const).map((yes) => (
+                      <label key={String(yes)} className="ap-qn__opt">
+                        <input type="radio" name={`q-${c.key}`} checked={c.on === yes} onChange={() => setScr({ ...scr, [c.key]: yes })} />
+                        <span className="ap-qn__dot" />
+                        {yes ? "ใช่" : "ไม่ใช่"}
+                      </label>
+                    ))}
+                  </div>
                 ))}
               </div>
             </section>
