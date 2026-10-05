@@ -1152,59 +1152,140 @@
 }
 /* read-from-ID-card button on step 1 */
 .ap-card {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: stretch;
   width: 100%;
+  min-height: 132px;
   margin-bottom: 16px;
-  padding: 12px 14px;
-  border-radius: 18px;
+  padding: 16px 0 16px 18px;
+  overflow: hidden;
+  border-radius: 20px;
   text-align: left;
-  background: linear-gradient(135deg, #eef6f0, #e8f1fb);
-  box-shadow: inset 0 0 0 1.5px rgba(76, 132, 90, 0.25);
-}
-.ap-card.is-done {
-  background: #e9f6ee;
-  box-shadow: inset 0 0 0 1.5px var(--color-brand);
-}
-.ap-card__icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 14px;
-  background: var(--color-brand);
   color: var(--white);
-  box-shadow: 0 6px 14px rgba(76, 132, 90, 0.3);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(140, 200, 255, 0.55), transparent 55%),
+    linear-gradient(135deg, #1f5fae 0%, #2d7fd6 55%, #4fa3ef 100%);
+  box-shadow: 0 10px 24px rgba(31, 95, 174, 0.28);
+  transition: transform var(--dur-fast) var(--ease-out);
 }
-.ap-card > span:nth-child(2) {
+.ap-card:active {
+  transform: scale(0.985);
+}
+.ap-card__body {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
 }
 .ap-card b {
-  font: 700 14px/1.3 var(--font-sans);
-  color: var(--color-text);
+  font: 700 15px/1.3 var(--font-sans);
 }
-.ap-card small {
-  font: 400 12px/1.4 var(--font-sans);
-  color: var(--color-text-muted);
+.ap-card__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+.ap-card__steps > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 500 11.5px/1 var(--font-sans);
+  color: rgba(255, 255, 255, 0.86);
+  white-space: nowrap;
+}
+.ap-card__steps i {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  font: 700 10.5px/1 var(--font-sans);
+  font-style: normal;
+}
+.ap-card__steps .is-done i {
+  background: #5fd48c;
 }
 .ap-card em {
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 34px;
-  padding: 0 14px;
+  margin-top: auto;
+  padding: 0 16px;
   border-radius: var(--radius-pill);
-  background: var(--color-brand);
-  font: 700 12.5px/34px var(--font-sans);
-  font-style: normal;
-  color: var(--white);
-}
-.ap-card.is-done em {
   background: var(--white);
-  color: var(--color-brand);
+  font: 700 12.5px/1 var(--font-sans);
+  font-style: normal;
+  color: #1f5fae;
+  box-shadow: 0 4px 12px rgba(10, 40, 90, 0.2);
+}
+.ap-card__art {
+  position: relative;
+  width: 168px;
+  flex-shrink: 0;
+}
+.ap-card__ring {
+  position: absolute;
+  right: -40px;
+  top: 50%;
+  width: 200px;
+  height: 200px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 38%, rgba(255, 255, 255, 0.08) 39%, rgba(255, 255, 255, 0.08) 54%, transparent 55%, transparent 66%, rgba(255, 255, 255, 0.06) 67%, rgba(255, 255, 255, 0.06) 80%, transparent 81%);
+}
+.ap-card__id {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 150px;
+  aspect-ratio: 516 / 324;
+  translate: 0 -50%;
+  rotate: -9deg;
+  overflow: hidden;
+  border-radius: 9px;
+  box-shadow: 0 14px 26px rgba(8, 35, 80, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+.ap-card__id img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ap-card__scan {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(120, 200, 255, 0) 40%, rgba(120, 200, 255, 0.55) 50%, rgba(120, 200, 255, 0) 60%, transparent 100%);
+  background-size: 100% 250%;
+  animation: ap-scan 2.6s ease-in-out infinite;
+}
+@keyframes ap-scan {
+  0% { background-position: 0 100%; }
+  100% { background-position: 0 0%; }
+}
+.ap-card.is-done .ap-card__scan {
+  display: none;
+}
+.ap-card__ok {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2fb36a;
+  color: var(--white);
+  box-shadow: 0 0 0 2px var(--white);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ap-card__scan { animation: none; }
 }
 /* registration form sections */
 .ap-sec {

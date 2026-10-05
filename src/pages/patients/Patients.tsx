@@ -21,6 +21,7 @@ import { CardReaderDialog } from "../../features/CardReaderDialog";
 import { PhotoSlot } from "../../features/PhotoSlot";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
+import idFace from "../../assets/cardreader/id_face.png";
 import "./patients.css";
 
 type Filter = "all" | "course" | "low" | "week";
@@ -485,14 +486,33 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           <PhotoSlot name={f.first} value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
           {!edit && (
             <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
-              <span className="ap-card__icon">
-                <CreditCard size={20} />
-              </span>
-              <span>
+              <span className="ap-card__body">
                 <b>{fromCard ? "อ่านข้อมูลจากบัตรแล้ว" : "อ่านข้อมูลจากบัตรประชาชน"}</b>
-                <small>{fromCard ? "ตรวจสอบข้อมูลด้านล่าง หรือแตะเพื่ออ่านบัตรใหม่" : "เสียบบัตรที่เครื่องอ่าน ระบบจะเติม ชื่อ วันเกิด เลขบัตร และที่อยู่ให้"}</small>
+                <span className="ap-card__steps">
+                  {["เสียบบัตร", "อ่านชิป", "กรอกให้อัตโนมัติ"].map((t, i) => (
+                    <span key={t} className={fromCard ? "is-done" : undefined}>
+                      <i>{fromCard ? <Check size={11} strokeWidth={3} /> : i + 1}</i>
+                      {t}
+                    </span>
+                  ))}
+                </span>
+                <em>
+                  <CreditCard size={15} />
+                  {fromCard ? "อ่านบัตรใหม่" : "อ่านบัตร"}
+                </em>
               </span>
-              <em>{fromCard ? "อ่านใหม่" : "อ่านบัตร"}</em>
+              <span className="ap-card__art" aria-hidden>
+                <span className="ap-card__ring" />
+                <span className="ap-card__id">
+                  <img src={idFace} alt="" />
+                  <span className="ap-card__scan" />
+                  {fromCard && (
+                    <span className="ap-card__ok">
+                      <Check size={14} strokeWidth={3} />
+                    </span>
+                  )}
+                </span>
+              </span>
             </button>
           )}
           <section className="ap-sec">
