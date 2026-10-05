@@ -1165,7 +1165,7 @@
   color: #1d4f8f;
   background:
     radial-gradient(90% 140% at 100% 50%, rgba(255, 255, 255, 0.7), transparent 60%),
-    linear-gradient(135deg, #e3effc 0%, #d6e8fb 100%);
+    linear-gradient(135deg, #f2f8fe 0%, #eaf3fd 100%);
   transition: transform var(--dur-fast) var(--ease-out);
 }
 .ap-card:active {
