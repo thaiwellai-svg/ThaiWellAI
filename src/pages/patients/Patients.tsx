@@ -12,13 +12,13 @@ import type { CreditInfo } from "../../data/domain";
 import type { Appointment, CounterScreening, Patient } from "../../data/types";
 import { addISODays, diffDays, relativeDay, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { patientPhoto } from "../../data/avatars";
-import { PhotoPicker } from "../../features/PhotoPicker";
 import { PatientDetail } from "./PatientDetail";
 import { AIPlanCard } from "../../features/AIPlan";
 import "../visits/visits.css";
 import { FilterMenu } from "../../features/FilterMenu";
 import { Workspace } from "../../features/Workspace";
 import { CardReaderDialog } from "../../features/CardReaderDialog";
+import { PhotoSlot } from "../../features/PhotoSlot";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import "./patients.css";
@@ -494,14 +494,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               <em>{fromCard ? "อ่านใหม่" : "อ่านบัตร"}</em>
             </button>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-            <PhotoPicker name={`${f.first || "?"}`} src={f.photo || undefined} size="xl" onPick={(photo) => setF({ ...f, photo })} />
-            <p className="tw-meta" style={{ lineHeight: 1.5, whiteSpace: "normal" }}>
-              แตะเพื่อถ่ายรูปด้วยกล้อง iPad หรือเลือกจากคลังภาพ
-              <br />
-              ถ่ายเฉพาะเมื่อผู้ป่วยยินยอม · รูปใช้ยืนยันตัวตนในคลินิกเท่านั้น
-            </p>
-          </div>
+          <PhotoSlot value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
           <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr", gap: 12 }}>
             <Field label="คำนำหน้า">
               <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
