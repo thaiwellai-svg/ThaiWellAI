@@ -134,6 +134,7 @@ export function Workspace({ storageKey, panes, className, flexMin = 420 }: { sto
                   })
             }
             onResizeOther={resize}
+            flexMin={FLEX_MIN}
             onFocus={() => setFocus((f) => (f === id ? null : id))}
             onResize={(w) => resize(id, w)}
             onReset={() => {
@@ -158,9 +159,11 @@ function Pane({
   onReset,
   neighbors,
   onResizeOther,
+  flexMin,
 }: {
   neighbors?: ({ side: "left" | "right"; id: string; w: number; min?: number; max?: number } | null)[];
   onResizeOther?: (id: string, w: number) => void;
+  flexMin?: number;
   def: PaneDef;
   width?: number;
   focused: boolean;
@@ -208,7 +211,7 @@ function Pane({
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
   };
-  const size = width ? { width, flex: "0 0 auto" } : { flex: "1 1 0" };
+  const size = width ? { width, flex: "0 0 auto" } : { flex: "1 1 0", minWidth: flexMin };
   return (
     <Reorder.Item
       as="div"

@@ -132,7 +132,7 @@ export default function Patients() {
                 <motion.button
                   key={r.p.id}
                   className="prow"
-                  title={wide && slim ? r.p.name : undefined}
+                  title={wide && (slim || (aiOpen && current)) ? r.p.name : undefined}
                   aria-pressed={sel}
                   onClick={() => open(r.p.id)}
                   initial={{ opacity: 0, y: 6 }}
@@ -159,7 +159,7 @@ export default function Patients() {
                       {r.pain !== undefined && <PainMini score={r.pain} />}
                     </span>
                   </span>
-                  {slim && (
+                  {(slim || (aiOpen && current)) && (
                     <span className="prow__slim">
                       <b>{r.p.name.replace(/^(นางสาว|นาง|นาย|ด\.ช\.|ด\.ญ\.)\s*/, "").split(/\s+/)[0]}</b>
                       <small>{r.next ? r.next.start : "—"}</small>
@@ -202,9 +202,9 @@ export default function Patients() {
         <Workspace
           storageKey="thaiwell.patients.layout"
           flexMin={380}
-          className={slim ? "pws is-slim" : "pws"}
+          className={slim || (aiOpen && current) ? "pws is-slim" : "pws"}
           panes={[
-            ...(solo ? [] : [{ id: "list", width: slim ? 96 : 300, min: slim ? 96 : undefined, fixed: true, collapsible: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: listPane }]),
+            ...(solo ? [] : [{ id: "list", width: slim || (aiOpen && current) ? 96 : 300, min: slim || (aiOpen && current) ? 96 : undefined, fixed: true, collapsible: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: listPane }]),
             {
               id: "detail",
               locked: true,
