@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { BarChart3, FileSpreadsheet, Banknote, CheckCheck, ChevronRight, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
@@ -23,6 +24,7 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: 
 /** คิดเงิน — bills waiting at the counter, and the payment/receipt history. */
 export default function Billing() {
   const store = useStore();
+  const navigate = useNavigate();
   const today = todayISO();
   const [tab, setTab] = useState<Tab>("due");
   const [range, setRange] = useState<Range>("today");
@@ -275,7 +277,7 @@ export default function Billing() {
                     const s = store.serviceById(a.serviceId);
                     const pending = a.payment?.status === "pending";
                     return (
-                      <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")}>
+                      <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")} role="button" tabIndex={0} onClick={() => navigate(`/billing/${a.id}`)}>
                         <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" />
                         <span className="bl2-bill__who">
                           <b>{p.name}</b>
@@ -288,7 +290,7 @@ export default function Billing() {
                           <b>{baht(a.payment?.amount ?? s.price)}</b>
                           <small>บาท</small>
                         </span>
-                        <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={() => setOpen(a.id)}>
+                        <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={(e) => (e.stopPropagation(), setOpen(a.id))}>
                           {pending ? "ดูบิล" : "รับชำระ"}
                         </Button>
                       </div>
@@ -310,7 +312,7 @@ export default function Billing() {
                         const p = store.patientById(a.patientId);
                         const Ic = ICON[pay.method];
                         return (
-                          <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending")} onClick={() => setReceipt(key)}>
+                          <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending")} onClick={() => navigate(`/billing/${a.id}`)}>
                             <span className={clsx("bl-mi", `bl-mi--${pay.method}`)}>
                               <Ic size={16} />
                             </span>

@@ -24,6 +24,7 @@ const DesignSystem = lazy(() => import("../pages/design-system/DesignSystem"));
 const AISpotlight = lazy(() => import("../pages/ai/Assistant").then((m) => ({ default: m.AISpotlight })));
 const Visits = lazy(() => import("../pages/visits/Visits"));
 const Billing = lazy(() => import("../pages/billing/Billing"));
+const BillDetail = lazy(() => import("../pages/billing/BillDetail"));
 const Requests = lazy(() => import("../pages/requests/Requests"));
 const Login = lazy(() => import("../pages/login/Login"));
 const RoomScene = lazy(() => import("./room3d/RoomScene"));
@@ -122,6 +123,7 @@ export function AppShell() {
             <Route path="/settings" element={<Page><Settings /></Page>} />
             <Route path="/visits" element={<Page><Visits /></Page>} />
             <Route path="/billing" element={<Page><Billing /></Page>} />
+            <Route path="/billing/:id" element={<Page><BillDetail /></Page>} />
             <Route path="/requests" element={<Page><Requests /></Page>} />
             <Route path="/design-system" element={<Page><DesignSystem /></Page>} />
             <Route path="*" element={<Page><Dashboard /></Page>} />
@@ -130,7 +132,7 @@ export function AppShell() {
       </AnimatePresence>
 
       {/* sub-pages (register / edit / booking requests) are full-screen tasks: no dock, they have their own back button */}
-      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests|appointments\/[^/]+)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
+      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests|appointments\/[^/]+|billing\/[^/]+)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
       <Tour />
         </>
