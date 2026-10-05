@@ -183,7 +183,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: str
               ))}
               {!p.conditions.length && !p.allergies?.length && <em>ไม่มีโรคประจำตัว · ไม่มีประวัติแพ้</em>}
             </div>
-            {(p.birthDate || p.citizenId || p.emergency) && (
+            {(p.birthDate || p.citizenId || p.email || p.emergency) && (
               <dl className="pd2__kv">
                 {p.birthDate && (
                   <div>
@@ -195,6 +195,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen }: { id: str
                   <div>
                     <dt>เลขบัตรประชาชน</dt>
                     <dd>{p.citizenId.replace(/^(\d)(\d{4})(\d{5})(\d{2})(\d)$/, "$1-$2-$3-$4-$5")}</dd>
+                  </div>
+                )}
+                {p.email && (
+                  <div>
+                    <dt>อีเมล</dt>
+                    <dd>{p.email}</dd>
                   </div>
                 )}
                 {p.emergency && (

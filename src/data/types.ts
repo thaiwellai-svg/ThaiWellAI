@@ -121,6 +121,7 @@ export interface Patient {
   gender: "ชาย" | "หญิง";
   age: number;
   phone: string;
+  email?: string;
   conditions: string[];
   complaint: string;
   course?: Course;

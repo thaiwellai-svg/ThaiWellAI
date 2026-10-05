@@ -280,7 +280,7 @@ export default function Patients() {
 function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; onClose: () => void; onCreated: (id: string) => void; /** edit this patient instead of registering a new one */ edit?: Patient | null }) {
   const store = useStore();
   const toast = useToast();
-  const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "", address: "" };
+  const empty = { title: "นาย", first: "", last: "", gender: "ชาย" as Patient["gender"], dob: "", phone: "", email: "", complaint: "", conditions: "", photo: "", cid: "", allergies: "", ecName: "", ecPhone: "", ecRel: "", address: "" };
   const fromPatient = (p: Patient) => {
     const m = p.name.match(/^(นางสาว|นาง|นาย)\s*(\S+)\s*(.*)$/);
     const d = p.citizenId ?? "";
@@ -291,6 +291,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       gender: p.gender,
       dob: p.birthDate ?? "",
       phone: p.phone,
+      email: p.email ?? "",
       complaint: p.complaint,
       conditions: p.conditions.join(", "),
       photo: p.photo ?? "",
@@ -356,6 +357,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           allergies: f.allergies.split(",").map((x) => x.trim()).filter(Boolean),
           emergency: f.ecName.trim() ? { name: f.ecName.trim(), phone: f.ecPhone.trim(), relation: f.ecRel.trim() || undefined } : undefined,
           phone: f.phone,
+          email: f.email.trim() || undefined,
           complaint: f.complaint.trim() || edit.complaint,
           conditions: f.conditions.split(",").map((x) => x.trim()).filter(Boolean),
           photo: f.photo || undefined,
@@ -382,6 +384,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         allergies: f.allergies.split(",").map((x) => x.trim()).filter(Boolean),
         emergency: f.ecName.trim() ? { name: f.ecName.trim(), phone: f.ecPhone.trim(), relation: f.ecRel.trim() || undefined } : undefined,
         phone: f.phone,
+        email: f.email.trim() || undefined,
         complaint: f.complaint.trim() || "ต้องการนวดผ่อนคลาย",
         conditions: f.conditions
           .split(",")
@@ -582,6 +585,9 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 <Field label="เบอร์โทรศัพท์ *" className="span-3">
                   <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
                 </Field>
+                <Field label="อีเมล" className="span-3">
+                  <Input type="email" inputMode="email" autoCapitalize="off" autoCorrect="off" placeholder="name@example.com" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+                </Field>
                 <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <Input style={{ gridColumn: "1 / -1" }} value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ-นามสกุล" />
@@ -699,6 +705,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
           </div>
           <dl className="ap-kv">
             {row("เบอร์โทร", f.phone)}
+            {row("อีเมล", f.email)}
             {row("เลขบัตรประชาชน", f.cid)}
             {row("ที่อยู่", f.address)}
             {row("อาการสำคัญ", f.complaint)}
