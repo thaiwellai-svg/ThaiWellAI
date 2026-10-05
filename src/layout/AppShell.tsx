@@ -15,6 +15,7 @@ import { finishEnter, useEntering, useSignedIn } from "../features/session";
 import "./shell.css";
 
 const Appointments = lazy(() => import("../pages/appointments/Appointments"));
+const AppointmentDetail = lazy(() => import("../pages/appointments/AppointmentDetail"));
 const Planner = lazy(() => import("../pages/planner/Planner"));
 const Patients = lazy(() => import("../pages/patients/Patients"));
 const PatientFormPage = lazy(() => import("../pages/patients/Patients").then((m) => ({ default: m.PatientFormPage })));
@@ -112,6 +113,7 @@ export function AppShell() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Page><Dashboard /></Page>} />
             <Route path="/appointments" element={<Page><Appointments /></Page>} />
+            <Route path="/appointments/:id" element={<Page><AppointmentDetail /></Page>} />
             <Route path="/planner" element={<Page><Planner /></Page>} />
             <Route path="/patients" element={<Page><Patients /></Page>} />
             <Route path="/patients/new" element={<Page><PatientFormPage /></Page>} />
@@ -128,7 +130,7 @@ export function AppShell() {
       </AnimatePresence>
 
       {/* sub-pages (register / edit / booking requests) are full-screen tasks: no dock, they have their own back button */}
-      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
+      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests|appointments\/[^/]+)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
       <Tour />
         </>

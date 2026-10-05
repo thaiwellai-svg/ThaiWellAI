@@ -389,7 +389,7 @@ export default function Appointments() {
                 {view === "week" ? (
                   <WeekView from={range.from} appts={shown} onOpenDay={(d) => { go(d, 0); setView("day"); }} onBook={(slot: BookSlot) => setBooking({ slot })} />
                 ) : (
-                  <DayView date={date} appts={shown} therapistFilter={therapist} onOpen={(id: string) => navigate(`/visits?id=${id}`)} />
+                  <DayView date={date} appts={shown} therapistFilter={therapist} onOpen={(id: string) => navigate(`/appointments/${id}`)} />
                 )}
               </motion.div>
             </AnimatePresence>
