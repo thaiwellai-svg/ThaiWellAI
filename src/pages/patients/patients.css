@@ -1423,3 +1423,63 @@
 .tw-dialog.ap .tw-overlay-foot > .tw-btn {
   min-width: 112px;
 }
+/* compact stepper */
+.ap-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 2px 0 14px;
+}
+.ap-steps li {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.ap-steps li:last-child {
+  flex: 0 0 auto;
+}
+.ap-steps li:not(:last-child)::after {
+  content: "";
+  flex: 1;
+  height: 2px;
+  margin: 0 10px;
+  border-radius: 1px;
+  background: var(--sage-100);
+}
+.ap-steps li.is-done:not(:last-child)::after {
+  background: var(--color-brand);
+}
+.ap-steps button,
+.ap-steps .is-now button {
+  width: auto;
+  padding: 2px;
+  gap: 7px;
+  border-radius: var(--radius-pill);
+  background: none;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.ap-steps i {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+.ap-steps span {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12.5px;
+}
+.ap-steps small {
+  font-size: 10.5px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+.ap-steps .is-now i {
+  box-shadow: 0 0 0 4px var(--color-brand-tint);
+}
+.ap-seg button {
+  padding: 0 2px;
+  white-space: nowrap;
+  font-size: 12px;
+}
