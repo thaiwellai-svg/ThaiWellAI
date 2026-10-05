@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  GraduationCap,
   Bell,
   Building2,
   CalendarCog,
@@ -42,6 +43,7 @@ import { TH_WEEKDAYS, TH_WEEKDAYS_SHORT, baht, fromMinutes } from "../../data/th
 import type { ClinicSettings, Service, ShareTopic, Therapist } from "../../data/types";
 import { therapistPhoto } from "../../data/avatars";
 import { PhotoPicker } from "../../features/PhotoPicker";
+import { startTour } from "../../features/Tour";
 import { signOut } from "../../features/session";
 import "../appointments/appointments.css";
 import "../../features/shift-editor.css";
@@ -172,6 +174,10 @@ export default function Settings() {
       title="ตั้งค่า"
       bell={false}
       actions={
+        <>
+        <Button variant="outline" size="md" className="set-tour" leading={<GraduationCap size={16} />} onClick={startTour}>
+          คู่มือการใช้งาน
+        </Button>
         <AnimatePresence>
           {saved > 0 && (
             <motion.span
@@ -185,6 +191,7 @@ export default function Settings() {
             </motion.span>
           )}
         </AnimatePresence>
+        </>
       }
     >
       <div className="appt st-page">

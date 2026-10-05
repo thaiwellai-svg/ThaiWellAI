@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { clsx } from "clsx";
 import bg from "../assets/backdrop/spa-room.jpg";
 import { Dock } from "./Dock";
+import { Tour } from "../features/Tour";
 import { LiveBackdrop } from "./backdrop/LiveBackdrop";
 import { useStore } from "../store/store";
 import { useToast } from "../design-system";
@@ -128,6 +129,7 @@ export function AppShell() {
       {/* sub-pages (register / edit) are full-screen tasks: no dock, they have their own back button */}
       {!/^\/patients\/(new|[^/]+\/edit)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
+      <Tour />
         </>
       )}
     </div>
