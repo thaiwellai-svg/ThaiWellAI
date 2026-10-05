@@ -88,3 +88,61 @@
   font: 500 11px/1.3 var(--font-sans);
   color: var(--color-text-muted);
 }
+/* v2: placeholder avatar + camera badge, no buttons */
+.pslot {
+  align-items: center;
+}
+.pslot__tile {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border: 0;
+  border-radius: 30px;
+  background: linear-gradient(160deg, #e6efe7, #d3e0d5);
+  overflow: visible;
+  box-shadow: inset 0 0 0 1px rgba(76, 132, 90, 0.15);
+}
+.pslot__tile img {
+  border-radius: 30px;
+}
+.pslot__ph {
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  fill: rgba(76, 132, 90, 0.38);
+  overflow: hidden;
+}
+.pslot__badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--white);
+  box-shadow: 0 0 0 3px var(--white), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.pslot__busy {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.6);
+}
+.pslot__del {
+  left: auto;
+  right: auto;
+  top: -6px;
+  margin-left: 78px;
+}
+.pslot__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 500 11.5px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}

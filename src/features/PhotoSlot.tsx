@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, ImagePlus, Loader2, ShieldCheck, X } from "lucide-react";
+import { Camera, Loader2, ShieldCheck, X } from "lucide-react";
 import { useToast } from "../design-system";
 import { fileToPortrait } from "./photo";
 import "./photo-slot.css";
@@ -23,33 +23,32 @@ export function PhotoSlot({ value, onChange }: { value?: string; onChange: (data
   };
   return (
     <div className="pslot">
-      <button type="button" className={value ? "pslot__tile has-photo" : "pslot__tile"} onClick={() => cam.current?.click()} aria-label="ถ่ายรูปผู้รับบริการ">
-        {busy ? <Loader2 size={24} className="spin" /> : value ? <img src={value} alt="" /> : (
-          <>
-            <Camera size={26} strokeWidth={1.8} />
-            <small>เพิ่มรูป</small>
-          </>
+      <button type="button" className={value ? "pslot__tile has-photo" : "pslot__tile"} onClick={() => lib.current?.click()} aria-label="เปลี่ยนรูปผู้รับบริการ" title="แตะเพื่อถ่ายหรือเลือกรูป">
+        {value ? (
+          <img src={value} alt="" />
+        ) : (
+          <svg viewBox="0 0 96 96" className="pslot__ph" aria-hidden>
+            <circle cx="48" cy="38" r="17" />
+            <path d="M14 96c2-20 16-32 34-32s32 12 34 32Z" />
+          </svg>
         )}
+        {busy && (
+          <span className="pslot__busy">
+            <Loader2 size={22} className="spin" />
+          </span>
+        )}
+        <span className="pslot__badge">
+          <Camera size={14} strokeWidth={2.2} />
+        </span>
       </button>
       {value && (
         <button type="button" className="pslot__del" aria-label="ลบรูป" onClick={() => onChange("")}>
-          <X size={13} strokeWidth={2.6} />
+          <X size={12} strokeWidth={2.8} />
         </button>
       )}
-      <div className="pslot__side">
-        <b>รูปผู้รับบริการ</b>
-        <div className="pslot__btns">
-          <button type="button" onClick={() => cam.current?.click()}>
-            <Camera size={15} /> ถ่ายรูป
-          </button>
-          <button type="button" onClick={() => lib.current?.click()}>
-            <ImagePlus size={15} /> เลือกจากคลังภาพ
-          </button>
-        </div>
-        <small>
-          <ShieldCheck size={12} /> ถ่ายเมื่อผู้ป่วยยินยอม · ใช้ยืนยันตัวตนในคลินิกเท่านั้น
-        </small>
-      </div>
+      <small className="pslot__note">
+        <ShieldCheck size={12} /> แตะรูปเพื่อถ่ายหรือเลือกรูป · เมื่อผู้ป่วยยินยอมเท่านั้น
+      </small>
       <input ref={cam} type="file" accept="image/*" capture="user" hidden onChange={(e) => (pick(e.target.files?.[0]), (e.target.value = ""))} />
       <input ref={lib} type="file" accept="image/*" hidden onChange={(e) => (pick(e.target.files?.[0]), (e.target.value = ""))} />
     </div>
