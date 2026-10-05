@@ -67,7 +67,8 @@ export function seasonElement(d = new Date()): { element: Element; label: string
 }
 
 /** stable demo birth month when the record has none */
-export function birthMonthOf(p: Pick<Patient, "id" | "birthMonth">) {
+export function birthMonthOf(p: Pick<Patient, "id" | "birthMonth" | "birthDate">) {
+  if (p.birthDate && /^\d{4}-\d{2}/.test(p.birthDate)) return Number(p.birthDate.slice(5, 7));
   if (p.birthMonth) return p.birthMonth;
   let h = 0;
   for (const c of p.id) h = (h * 31 + c.charCodeAt(0)) % 997;
@@ -80,3 +81,17 @@ export function elementProfile(p: Patient) {
 }
 
 export const TH_MONTH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+/** demo patients without a birth date get a stable one that matches their age and birth month */
+export function withBirthDate<T extends Patient>(p: T): T {
+  if (p.birthDate) return p;
+  const month = birthMonthOf(p);
+  let h = 7;
+  for (const c of p.id) h = (h * 131 + c.charCodeAt(0)) % 9973;
+  const now = new Date();
+  const day = (h % 28) + 1;
+  // born this many years ago, adjusted so the age is exact today
+  const passed = now.getMonth() + 1 > month || (now.getMonth() + 1 === month && now.getDate() >= day);
+  const year = now.getFullYear() - p.age - (passed ? 0 : 1);
+  return { ...p, birthDate: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}` };
+}

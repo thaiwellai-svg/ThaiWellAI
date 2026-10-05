@@ -18,6 +18,7 @@ import { AIPlanCard } from "../../features/AIPlan";
 import "../visits/visits.css";
 import { FilterMenu } from "../../features/FilterMenu";
 import { Workspace } from "../../features/Workspace";
+import { BirthDateField, ageFrom } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import "./patients.css";
 
@@ -354,8 +355,8 @@ function AddPatientDialog({ open, onClose, onCreated }: { open: boolean; onClose
         <Field label="นามสกุล">
           <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
         </Field>
-        <Field label="วันเกิด" className="span-2" hint={age !== null ? `อายุ ${age} ปี · ใช้คำนวณธาตุเจ้าเรือน` : "ใช้คำนวณอายุและธาตุเจ้าเรือน"}>
-          <Input type="date" max={todayISO()} value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} />
+        <Field label="วัน เดือน ปีเกิด" className="span-2" hint={age !== null ? `อายุ ${age} ปี · ใช้คำนวณธาตุเจ้าเรือน` : "ใช้คำนวณอายุและธาตุเจ้าเรือน"}>
+          <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
         </Field>
         <Field label="เบอร์โทรศัพท์" hint="แจ้งเตือนนัดผ่านแอป">
           <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
@@ -388,14 +389,6 @@ function AddPatientDialog({ open, onClose, onCreated }: { open: boolean; onClose
   );
 }
 
-/** whole years from an ISO birth date */
-function ageFrom(dob: string): number | null {
-  if (!dob) return null;
-  const b = new Date(dob);
-  if (Number.isNaN(b.getTime())) return null;
-  const n = new Date();
-  return n.getFullYear() - b.getFullYear() - (n.getMonth() < b.getMonth() || (n.getMonth() === b.getMonth() && n.getDate() < b.getDate()) ? 1 : 0);
-}
 /** Thai national ID checksum */
 function validCitizenId(d: string) {
   if (!/^\d{13}$/.test(d)) return false;

@@ -3,6 +3,7 @@ import type { Dispatch, ReactNode } from "react";
 import type { AuditEntry, Appointment, AppointmentStatus, BookingRequest, ClinicSettings, Notification, Patient, RequestDecision, Service, Therapist, DayException } from "../data/types";
 import { createSeed, DEFAULT_SETTINGS, SERVICES, THERAPISTS } from "../data/seed";
 import { todayISO } from "../data/thaiDate";
+import { withBirthDate } from "../data/elements";
 
 interface State {
   version: number;
@@ -54,7 +55,8 @@ const VERSION = 24;
 const KEY = "thaiwell.backoffice";
 
 function fresh(): State {
-  return { version: VERSION, seededOn: todayISO(), ...createSeed(), settings: DEFAULT_SETTINGS, therapists: THERAPISTS, services: SERVICES, audit: [] };
+  const seed = createSeed();
+  return { version: VERSION, seededOn: todayISO(), ...seed, patients: seed.patients.map(withBirthDate), settings: DEFAULT_SETTINGS, therapists: THERAPISTS, services: SERVICES, audit: [] };
 }
 
 function load(): State {
@@ -69,6 +71,7 @@ function load(): State {
           services: s.services ?? SERVICES,
           settings: { ...DEFAULT_SETTINGS, ...s.settings },
           audit: s.audit ?? [],
+          patients: s.patients.map(withBirthDate),
           therapists: (s.therapists ?? THERAPISTS).map((t) => ({ ...t, shifts: t.shifts.map((x) => ({ ...x, services: x.services ?? t.services })) })),
         };
       // new demo data (new day or new version) — keep the clinic setup and the user's profile

@@ -938,3 +938,8 @@ input[type="date"].tw-input {
 .span-3 {
   grid-column: span 3;
 }
+.bdf {
+  display: grid;
+  grid-template-columns: 0.7fr 1.3fr 1fr;
+  gap: 6px;
+}
