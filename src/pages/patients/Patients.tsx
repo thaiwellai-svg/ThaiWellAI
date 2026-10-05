@@ -684,20 +684,27 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                       </div>
                     );
                   })()}
+                <span className="ap-body__hint">แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด</span>
               </Body3D>
-              <p className="ap-body__hint">แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด</p>
-              <Field label="ระดับความปวด (0–10)">
-                <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
-                  {Array.from({ length: 11 }, (_, n) => n).map((n) => (
-                    <button key={n} type="button" role="radio" aria-checked={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </Field>
             </section>
           </div>
           <div className="ap-col ap-scr__side scroll-y">
+            <section className="ap-sec">
+              <h4>
+                <span style={{ ["--c" as string]: "#e0603a" }}>
+                  <Activity size={14} />
+                </span>
+                ระดับความปวด
+                {scr.pain != null && <em className="ap-pain__lbl" style={{ ["--pc" as string]: scr.pain >= 7 ? "#d8392a" : scr.pain >= 4 ? "#e08a1e" : "#2f9a5b" }}>{scr.pain === 0 ? "ไม่ปวด" : scr.pain <= 3 ? "เล็กน้อย" : scr.pain <= 6 ? "ปานกลาง" : "มาก"}</em>}
+              </h4>
+              <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
+                {Array.from({ length: 11 }, (_, n) => n).map((n) => (
+                  <button key={n} type="button" role="radio" aria-checked={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </section>
             <section className="ap-sec">
               <h4>
                 <span style={{ ["--c" as string]: "#c2482b" }}>
