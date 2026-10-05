@@ -362,7 +362,7 @@ export function Body3D({
   selected?: string[];
   onToggle?: (area: BodyArea) => void;
   /** long-press (touch or mouse) or right-click on an area; x/y are stage coordinates */
-  onHold?: (area: BodyArea, at: { x: number; y: number }) => void;
+  onHold?: (area: BodyArea, at: { x: number; y: number; w: number; h: number }) => void;
   /** overlays drawn on the stage (chips, scales, menus) */
   children?: ReactNode;
   compact?: boolean;
@@ -373,6 +373,8 @@ export function Body3D({
   state.current = { ...state.current, heatmap, avoid, selected, onToggle, onHold };
   const [ready, setReady] = useState(false);
   const [tip, setTip] = useState<{ x: number; y: number; label: string } | null>(null);
+  // long-press feedback: a ring fills under the finger until the hold fires
+  const [press, setPress] = useState<{ x: number; y: number; k: number } | null>(null);
   const [active, setActive] = useState<string>("front");
 
   useEffect(() => {
@@ -689,7 +691,8 @@ export function Body3D({
       const hold = (e: { clientX: number; clientY: number }) => {
         const h = pick(e);
         if (!h || !state.current.onHold) return false;
-        state.current.onHold(BODY_AREAS[h.area - 1], { x: h.x, y: h.y });
+        const r = renderer.domElement.getBoundingClientRect();
+        state.current.onHold(BODY_AREAS[h.area - 1], { x: h.x, y: h.y, w: r.width, h: r.height });
         return true;
       };
       const onDown = (e: PointerEvent) => {
@@ -698,16 +701,24 @@ export function Body3D({
         clearTimeout(holdTimer);
         if (state.current.onHold && e.button === 0) {
           const at = { clientX: e.clientX, clientY: e.clientY };
+          const h = pick(at);
+          if (!h) return;
+          setPress({ x: h.x, y: h.y, k: performance.now() });
           holdTimer = window.setTimeout(() => {
+            setPress(null);
             if (down && hold(at)) {
               held = true;
               setTip(null);
+              navigator.vibrate?.(12);
             }
-          }, 480);
+          }, 520);
         }
       };
       const onDrag = (e: PointerEvent) => {
-        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) clearTimeout(holdTimer);
+        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) {
+          clearTimeout(holdTimer);
+          setPress(null);
+        }
       };
       const onMenu = (e: MouseEvent) => {
         if (!state.current.onHold) return;
@@ -716,6 +727,7 @@ export function Body3D({
       };
       const onUp = (e: PointerEvent) => {
         clearTimeout(holdTimer);
+        setPress(null);
         if (held) return void (down = null);
         if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) return;
         down = null;
@@ -750,7 +762,7 @@ export function Body3D({
       cv.addEventListener("pointerup", onUp);
       cv.addEventListener("pointermove", onMove);
       cv.addEventListener("pointermove", onDrag);
-      cv.addEventListener("pointercancel", () => clearTimeout(holdTimer));
+      cv.addEventListener("pointercancel", () => (clearTimeout(holdTimer), setPress(null)));
       cv.addEventListener("contextmenu", onMenu);
       cv.addEventListener("pointerleave", onLeave);
 
@@ -849,6 +861,13 @@ export function Body3D({
           </div>
         )}
         {ready && <span className="b3__spin">ลากเพื่อหมุนดูรอบตัว 360°</span>}
+        {press && (
+          <span key={press.k} className="b3__press" style={{ left: press.x, top: press.y }}>
+            <svg viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="19" />
+            </svg>
+          </span>
+        )}
         {children}
         {tip && (
           <span className="b3__tip" style={{ left: tip.x, top: tip.y }} onAnimationEnd={() => setTip(null)}>

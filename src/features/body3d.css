@@ -406,3 +406,36 @@
   -webkit-user-select: none;
   user-select: none;
 }
+/* long-press progress ring */
+.b3__press {
+  position: absolute;
+  z-index: 3;
+  width: 52px;
+  height: 52px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.1) 70%);
+  pointer-events: none;
+  animation: b3-press-in 0.52s ease-out both;
+}
+.b3__press svg {
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+}
+.b3__press circle {
+  fill: none;
+  stroke: #7c6cd4;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: b3-press-ring 0.5s linear 0.02s forwards;
+}
+@keyframes b3-press-in {
+  from { scale: 0.5; opacity: 0; }
+  to { scale: 1; opacity: 1; }
+}
+@keyframes b3-press-ring {
+  to { stroke-dashoffset: 0; }
+}

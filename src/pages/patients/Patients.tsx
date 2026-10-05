@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, ChevronLeft, Activity, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -308,7 +308,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
   const emptyScr = { bpSys: "", bpDia: "", pulse: "", fever: false, pregnant: false, recentSurgery: false, numbness: false, bloodThinner: false, skinProblem: false, pressure: "ปานกลาง" as CounterScreening["pressure"], painAreas: [] as BodyArea[], avoidAreas: [] as BodyArea[], pain: null as number | null };
   const [scr, setScr] = useState(emptyScr);
   const [skipScr, setSkipScr] = useState(false);
-  const [hold, setHold] = useState<{ area: BodyArea; x: number; y: number } | null>(null);
+  const [hold, setHold] = useState<{ area: BodyArea; x: number; y: number; w: number; h: number } | null>(null);
   // tap = painful area; long-press opens a menu to mark it no-massage (an area is one or the other)
   const toggleArea = (a: BodyArea) => {
     setHold(null);
@@ -639,23 +639,51 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                     ))}
                   </div>
                 )}
-                {hold && (
-                  <motion.div className="ap-hold" style={{ left: hold.x, top: hold.y }} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 30 }}>
-                    <b>{hold.area}</b>
-                    {scr.avoidAreas.includes(hold.area) ? (
-                      <button type="button" onClick={() => setAvoid(hold.area, false)}>
-                        ยกเลิกห้ามนวด
-                      </button>
-                    ) : (
-                      <button type="button" className="is-avoid" onClick={() => setAvoid(hold.area, true)}>
-                        <i /> ห้ามนวด
-                      </button>
-                    )}
-                    <button type="button" className="is-x" aria-label="ปิด" onClick={() => setHold(null)}>
-                      <X size={13} />
-                    </button>
-                  </motion.div>
-                )}
+                {hold &&
+                  (() => {
+                    const isPain = scr.painAreas.includes(hold.area);
+                    const isAvoid = scr.avoidAreas.includes(hold.area);
+                    // keep the menu inside the stage: shift sideways near the edges, open below near the top
+                    const half = 116;
+                    const dx = Math.min(Math.max(hold.x, half + 6), hold.w - half - 6) - hold.x;
+                    const below = hold.y < 150;
+                    return (
+                      <div className="ap-hold" style={{ left: hold.x, top: hold.y }}>
+                        <span className="ap-hold__dot" />
+                        <motion.div
+                          className={below ? "ap-hold__card is-below" : "ap-hold__card"}
+                          style={{ x: `calc(-50% + ${dx}px)`, transformOrigin: `${50 - (dx / (half * 2)) * 100}% ${below ? "0%" : "100%"}` }}
+                          initial={{ opacity: 0, scale: 0.6, y: below ? -6 : 6 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{ type: "spring", stiffness: 520, damping: 30 }}
+                        >
+                          <header>
+                            <b>{hold.area}</b>
+                            <small>{isAvoid ? "ห้ามนวด" : isPain ? "จุดที่ปวด" : "ยังไม่ได้เลือก"}</small>
+                            <button type="button" className="ap-hold__x" aria-label="ปิด" onClick={() => setHold(null)}>
+                              <X size={14} />
+                            </button>
+                          </header>
+                          <div className="ap-hold__opts">
+                            <button type="button" className="is-pain" aria-pressed={isPain} onClick={() => toggleArea(hold.area)}>
+                              <i>
+                                <Activity size={15} strokeWidth={2.4} />
+                              </i>
+                              จุดที่ปวด
+                              {isPain && <Check size={14} strokeWidth={3} />}
+                            </button>
+                            <button type="button" className="is-avoid" aria-pressed={isAvoid} onClick={() => setAvoid(hold.area, !isAvoid)}>
+                              <i>
+                                <Ban size={15} strokeWidth={2.4} />
+                              </i>
+                              ห้ามนวด
+                              {isAvoid && <Check size={14} strokeWidth={3} />}
+                            </button>
+                          </div>
+                        </motion.div>
+                      </div>
+                    );
+                  })()}
               </Body3D>
               <p className="ap-body__hint">แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด</p>
               <Field label="ระดับความปวด (0–10)">
