@@ -583,8 +583,8 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                   <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
                 </Field>
                 <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3">
-                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 8 }}>
-                    <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <Input style={{ gridColumn: "1 / -1" }} value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ-นามสกุล" />
                     <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
                     <Select value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} aria-label="ความเกี่ยวข้อง">
                       <option value="">เกี่ยวข้องเป็น</option>
