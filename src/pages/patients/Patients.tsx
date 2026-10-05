@@ -562,11 +562,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                   <span className="ap-card__id">
                     <img src={idFace} alt="" />
                     <span className="ap-card__scan" />
-                    {fromCard && (
-                      <span className="ap-card__ok">
-                        <Check size={10} strokeWidth={3} />
-                      </span>
-                    )}
                   </span>
                 </span>
               </button>

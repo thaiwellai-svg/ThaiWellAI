@@ -1274,19 +1274,6 @@
 .ap-card.is-done .ap-card__scan {
   display: none;
 }
-.ap-card__ok {
-  position: absolute;
-  right: 3px;
-  top: 3px;
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #2fb36a;
-  color: var(--white);
-  box-shadow: 0 0 0 2px var(--white);
-}
 @media (prefers-reduced-motion: reduce) {
   .ap-card__scan { animation: none; }
 }
@@ -1492,10 +1479,15 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 120px;
+  width: 170px;
 }
 .ap-card__id {
-  left: 22px;
+  left: auto;
+  right: -38px;
+  top: 64%;
+  width: 150px;
+  rotate: -14deg;
+  border-radius: 9px;
 }
 .ap-card em {
   position: relative;
