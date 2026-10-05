@@ -16,6 +16,7 @@ import { ClinicalRecord, RecSection } from "./ClinicalRecord";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
+import { ScreeningAlert } from "./ScreeningAlert";
 
 export { stageOf, type Stage } from "../data/domain";
 
@@ -283,6 +284,8 @@ export function AppointmentDrawer({
               <b>{baht(s.price)} ฿</b>
             </span>
           </div>
+
+          {stage !== "done" && <ScreeningAlert p={p} />}
 
           {stepIdx >= 0 ? (
             <ol className="vs__steps">

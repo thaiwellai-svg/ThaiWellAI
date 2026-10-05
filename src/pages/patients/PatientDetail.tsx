@@ -1,4 +1,5 @@
 import { CoursePlanDialog } from "../planner/PatientPlanner";
+import { ScreeningAlert } from "../../features/ScreeningAlert";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
@@ -138,6 +139,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             </button>
           </div>
         </header>
+
+        <ScreeningAlert p={p} />
 
         {/* Quick stats */}
         <div className="pd__stats">

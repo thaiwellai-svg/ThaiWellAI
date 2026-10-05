@@ -21,6 +21,7 @@ import { CardReaderDialog } from "../../features/CardReaderDialog";
 import { PhotoSlot } from "../../features/PhotoSlot";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
+import { screeningFlags } from "../../data/counterScreening";
 import { Body3D } from "../../features/Body3D";
 import { MultiSelect } from "../../features/MultiSelect";
 import { ElementIcon } from "../../features/ElementIcon";
@@ -430,6 +431,8 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
           photo: f.photo || undefined,
           address: f.address.trim() || undefined,
           screening,
+          // pain scored at the counter today counts as today's pain record
+          ...(screening?.pain != null ? { painHistory: [...edit.painHistory.filter((x) => x.date !== todayISO()), { date: todayISO(), score: screening.pain }] } : {}),
         },
       });
       toast({ message: "บันทึกข้อมูลผู้รับบริการแล้ว" });
@@ -457,7 +460,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
-        painHistory: [],
+        painHistory: screening?.pain != null ? [{ date: todayISO(), score: screening.pain }] : [],
         registeredOn: todayISO(),
         photo: f.photo || undefined,
         address: f.address.trim() || undefined,
@@ -1112,15 +1115,3 @@ function formatCid(v: string) {
   return [d.slice(0, 1), d.slice(1, 5), d.slice(5, 10), d.slice(10, 12), d.slice(12)].filter(Boolean).join("-");
 }
 
-/** flags from the counter screening (stop = do not massage today) */
-function screeningFlags(s: CounterScreening, bpThreshold = 160): { label: string; level: "stop" | "warn" }[] {
-  const out: { label: string; level: "stop" | "warn" }[] = [];
-  if (s.fever) out.push({ label: "มีไข้ / การติดเชื้อ", level: "stop" });
-  if (s.bpSys && s.bpSys >= bpThreshold) out.push({ label: `ความดันสูง ${s.bpSys}/${s.bpDia ?? "—"}`, level: "stop" });
-  if (s.recentSurgery) out.push({ label: "ผ่าตัดภายใน 30 วัน", level: "stop" });
-  if (s.pregnant) out.push({ label: "ตั้งครรภ์", level: "warn" });
-  if (s.bloodThinner) out.push({ label: "ใช้ยาละลายลิ่มเลือด · ลดแรงนวด", level: "warn" });
-  if (s.numbness) out.push({ label: "มีอาการชา / อ่อนแรง", level: "warn" });
-  if (s.skinProblem) out.push({ label: "มีแผล / ผื่นบริเวณที่นวด", level: "warn" });
-  return out;
-}
