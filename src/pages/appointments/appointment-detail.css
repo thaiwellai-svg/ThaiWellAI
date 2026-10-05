@@ -459,3 +459,496 @@
     justify-content: flex-start;
   }
 }
+
+/* ── redesign: one white sheet like the other sub-pages ── */
+.adp {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1180px;
+  height: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--white);
+  box-shadow: var(--shadow-modal);
+}
+.adp__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.adp__status {
+  --sc: var(--color-brand);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--sc) 12%, white);
+  font: 700 13px/1 var(--font-sans);
+  color: var(--sc);
+}
+.adp__status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sc);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 20%, transparent);
+}
+.adp__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.adp__actions .adp__danger {
+  color: #c0392b;
+  border-color: #f2c9c2;
+}
+.adp__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+.apg .adp__body.scroll-y,
+.adp__body.scroll-y {
+  padding-bottom: 20px !important;
+}
+.adp__hero {
+  --sc: var(--color-brand);
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    radial-gradient(70% 140% at 0% 0%, rgba(255, 255, 255, 0.95), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--sc) 9%, #f7faf8), color-mix(in srgb, var(--sc) 4%, #f2f6f3));
+}
+.adp__date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 116px;
+  padding: 14px 8px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: 0 10px 24px rgba(20, 50, 30, 0.08);
+}
+.adp__date small {
+  font: 600 12px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.adp__date b {
+  font: 800 44px/1 var(--font-sans);
+  color: var(--sc);
+}
+.adp__when {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 22px;
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+}
+.adp__when small {
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__when h2 {
+  margin: 0;
+  font: 800 32px/1.1 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.adp__hero.is-cancelled h2 {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+.adp__when p {
+  margin: 0;
+  font: 600 13.5px/1.35 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.adp__who > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.adp__who > div > b {
+  font: 700 17px/1.25 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__who > div > small {
+  font: 500 12.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__who > div > span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.adp__who > div > span a,
+.adp__who > div > span button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+  text-decoration: none;
+}
+.adp__cancel {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #f4f5f4;
+  color: var(--color-text-muted);
+}
+.adp__cancel div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.adp__cancel b {
+  font: 700 13.5px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__cancel small {
+  font: 500 12.5px/1.4 var(--font-sans);
+}
+.adp__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.adp__col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.adp__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.adp__card > header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 700 14px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__card > header svg {
+  color: var(--color-brand);
+}
+.adp__card > header em {
+  margin-left: auto;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-tint);
+  font: 700 11.5px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-brand);
+}
+.adp__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.adp__facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.adp__facts small {
+  font: 500 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__facts b {
+  font: 700 14.5px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__facts b u {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text-muted);
+}
+.adp__facts em {
+  font: 500 11px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.adp__staff {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.adp__note {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8ff;
+  font: 500 13px/1.5 var(--font-sans);
+}
+.adp__note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--color-brand);
+}
+.adp__muted {
+  margin: 0;
+  font: 500 12.5px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.adp__track button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 4px;
+  border-radius: 12px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.adp__track button b {
+  font: 800 14px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__track button small {
+  font: 500 10.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.adp__track .is-used {
+  background: var(--color-brand);
+  box-shadow: none;
+}
+.adp__track .is-used b,
+.adp__track .is-used small {
+  color: var(--white);
+}
+.adp__track .is-booked {
+  background: #fdf6e3;
+  box-shadow: inset 0 0 0 1px #f1dca6;
+}
+.adp__track .is-booked b {
+  color: #b07a0c;
+}
+.adp__track .is-this {
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--color-brand), 0 6px 14px rgba(76, 132, 90, 0.2);
+}
+.adp__track .is-this b {
+  color: var(--color-brand);
+}
+.adp__track button:disabled {
+  cursor: default;
+}
+.adp__chips {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.adp__chips small {
+  padding-top: 6px;
+  font: 500 12px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__chips span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adp__chips em {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 600 12px/1.3 var(--font-sans);
+  font-style: normal;
+}
+.adp__chips u {
+  font: 700 10.5px/1 var(--font-sans);
+  text-decoration: none;
+  color: var(--color-brand);
+}
+.adp__advice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f6f8ff;
+  font: 500 13px/1.5 var(--font-sans);
+}
+.adp__scr {
+  --vc: #2f8a52;
+  --vt: #eaf7ef;
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--vt);
+}
+.adp__scr.is-warn { --vc: #b06a0c; --vt: #fdf4e3; }
+.adp__scr.is-stop { --vc: #d23a2a; --vt: #fdecea; }
+.adp__scr.is-none { --vc: #7a857d; --vt: var(--sage-50); }
+.adp__scr-i {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: var(--vc);
+  color: var(--white);
+}
+.adp__scr > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.adp__scr small {
+  font: 600 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.adp__scr b {
+  font: 700 14.5px/1.3 var(--font-sans);
+  color: var(--vc);
+}
+.adp__scr span {
+  font: 500 12.5px/1.45 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__scr button {
+  height: 32px;
+  margin-top: 6px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font: 700 12.5px/1 var(--font-sans);
+  color: var(--vc);
+}
+.adp__log {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: none;
+}
+.adp__log::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--sage-100);
+}
+.adp__log li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.adp__log li::before {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: inset 0 0 0 2px var(--color-brand);
+}
+.adp__log li:first-child::before {
+  background: var(--color-brand);
+  box-shadow: 0 0 0 4px var(--color-brand-tint);
+}
+.adp__log span {
+  font: 600 13px/1.4 var(--font-sans);
+  color: var(--color-text);
+}
+.adp__log time {
+  font: 500 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+@media (max-width: 1100px) {
+  .adp__grid {
+    grid-template-columns: 1fr;
+  }
+  .adp__hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .adp__who {
+    grid-column: 1 / -1;
+  }
+  .adp__when {
+    border-right: 0;
+    padding-right: 0;
+  }
+  .adp__bar {
+    flex-wrap: wrap;
+  }
+}
