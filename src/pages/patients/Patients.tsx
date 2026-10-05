@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Plus, Sparkles, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Plus, Sparkles, Hand, Leaf, TriangleAlert, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -43,11 +43,11 @@ const EL_SIGNS: Record<Element, RegExp> = {
 };
 const EL_PRESSURE: Record<Element, CounterScreening["pressure"][]> = { ดิน: ["ปานกลาง", "หนัก"], น้ำ: ["ปานกลาง"], ลม: ["เบา", "ปานกลาง"], ไฟ: ["เบา", "ปานกลาง"] };
 function elementNotes(el: Element, items: string[], pressure?: CounterScreening["pressure"]) {
-  const out: string[] = [];
+  const out: { text: string; tone: "match" | "warn" | "ok" }[] = [];
   const hit = items.filter((x) => EL_SIGNS[el].test(x));
-  if (hit.length) out.push(`${hit.slice(0, 3).join(", ")} สอดคล้องกับธาตุ${el}ที่มักเสียสมดุล`);
-  if (pressure && !EL_PRESSURE[el].includes(pressure)) out.push(`ต้องการแรงนวด${pressure} แต่ธาตุ${el}เหมาะกับแรง${EL_PRESSURE[el].join("–")}`);
-  else if (pressure) out.push(`แรงนวด${pressure}เหมาะกับธาตุ${el}`);
+  if (hit.length) out.push({ text: `${hit.slice(0, 3).join(", ")} สอดคล้องกับธาตุ${el}ที่เสียสมดุล`, tone: "match" });
+  if (pressure && !EL_PRESSURE[el].includes(pressure)) out.push({ text: `ขอแรงนวด${pressure} · ธาตุ${el}เหมาะกับแรง${EL_PRESSURE[el].join("–")}`, tone: "warn" });
+  else if (pressure) out.push({ text: `แรงนวด${pressure} เหมาะกับธาตุ${el}`, tone: "ok" });
   return out;
 }
 const RELATIONS = ["บิดา", "มารดา", "สามี", "ภรรยา", "บุตร", "พี่", "น้อง", "ญาติ", "เพื่อน", "ผู้ดูแล", "อื่น ๆ"];
@@ -1001,35 +1001,46 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                       <ElementIcon element={el} size={26} strokeWidth={2} />
                     </span>
                     <div>
-                      <small>ธาตุเจ้าเรือน · เกิดเดือน{TH_MONTH[month - 1]}</small>
+                      <small>ธาตุเจ้าเรือน</small>
                       <b>ธาตุ{el}</b>
-                      <p>{info.trait}</p>
+                    </div>
+                    <span className="sm-el__month">เกิดเดือน{TH_MONTH[month - 1]}</span>
+                  </div>
+                  <p className="sm-el__trait">{info.trait}</p>
+                  {notes.length > 0 && (
+                    <div className="sm-el__today">
+                      <small>วิเคราะห์จากข้อมูลวันนี้</small>
+                      {notes.map((n) => (
+                        <p key={n.text} className={`is-${n.tone}`}>
+                          {n.tone === "warn" ? <TriangleAlert size={14} /> : n.tone === "ok" ? <Check size={14} strokeWidth={2.6} /> : <Sparkles size={14} />}
+                          {n.text}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  <div className="sm-el__tiles">
+                    <div className="is-wide">
+                      <span>
+                        <Hand size={14} />
+                      </span>
+                      <small>แนวทางนวด</small>
+                      <p>{info.care}</p>
+                    </div>
+                    <div>
+                      <span>
+                        <TriangleAlert size={14} />
+                      </span>
+                      <small>มักพบ</small>
+                      <p>{info.risk}</p>
+                    </div>
+                    <div>
+                      <span>
+                        <Leaf size={14} />
+                      </span>
+                      <small>รสยาที่เหมาะ</small>
+                      <p>{info.taste}</p>
                     </div>
                   </div>
-                  {notes.length > 0 && (
-                    <ul className="sm-el__notes">
-                      {notes.map((n) => (
-                        <li key={n}>
-                          <Sparkles size={13} />
-                          {n}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <dl className="sm-el__kv">
-                    <div>
-                      <dt>มักพบ</dt>
-                      <dd>{info.risk}</dd>
-                    </div>
-                    <div>
-                      <dt>แนวทางนวด</dt>
-                      <dd>{info.care}</dd>
-                    </div>
-                    <div>
-                      <dt>รสยาที่เหมาะ</dt>
-                      <dd>{info.taste}</dd>
-                    </div>
-                  </dl>
                 </section>
               );
             })()}
