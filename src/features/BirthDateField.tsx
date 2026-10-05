@@ -34,7 +34,7 @@ export function BirthDateField({ value, onChange }: { value: string; onChange: (
   const nowBE = now.getFullYear() + 543;
 
   return (
-    <div className="bdc" ref={box}>
+    <div className="bdc" ref={box} onClick={(e) => e.target !== e.currentTarget && (e.target as HTMLElement).closest(".bdc__pop") && e.preventDefault()}>
       <button type="button" className={full ? "bdc__field" : "bdc__field is-empty"} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <CalendarDays size={16} />
         <span>{full ? thaiBirth(value) : "เลือกวันเกิด"}</span>
@@ -75,7 +75,9 @@ export function BirthDateField({ value, onChange }: { value: string; onChange: (
                   type="button"
                   disabled={future(d)}
                   className={sel && sel[0] === view.y && sel[1] === view.m + 1 && sel[2] === d ? "is-on" : undefined}
-                  onClick={() => {
+                  onClick={(e) => {
+                    // inside a <label>: stop the label from re-clicking the field button (which reopened the calendar)
+                    e.preventDefault();
                     onChange(iso(d));
                     setOpen(false);
                   }}

@@ -503,7 +503,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               ข้อมูลตามบัตรประชาชน
             </h4>
             <div className="ap-grid">
-              <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? "13 หลัก · ไม่บังคับสำหรับผู้ที่ไม่มีบัตร" : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
+              <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
                 <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
               </Field>
               <Field label="คำนำหน้า">
@@ -519,7 +519,16 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               <Field label="นามสกุล *">
                 <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
               </Field>
-              <Field label="วัน เดือน ปีเกิด *" className="span-3" hint="ใช้คำนวณอายุและธาตุเจ้าเรือน">
+              <Field label="เพศ *">
+                <div className="ap-seg ap-seg--2">
+                  {(["ชาย", "หญิง"] as const).map((g) => (
+                    <button key={g} type="button" aria-pressed={f.gender === g} onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}>
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="วัน เดือน ปีเกิด *" className="span-2">
                 <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
               </Field>
               <Field label="ที่อยู่ตามบัตร" className="span-3">
@@ -536,10 +545,10 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               ช่องทางติดต่อ
             </h4>
             <div className="ap-grid">
-              <Field label="เบอร์โทรศัพท์ *" className="span-3" hint="ใช้แจ้งเตือนนัดผ่านแอป ThaiWell AI">
+              <Field label="เบอร์โทรศัพท์ *" className="span-3">
                 <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
               </Field>
-              <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3" hint="ไม่บังคับ">
+              <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3">
                 <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
                   <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
                   <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
@@ -549,25 +558,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
             </div>
           </section>
 
-          <section className="ap-sec">
-            <h4>
-              <span style={{ ["--c" as string]: "#c2482b" }}>
-                <HeartPulse size={14} />
-              </span>
-              ข้อมูลสุขภาพเบื้องต้น
-            </h4>
-            <div className="ap-grid">
-              <Field label="อาการสำคัญ" className="span-3">
-                <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
-              </Field>
-              <Field label="โรคประจำตัว" className="span-3" hint="คั่นด้วยเครื่องหมายจุลภาค">
-                <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
-              </Field>
-              <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" className="span-3" hint="แสดงเตือนตอนรับบริการ">
-                <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
-              </Field>
-            </div>
-          </section>
           {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
         </div>
       )}
@@ -575,6 +565,32 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
       {step === 1 && (
         <div className="ap-pane">
           <p className="ap-lead">คัดกรองความปลอดภัยก่อนนวด · ถ้ายังไม่พร้อม กด “ข้ามการคัดกรอง” แล้วทำทีหลังได้</p>
+          <section className="ap-sec">
+            <h4>
+              <span style={{ ["--c" as string]: "#c2482b" }}>
+                <HeartPulse size={14} />
+              </span>
+              ข้อมูลสุขภาพ
+            </h4>
+            <div className="ap-grid">
+              <Field label="อาการสำคัญ" className="span-3">
+                <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
+              </Field>
+              <Field label="โรคประจำตัว" className="span-3">
+                <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
+              </Field>
+              <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" className="span-3">
+                <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
+              </Field>
+            </div>
+          </section>
+          <section className="ap-sec">
+            <h4>
+              <span style={{ ["--c" as string]: "#d97706" }}>
+                <ShieldCheck size={14} />
+              </span>
+              สัญญาณชีพและข้อห้ามก่อนนวด
+            </h4>
           <div className="ap-vitals">
             <Field label="ความดัน (mmHg)">
               <div className="ap-bp">
@@ -604,9 +620,10 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
             {yes("skinProblem", "มีแผล ผื่น หรือโรคผิวหนังบริเวณที่นวด")}
             {f.gender === "หญิง" && yes("pregnant", "ตั้งครรภ์ หรืออาจตั้งครรภ์")}
           </div>
-          <Field label="บริเวณที่ไม่ต้องการให้นวด" hint="ไม่บังคับ">
+          <Field label="บริเวณที่ไม่ต้องการให้นวด">
             <Input value={scr.avoid} onChange={(e) => setScr({ ...scr, avoid: e.target.value })} placeholder="เช่น เอวส่วนล่าง, หน้าท้อง" />
           </Field>
+          </section>
         </div>
       )}
 

@@ -1243,3 +1243,13 @@
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
+.ap-sec .ap-vitals,
+.ap-sec .ap-qs {
+  margin-bottom: 0;
+}
+.ap-seg--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.ap-seg--2 button {
+  height: 40px;
+}
