@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -495,53 +495,79 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               <em>{fromCard ? "อ่านใหม่" : "อ่านบัตร"}</em>
             </button>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr", gap: 12 }}>
-            <Field label="คำนำหน้า">
-              <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
-                <option>นาย</option>
-                <option>นาง</option>
-                <option>นางสาว</option>
-              </Select>
-            </Field>
-            <Field label="ชื่อ *">
-              <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} autoFocus />
-            </Field>
-            <Field label="นามสกุล *">
-              <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
-            </Field>
-            <Field label="วัน เดือน ปีเกิด *" className="span-2" hint={age !== null ? `อายุ ${age} ปี · ใช้คำนวณธาตุเจ้าเรือน` : "ใช้คำนวณอายุและธาตุเจ้าเรือน"}>
-              <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
-            </Field>
-            <Field label="เบอร์โทรศัพท์ *" hint="แจ้งเตือนนัดผ่านแอป">
-              <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-            </Field>
-            <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? "ไม่บังคับ · 13 หลัก" : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
-              <Input inputMode="numeric" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
-            </Field>
-            <Field label="ที่อยู่ตามบัตร" className="span-3" hint="ไม่บังคับ">
-              <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
-            </Field>
-          </div>
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-            <Field label="อาการสำคัญ">
-              <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
-            </Field>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <Field label="โรคประจำตัว" hint="คั่นด้วยเครื่องหมายจุลภาค">
+          <section className="ap-sec">
+            <h4>
+              <span style={{ ["--c" as string]: "#3b82c4" }}>
+                <IdCard size={14} />
+              </span>
+              ข้อมูลตามบัตรประชาชน
+            </h4>
+            <div className="ap-grid">
+              <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? "13 หลัก · ไม่บังคับสำหรับผู้ที่ไม่มีบัตร" : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
+                <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
+              </Field>
+              <Field label="คำนำหน้า">
+                <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
+                  <option>นาย</option>
+                  <option>นาง</option>
+                  <option>นางสาว</option>
+                </Select>
+              </Field>
+              <Field label="ชื่อ *">
+                <Input value={f.first} onChange={(e) => setF({ ...f, first: e.target.value })} />
+              </Field>
+              <Field label="นามสกุล *">
+                <Input value={f.last} onChange={(e) => setF({ ...f, last: e.target.value })} />
+              </Field>
+              <Field label="วัน เดือน ปีเกิด *" className="span-3" hint="ใช้คำนวณอายุและธาตุเจ้าเรือน">
+                <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
+              </Field>
+              <Field label="ที่อยู่ตามบัตร" className="span-3">
+                <Input value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} placeholder="บ้านเลขที่ หมู่ ตำบล อำเภอ จังหวัด" />
+              </Field>
+            </div>
+          </section>
+
+          <section className="ap-sec">
+            <h4>
+              <span style={{ ["--c" as string]: "#2f8a52" }}>
+                <PhoneCall size={14} />
+              </span>
+              ช่องทางติดต่อ
+            </h4>
+            <div className="ap-grid">
+              <Field label="เบอร์โทรศัพท์ *" className="span-3" hint="ใช้แจ้งเตือนนัดผ่านแอป ThaiWell AI">
+                <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
+              </Field>
+              <Field label="ผู้ติดต่อฉุกเฉิน" className="span-3" hint="ไม่บังคับ">
+                <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
+                  <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
+                  <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
+                  <Input value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} placeholder="เกี่ยวข้องเป็น" />
+                </div>
+              </Field>
+            </div>
+          </section>
+
+          <section className="ap-sec">
+            <h4>
+              <span style={{ ["--c" as string]: "#c2482b" }}>
+                <HeartPulse size={14} />
+              </span>
+              ข้อมูลสุขภาพเบื้องต้น
+            </h4>
+            <div className="ap-grid">
+              <Field label="อาการสำคัญ" className="span-3">
+                <Textarea value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
+              </Field>
+              <Field label="โรคประจำตัว" className="span-3" hint="คั่นด้วยเครื่องหมายจุลภาค">
                 <Input value={f.conditions} onChange={(e) => setF({ ...f, conditions: e.target.value })} placeholder="ความดันโลหิตสูง, เบาหวาน" />
               </Field>
-              <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" hint="แสดงเตือนตอนรับบริการ">
+              <Field label="การแพ้ยา / น้ำมัน / สมุนไพร" className="span-3" hint="แสดงเตือนตอนรับบริการ">
                 <Input value={f.allergies} onChange={(e) => setF({ ...f, allergies: e.target.value })} placeholder="เช่น ยาหม่อง, ไพล" />
               </Field>
             </div>
-            <Field label="ผู้ติดต่อฉุกเฉิน" hint="ไม่บังคับ">
-              <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 0.8fr", gap: 8 }}>
-                <Input value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ" />
-                <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
-                <Input value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} placeholder="เกี่ยวข้องเป็น" />
-              </div>
-            </Field>
-          </div>
+          </section>
           {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
         </div>
       )}
