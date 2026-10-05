@@ -1164,3 +1164,22 @@ input[type="date"].tw-input {
   background: var(--sage-50);
   color: var(--color-text-muted);
 }
+.bdc__pick {
+  display: flex;
+  gap: 6px;
+}
+.bdc__pick select {
+  height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--sage-50);
+  font: 800 14px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.bdc__pick select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0 28px 0 12px;
+  background: var(--sage-50) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234c845a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
+}

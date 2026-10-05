@@ -3,17 +3,14 @@ import { createPortal } from "react-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { TH_MONTH } from "../data/elements";
 
-const TH_MON_SHORT = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 
 /** birth-date picker: year → month → day, big touch targets, Thai months & พ.ศ. — value is ISO YYYY-MM-DD or "" */
 export function BirthDateField({ value, onChange }: { value: string; onChange: (iso: string) => void }) {
   const full = isFullDate(value);
   const now = new Date();
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"year" | "month" | "day">("year");
   const [y, setY] = useState(now.getFullYear() - 30);
   const [m, setM] = useState(0);
-  const [decade, setDecade] = useState(Math.floor((now.getFullYear() - 30 + 543) / 10) * 10);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,9 +19,7 @@ export function BirthDateField({ value, onChange }: { value: string; onChange: (
       const d = new Date(value);
       setY(d.getFullYear());
       setM(d.getMonth());
-      setDecade(Math.floor((d.getFullYear() + 543) / 10) * 10);
-      setMode("day");
-    } else setMode("year");
+    }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nowBE = now.getFullYear() + 543;
@@ -57,88 +52,36 @@ export function BirthDateField({ value, onChange }: { value: string; onChange: (
               <X size={16} />
             </button>
           </div>
-          {/* breadcrumb: tap to jump back a level */}
-          <div className="bdc__crumbs">
-            <button type="button" aria-pressed={mode === "year"} onClick={() => setMode("year")}>
-              <small>ปี พ.ศ.</small>
-              <b>{mode === "year" && !full ? "เลือกปี" : y + 543}</b>
-            </button>
-            <i>›</i>
-            <button type="button" aria-pressed={mode === "month"} disabled={mode === "year" && !full} onClick={() => setMode("month")}>
-              <small>เดือน</small>
-              <b>{mode === "year" && !full ? "—" : TH_MONTH[m]}</b>
-            </button>
-            <i>›</i>
-            <button type="button" aria-pressed={mode === "day"} disabled={mode !== "day" && !full}>
-              <small>วันที่</small>
-              <b>{sel && sel[0] === y && sel[1] === m + 1 ? sel[2] : "—"}</b>
-            </button>
-          </div>
-
-          {mode === "year" && (
-            <div className="bdc__view">
-              <div className="bdc__nav">
-                <button type="button" onClick={() => setDecade((d) => Math.max(Math.floor(minBE / 10) * 10, d - 10))} aria-label="ทศวรรษก่อน">
-                  <ChevronLeft size={18} />
-                </button>
-                <b>
-                  {decade} – {decade + 9}
-                </b>
-                <button type="button" onClick={() => setDecade((d) => Math.min(Math.floor(nowBE / 10) * 10, d + 10))} aria-label="ทศวรรษถัดไป">
-                  <ChevronRight size={18} />
-                </button>
-              </div>
-              <div className="bdc__cells bdc__cells--year">
-                {Array.from({ length: 10 }, (_, i) => decade + i).map((be) => (
-                  <button
-                    key={be}
-                    type="button"
-                    disabled={be > nowBE || be < minBE}
-                    className={y + 543 === be && (full || mode !== "year") ? "is-on" : undefined}
-                    onClick={() => {
-                      setY(be - 543);
-                      if (future(be - 543, m)) setM(now.getMonth());
-                      setMode("month");
-                    }}
-                  >
-                    {be}
-                    <small>อายุ {nowBE - be} ปี</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {mode === "month" && (
-            <div className="bdc__view">
-              <div className="bdc__cells bdc__cells--month">
-                {TH_MON_SHORT.map((n, i) => (
-                  <button
-                    key={n}
-                    type="button"
-                    disabled={future(y, i)}
-                    className={i === m && (full || mode !== "month") ? "is-on" : undefined}
-                    onClick={() => {
-                      setM(i);
-                      setMode("day");
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {mode === "day" && (
+          {(
             <div className="bdc__view">
               <div className="bdc__nav">
                 <button type="button" onClick={() => stepMonth(-1)} aria-label="เดือนก่อน">
                   <ChevronLeft size={18} />
                 </button>
-                <b>
-                  {TH_MONTH[m]} {y + 543}
-                </b>
+                <div className="bdc__pick">
+                  <select value={m} onChange={(e) => setM(Number(e.target.value))} aria-label="เดือน">
+                    {TH_MONTH.map((n, i) => (
+                      <option key={n} value={i} disabled={future(y, i)}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={y + 543}
+                    onChange={(e) => {
+                      const ny = Number(e.target.value) - 543;
+                      setY(ny);
+                      if (future(ny, m)) setM(now.getMonth());
+                    }}
+                    aria-label="ปี พ.ศ."
+                  >
+                    {Array.from({ length: 111 }, (_, i) => nowBE - i).map((be) => (
+                      <option key={be} value={be}>
+                        {be}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <button type="button" onClick={() => stepMonth(1)} aria-label="เดือนถัดไป" disabled={future(y, m + 1)}>
                   <ChevronRight size={18} />
                 </button>
