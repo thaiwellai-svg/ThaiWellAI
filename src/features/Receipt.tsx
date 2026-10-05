@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import QRCode from "qrcode";
-import { Check, CheckCheck, Printer, Send, X } from "lucide-react";
+import { Check, CheckCheck, Printer, Send, X, Ban } from "lucide-react";
 import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { baht, thaiDateLong } from "../data/thaiDate";
@@ -20,8 +20,14 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
   const [qr, setQr] = useState("");
   const [run, setRun] = useState(0); // replay key
 
-  const a = store.appointments.find((x) => x.id === shown);
-  const no = a?.payment?.no ?? (a ? `RC-${a.id.toUpperCase()}` : "");
+  // id = "<appointment>" for the current receipt, "<appointment>|<receipt no>" for a cancelled one
+  const [apptId, voidNo] = (shown ?? "").split("|");
+  const a = store.appointments.find((x) => x.id === apptId);
+  const vp = voidNo ? a?.voidedPayments?.find((x) => x.no === voidNo) : undefined;
+  const no = (vp ?? a?.payment)?.no ?? (a ? `RC-${a.id.toUpperCase()}` : "");
+  const [voiding, setVoiding] = useState(false);
+  const [reason, setReason] = useState("");
+  const [refund, setRefund] = useState(true);
   useEffect(() => {
     if (!no) return;
     QRCode.toDataURL(`thaiwell://receipt/${no}`, { margin: 0, width: 160, color: { dark: "#2a2620", light: "#00000000" } })
@@ -40,7 +46,8 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
   const p = store.patientById(a.patientId);
   const s = store.serviceById(a.serviceId);
   const t = store.therapistById(a.therapistId);
-  const pay = a.payment;
+  const pay = vp ?? a.payment;
+  const isVoid = pay?.status === "void";
   const at = new Date(pay?.at ?? `${a.date}T${a.start}`);
   const credit = pay?.method === "credit";
   const total = pay?.amount ?? s.price;
@@ -82,8 +89,10 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                 animate={{ y: 0 }}
                 transition={{ duration: 1.1, ease: [0.3, 0.9, 0.3, 1] }}
               >
-                <motion.span className={`rcx__stamp ${paid ? "is-paid" : "is-due"}`} initial={{ scale: 2.4, opacity: 0, rotate: -24 }} animate={{ scale: 1, opacity: 1, rotate: -12 }} transition={{ delay: 1.35, type: "spring", stiffness: 380, damping: 16 }}>
-                  {paid ? (
+                <motion.span className={`rcx__stamp ${isVoid ? "is-void" : paid ? "is-paid" : "is-due"}`} initial={{ scale: 2.4, opacity: 0, rotate: -24 }} animate={{ scale: 1, opacity: 1, rotate: -12 }} transition={{ delay: 1.35, type: "spring", stiffness: 380, damping: 16 }}>
+                  {isVoid ? (
+                    "ยกเลิก"
+                  ) : paid ? (
                     <>
                       <Check size={14} strokeWidth={3} /> ชำระแล้ว
                     </>
@@ -178,6 +187,19 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                       <b>รอชำระในแอป ThaiWell AI</b>
                     </div>
                   )}
+                  {pay?.voided && (
+                    <div className="rcx__void">
+                      <span>ยกเลิกเมื่อ</span>
+                      <b>
+                        {new Date(pay.voided.at).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} · {pay.voided.by}
+                      </b>
+                      <span>เหตุผล</span>
+                      <b>
+                        {pay.voided.reason}
+                        {pay.voided.refund ? ` · คืนเงิน ${baht(pay.amount)} บาท` : ""}
+                      </b>
+                    </div>
+                  )}
                 </motion.div>
 
                 <Tear />
@@ -207,7 +229,52 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
               <button type="button" className="rcx__btn rcx__btn--primary" onClick={() => window.print()}>
                 <Printer size={16} /> พิมพ์สลิป
               </button>
+              {!isVoid && pay && pay.status !== "void" && (
+                <button type="button" className="rcx__btn rcx__btn--danger" onClick={() => setVoiding(true)}>
+                  <Ban size={16} /> ยกเลิกใบเสร็จ
+                </button>
+              )}
             </motion.div>
+            <AnimatePresence>
+              {voiding && pay && (
+                <motion.div className="rcx__voidbox" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>
+                  <b>ยกเลิกใบเสร็จ {pay.no}</b>
+                  <small>ใบเสร็จเดิมจะขึ้นตรา “ยกเลิก” และยังเก็บไว้ในประวัติ · รายการกลับไปรอชำระเงินใหม่{pay.method === "credit" ? " · คืนเครดิตคอร์ส 1 ครั้ง" : ""}</small>
+                  <div className="rcx__reasons">
+                    {["ออกใบเสร็จผิดคน", "ยอดเงินไม่ถูกต้อง", "เลือกช่องทางผิด", "ผู้ป่วยขอคืนเงิน"].map((r) => (
+                      <button key={r} type="button" aria-pressed={reason === r} onClick={() => setReason(r)}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                  <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="หรือพิมพ์เหตุผล…" />
+                  {pay.method !== "credit" && pay.amount > 0 && (
+                    <label className="rcx__refund">
+                      <input type="checkbox" checked={refund} onChange={(e) => setRefund(e.target.checked)} /> คืนเงินให้ผู้ป่วย {baht(pay.amount)} บาท
+                    </label>
+                  )}
+                  <div className="rcx__voidbtns">
+                    <button type="button" onClick={() => setVoiding(false)}>
+                      ไม่ยกเลิก
+                    </button>
+                    <button
+                      type="button"
+                      className="is-danger"
+                      disabled={!reason.trim()}
+                      onClick={() => {
+                        store.dispatch({ type: "voidPayment", id: a.id, reason: reason.trim(), refund: pay.method !== "credit" && pay.amount > 0 && refund });
+                        toast({ message: `ยกเลิกใบเสร็จ ${pay.no} แล้ว · รายการกลับไปรอชำระเงิน` });
+                        setVoiding(false);
+                        setReason("");
+                        onClose();
+                      }}
+                    >
+                      ยืนยันยกเลิกใบเสร็จ
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       )}

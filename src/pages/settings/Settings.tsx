@@ -33,6 +33,7 @@ import {
   Ticket,
   Receipt,
   Volume2,
+  QrCode,
 } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, Field, Input, Select, Switch, ease, spring, useToast } from "../../design-system";
@@ -46,6 +47,7 @@ import "../appointments/appointments.css";
 import "../../features/shift-editor.css";
 import "../../features/book-dialog.css";
 import { RoomsEditor } from "../../features/RoomsEditor";
+import { AuditLog, BackupPanel, PromptPaySetting } from "../../features/SettingsExtras";
 import { CALL_VOICES, DEFAULT_CALL_VOICE, announce, callText } from "../../features/tts";
 import "./settings.css";
 
@@ -57,13 +59,15 @@ const SECTIONS = [
   { id: "staff", label: "ผู้บำบัด", desc: "รายชื่อและตารางงาน", icon: Stethoscope, tint: "#3e9a8f" },
   { id: "safety", label: "กฎคัดกรองความปลอดภัย", desc: "ความดัน · ผ่าตัด · ข้อห้าม", icon: ShieldCheck, tint: "#c0614f" },
   { id: "notify", label: "การแจ้งเตือน", desc: "เจ้าหน้าที่ · ผู้ป่วย · ส่งประวัติไปแอป", icon: Bell, tint: "#d9a531" },
-  { id: "data", label: "ข้อมูลจำลอง", desc: "รีเซ็ตข้อมูลสาธิตใหม่", icon: Database, tint: "#7d8681" },
+  { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ของคลินิก", icon: QrCode, tint: "#2f8f9a" },
+  { id: "audit", label: "ประวัติการแก้ไข", desc: "ใครทำอะไร เมื่อไร", icon: History, tint: "#7c5cc4" },
+  { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง · กู้คืน · รีเซ็ตข้อมูลตัวอย่าง", icon: Database, tint: "#7d8681" },
 ] as const;
 /** menu groups (account lives in the profile card on top) */
 const GROUPS: { label: string; ids: string[] }[] = [
   { label: "คลินิก", ids: ["clinic", "hours", "services", "staff"] },
   { label: "การดูแลผู้ป่วย", ids: ["safety", "notify"] },
-  { label: "ระบบ", ids: ["data"] },
+  { label: "ระบบ", ids: ["payment", "audit", "data"] },
 ];
 type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -253,8 +257,19 @@ export default function Settings() {
                 <div className="st-inner">
                 {active === "account" && <AccountSection onSaved={() => setSaved(Date.now())} />}
 
+                {active === "payment" && (
+                  <Group title="พร้อมเพย์ของคลินิก" desc="ใช้สร้าง QR ตอนรับชำระเงินที่เคาน์เตอร์ · ตรวจให้ตรงกับบัญชีจริงของคลินิก">
+                    <PromptPaySetting />
+                  </Group>
+                )}
+
+                {active === "audit" && <AuditLog />}
+
                 {active === "data" && (
                   <>
+                    <Group title="สำรองและกู้คืนข้อมูล">
+                      <BackupPanel />
+                    </Group>
                     <Group title="รีเซ็ตข้อมูลจำลอง" desc="ข้อมูลทั้งหมดในแอปเป็นข้อมูลสมมติ ไม่มีข้อมูลสุขภาพของบุคคลจริง บันทึกไว้ในเครื่องนี้เท่านั้น">
                       <Row title="สร้างข้อมูลตัวอย่างใหม่" desc="ผู้ป่วย คิวนัด คำขอจอง การชำระเงิน แจ้งเตือน และตารางงาน จะกลับเป็นชุดเริ่มต้นของวันนี้ · การตั้งค่าคลินิกและบัญชีผู้ใช้ยังอยู่">
                         <Button variant="outline" size="md" className="acc-logout" leading={<RotateCcw size={14} />} onClick={() => setConfirmReset(true)}>

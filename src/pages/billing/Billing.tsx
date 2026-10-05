@@ -10,7 +10,7 @@ import { ReceiptDialog } from "../../features/Receipt";
 import { METHOD_LABEL } from "../../features/billing";
 import { patientPhoto } from "../../data/avatars";
 import { addISODays, baht, thaiDate, thaiDateLong, todayISO } from "../../data/thaiDate";
-import type { Appointment, PaymentMethod } from "../../data/types";
+import type { Appointment, Payment, PaymentMethod } from "../../data/types";
 import "../appointments/appointments.css";
 import { ReportDialog, downloadCsv } from "../../features/ReportDialog";
 import "./billing.css";
@@ -51,22 +51,25 @@ export default function Billing() {
   );
 
   const from = range === "today" ? today : addISODays(today, -(Number(range) - 1));
-  const history = useMemo(
+  // every receipt in the period — current ones and cancelled ones (kept for the record)
+  type Entry = { a: Appointment; pay: Payment; key: string };
+  const history = useMemo<Entry[]>(
     () =>
       store.appointments
-        .filter((a) => a.payment && a.payment.at.slice(0, 10) >= from && a.payment.at.slice(0, 10) <= today)
-        .filter((a) => method === "all" || a.payment!.method === method)
-        .filter(match)
-        .sort((a, b) => b.payment!.at.localeCompare(a.payment!.at)),
+        .flatMap((a) => [...(a.payment ? [{ a, pay: a.payment, key: a.id }] : []), ...(a.voidedPayments ?? []).map((pay) => ({ a, pay, key: `${a.id}|${pay.no}` }))])
+        .filter((e) => e.pay.at.slice(0, 10) >= from && e.pay.at.slice(0, 10) <= today)
+        .filter((e) => method === "all" || e.pay.method === method)
+        .filter((e) => match(e.a) || (query.trim() && (e.pay.no ?? "").includes(query.trim())))
+        .sort((x, y) => y.pay.at.localeCompare(x.pay.at)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store.appointments, from, method, query],
   );
   const groups = useMemo(() => {
-    const m = new Map<string, Appointment[]>();
-    for (const a of history) {
-      const d = a.payment!.at.slice(0, 10);
+    const m = new Map<string, Entry[]>();
+    for (const e of history) {
+      const d = e.pay.at.slice(0, 10);
       if (!m.has(d)) m.set(d, []);
-      m.get(d)!.push(a);
+      m.get(d)!.push(e);
     }
     return [...m.entries()];
   }, [history]);
@@ -98,9 +101,9 @@ export default function Billing() {
               onClick={() =>
                 downloadCsv(`thaiwell-receipts-${from}-${today}.csv`, [
                   ["เลขที่ใบเสร็จ", "วันที่", "เวลา", "HN", "ชื่อ", "บริการ", "ช่องทาง", "สถานะ", "ยอด (บาท)"],
-                  ...history.map((a) => {
+                  ...history.map(({ a, pay }) => {
                     const p = store.patientById(a.patientId);
-                    return [a.payment!.no, a.payment!.at.slice(0, 10), time(a.payment!.at), p.hn, p.name, store.serviceById(a.serviceId).name, METHOD_LABEL[a.payment!.method], a.payment!.status === "paid" ? "ชำระแล้ว" : "รอชำระในแอป", a.payment!.amount];
+                    return [pay.no, pay.at.slice(0, 10), time(pay.at), p.hn, p.name, store.serviceById(a.serviceId).name, METHOD_LABEL[pay.method], pay.status === "paid" ? "ชำระแล้ว" : pay.status === "void" ? `ยกเลิก (${pay.voided?.reason ?? ""})` : "รอชำระในแอป", pay.status === "void" ? 0 : pay.amount];
                   }),
                 ])
               }
@@ -219,7 +222,7 @@ export default function Billing() {
                   </button>
                 ))}
                 <span className="bl-sum">
-                  รวม <b>{baht(history.filter((a) => a.payment!.status === "paid").reduce((n, a) => n + a.payment!.amount, 0))}</b> บาท · {history.length} รายการ
+                  รวม <b>{baht(history.filter((e) => e.pay.status === "paid").reduce((n, e) => n + e.pay.amount, 0))}</b> บาท · {history.length} รายการ
                 </span>
               </div>
             )}
@@ -258,14 +261,13 @@ export default function Billing() {
                     <section key={d} className="bl-group">
                       <p className="bl-group__label">
                         {d === today ? "วันนี้" : thaiDateLong(d)}
-                        <span>{baht(list.filter((a) => a.payment!.status === "paid").reduce((n, a) => n + a.payment!.amount, 0))} บาท</span>
+                        <span>{baht(list.filter((e) => e.pay.status === "paid").reduce((n, e) => n + e.pay.amount, 0))} บาท</span>
                       </p>
-                      {list.map((a) => {
+                      {list.map(({ a, pay, key }) => {
                         const p = store.patientById(a.patientId);
-                        const pay = a.payment!;
                         const Ic = ICON[pay.method];
                         return (
-                          <button key={a.id} type="button" className="bl-row" onClick={() => setReceipt(a.id)}>
+                          <button key={key} type="button" className={clsx("bl-row", pay.status === "void" && "is-void")} onClick={() => setReceipt(key)}>
                             <span className={clsx("bl-mi", `bl-mi--${pay.method}`)}>
                               <Ic size={16} />
                             </span>
@@ -280,8 +282,8 @@ export default function Billing() {
                                 <CheckCheck size={13} /> ส่งสลิปแล้ว
                               </span>
                             )}
-                            <Badge tone={pay.status === "pending" ? "info" : "neutral"} compact>
-                              {pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
+                            <Badge tone={pay.status === "void" ? "danger" : pay.status === "pending" ? "info" : "neutral"} compact>
+                              {pay.status === "void" ? (pay.voided?.refund ? "ยกเลิก · คืนเงิน" : "ยกเลิก") : pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
                             </Badge>
                             <b className="bl-amt">{baht(pay.amount)} ฿</b>
                             <ReceiptText size={16} className="bl-chev" />

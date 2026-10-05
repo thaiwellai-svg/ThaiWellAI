@@ -172,6 +172,8 @@ export interface Appointment {
   /** หัตถการ performed in this session */
   procedures?: Procedure[];
   payment?: Payment;
+  /** cancelled receipts for this visit, kept for the record */
+  voidedPayments?: Payment[];
   /** what happened, in order — shown as the visit timeline */
   log?: { at: string; label: string }[];
 }
@@ -200,9 +202,21 @@ export interface Payment {
   received?: number;
   /** when the slip was sent to the patient's ThaiWell AI app */
   slipSentAt?: string;
-  /** "pending" = bill sent to the ThaiWell AI app, not paid yet */
-  status: "paid" | "pending";
+  /** "pending" = bill sent to the ThaiWell AI app, not paid yet · "void" = receipt cancelled */
+  status: "paid" | "pending" | "void";
   at: string;
+  /** set when the receipt was cancelled / refunded */
+  voided?: { at: string; by: string; reason: string; refund: boolean };
+}
+
+/** who did what, when — kept for medical-record and finance accountability */
+export interface AuditEntry {
+  id: string;
+  at: string;
+  by: string;
+  cat: "เวชระเบียน" | "การเงิน" | "นัดหมาย" | "ผู้ป่วย" | "ตั้งค่า" | "ระบบ";
+  text: string;
+  patientId?: string;
 }
 
 export interface BookingRequest {

@@ -232,3 +232,10 @@
   color: var(--color-brand);
   white-space: nowrap;
 }
+.bl-row.is-void {
+  opacity: 0.72;
+}
+.bl-row.is-void .bl-amt {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
