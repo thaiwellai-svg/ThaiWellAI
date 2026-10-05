@@ -670,3 +670,13 @@
 .aib.is-busy .ai2__aura {
   animation-duration: 1.6s;
 }
+/* sub-page header with a round back button */
+.apg__lead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.apg__lead {
+  flex: 1 1 280px;
+}

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Plus, Sparkles, Hand, Leaf, TriangleAlert, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Plus, Sparkles, Hand, Leaf, TriangleAlert, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
+import { BackLead } from "../../layout/BackLead";
 import { PatientDrawer, PatientHealth } from "../../features/PatientDrawer";
 import { PainMini } from "../../features/RecordCards";
 import { creditInfo } from "../../data/domain";
@@ -519,17 +520,7 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
       eyebrow={edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}
       title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
       bell={false}
-      lead={
-        <div className="apg__lead">
-          <IconButton label="ย้อนกลับ" variant="white" onClick={onClose}>
-            <ChevronLeft size={22} strokeWidth={2} />
-          </IconButton>
-          <div className="work__titles">
-            <div className="work__eyebrow">{edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}</div>
-            <h1 className="work__title">{edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}</h1>
-          </div>
-        </div>
-      }
+      lead={<BackLead eyebrow={edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"} title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"} onBack={onClose} />}
     >
       <div className="apg ap">
         <div className="apg__bar">

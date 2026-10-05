@@ -668,3 +668,10 @@
 .rq2__kv .rq__staff {
   justify-content: flex-start;
 }
+/* no dock on this sub-page: lists and detail run to the bottom */
+.rq .scroll-y {
+  padding-bottom: 16px !important;
+}
+.rq__foot {
+  padding-bottom: 16px;
+}

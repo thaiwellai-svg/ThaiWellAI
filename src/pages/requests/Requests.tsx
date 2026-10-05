@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, CalendarCheck2, CalendarRange, Check, CircleCheck, CircleX, History, ListFilter, MessageSquareText, Phone, ShieldAlert, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
+import { CalendarClock, CalendarCheck2, CalendarRange, Check, CircleCheck, CircleX, History, ListFilter, MessageSquareText, Phone, ShieldAlert, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, SearchField, Segmented, spring } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
+import { BackLead } from "../../layout/BackLead";
 import { PainMini } from "../../features/RecordCards";
 import { ApproveDialog, RejectDialog } from "../../features/RequestDialogs";
 import { BookDialog, type BookPreset } from "../../features/BookDialog";
@@ -30,6 +31,7 @@ const clock = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour:
 export default function Requests() {
   const store = useStore();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
   const tab = (params.get("tab") as Tab) ?? "pending";
   const [query, setQuery] = useState("");
   const [pf, setPf] = useState<PendingFilter>("all");
@@ -86,12 +88,9 @@ export default function Requests() {
 
   return (
     <WorkPage
-      eyebrow={
-        <Link to="/" className="back-link">
-          <ArrowLeft size={14} /> หน้าหลัก
-        </Link>
-      }
+      eyebrow="หน้าหลัก"
       title="คำขอจองคิว"
+      lead={<BackLead eyebrow="หน้าหลัก" title="คำขอจองคิว" onBack={() => navigate("/")} />}
       bell={false}
       actions={
         <>
