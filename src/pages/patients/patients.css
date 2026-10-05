@@ -492,3 +492,9 @@
 .pai .vp__hist-body {
   padding-bottom: calc(var(--dock-height) + 8px) !important;
 }
+/* AI panel fills its pane (the base .vp__hist rule is a fixed 320px with a left margin) */
+.pws .vp__hist {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
