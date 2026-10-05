@@ -43,7 +43,7 @@ import { TH_WEEKDAYS, TH_WEEKDAYS_SHORT, baht, fromMinutes } from "../../data/th
 import type { ClinicSettings, Service, ShareTopic, Therapist } from "../../data/types";
 import { therapistPhoto } from "../../data/avatars";
 import { PhotoPicker } from "../../features/PhotoPicker";
-import { startTour } from "../../features/Tour";
+import { UserGuide } from "../../features/UserGuide";
 import { signOut } from "../../features/session";
 import "../appointments/appointments.css";
 import "../../features/shift-editor.css";
@@ -63,6 +63,7 @@ const SECTIONS = [
   { id: "notify", label: "การแจ้งเตือน", desc: "เจ้าหน้าที่ · ผู้ป่วย · ส่งประวัติไปแอป", icon: Bell, tint: "#d9a531" },
   { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ของคลินิก", icon: QrCode, tint: "#2f8f9a" },
   { id: "audit", label: "ประวัติการแก้ไข", desc: "ใครทำอะไร เมื่อไร", icon: History, tint: "#7c5cc4" },
+  { id: "guide", label: "คู่มือการใช้งาน", desc: "วิธีใช้ทุกเมนูแบบทีละขั้น", icon: GraduationCap, tint: "#2f8f9a" },
   { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง · กู้คืน · รีเซ็ตข้อมูลตัวอย่าง", icon: Database, tint: "#7d8681" },
 ] as const;
 /** menu groups (account lives in the profile card on top) */
@@ -70,6 +71,7 @@ const GROUPS: { label: string; ids: string[] }[] = [
   { label: "คลินิก", ids: ["clinic", "hours", "services", "staff"] },
   { label: "การดูแลผู้ป่วย", ids: ["safety", "notify"] },
   { label: "ระบบ", ids: ["payment", "audit", "data"] },
+  { label: "ช่วยเหลือ", ids: ["guide"] },
 ];
 type SectionId = (typeof SECTIONS)[number]["id"];
 
@@ -175,7 +177,7 @@ export default function Settings() {
       bell={false}
       actions={
         <>
-        <Button variant="outline" size="md" className="set-tour" leading={<GraduationCap size={16} />} onClick={startTour}>
+        <Button variant="outline" size="md" className="set-tour" leading={<GraduationCap size={16} />} onClick={() => setActive("guide")}>
           คู่มือการใช้งาน
         </Button>
         <AnimatePresence>
@@ -272,6 +274,7 @@ export default function Settings() {
 
                 {active === "audit" && <AuditLog />}
 
+                {active === "guide" && <UserGuide />}
                 {active === "data" && (
                   <>
                     <Group title="สำรองและกู้คืนข้อมูล">

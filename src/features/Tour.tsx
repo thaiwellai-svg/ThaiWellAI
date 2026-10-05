@@ -25,7 +25,7 @@ const PREVIEW = STEPS.filter((x) => x.Icon);
 const TIPS: { Icon: Icon; text: string }[] = [
   { Icon: Hand as Icon, text: "หุ่น 3D: แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด" },
   { Icon: LayoutGrid as Icon, text: "จุด ••• บนกล่อง ใช้จัดตำแหน่งและขยายเต็มจอ" },
-  { Icon: SettingsIcon, text: "เปิดคู่มือนี้อีกครั้งได้ที่ ตั้งค่า → คู่มือการใช้งาน" },
+  { Icon: SettingsIcon, text: "คู่มือฉบับเต็ม: ตั้งค่า → คู่มือการใช้งาน" },
 ];
 
 // bump the version to show the guide again on every device after it changes

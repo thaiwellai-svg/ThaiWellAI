@@ -1,0 +1,184 @@
+import { useState } from "react";
+import type { ComponentType, SVGProps } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronDown, GraduationCap, Lightbulb, PlayCircle, Search, Sparkles } from "lucide-react";
+import { AppointmentsIcon, BillingIcon, HomeIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
+import { startTour } from "./Tour";
+import "./user-guide.css";
+
+type Icon = ComponentType<SVGProps<SVGSVGElement>>;
+const AiIcon: Icon = (p) => <Sparkles {...(p as object)} />;
+
+/** step-by-step manual, grouped by menu */
+const CHAPTERS: { id: string; title: string; color: string; Icon: Icon; intro: string; topics: { q: string; steps: string[]; tip?: string }[] }[] = [
+  {
+    id: "home",
+    title: "หน้าหลัก",
+    color: "#4c845a",
+    Icon: HomeIcon,
+    intro: "ภาพรวมของวันนี้ในหน้าเดียว",
+    topics: [
+      { q: "ดูภาพรวมวันนี้", steps: ["ฝั่งซ้ายเป็นวิดเจ็ต: จำนวนผู้มารับบริการ รายได้ เครดิตคอร์ส ปฏิทิน", "ฝั่งขวาเป็นรายการงานวันนี้ เรียงตามเวลา", "กดปุ่มท้ายรายการ (จบ / บันทึก / คิดเงิน) เพื่อไปทำขั้นถัดไปได้ทันที"] },
+      { q: "อนุมัติคำขอจองคิวจากแอป", steps: ["กดไอคอนกระดิ่งมุมขวาบน หรือการ์ดคำขอคิว", "ตรวจผลคัดกรองที่ผู้ป่วยทำมาจากแอป", "กด “อนุมัติ” หรือ “ปฏิเสธ” พร้อมเหตุผล"] },
+      { q: "จัดวางวิดเจ็ตเอง", steps: ["แตะจุด ••• ด้านบนกล่องเพื่อเลือกกล่อง", "ลากขอบเพื่อปรับความกว้าง หรือลากจุด ••• เพื่อย้ายตำแหน่ง", "กด “รีเซ็ต” ถ้าต้องการกลับเป็นแบบเดิม"] },
+    ],
+  },
+  {
+    id: "visits",
+    title: "รับบริการ",
+    color: "#2f8f9a",
+    Icon: VisitIcon,
+    intro: "ทำงานหน้างานทีละขั้น ตั้งแต่เรียกคิวจนรับชำระเงิน",
+    topics: [
+      { q: "ขั้นตอนการรับบริการ", steps: ["เลือกผู้ป่วยจากรายการฝั่งซ้าย", "กด “เรียกคิว” ระบบจะประกาศเสียงเรียก", "กด “คัดกรองก่อนนวด” วัดความดัน ชีพจร ถามอาการ", "เลือกเตียงแล้ว “เริ่มรับบริการ” ระบบจับเวลาให้", "กด “จบการรักษา” → บันทึกการรักษา (วินิจฉัย หัตถการ Pain หลังนวด)", "เลือกวิธีชำระ เงินสด / พร้อมเพย์ / เครดิตคอร์ส → ออกใบเสร็จ"], tip: "ถ้าแถบคัดกรองเป็นสีแดง แปลว่าพบข้อห้าม ต้องให้แพทย์แผนไทยประเมินก่อนนวด" },
+      { q: "ดูข้อมูลสุขภาพระหว่างรับบริการ", steps: ["กดไอคอนหัวใจข้างปุ่มโทร", "กล่องข้อมูลสุขภาพเปิดทางขวา มีหุ่น 3D จุดที่ปวด และประวัติ Pain Score"] },
+      { q: "ผู้ป่วยไม่มา / ยกเลิกนัด", steps: ["กด “ไม่มา” ในขั้นรอเรียกคิว", "ถ้าผู้ป่วยมาถึงทีหลัง กด “ย้อนกลับ” ได้"] },
+    ],
+  },
+  {
+    id: "patients",
+    title: "ผู้มารับบริการ",
+    color: "#3b82c4",
+    Icon: PatientsIcon,
+    intro: "ลงทะเบียน ประวัติ ธาตุเจ้าเรือน และแผนการรักษา",
+    topics: [
+      { q: "ลงทะเบียนผู้ป่วยใหม่", steps: ["กดไอคอนเพิ่มคนมุมขวาบน", "ขั้น 1 ลงทะเบียน: กด “อ่านบัตร” เพื่อกรอกจากบัตรประชาชน หรือพิมพ์เอง", "ขั้น 2 คัดกรอง: แตะจุดที่ปวดบนหุ่น ตอบคำถามก่อนนวด (ข้ามได้)", "ขั้น 3 สรุป: ตรวจข้อมูลและผลวิเคราะห์ธาตุ แล้วกด “บันทึก”"], tip: "ถ้าเลขบัตรซ้ำกับคนที่มีอยู่ ระบบจะเตือนและพาไปเปิดประวัติเดิม" },
+      { q: "เลือกตำแหน่งบนหุ่น 3D", steps: ["ลากเพื่อหมุนดูรอบตัว", "แตะ = จุดที่ปวด (สีส้ม)", "กดค้าง = เมนูห้ามนวด (สีม่วง)", "แตะ × ที่ chip มุมซ้ายบนเพื่อเอาออก"] },
+      { q: "ค้นหาผู้ป่วย", steps: ["พิมพ์ชื่อ HN เบอร์โทร หรือเลขบัตรประชาชนในช่องค้นหา", "หรือกดไอคอนบัตรประชาชน แล้วเสียบบัตร ระบบจะเปิดประวัติให้ทันที"] },
+      { q: "แผนการรักษาโดย AI", steps: ["เปิดผู้ป่วย แล้วกด “ให้ AI วางแผน”", "แนบใบส่งตัวหรือผลตรวจได้ AI จะอ่านประกอบ", "แพทย์แผนไทยตรวจแล้วกด “แพทย์อนุมัติ” → “จองนัดตามแผน”"] },
+      { q: "พิมพ์ / บันทึก PDF", steps: ["กดไอคอนเครื่องพิมพ์ในหัวข้อมูลผู้ป่วย", "เลือกเครื่องพิมพ์ หรือ “บันทึกเป็น PDF” / แชร์"] },
+      { q: "แก้ไขข้อมูลผู้ป่วย", steps: ["กดไอคอนดินสอในหัวข้อมูลผู้ป่วย", "แก้ไขได้ทุกขั้นเหมือนตอนลงทะเบียน การแก้ไขจะบันทึกในประวัติการแก้ไข"] },
+    ],
+  },
+  {
+    id: "appointments",
+    title: "ตารางนัด",
+    color: "#d08a3c",
+    Icon: AppointmentsIcon,
+    intro: "นัดรายวัน รายสัปดาห์ และนัดตามคอร์ส",
+    topics: [
+      { q: "จองนัดใหม่", steps: ["กดปุ่มจองนัด หรือไอคอนปฏิทินที่หน้าผู้ป่วย", "เลือกผู้ป่วย บริการ วัน เวลา และผู้บำบัด", "ระบบเช็คเตียงว่างและวันพักระหว่างครั้งให้อัตโนมัติ"] },
+      { q: "นัดตามคอร์สการรักษา", steps: ["เปิดผู้ป่วยที่มีคอร์ส → จัดตารางนัด", "เลือกความถี่ ระบบจะจองครบทุกครั้งให้"] },
+    ],
+  },
+  {
+    id: "billing",
+    title: "คิดเงิน",
+    color: "#b0739a",
+    Icon: BillingIcon,
+    intro: "ใบเสร็จ ยอดรับชำระ และรายงาน",
+    topics: [
+      { q: "ยกเลิกใบเสร็จ / คืนเงิน", steps: ["เปิดใบเสร็จที่ต้องการ", "กด “ยกเลิกใบเสร็จ” แล้วระบุเหตุผล", "ถ้าชำระด้วยเครดิตคอร์ส ระบบคืนเครดิตให้อัตโนมัติ"] },
+      { q: "ส่งออกรายงาน", steps: ["เลือกช่วงวันที่", "กด “รายงาน” → ดาวน์โหลด CSV เปิดใน Excel ได้"] },
+    ],
+  },
+  {
+    id: "planner",
+    title: "จัดตารางงาน",
+    color: "#7c5cc4",
+    Icon: PlannerIcon,
+    intro: "ตารางผู้บำบัด ห้อง และเตียง",
+    topics: [{ q: "กำหนดวันเวลาทำงาน", steps: ["เลือกผู้บำบัด", "กด “กำหนดตารางงาน” แล้วเลือกวันและช่วงเวลา", "ระบบจะไม่ให้จองนัดนอกเวลางานของผู้บำบัด"] }],
+  },
+  {
+    id: "settings",
+    title: "ตั้งค่า",
+    color: "#66756b",
+    Icon: SettingsIcon,
+    intro: "ข้อมูลคลินิก กฎความปลอดภัย และข้อมูลระบบ",
+    topics: [
+      { q: "ตั้งเกณฑ์คัดกรอง", steps: ["ตั้งค่า → กฎคัดกรองความปลอดภัย", "กำหนดเกณฑ์ความดันห้ามนวด และจำนวนวันหลังผ่าตัด"] },
+      { q: "สำรอง / กู้คืนข้อมูล", steps: ["ตั้งค่า → ข้อมูลและการสำรอง", "กด “สำรองข้อมูล” เก็บไฟล์ไว้", "กด “กู้คืน” แล้วเลือกไฟล์สำรองเมื่อต้องการ"], tip: "ข้อมูลเก็บในเครื่องนี้เท่านั้น ควรสำรองเป็นประจำ" },
+      { q: "ตั้งพร้อมเพย์ของคลินิก", steps: ["ตั้งค่า → การรับชำระเงิน", "ใส่เบอร์หรือเลขผู้เสียภาษี QR ที่ใบเสร็จจะใช้เลขนี้"] },
+    ],
+  },
+  {
+    id: "ai",
+    title: "ผู้ช่วย AI",
+    color: "#7a5af0",
+    Icon: AiIcon,
+    intro: "ถามได้ทุกเรื่องเกี่ยวกับคลินิก",
+    topics: [{ q: "ใช้ผู้ช่วย AI", steps: ["กดลูกแก้วเรืองแสงท้ายแถบเมนู", "พิมพ์คำถาม เช่น “วันนี้มีคิวกี่คน” “ใครเครดิตใกล้หมด”", "กดแชทใหม่ หรือเปิดประวัติแชทเดิมได้"] }],
+  },
+];
+
+export function UserGuide() {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState<string | null>("visits:0");
+  const needle = q.trim().toLowerCase();
+  const chapters = CHAPTERS.map((c) => ({
+    ...c,
+    topics: c.topics.map((t, k) => ({ ...t, k })).filter((t) => !needle || `${c.title} ${t.q} ${t.steps.join(" ")} ${t.tip ?? ""}`.toLowerCase().includes(needle)),
+  })).filter((c) => c.topics.length);
+
+  return (
+    <div className="ug">
+      <div className="ug-hero">
+        <span className="ug-hero__icon">
+          <GraduationCap size={26} />
+        </span>
+        <div>
+          <b>คู่มือการใช้งาน ThaiWell</b>
+          <small>วิธีใช้ทุกเมนูแบบทีละขั้น · ค้นหาหัวข้อที่ต้องการได้ด้านล่าง</small>
+        </div>
+        <button type="button" onClick={startTour}>
+          <PlayCircle size={16} /> ดูคู่มือแนะนำเมนู
+        </button>
+      </div>
+
+      <label className="ug-search">
+        <Search size={16} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาวิธีใช้ เช่น ลงทะเบียน คืนเงิน หุ่น 3D" />
+      </label>
+
+      {chapters.length === 0 && <p className="ug-empty">ไม่พบหัวข้อ “{q}”</p>}
+
+      {chapters.map((c) => (
+        <section key={c.id} className="ug-ch" style={{ ["--c" as string]: c.color }}>
+          <header>
+            <span className="ug-ch__icon">
+              <c.Icon width={18} height={18} />
+            </span>
+            <div>
+              <b>{c.title}</b>
+              <small>{c.intro}</small>
+            </div>
+          </header>
+          <div className="ug-list">
+            {c.topics.map((t) => {
+              const id = `${c.id}:${t.k}`;
+              const on = open === id || !!needle;
+              return (
+                <div key={id} className={on ? "ug-item is-open" : "ug-item"}>
+                  <button type="button" onClick={() => setOpen(open === id ? null : id)} aria-expanded={on}>
+                    {t.q}
+                    <ChevronDown size={16} />
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {on && (
+                      <motion.div className="ug-body" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
+                        <ol>
+                          {t.steps.map((s, n) => (
+                            <li key={n}>
+                              <i>{n + 1}</i>
+                              {s}
+                            </li>
+                          ))}
+                        </ol>
+                        {t.tip && (
+                          <p className="ug-tip">
+                            <Lightbulb size={14} /> {t.tip}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
