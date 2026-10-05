@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { X, Plus, Sparkles, Hand, Leaf, TriangleAlert, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
@@ -17,7 +17,7 @@ import { AIPlanCard } from "../../features/AIPlan";
 import "../visits/visits.css";
 import { FilterMenu } from "../../features/FilterMenu";
 import { Workspace } from "../../features/Workspace";
-import { CardReaderDialog } from "../../features/CardReaderDialog";
+import { CardReaderDialog, type IdCardData } from "../../features/CardReaderDialog";
 import { PhotoSlot } from "../../features/PhotoSlot";
 import { BirthDateField, ageFrom, isFullDate, thaiBirth } from "../../features/BirthDateField";
 import { ListModeMenu } from "../../features/ListModeMenu";
@@ -106,6 +106,8 @@ export default function Patients() {
   const [selected, setSelected] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<string | null>(null);
   const navigate = useNavigate();
+  const toast = useToast();
+  const [findCard, setFindCard] = useState(false);
   const wide = useWide();
   const today = todayISO();
   const weekEnd = addISODays(today, 7);
@@ -136,7 +138,8 @@ export default function Patients() {
       if (filter === "course" && !r.c) return false;
       if (filter === "low" && !(r.c && r.c.remaining <= 1)) return false;
       if (filter === "week" && !(r.next && r.next.date <= weekEnd)) return false;
-      return !q || `${r.p.name} ${r.p.hn} ${r.p.phone} ${r.p.complaint}`.toLowerCase().includes(q);
+      const qd = q.replace(/\D/g, "");
+      return !q || `${r.p.name} ${r.p.hn} ${r.p.phone} ${r.p.complaint}`.toLowerCase().includes(q) || (qd.length >= 4 && !!r.p.citizenId?.includes(qd));
     });
     // soonest appointment first; patients without one go last, then by name
     return list.sort((a, b) => {
@@ -235,6 +238,9 @@ export default function Patients() {
         <>
           <SearchField className="phead-search" value={query} onChange={setQuery} />
           <FilterMenu value={filter} onChange={setFilter} options={STAT.map((f) => ({ value: f.key, label: f.label, count: stats[f.key], icon: f.icon }))} />
+          <IconButton label="อ่านบัตรประชาชน" onClick={() => setFindCard(true)}>
+            <IdCard size={20} strokeWidth={1.8} />
+          </IconButton>
           <IconButton label="เพิ่มผู้รับบริการ" variant="white" className="padd-btn" onClick={() => navigate("/patients/new")}>
             <UserPlus size={20} strokeWidth={1.8} />
           </IconButton>
@@ -329,6 +335,22 @@ export default function Patients() {
       )}
 
       <PatientDrawer id={drawer} onClose={() => setDrawer(null)} />
+      {/* insert an ID card: open the existing record, or start registration pre-filled */}
+      <CardReaderDialog
+        open={findCard}
+        onClose={() => setFindCard(false)}
+        onRead={(d) => {
+          const hit = store.patients.find((x) => x.citizenId === d.cid);
+          if (hit) {
+            setQuery("");
+            open(hit.id);
+            toast({ message: `พบประวัติ ${hit.name} · ${hit.hn}` });
+          } else {
+            toast({ message: `ยังไม่มีประวัติ ${d.title} ${d.first} ${d.last} · เริ่มลงทะเบียนใหม่` });
+            navigate("/patients/new", { state: { card: d } });
+          }
+        }}
+      />
     </WorkPage>
   );
 }
@@ -377,10 +399,14 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
   const [reader, setReader] = useState(false);
   const [fromCard, setFromCard] = useState(false);
   // load the patient when the edit dialog opens
+  // a card read on the list page arrives as router state
+  const location = useLocation();
+  const navigate = useNavigate();
+  const cardIn = (location.state as { card?: IdCardData } | null)?.card;
   useEffect(() => {
-    setF(edit ? fromPatient(edit) : empty);
+    setF(edit ? fromPatient(edit) : cardIn ? { ...empty, title: cardIn.title, first: cardIn.first, last: cardIn.last, gender: cardIn.gender, dob: cardIn.dob, cid: formatCid(cardIn.cid), address: cardIn.address } : empty);
     setStep(0);
-    setFromCard(false);
+    setFromCard(!edit && !!cardIn);
     const sc = edit?.screening;
     setScr(sc ? { bpSys: sc.bpSys ? String(sc.bpSys) : "", bpDia: sc.bpDia ? String(sc.bpDia) : "", pulse: sc.pulse ? String(sc.pulse) : "", fever: sc.fever, pregnant: !!sc.pregnant, recentSurgery: sc.recentSurgery, numbness: sc.numbness, bloodThinner: sc.bloodThinner, skinProblem: sc.skinProblem, pressure: sc.pressure, painAreas: areasOf(sc.painAreas ?? []), avoidAreas: areasOf(sc.avoid.split(/[,·]\s*/)), pain: sc.pain ?? null } : emptyScr);
     setHold(null);
@@ -389,7 +415,9 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
   const age = ageFrom(f.dob);
   const cidDigits = f.cid.replace(/\D/g, "");
   const cidOk = !cidDigits || validCitizenId(cidDigits);
-  const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && (!f.phone.trim() || /^[0-9-]{9,12}$/.test(f.phone)) && cidOk;
+  // the same ID card must not be registered twice
+  const dup = cidDigits.length === 13 ? store.patients.find((x) => x.citizenId === cidDigits && x.id !== edit?.id) : undefined;
+  const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && (!f.phone.trim() || /^[0-9-]{9,12}$/.test(f.phone)) && cidOk && !dup;
 
   const screening: CounterScreening | undefined = skipScr
     ? edit?.screening
@@ -564,8 +592,19 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
               </h4>
               <div className="ap-grid">
                 <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
-                  <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk} />
+                  <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk || !!dup} />
                 </Field>
+                {dup && (
+                  <div className="ap-dup span-3">
+                    <ShieldAlert size={16} />
+                    <span>
+                      เลขบัตรนี้ลงทะเบียนแล้ว · <b>{dup.name}</b> {dup.hn}
+                    </span>
+                    <button type="button" onClick={() => navigate(`/patients?id=${dup.id}`)}>
+                      เปิดประวัติ
+                    </button>
+                  </div>
+                )}
                 <Field label="คำนำหน้า">
                   <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
                     <option>นาย</option>

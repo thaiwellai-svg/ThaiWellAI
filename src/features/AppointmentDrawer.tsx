@@ -16,7 +16,8 @@ import { ClinicalRecord, RecSection } from "./ClinicalRecord";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
-import { ScreeningAlert } from "./ScreeningAlert";
+import { VisitScreening } from "./ScreeningAlert";
+import { ScreeningDialog } from "./ScreeningDialog";
 
 export { stageOf, type Stage } from "../data/domain";
 
@@ -81,6 +82,7 @@ export function AppointmentDrawer({
   }, [id]);
 
   const stage = appt ? stageOf(appt) : "waiting";
+  const [screenOpen, setScreenOpen] = useState(false);
   useEffect(() => {
     if (stage !== "treating") return;
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -285,7 +287,8 @@ export function AppointmentDrawer({
             </span>
           </div>
 
-          {stage !== "done" && <ScreeningAlert p={p} />}
+          {(stage === "waiting" || stage === "called" || stage === "treating") && <VisitScreening p={p} onScreen={() => setScreenOpen(true)} />}
+          <ScreeningDialog p={p} open={screenOpen} onClose={() => setScreenOpen(false)} />
 
           {stepIdx >= 0 ? (
             <ol className="vs__steps">

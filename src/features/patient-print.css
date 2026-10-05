@@ -1,0 +1,122 @@
+.pp-root {
+  display: none;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body > *:not(.pp-root) {
+    display: none !important;
+  }
+  .pp-root {
+    display: block;
+  }
+}
+.pp {
+  font: 400 11pt/1.5 var(--font-sans);
+  color: #1f2a22;
+}
+.pp__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 8pt;
+  margin-bottom: 10pt;
+  border-bottom: 2px solid #4c845a;
+}
+.pp h1 {
+  margin: 0;
+  font: 700 17pt/1.2 var(--font-sans);
+  color: #2f5f3f;
+}
+.pp__head p {
+  margin: 2pt 0 0;
+  font-weight: 600;
+}
+.pp__date {
+  font-size: 9.5pt;
+  color: #667;
+}
+.pp section {
+  margin-bottom: 10pt;
+  break-inside: avoid;
+}
+.pp h2 {
+  margin: 0 0 4pt;
+  padding: 3pt 8pt;
+  border-radius: 4pt;
+  background: #eef5ef;
+  font: 700 11.5pt/1.3 var(--font-sans);
+  color: #2f5f3f;
+}
+.pp table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.pp th,
+.pp td {
+  padding: 3pt 8pt;
+  border-bottom: 1px solid #e3e8e4;
+  text-align: left;
+  vertical-align: top;
+}
+.pp th {
+  width: 32%;
+  font-weight: 600;
+  color: #556;
+}
+.pp p {
+  margin: 4pt 0;
+}
+.pp__verdict {
+  padding: 5pt 8pt;
+  border-radius: 4pt;
+  background: #eaf7ef;
+  font-weight: 700;
+  color: #2f8a52;
+}
+.pp__verdict.is-warn {
+  background: #fdf4e3;
+  color: #b06a0c;
+}
+.pp__verdict.is-stop {
+  background: #fdecea;
+  color: #c0392b;
+}
+.pp__verdict span {
+  font-weight: 500;
+  color: #1f2a22;
+}
+.pp__muted {
+  color: #889;
+}
+.pp__phases {
+  margin: 4pt 0;
+  padding-left: 18pt;
+}
+.pp__sign {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 28pt;
+  break-inside: avoid;
+}
+.pp__sign div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4pt;
+  font-size: 10pt;
+  color: #556;
+}
+.pp__sign span {
+  width: 160pt;
+  border-bottom: 1px dotted #889;
+  height: 24pt;
+}

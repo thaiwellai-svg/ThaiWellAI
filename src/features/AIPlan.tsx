@@ -3,7 +3,7 @@ import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { ElementIcon } from "./ElementIcon";
 import { ageFrom, thaiBirth } from "./BirthDateField";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House } from "lucide-react";
+import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House, Printer } from "lucide-react";
 import { useStore } from "../store/store";
 import { Button, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
@@ -12,6 +12,7 @@ import type { AIPlan, Patient } from "../data/types";
 import { AI, THAI_MASSAGE_KNOWLEDGE, chatJSON, ocrFile } from "./ai";
 import { CoursePlanDialog } from "../pages/planner/PatientPlanner";
 import "./aiplan.css";
+import { usePatientPrint } from "./PatientPrint";
 
 /** ธาตุเจ้าเรือน · อายุสมุฏฐาน · อุตุสมุฏฐาน of the patient */
 export function ElementCard({ p }: { p: Patient }) {
@@ -85,6 +86,7 @@ export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side pan
   const [reading, setReading] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
   const plan = p.aiPlan;
+  const [print, printNode] = usePatientPrint(p);
 
   const attach = async (f: File) => {
     setReading(f.name);
@@ -395,6 +397,10 @@ ${THAI_MASSAGE_KNOWLEDGE}
                   จองนัดตามแผน
                 </Button>
               </div>
+              <Button variant="outline" size="md" leading={<Printer size={15} />} onClick={print}>
+                พิมพ์ / บันทึก PDF
+              </Button>
+              {printNode}
             </div>
           </motion.div>
         ) : (

@@ -1,8 +1,9 @@
 import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { ScreeningAlert } from "../../features/ScreeningAlert";
+import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -59,6 +60,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
   const today = todayISO();
+  const [print, printNode] = usePatientPrint(p ?? null);
 
   const visits = useMemo(
     () => (p ? store.appointments.filter((a) => a.patientId === p.id).sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start)) : []),
@@ -134,6 +136,10 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <Phone size={18} />
               </button>
             )}
+            <button type="button" className="pd__ib" onClick={print} aria-label="พิมพ์ / PDF" title="พิมพ์สรุปผลคัดกรองและแผนการรักษา">
+              <Printer size={18} />
+            </button>
+            {printNode}
             <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
               <CalendarPlus size={18} />
             </button>
