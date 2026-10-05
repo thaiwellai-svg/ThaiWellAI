@@ -117,7 +117,6 @@ function open(id, scroll = true) {
               </div>
               <span class="device__loop"><i></i></span>
             </div>
-            <button class="flow__zoom" data-src="${x.actions.length ? x.actions[x.actions.length - 1].frame : x.start}" data-cap="${x.n}. ${x.title}" aria-label="ขยายภาพ">⤢</button>
           </div>
           <div class="flow__text">
             <span class="flow__no">${x.n}</span>
@@ -136,7 +135,6 @@ function open(id, scroll = true) {
     </nav>`;
   wireFlow();
   L.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => open(b.dataset.go)));
-  L.querySelectorAll(".flow__zoom").forEach((b) => b.addEventListener("click", () => lightbox(b.dataset.src, b.dataset.cap)));
   L.querySelectorAll("[data-jump]").forEach((b) => b.addEventListener("click", () => $("#s-" + b.dataset.jump).scrollIntoView({ behavior: "smooth", block: "center" })));
   reveal();
   if (scroll) $(".layout").scrollIntoView({ behavior: "smooth", block: "start" });
