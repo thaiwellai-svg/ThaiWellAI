@@ -2,7 +2,6 @@ import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
-import "../../features/visit.css";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -120,9 +119,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
           </div>
           <div className="pd__actions pd__icons">
             {onHealth && (
-              <button type="button" className={healthOpen ? "vs__hbtn is-on" : "vs__hbtn"} aria-pressed={!!healthOpen} onClick={onHealth} title={healthOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}>
-                <HeartPulse size={16} />
-                <span>ข้อมูลสุขภาพ</span>
+              <button type="button" className={healthOpen ? "pd__ib is-on" : "pd__ib"} aria-pressed={!!healthOpen} onClick={onHealth} aria-label="ข้อมูลสุขภาพ" title={healthOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}>
+                <HeartPulse size={18} />
               </button>
             )}
             {onEdit && (

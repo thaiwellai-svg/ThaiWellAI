@@ -2609,3 +2609,7 @@
 .sm-el__tiles > div {
   align-content: start;
 }
+.pd__ib.is-on {
+  background: var(--color-brand-tint);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
