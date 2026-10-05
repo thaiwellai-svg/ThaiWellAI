@@ -1492,11 +1492,10 @@
   top: 0;
   right: 0;
   bottom: 0;
-  width: 168px;
+  width: 120px;
 }
 .ap-card__id {
-  left: 8px;
-  width: 88px;
+  left: 22px;
 }
 .ap-card em {
   position: relative;
