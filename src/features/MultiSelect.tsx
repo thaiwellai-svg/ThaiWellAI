@@ -11,7 +11,7 @@ export function MultiSelect({
   options,
   placeholder = "เลือก…",
   none = "ไม่มี",
-  tone = "#3b82c4",
+  tone = "var(--color-text)",
   icon,
 }: {
   value: string[];

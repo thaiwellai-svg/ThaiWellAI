@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, Plus, Stethoscope, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, Plus, ChevronLeft, Activity, Ban, Thermometer, Scissors, Droplet, Zap, Bandage, Baby, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -733,10 +733,10 @@ function PatientForm({ onClose, onCreated, edit }: { onClose: () => void; onCrea
                   })}
                 </div>
                 <Field label="โรคประจำตัว">
-                  <MultiSelect value={splitList(f.conditions)} onChange={(v) => setF({ ...f, conditions: v.join(", ") })} options={CONDITIONS} placeholder="เลือกโรคประจำตัว" none="ไม่มีโรคประจำตัว" tone="#c2482b" icon={<Stethoscope size={16} />} />
+                  <MultiSelect value={splitList(f.conditions)} onChange={(v) => setF({ ...f, conditions: v.join(", ") })} options={CONDITIONS} placeholder="เลือกโรคประจำตัว" none="ไม่มีโรคประจำตัว" />
                 </Field>
                 <Field label="การแพ้ยา / น้ำมัน / สมุนไพร">
-                  <MultiSelect value={splitList(f.allergies)} onChange={(v) => setF({ ...f, allergies: v.join(", ") })} options={ALLERGIES} placeholder="เลือกสิ่งที่แพ้" none="ไม่มีประวัติแพ้" tone="#d97706" icon={<ShieldAlert size={16} />} />
+                  <MultiSelect value={splitList(f.allergies)} onChange={(v) => setF({ ...f, allergies: v.join(", ") })} options={ALLERGIES} placeholder="เลือกสิ่งที่แพ้" none="ไม่มีประวัติแพ้" />
                 </Field>
               </div>
             </section>
