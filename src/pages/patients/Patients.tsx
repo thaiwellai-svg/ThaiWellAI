@@ -522,15 +522,20 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               <Field label="เพศ *">
                 <div className="ap-gender">
                   {(["ชาย", "หญิง"] as const).map((g) => (
-                    <button
+                    <motion.button
                       key={g}
                       type="button"
                       className="tw-chip"
                       aria-pressed={f.gender === g}
+                      whileTap={{ scale: 0.92 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 26 }}
                       onClick={() => setF({ ...f, gender: g, title: g === "ชาย" ? "นาย" : f.title === "นาย" ? "นางสาว" : f.title })}
                     >
-                      {g}
-                    </button>
+                      {f.gender === g && (
+                        <motion.span layoutId="ap-gender-pill" className="ap-gender__pill" transition={{ type: "spring", stiffness: 420, damping: 32 }} />
+                      )}
+                      <span className="ap-gender__t">{g}</span>
+                    </motion.button>
                   ))}
                 </div>
               </Field>

@@ -1266,4 +1266,17 @@
   height: 36px;
   padding: 0;
   font-size: 13.5px;
+  position: relative;
+  isolation: isolate;
+  transition: color 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
+}
+.ap-gender .tw-chip[aria-pressed="true"] {
+  background: var(--white);
+}
+.ap-gender__pill {
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--color-text);
 }
