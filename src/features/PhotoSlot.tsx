@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, ShieldCheck, X } from "lucide-react";
+import { Camera, Loader2, X } from "lucide-react";
 import { useToast } from "../design-system";
 import { fileToPortrait } from "./photo";
 import "./photo-slot.css";
 
 /** registration photo: big tile + "ถ่ายรูป" / "เลือกจากคลังภาพ" + consent note */
-export function PhotoSlot({ value, onChange }: { value?: string; onChange: (dataUrl: string) => void }) {
+export function PhotoSlot({ value, onChange, name = "" }: { value?: string; onChange: (dataUrl: string) => void; /** first name — its first letter stands in until there is a photo */ name?: string }) {
+  // first Thai consonant/letter (skip leading vowels like เ แ โ ใ ไ)
+  const initial = name.trim().replace(/^[เแโใไ]/, "").charAt(0);
   const cam = useRef<HTMLInputElement>(null);
   const lib = useRef<HTMLInputElement>(null);
   const toast = useToast();
@@ -27,10 +29,7 @@ export function PhotoSlot({ value, onChange }: { value?: string; onChange: (data
         {value ? (
           <img src={value} alt="" />
         ) : (
-          <svg viewBox="0 0 96 96" className="pslot__ph" aria-hidden>
-            <circle cx="48" cy="38" r="17" />
-            <path d="M14 96c2-20 16-32 34-32s32 12 34 32Z" />
-          </svg>
+          <span className="pslot__ini">{initial || "?"}</span>
         )}
         {busy && (
           <span className="pslot__busy">
@@ -46,9 +45,7 @@ export function PhotoSlot({ value, onChange }: { value?: string; onChange: (data
           <X size={12} strokeWidth={2.8} />
         </button>
       )}
-      <small className="pslot__note">
-        <ShieldCheck size={12} /> แตะรูปเพื่อถ่ายหรือเลือกรูป · เมื่อผู้ป่วยยินยอมเท่านั้น
-      </small>
+      <span className="pslot__label">{value ? "เปลี่ยนรูป" : "เพิ่มรูป"}</span>
       <input ref={cam} type="file" accept="image/*" capture="user" hidden onChange={(e) => (pick(e.target.files?.[0]), (e.target.value = ""))} />
       <input ref={lib} type="file" accept="image/*" hidden onChange={(e) => (pick(e.target.files?.[0]), (e.target.value = ""))} />
     </div>

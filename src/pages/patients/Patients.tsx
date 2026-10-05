@@ -494,7 +494,7 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
               <em>{fromCard ? "อ่านใหม่" : "อ่านบัตร"}</em>
             </button>
           )}
-          <PhotoSlot value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
+          <PhotoSlot name={f.first} value={f.photo || undefined} onChange={(photo) => setF({ ...f, photo })} />
           <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr", gap: 12 }}>
             <Field label="คำนำหน้า">
               <Select value={f.title} onChange={(e) => setF({ ...f, title: e.target.value, gender: e.target.value === "นาย" ? "ชาย" : "หญิง" })}>
