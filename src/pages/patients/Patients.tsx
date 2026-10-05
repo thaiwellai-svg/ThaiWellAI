@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { X, PersonStanding, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
+import { X, IdCard, PhoneCall, HeartPulse, CreditCard, Check, ShieldAlert, ShieldCheck, Maximize2, Minimize2, CalendarRange, ClipboardPlus, Hourglass, ListFilter, UserPlus, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, EmptyState, Field, IconButton, Input, SearchField, Select, Textarea, useToast } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -618,12 +618,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
         <div className="ap-pane ap-cols ap-scr">
           <div className="ap-col">
             <section className="ap-sec ap-body">
-              <h4>
-                <span style={{ ["--c" as string]: "#3b82c4" }}>
-                  <PersonStanding size={14} />
-                </span>
-                ตำแหน่งบนร่างกาย
-              </h4>
               <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} onToggle={toggleArea} onHold={(area, at) => setHold({ area, ...at })}>
                 {(scr.painAreas.length > 0 || scr.avoidAreas.length > 0) && (
                   <div className="ap-body__picked">
