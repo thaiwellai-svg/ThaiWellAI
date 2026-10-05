@@ -207,8 +207,8 @@ export default function Patients() {
             ...(solo ? [] : [{ id: "list", width: slim || (aiOpen && current) ? 96 : 300, min: slim || (aiOpen && current) ? 96 : undefined, fixed: true, collapsible: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: listPane }]),
             {
               id: "detail",
-              locked: true,
-              menu: (
+              // ••• → resize against the AI panel (edge grip), move, or expand to full screen
+              actions: (
                 <button type="button" className="ws__icon" onClick={() => setSolo((v) => !v)} aria-label={solo ? "แสดงรายการ" : "ขยายเต็มจอ"} title={solo ? "แสดงรายการ" : "ขยายเต็มจอ"}>
                   {solo ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
                 </button>
@@ -242,7 +242,7 @@ export default function Patients() {
                             </IconButton>
                           </div>
                           <div className="vp__hist-body scroll-y scroll-y--light">
-                            <AIPlanCard p={store.patientById(current)} panel />
+                            <AIPlanCard key={current} p={store.patientById(current)} panel />
                           </div>
                         </div>
                       </div>

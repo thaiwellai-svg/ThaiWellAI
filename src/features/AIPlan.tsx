@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X } from "lucide-react";
@@ -150,6 +150,14 @@ ${THAI_MASSAGE_KNOWLEDGE}
       setBusy(false);
     }
   };
+
+  // side panel: no plan yet → start analysing straight away (once per patient)
+  const started = useRef<string | null>(null);
+  useEffect(() => {
+    if (!panel || plan || busy || started.current === p.id) return;
+    started.current = p.id;
+    void generate();
+  }, [panel, p.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const approve = () => {
     if (!plan) return;
