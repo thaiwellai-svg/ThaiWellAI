@@ -38,7 +38,23 @@
   font: 500 12px/1.4 var(--font-sans);
   color: rgba(255, 255, 255, 0.85);
 }
-.ug-hero button {
+.ug-hero__btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ug-hero__btns > * {
+  justify-content: center;
+  text-decoration: none;
+}
+.ug-hero__btns .is-main {
+  background: #ffe9a8;
+  color: #5a4300;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+.ug-hero button,
+.ug-hero__btns a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -195,4 +211,7 @@
 .ug-tip svg {
   flex-shrink: 0;
   margin-top: 2px;
+}
+.ug-hero > .ug-hero__btns {
+  flex: 0 0 auto;
 }

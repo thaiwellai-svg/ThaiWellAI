@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>ThaiWell · สอนการใช้งาน</title>
+    <meta name="description" content="Tutorial สอนการใช้งานระบบ ThaiWell ทีละฟีเจอร์ พร้อมวิดีโอและภาพหน้าจอ" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="tutorial.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__glow"></div>
+      <nav class="hero__bar">
+        <span class="brand"><span class="brand__mark">✦</span> ThaiWell <em>Academy</em></span>
+        <a class="hero__back" href="../">กลับเข้าระบบ →</a>
+      </nav>
+      <div class="hero__body">
+        <p class="hero__eyebrow">คู่มือการใช้งานฉบับเต็ม</p>
+        <h1>เรียนรู้ ThaiWell<br /><span>ทีละฟีเจอร์ ด้วยวิดีโอจริง</span></h1>
+        <p class="hero__lead">ดูวิดีโอสาธิตจากหน้าจอจริง แตะขั้นตอนเพื่อข้ามไปจุดนั้น และดูภาพหน้าจอประกอบทุกขั้น</p>
+        <div class="hero__stats" id="stats"></div>
+        <button class="btn btn--light" id="start">▶ เริ่มเรียนบทแรก</button>
+      </div>
+      <div class="hero__cards" id="heroCards" aria-hidden="true"></div>
+    </header>
+
+    <main class="layout">
+      <aside class="toc" id="toc" aria-label="บทเรียน"></aside>
+      <section class="lesson" id="lesson" aria-live="polite"></section>
+    </main>
+
+    <div class="lightbox" id="lightbox" hidden>
+      <button class="lightbox__x" aria-label="ปิด">✕</button>
+      <img alt="" />
+      <p></p>
+    </div>
+
+    <script src="tutorial.js"></script>
+  </body>
+</html>

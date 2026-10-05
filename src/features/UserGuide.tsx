@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, GraduationCap, Lightbulb, PlayCircle, Search, Sparkles } from "lucide-react";
+import { ChevronDown, GraduationCap, Lightbulb, MonitorPlay, PlayCircle, Search, Sparkles } from "lucide-react";
 import { AppointmentsIcon, BillingIcon, HomeIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
 import { startTour } from "./Tour";
 import "./user-guide.css";
@@ -121,9 +121,14 @@ export function UserGuide() {
           <b>คู่มือการใช้งาน ThaiWell</b>
           <small>วิธีใช้ทุกเมนูแบบทีละขั้น · ค้นหาหัวข้อที่ต้องการได้ด้านล่าง</small>
         </div>
-        <button type="button" onClick={startTour}>
-          <PlayCircle size={16} /> ดูคู่มือแนะนำเมนู
-        </button>
+        <div className="ug-hero__btns">
+          <a className="is-main" href={`${import.meta.env.BASE_URL}tutorial/`} target="_blank" rel="noopener">
+            <MonitorPlay size={16} /> ดูแบบเต็ม · วิดีโอสอน
+          </a>
+          <button type="button" onClick={startTour}>
+            <PlayCircle size={16} /> แนะนำเมนู
+          </button>
+        </div>
       </div>
 
       <label className="ug-search">
