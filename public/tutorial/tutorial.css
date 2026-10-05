@@ -1150,3 +1150,6 @@ img {
   animation: none !important;
   transform: scaleX(0);
 }
+.flow::before {
+  display: none;
+}
