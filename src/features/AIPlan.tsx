@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand } from "lucide-react";
 import { useStore } from "../store/store";
 import { Badge, Button, useToast } from "../design-system";
-import { ELEMENT_INFO, TH_MONTH, elementProfile, type Element } from "../data/elements";
+import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
 import { addISODays, thaiDate, todayISO } from "../data/thaiDate";
 import type { AIPlan, Patient } from "../data/types";
 import { AI, THAI_MASSAGE_KNOWLEDGE, chatJSON, ocrFile } from "./ai";
@@ -20,18 +20,6 @@ export function ElementCard({ p }: { p: Patient }) {
   const [dob, setDob] = useState(p.birthDate ?? "");
   const prof = elementProfile(p);
   const info = ELEMENT_INFO[prof.birth];
-  const chip = (label: string, el: Element, sub: string) => (
-    <span className="el2-chip" style={{ ["--c" as string]: ELEMENT_INFO[el].color, ["--t" as string]: ELEMENT_INFO[el].tint }}>
-      <i>
-        <ElementIcon element={el} size={15} strokeWidth={2.2} />
-      </i>
-      <span>
-        <small>{label}</small>
-        <b>ธาตุ{el}</b>
-        <em>{sub}</em>
-      </span>
-    </span>
-  );
   return (
     <section className="pd__card pd__card--wide el2" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
       <div className="el2__head">
@@ -80,10 +68,6 @@ export function ElementCard({ p }: { p: Patient }) {
             <b>ธาตุ{prof.birth}</b>
             <p>{info.trait}</p>
           </div>
-        </div>
-        <div className="el2__chips">
-          {chip("อายุสมุฏฐาน", prof.age.element, prof.age.label)}
-          {chip("อุตุสมุฏฐาน", prof.season.element, prof.season.label)}
         </div>
       </div>
       <div className="el2__kv">

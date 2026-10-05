@@ -823,3 +823,7 @@
 .el2__save:disabled {
   opacity: 0.45;
 }
+/* only the birth element is shown */
+.el2__body {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
