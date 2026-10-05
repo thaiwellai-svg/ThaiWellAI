@@ -114,6 +114,12 @@ export function Workspace({ storageKey, panes, className, flexMin = 420 }: { sto
   };
   const resize = (id: string, w: number) => setLayout((l) => ({ ...l, widths: { ...l.widths, ...fit({ ...l.widths, [id]: w }, id) } }));
 
+  // panes added after the first paint slide in empty and fill once they land
+  const booted = useRef(false);
+  useEffect(() => {
+    booted.current = true;
+  }, []);
+
   return (
     <Reorder.Group as="div" axis="x" values={order} onReorder={reorder} className={clsx("ws", focus && "ws--editing", className)} ref={root}>
       <AnimatePresence initial={false}>
@@ -121,6 +127,7 @@ export function Workspace({ storageKey, panes, className, flexMin = 420 }: { sto
           <Pane
             key={id}
             def={byId[id]}
+            entering={booted.current}
             width={byId[id].width ? eff[id] : undefined}
             focused={focus === id}
             dimmed={!!focus && focus !== id}
@@ -160,7 +167,9 @@ function Pane({
   neighbors,
   onResizeOther,
   flexMin,
+  entering,
 }: {
+  entering?: boolean;
   neighbors?: ({ side: "left" | "right"; id: string; w: number; min?: number; max?: number } | null)[];
   onResizeOther?: (id: string, w: number) => void;
   flexMin?: number;
@@ -176,6 +185,15 @@ function Pane({
   const controls = useDragControls();
   const down = useRef<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  // while a side box slides in/out its content keeps its final width and is clipped, so it never re-lays out per frame
+  const [sliding, setSliding] = useState(false);
+  // content of a box that just opened mounts after the slide, so the slide itself stays at 60fps
+  const [ready, setReady] = useState(() => !(def.collapsible && entering));
+  useEffect(() => {
+    if (ready) return;
+    const t = window.setTimeout(() => setReady(true), 600);
+    return () => window.clearTimeout(t);
+  }, [ready]);
 
   const startResize = (e: React.PointerEvent) => {
     e.preventDefault();
@@ -221,12 +239,17 @@ function Pane({
       dragControls={controls}
       onDragStart={() => setDragging(true)}
       onDragEnd={() => setDragging(false)}
-      className={clsx("ws__pane", focused && "is-focused", dimmed && "is-dimmed", dragging && "is-dragging", !width && "is-flex", def.locked && "is-locked", def.fixed && "is-fixed", def.ghost && "is-ghost")}
+      className={clsx("ws__pane", sliding && "is-sliding", focused && "is-focused", dimmed && "is-dimmed", dragging && "is-dragging", !width && "is-flex", def.locked && "is-locked", def.fixed && "is-fixed", def.ghost && "is-ghost")}
       style={{ ...size, ["--pw" as string]: width ? `${width}px` : undefined }}
       initial={def.collapsible ? { opacity: 0, width: 0 } : false}
       animate={def.collapsible ? { opacity: 1, width } : undefined}
       exit={def.collapsible ? { opacity: 0, width: 0, transition: { duration: 0.32, ease: [0.4, 0, 0.2, 1] } } : undefined}
       transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+      onAnimationStart={() => def.collapsible && setSliding(true)}
+      onAnimationComplete={() => {
+        setSliding(false);
+        setReady(true);
+      }}
     >
       {!def.locked && (
       <button
@@ -268,7 +291,9 @@ function Pane({
         )}
       </AnimatePresence>
 
-      <div className="ws__body">{typeof def.node === "function" ? def.node(focused) : def.node}</div>
+      <div className={clsx("ws__body", !ready && "is-pending")} style={sliding && width ? { minWidth: width, maxWidth: width } : undefined}>
+        {ready ? (typeof def.node === "function" ? def.node(focused) : def.node) : <div className="panel ws__ghost"><div className="sheet" /></div>}
+      </div>
 
       {focused &&
         neighbors?.map(

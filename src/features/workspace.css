@@ -333,3 +333,21 @@
 .ws__bar:not(:has(span)) {
   padding: 5px;
 }
+/* a side box sliding in/out: clip its fixed-width content instead of re-laying it out every frame */
+.ws__pane.is-sliding {
+  overflow: clip;
+}
+.ws__pane.is-sliding .ws__body {
+  will-change: auto;
+}
+/* a box that just opened: plain sheet while sliding, then its content fades in */
+.ws__ghost .sheet {
+  height: 100%;
+}
+.ws__body:not(.is-pending) > .panel {
+  animation: ws-content-in 0.22s ease-out;
+}
+@keyframes ws-content-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

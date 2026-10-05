@@ -381,7 +381,9 @@ export function Body3D({
     const el = host.current!;
     let disposed = false;
     let cleanup = () => {};
-    loadModel(sex === "หญิง" ? "body_female.glb" : "body_male.glb").then((model) => {
+    // start after the surrounding box has finished sliding in — model setup + first paint are heavy and would stutter the slide
+    const startAfter = new Promise<void>((r) => window.setTimeout(r, 300));
+    Promise.all([loadModel(sex === "หญิง" ? "body_female.glb" : "body_male.glb"), startAfter]).then(([model]) => {
       if (disposed) return;
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio)); // retina at 2× costs ~80% more pixels for little visible gain
@@ -775,7 +777,11 @@ export function Body3D({
         camera.updateProjectionMatrix();
         kick();
       };
-      const ro = new ResizeObserver(resize);
+      let resizeRaf = 0;
+      const ro = new ResizeObserver(() => {
+        cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(resize);
+      });
       ro.observe(el);
       resize();
 
@@ -796,6 +802,7 @@ export function Body3D({
       cleanup = () => {
         cancelAnimationFrame(raf);
         ro.disconnect();
+        cancelAnimationFrame(resizeRaf);
         controls.dispose();
         material.dispose();
         eyeMaterial.dispose();
