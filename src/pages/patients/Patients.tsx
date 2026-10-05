@@ -641,14 +641,6 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                     ))}
                   </div>
                 )}
-                <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
-                  <small>ปวด</small>
-                  {Array.from({ length: 11 }, (_, n) => 10 - n).map((n) => (
-                    <button key={n} type="button" role="radio" aria-checked={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
-                      {n}
-                    </button>
-                  ))}
-                </div>
                 {hold && (
                   <motion.div className="ap-hold" style={{ left: hold.x, top: hold.y }} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 30 }}>
                     <b>{hold.area}</b>
@@ -668,6 +660,15 @@ function AddPatientDialog({ open, onClose, onCreated, edit }: { open: boolean; o
                 )}
               </Body3D>
               <p className="ap-body__hint">แตะ = จุดที่ปวด · กดค้าง = ห้ามนวด</p>
+              <Field label="ระดับความปวด (0–10)">
+                <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
+                  {Array.from({ length: 11 }, (_, n) => n).map((n) => (
+                    <button key={n} type="button" role="radio" aria-checked={scr.pain === n} style={{ ["--pc" as string]: n >= 7 ? "#d8392a" : n >= 4 ? "#e08a1e" : "#2f9a5b" }} onClick={() => setScr({ ...scr, pain: scr.pain === n ? null : n })}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </Field>
             </section>
           </div>
           <div className="ap-col">
