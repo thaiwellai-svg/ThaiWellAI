@@ -5,7 +5,9 @@ import { createSeed, DEFAULT_SETTINGS, SERVICES, THERAPISTS } from "../data/seed
 import { todayISO } from "../data/thaiDate";
 import { withBirthDate } from "../data/elements";
 import { defaultBiz, type Biz } from "../data/biz";
-import { beat, BRIDGE_KEY, sendToApp, takeNewAppEvents, type AppEvent } from "../features/appBridge";
+import { beat, BRIDGE_KEY, publishAvailability, sendToApp, takeNewAppEvents, type AppEvent } from "../features/appBridge";
+import { slotLoad } from "../features/slotLoad";
+import { staffState } from "../data/domain";
 
 interface State {
   version: number;
@@ -413,6 +415,28 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       clearInterval(t);
     };
   }, []);
+  // ประกาศเวลาว่างจริง 7 วันข้างหน้า (สูตรเดียวกับหน้าอนุมัติ: เตียงว่าง + ผู้บำบัดเข้าเวร รับบริการนั้น ยังไม่มีคิว)
+  useEffect(() => {
+    const days: Record<string, Record<string, Record<string, string[]>>> = {};
+    const base = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const beds = slotLoad(state.appointments, date, state.settings);
+      const now = new Date();
+      const nowHM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      for (const slot of beds) {
+        if (slot.free <= 0 || (i === 0 && slot.time <= nowHM)) continue;
+        for (const svc of state.services) {
+          const free = state.therapists.filter((t) => staffState(t, { date, start: slot.time, serviceId: svc.id }, state.appointments) === "free").map((t) => t.id);
+          if (!free.length) continue;
+          ((days[date] ??= {})[slot.time] ??= {})[svc.id] = free;
+        }
+      }
+    }
+    publishAvailability({ at: new Date().toISOString(), clinicName: state.settings.clinicName, therapists: state.therapists.map((t) => ({ id: t.id, name: t.name, role: t.role })), days });
+  }, [state.appointments, state.therapists, state.services, state.settings]);
   // ส่ง: ผลการพิจารณาคำขอจากแอป · นวดเสร็จ (คะแนนหลังนวด) · ยกเลิก/ไม่มา
   useEffect(() => {
     for (const d of state.decisions) {

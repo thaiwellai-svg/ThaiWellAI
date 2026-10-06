@@ -73,6 +73,19 @@ export function sendToApp(key: string, event: NoMeta<ClinicEvent>) {
   write(SENT_KEY, [...sent, key].slice(-500));
 }
 
+/**
+ * เวลาว่างจริงของคลินิก 7 วันข้างหน้า → แอปใช้แสดงแพทย์/เวลาตอนจอง (แทนตารางตัวอย่างของแอป)
+ * days[YYYY-MM-DD][HH:mm][serviceId] = id ผู้บำบัดที่ว่าง (มีเตียงว่าง · เข้าเวร · รับบริการนั้น · ยังไม่มีคิว)
+ */
+export const AVAILABILITY_KEY = "thaiwell.bridge.availability";
+export interface Availability {
+  at: string;
+  clinicName: string;
+  therapists: { id: string; name: string; role: string }[];
+  days: Record<string, Record<string, Record<string, string[]>>>;
+}
+export const publishAvailability = (a: Availability) => write(AVAILABILITY_KEY, a);
+
 /** หลังบ้านเปิดอยู่ (แอปใช้ตัดสินว่าจะรอคลินิกยืนยันจริง หรือจำลองเอง) */
 export const beat = () => {
   try {
