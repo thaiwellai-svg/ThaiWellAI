@@ -5,6 +5,7 @@ import { queueNumber } from "../features/AppointmentDrawer";
 import { todayISO } from "../data/thaiDate";
 import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
 import { AVAILABILITY_KEY } from "../features/appBridge";
+import { DEMO } from "../data/mode";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
@@ -73,14 +74,18 @@ export function CloudBridge() {
     const st = ref.current;
     const cp = row.tw_patients;
     const digits = cp?.phone?.replace(/\D/g, "") ?? "";
-    const found = st.patients.find((p) => p.cloudId === row.patient_id) ?? (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits) : undefined);
+    // ผู้ป่วยเดิมของคลินิก: บัญชีแอปเดียวกัน → เลขบัตรประชาชนตรงกัน → เบอร์โทรตรงกัน
+    const found =
+      st.patients.find((p) => p.cloudId === row.patient_id) ??
+      (cp?.citizen_id ? st.patients.find((p) => p.citizenId?.replace(/\D/g, "") === cp.citizen_id) : undefined) ??
+      (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits) : undefined);
     if (found) {
-      if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id } });
+      if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
       return found;
     }
     const p: Patient = {
       id: `pc${Date.now().toString(36)}`,
-      hn: `HN${String(641_000 + st.patients.length).padStart(7, "0")}`,
+      hn: `HN${String(641_000 + st.patients.length + 1).padStart(7, "0")}`,
       name: cp?.name ?? "ผู้ใช้แอป",
       gender: cp?.gender === "ชาย" ? "ชาย" : "หญิง",
       age: cp?.age ?? 30,
@@ -90,6 +95,11 @@ export function CloudBridge() {
       painHistory: [],
       registeredOn: todayISO(),
       cloudId: row.patient_id,
+      // ยืนยันตัวตนด้วยบัตรประชาชนในแอปแล้ว
+      ...(cp?.citizen_id ? { citizenId: cp.citizen_id } : {}),
+      ...(cp?.birth_date ? { birthDate: cp.birth_date } : {}),
+      ...(cp?.address ? { address: cp.address } : {}),
+      ...(cp?.email ? { email: cp.email } : {}),
     };
     st.dispatch({ type: "addPatient", patient: p });
     void cloud.from("tw_patients").update({ clinic_hn: p.hn }).eq("id", row.patient_id);
@@ -134,7 +144,7 @@ export function CloudBridge() {
         patientId: p.id,
         serviceId: serviceFor(row.service),
         // ผู้บำบัดที่ผู้ป่วยเลือกในแอป (ตามชื่อ) · ไม่ระบุ = คนแรก
-        therapistId: st.therapists.find((t) => row.therapist && (t.name === row.therapist || row.therapist.includes(t.name) || t.name.includes(row.therapist)))?.id ?? st.therapists[0].id,
+        therapistId: st.therapists.find((t) => row.therapist && (t.name === row.therapist || row.therapist.includes(t.name) || t.name.includes(row.therapist)))?.id ?? st.therapists[0]?.id ?? "",
         date: row.date ?? todayISO(),
         start: row.start ?? "10:00",
         painScore: as.pain ?? 5,
@@ -154,7 +164,7 @@ export function CloudBridge() {
       if (["confirmed", "checked_in"].includes(row.status) && row.date && row.start && !st.requests.some((r) => r.cloudId === row.id) && !adopting.current.has(row.id)) {
         adopting.current.add(row.id);
         const p = patientFor(row);
-        const t = st.therapists.find((x) => x.name === row.therapist) ?? st.therapists[0];
+        const t = st.therapists.find((x) => x.name === row.therapist) ?? st.therapists[0] ?? { id: "" };
         st.dispatch({
           type: "schedule",
           items: [{ patientId: p.id, serviceId: serviceFor(row.service), therapistId: t.id, date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
@@ -207,7 +217,8 @@ export function CloudBridge() {
     let alive = true;
     const join = "*, tw_patients(*)";
     // ข้อมูลสาธิตชุดเดียวกับแอป: รีเซ็ตที่ขอไว้ → ใส่ใหม่ทั้งหมด · ครั้งแรก → ใส่ส่วนที่ยังไม่มี
-    void (takeDemoReseed() ? resetDemoCloud(ref.current) : ensureDemoCloud(ref.current))
+    // ข้อมูลสาธิต (เฉพาะโหมดสาธิต/ทดสอบ) · ใช้งานจริงไม่แตะ cloud
+    void (!DEMO ? Promise.resolve() : takeDemoReseed() ? resetDemoCloud(ref.current) : ensureDemoCloud(ref.current))
       .catch(() => undefined)
       .then(() => cloud
       .from("tw_appointments")

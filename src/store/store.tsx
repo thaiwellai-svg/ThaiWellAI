@@ -5,11 +5,12 @@ import { createSeed, DEFAULT_SETTINGS, SERVICES, THERAPISTS } from "../data/seed
 import { todayISO } from "../data/thaiDate";
 import { withBirthDate } from "../data/elements";
 import { defaultBiz, type Biz } from "../data/biz";
+import { DEMO } from "../data/mode";
 import { beat, BRIDGE_KEY, publishAvailability, sendToApp, takeNewAppEvents, type AppEvent } from "../features/appBridge";
 import { slotLoad } from "../features/slotLoad";
 import { staffState } from "../data/domain";
 
-interface State {
+export interface State {
   version: number;
   seededOn: string;
   patients: Patient[];
@@ -59,10 +60,41 @@ type Action =
   | { type: "setKeepData"; on: boolean }
   | { type: "biz"; update: (b: Biz) => Biz; log: string; cat?: AuditEntry["cat"]; patientId?: string }
   | { type: "bridgeIn"; event: AppEvent }
-  | { type: "reset" };
+  | { type: "reset" }
+  /** ข้อมูลจากฐานข้อมูล (ตอนเข้าสู่ระบบ) */
+  | { type: "hydrate"; state: State }
+  /** อีกเครื่องแก้ข้อมูล (realtime) — item = null คือถูกลบ */
+  | { type: "remote"; collection: Collection; id: string; item: unknown | null };
 
 const VERSION = 26;
 const KEY = "thaiwell.backoffice";
+
+const MISSING_PATIENT: Patient = { id: "", hn: "-", name: "ไม่พบข้อมูลผู้ป่วย", gender: "หญิง", age: 0, phone: "", conditions: [], complaint: "", painHistory: [], registeredOn: "" };
+const MISSING_THERAPIST: Therapist = { id: "", name: "ยังไม่ระบุผู้บำบัด", role: "", color: "#8a8f87", shifts: [], services: [] };
+
+/** ชุดข้อมูลในฐานข้อมูล (bo_store.collection) */
+export const COLLECTIONS = ["patients", "appointments", "requests", "decisions", "notifications", "therapists", "services", "audit"] as const;
+export type Collection = (typeof COLLECTIONS)[number] | "meta";
+
+/** ใช้งานจริง: เริ่มจากว่าง — มีแค่บริการตั้งต้น (แก้ได้ในตั้งค่า) และค่าตั้งต้นของคลินิก */
+export function emptyLive(): State {
+  const b = defaultBiz();
+  return {
+    version: VERSION,
+    seededOn: todayISO(),
+    patients: [],
+    appointments: [],
+    requests: [],
+    notifications: [],
+    decisions: [],
+    settings: { ...DEFAULT_SETTINGS, staffName: "เจ้าหน้าที่คลินิก", staffRole: "เจ้าหน้าที่ประจำคลินิก" },
+    therapists: [],
+    services: SERVICES,
+    audit: [],
+    biz: { ...b, items: [], usage: {}, packages: [], rates: {} },
+    keepData: true,
+  };
+}
 
 function fresh(): State {
   const seed = createSeed();
@@ -101,6 +133,20 @@ const nextId = (p: string) => `${p}${(uid++).toString(36)}`;
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "hydrate":
+      return action.state;
+    case "remote": {
+      if (action.collection === "meta") {
+        const m = action.item as { key: string; value: unknown } | null;
+        return m ? { ...state, [m.key]: m.value } : state;
+      }
+      const list = state[action.collection] as { id: string }[];
+      const rest = list.filter((x) => x.id !== action.id);
+      if (!action.item) return { ...state, [action.collection]: rest };
+      const i = list.findIndex((x) => x.id === action.id);
+      const next = i >= 0 ? list.map((x) => (x.id === action.id ? (action.item as { id: string }) : x)) : [action.item as { id: string }, ...list];
+      return { ...state, [action.collection]: next };
+    }
     case "approve": {
       const req = state.requests.find((r) => r.id === action.id);
       if (!req) return state;
@@ -446,9 +492,11 @@ interface Store extends State {
 const StoreContext = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(auditedReducer, undefined, load);
+  // ใช้งานจริง: เริ่มว่าง แล้วรับข้อมูลจากฐานข้อมูลหลังเข้าสู่ระบบ (DbSync) · สาธิต/ทดสอบ: ข้อมูลจำลองในเครื่อง
+  const [state, dispatch] = useReducer(auditedReducer, undefined, () => (DEMO ? load() : emptyLive()));
 
   useEffect(() => {
+    if (!DEMO) return;
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
     } catch {
@@ -560,14 +608,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [state.decisions, state.appointments, state.therapists, state.services, state.patients]);
 
   const patientMap = useMemo(() => new Map(state.patients.map((p) => [p.id, p])), [state.patients]);
-  const patientById = useCallback((id: string) => patientMap.get(id) ?? state.patients[0], [patientMap, state.patients]);
+  // ไม่พบ (เช่น คลินิกใหม่ยังไม่มีข้อมูล / ถูกลบ) → ค่าว่างที่แสดงผลได้ ไม่ให้หน้าพัง
+  const patientById = useCallback((id: string) => patientMap.get(id) ?? state.patients[0] ?? MISSING_PATIENT, [patientMap, state.patients]);
 
   const serviceById = useCallback(
     (id: string) => state.services.find((x) => x.id === id) ?? SERVICES.find((x) => x.id === id) ?? state.services[0] ?? SERVICES[0],
     [state.services],
   );
   const therapistById = useCallback(
-    (id: string) => state.therapists.find((t) => t.id === id) ?? state.therapists[0],
+    (id: string) => state.therapists.find((t) => t.id === id) ?? state.therapists[0] ?? MISSING_THERAPIST,
     [state.therapists],
   );
 

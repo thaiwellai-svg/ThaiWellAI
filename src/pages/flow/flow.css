@@ -386,3 +386,6 @@
   align-self: center;
   background: var(--sage-100);
 }
+.fl.fl--live {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+}

@@ -9,9 +9,10 @@ import { FLOW, STATUS_TH, cloud, logEvent, updateAppt, type CloudAppt, type Clou
 import { useStore } from "../../store/store";
 import { DEFAULT_SETTINGS } from "../../data/seed";
 import { DEMO_APP_USER, resetBothSystems } from "../../sync/demo";
+import { DEMO } from "../../data/mode";
 import "./flow.css";
 
-const DEMO = DEMO_APP_USER;
+const SIM = DEMO_APP_USER;
 const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 /**
@@ -53,18 +54,18 @@ export default function Flow() {
     return () => void cloud.removeChannel(ch);
   }, []);
 
-  const mine = appts.filter((a) => a.patient_id === DEMO.id);
+  const mine = appts.filter((a) => a.patient_id === SIM.id);
   const current = mine[0];
 
   // ── patient-app actions (the same writes the real app makes) ──
   const book = async () => {
     setBusy("book");
     try {
-      await cloud.from("tw_patients").upsert({ id: DEMO.id, name: DEMO.name, phone: DEMO.phone, gender: DEMO.gender, age: DEMO.age });
+      await cloud.from("tw_patients").upsert({ id: SIM.id, name: SIM.name, phone: SIM.phone, gender: SIM.gender, age: SIM.age });
       const id = `bk${Date.now().toString(36)}`;
       await cloud.from("tw_appointments").insert({
         id,
-        patient_id: DEMO.id,
+        patient_id: SIM.id,
         status: "requested",
         service: form.service,
         date: form.date,
@@ -72,7 +73,7 @@ export default function Flow() {
         assessment: { complaint: form.complaint, pain: form.pain, areas: ["คอ", "บ่า", "ไหล่"], avoid: [], conditions: [], pressure: "ปานกลาง", screening: { fever: false, highBP: false }, summary: `AI ประเมิน: ${form.complaint} · ปวด ${form.pain}/10 · ไม่พบข้อห้าม` },
       });
       setAgain(false);
-      await logEvent("app", "booking.requested", { id }, DEMO.name, `ประเมินอาการแล้ว ส่งคำขอจอง ${form.service} ${form.date} ${form.start} น.`);
+      await logEvent("app", "booking.requested", { id }, SIM.name, `ประเมินอาการแล้ว ส่งคำขอจอง ${form.service} ${form.date} ${form.start} น.`);
     } finally {
       setBusy(null);
     }
@@ -81,20 +82,20 @@ export default function Flow() {
     if (!current) return;
     setBusy("in");
     await updateAppt(current.id, { status: "checked_in" });
-    await logEvent("app", "visit.checked_in", current, DEMO.name, "มาถึงคลินิก กดเช็กอินในแอป");
+    await logEvent("app", "visit.checked_in", current, SIM.name, "มาถึงคลินิก กดเช็กอินในแอป");
     setBusy(null);
   };
   const pay = async () => {
     if (!current?.bill) return;
     setBusy("pay");
     await updateAppt(current.id, { status: "paid", bill: { ...current.bill, status: "paid", method: "app", via: "app", paid_at: new Date().toISOString() } });
-    await logEvent("app", "bill.paid", current, DEMO.name, `ชำระ ${current.bill.amount} บาท ผ่านแอป (พร้อมเพย์)`);
+    await logEvent("app", "bill.paid", current, SIM.name, `ชำระ ${current.bill.amount} บาท ผ่านแอป (พร้อมเพย์)`);
     setBusy(null);
   };
   const cancel = async () => {
     if (!current) return;
     await updateAppt(current.id, { status: "cancelled", note: "ผู้ป่วยยกเลิกจากแอป" });
-    await logEvent("app", "booking.cancelled", current, DEMO.name, "ผู้ป่วยยกเลิกนัดจากแอป");
+    await logEvent("app", "booking.cancelled", current, SIM.name, "ผู้ป่วยยกเลิกนัดจากแอป");
   };
   const reset = () => {
     if (!window.confirm("รีเซ็ตข้อมูลสาธิตทั้ง 2 ระบบ? (หลังบ้าน + cloud · แอปบนมือถือให้ปิดแล้วเปิดใหม่)")) return;
@@ -114,22 +115,24 @@ export default function Flow() {
           <span className={clsx("fl-online", online && "is-on")}>
             <i /> {online === null ? "กำลังเชื่อมต่อ…" : online ? "เชื่อมต่อ Supabase แล้ว" : "เชื่อมต่อไม่ได้"}
           </span>
-          <Button variant="white" size="md" leading={<RotateCcw size={15} />} onClick={reset}>
-            รีเซ็ตข้อมูลสาธิต
-          </Button>
+          {DEMO && (
+            <Button variant="white" size="md" leading={<RotateCcw size={15} />} onClick={reset}>
+              รีเซ็ตข้อมูลสาธิต
+            </Button>
+          )}
         </>
       }
     >
-      <div className="fl">
-        {/* patient app simulator */}
-        <section className="fl-phone">
+      <div className={clsx("fl", !DEMO && "fl--live")}>
+        {/* patient app simulator (สาธิต/ทดสอบเท่านั้น — ใช้งานจริงข้อมูลมาจากแอปจริง) */}
+        {DEMO && <section className="fl-phone">
           <header>
             <Smartphone size={16} /> แอปผู้รับบริการ <small>(จำลอง)</small>
           </header>
           <div className="fl-screen scroll-y scroll-y--light">
             <div className="fl-who">
-              <b>{DEMO.name}</b>
-              <small>{DEMO.phone}</small>
+              <b>{SIM.name}</b>
+              <small>{SIM.phone}</small>
             </div>
             {!current || again || ["closed", "rejected", "cancelled"].includes(current.status) ? (
               <div className="fl-card">
@@ -242,7 +245,7 @@ export default function Flow() {
               </>
             )}
           </div>
-        </section>
+        </section>}
 
         {/* the shared cloud: every hand-off */}
         <section className="fl-stream">

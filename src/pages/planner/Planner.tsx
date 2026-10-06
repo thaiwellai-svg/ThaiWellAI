@@ -34,7 +34,7 @@ export function PatientPlanner() {
   const [params, setParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [onlyCourse, setOnlyCourse] = useState(true);
-  const selectedId = params.get("patient") ?? store.patients.find((p) => p.course)?.id ?? store.patients[0].id;
+  const selectedId = params.get("patient") ?? store.patients.find((p) => p.course)?.id ?? store.patients[0]?.id ?? "";
   const patient = store.patientById(selectedId);
   const credits = creditInfo(patient, store.appointments);
   const today = todayISO();

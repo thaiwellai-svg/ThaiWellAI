@@ -20,7 +20,8 @@ let only = process.argv.slice(2);
 
 async function newPage(b, role) {
   const ctx = await b.newContext({ viewport: { width: 1366, height: 1024 } });
-  await ctx.addInitScript(() => { try { localStorage.setItem('thaiwell.tour.v2', '1'); } catch {} });
+  // โหมดสาธิต/ทดสอบ: ข้อมูลจำลองในเครื่อง ไม่แตะฐานข้อมูลจริง
+  await ctx.addInitScript(() => { try { localStorage.setItem('thaiwell.tour.v2', '1'); localStorage.setItem('thaiwell.demo', '1'); } catch {} });
   const p = await ctx.newPage();
   p.errs = [];
   p.on('pageerror', (e) => p.errs.push(e.message));
@@ -214,6 +215,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   });
 
   await check('R10', 'reception', 'คำขอจองจากแอป · ผ่านคัดกรอง', 'อนุมัติคำขอ', async (p, ex) => {
+    // คำขอจากแอปที่ผ่านคัดกรอง (ใส่ในเครื่อง — โหมดทดสอบไม่แตะฐานข้อมูลจริง)
+    await mutate(p, `let d=new Date(Date.now()+7*3600e3+864e5);if(d.getUTCDay()===0)d=new Date(d.getTime()+864e5);s.requests.unshift({ id: 'rq-qa-ok', patientId: s.patients[2].id, serviceId: 's1', therapistId: 't2', date: d.toISOString().slice(0,10), start: '14:00', painScore: 5, screening: { fever: false, highBP: false, menstruation: false, pregnant: false, recentSurgery: false, contagious: false }, submittedAt: new Date().toISOString() });`);
     await go(p, '/requests', 1500);
     const before = (await state(p)).requests.length;
     await p.getByRole('button', { name: 'อนุมัติและจัดคิว' }).click(); await p.waitForTimeout(700);

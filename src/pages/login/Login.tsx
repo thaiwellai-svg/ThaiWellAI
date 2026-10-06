@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, CalendarCheck2, Check, Eye, EyeOff, Sparkles, UsersRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { ease } from "../../design-system";
-import { beginEnter, useEntering } from "../../features/session";
+import { beginEnter, clinicSignIn, useEntering } from "../../features/session";
+import { DEMO } from "../../data/mode";
 import { TH_WEEKDAYS, thaiDateLong, todayISO } from "../../data/thaiDate";
 import "./login.css";
 
@@ -46,13 +47,14 @@ function Lotus({ size = 64 }: { size?: number }) {
   );
 }
 
-/** Sign-in — demo only: any non-empty password is accepted, nothing is stored. */
+/** Sign-in — ใช้งานจริง: บัญชีคลินิกใน Supabase (ต้องเป็นอีเมลที่ลงไว้ใน tw_clinic_accounts) · สาธิต: รหัสอะไรก็ได้ */
 export default function Login() {
   const store = useStore();
   const { settings } = store;
-  // demo: prefilled so testers only press เข้าสู่ระบบ
-  const [user, setUser] = useState(settings.staffEmail ?? "somsak@thaiwell.clinic");
-  const [pw, setPw] = useState("thaiwell2569");
+  // สาธิต: เติมไว้ให้กดเข้าได้เลย · ใช้งานจริง: บัญชีคลินิก ใส่รหัสเอง
+  const [user, setUser] = useState(DEMO ? settings.staffEmail ?? "somsak@thaiwell.clinic" : "clinic@thaiwell.app");
+  const [pw, setPw] = useState(DEMO ? "thaiwell2569" : "");
+  const [error, setError] = useState<string | null>(null);
   const [show, setShow] = useState(false);
   const [phase, setPhase] = useState<"idle" | "busy" | "done">("idle");
   const [now, setNow] = useState(() => new Date());
@@ -69,9 +71,22 @@ export default function Login() {
     e.preventDefault();
     if (!valid || phase !== "idle") return;
     setPhase("busy");
-    window.setTimeout(() => setPhase("done"), 500);
-    // card fades, then the doors open and the camera glides into the lobby
-    window.setTimeout(() => beginEnter(), 750);
+    setError(null);
+    const go = () => {
+      setPhase("done");
+      // card fades, then the doors open and the camera glides into the lobby
+      window.setTimeout(() => beginEnter(), 250);
+    };
+    if (DEMO) {
+      window.setTimeout(go, 500);
+      return;
+    }
+    void clinicSignIn(user, pw).then((err) => {
+      if (err) {
+        setError(err);
+        setPhase("idle");
+      } else go();
+    });
   };
 
   // drifting sparkles
@@ -191,6 +206,11 @@ export default function Login() {
             </span>
           </label>
 
+          {error ? (
+            <p className="lg__error" role="alert">
+              {error}
+            </p>
+          ) : null}
           <button type="submit" className="lg__submit" disabled={!valid || phase !== "idle"} data-phase={phase}>
             <AnimatePresence mode="wait" initial={false}>
               {phase === "idle" && (

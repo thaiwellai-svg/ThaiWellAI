@@ -6,6 +6,14 @@ import { clsx } from "clsx";
 import bg from "../assets/backdrop/spa-room.jpg";
 import { Dock } from "./Dock";
 import { CloudBridge } from "../sync/CloudBridge";
+import { DbSync } from "../sync/DbSync";
+import { DEMO } from "../data/mode";
+
+/** ใช้งานจริง: รอข้อมูลคลินิกจากฐานข้อมูลก่อนแสดงหน้าใด ๆ · สาธิต: ข้อมูลในเครื่องพร้อมอยู่แล้ว */
+function LiveData({ children }: { children: ReactNode }) {
+  if (DEMO) return <>{children}</>;
+  return <DbSync fallback={<div className="dbsync-loading">กำลังโหลดข้อมูลคลินิก…</div>}>{children}</DbSync>;
+}
 import { initPush, NAVIGATE } from "../sync/notify";
 import { Tour } from "../features/Tour";
 import { LiveBackdrop } from "./backdrop/LiveBackdrop";
@@ -124,7 +132,7 @@ export function AppShell() {
           <Login />
         </Suspense>
       ) : (
-        <>
+        <LiveData>
       <AnimatePresence mode="wait">
         <Suspense fallback={null}>
           <Routes location={location} key={location.pathname}>
@@ -158,7 +166,7 @@ export function AppShell() {
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
       <Tour />
       <CloudBridge />
-        </>
+        </LiveData>
       )}
     </div>
   );

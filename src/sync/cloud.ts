@@ -8,7 +8,8 @@ import { createClient } from "@supabase/supabase-js";
 export const CLOUD_URL = "https://mvwksnilprhpgdwpiyqu.supabase.co";
 export const CLOUD_KEY = "sb_publishable_r9JpNxdWOGq5l77JwANvUA_Y3B7j_db";
 
-export const cloud = createClient(CLOUD_URL, CLOUD_KEY, { auth: { persistSession: false } });
+// บัญชีคลินิก (Supabase Auth) จำการเข้าสู่ระบบไว้ในเบราว์เซอร์/แอปนี้
+export const cloud = createClient(CLOUD_URL, CLOUD_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: "thaiwell.clinic.auth" } });
 
 /** one booking walks through these; the order is used so a side never moves a booking backwards */
 export const FLOW = ["requested", "confirmed", "checked_in", "called", "in_service", "recorded", "billed", "paid", "closed"] as const;
@@ -40,6 +41,12 @@ export interface CloudPatient {
   gender?: string | null;
   age?: number | null;
   clinic_hn?: string | null;
+  /** ข้อมูลตามบัตรประชาชน (ผู้ใช้ยืนยันตัวตนในแอป) */
+  citizen_id?: string | null;
+  title?: string | null;
+  birth_date?: string | null;
+  address?: string | null;
+  email?: string | null;
 }
 
 /** what the patient told the app before booking */

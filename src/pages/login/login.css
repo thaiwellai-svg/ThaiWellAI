@@ -588,3 +588,11 @@
 .lg__motes {
   display: none;
 }
+.lg__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(220, 38, 38, 0.12);
+  color: #b42318;
+  font-size: 14px;
+}

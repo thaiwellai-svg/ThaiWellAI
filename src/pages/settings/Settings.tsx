@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DEFAULT_SETTINGS } from "../../data/seed";
 import { resetBothSystems } from "../../sync/demo";
+import { DEMO } from "../../data/mode";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -288,13 +289,13 @@ export default function Settings() {
                     <Group title="สำรองและกู้คืนข้อมูล">
                       <BackupPanel />
                     </Group>
-                    <Group title="รีเซ็ตข้อมูลจำลอง" desc="ข้อมูลทั้งหมดในแอปเป็นข้อมูลสมมติ ไม่มีข้อมูลสุขภาพของบุคคลจริง บันทึกไว้ในเครื่องนี้เท่านั้น">
+                    {DEMO && <Group title="รีเซ็ตข้อมูลจำลอง" desc="ข้อมูลทั้งหมดในแอปเป็นข้อมูลสมมติ ไม่มีข้อมูลสุขภาพของบุคคลจริง บันทึกไว้ในเครื่องนี้เท่านั้น">
                       <Row title="สร้างข้อมูลตัวอย่างใหม่" desc="ผู้ป่วย คิวนัด คำขอจอง การชำระเงิน แจ้งเตือน และตารางงาน จะกลับเป็นชุดเริ่มต้นของวันนี้ · การตั้งค่าคลินิกและบัญชีผู้ใช้ยังอยู่">
                         <Button variant="outline" size="md" className="acc-logout" leading={<RotateCcw size={14} />} onClick={() => setConfirmReset(true)}>
                           รีเซ็ตข้อมูล
                         </Button>
                       </Row>
-                    </Group>
+                    </Group>}
                   </>
                 )}
 
