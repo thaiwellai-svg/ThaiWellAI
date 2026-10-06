@@ -25,7 +25,11 @@ export type ClinicEvent =
   | { id: string; at: string; type: "approved"; ref: string; date: string; start: string; therapist: string; service: string }
   | { id: string; at: string; type: "rejected"; ref: string; reason: string }
   | { id: string; at: string; type: "completed"; ref: string; painBefore: number; painAfter?: number }
-  | { id: string; at: string; type: "cancelled" | "absent"; ref: string };
+  | { id: string; at: string; type: "cancelled" | "absent"; ref: string }
+  /** นวดครั้งต่อ ๆ ไปตามแผน (นัดที่คลินิกลงเอง ไม่ได้มาจากคำขอในแอป) */
+  | { id: string; at: string; type: "visit"; patientId: string; apptId: string; date: string; painBefore: number; painAfter: number }
+  /** แผนการรักษา: นัดถัดไปที่คลินิกลงไว้ + คอร์ส (ส่งใหม่เมื่อเปลี่ยน) */
+  | { id: string; at: string; type: "plan"; patientId: string; next: { date: string; start: string; therapist: string } | null; upcoming: number; course?: { name: string; total: number; used: number } };
 
 interface Box {
   toClinic: AppEvent[];

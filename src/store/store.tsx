@@ -416,11 +416,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       } else if (d.outcome === "rejected") sendToApp(`rejected:${d.request.id}`, { type: "rejected", ref: d.request.id, reason: d.reason ?? "" });
     }
     for (const a of state.appointments) {
-      if (!a.bridgeRef) continue;
-      if (a.status === "done") sendToApp(`done:${a.bridgeRef}`, { type: "completed", ref: a.bridgeRef, painBefore: a.painBefore, painAfter: a.painAfter });
-      if (a.status === "cancelled" || a.status === "absent") sendToApp(`${a.status}:${a.bridgeRef}`, { type: a.status, ref: a.bridgeRef });
+      if (!a.patientId.startsWith("app-p-")) continue;
+      // บันทึกคะแนนหลังนวดแล้ว (ขั้นบันทึกการรักษา — ก่อนชำระเงิน) หรือปิดนัด → นวดเสร็จ
+      const finished = a.painAfter !== undefined || a.status === "done";
+      if (a.bridgeRef) {
+        if (finished) sendToApp(`done:${a.bridgeRef}`, { type: "completed", ref: a.bridgeRef, painBefore: a.painBefore, painAfter: a.painAfter });
+        else if (a.status === "cancelled" || a.status === "absent") sendToApp(`${a.status}:${a.bridgeRef}`, { type: a.status, ref: a.bridgeRef });
+      } else if (finished) {
+        // ครั้งต่อ ๆ ไปตามแผนของคลินิก
+        sendToApp(`visit:${a.id}`, { type: "visit", patientId: a.patientId, apptId: a.id, date: a.date, painBefore: a.painBefore, painAfter: a.painAfter ?? a.painBefore });
+      }
     }
-  }, [state.decisions, state.appointments, state.therapists, state.services]);
+    // แผนการรักษา: นัดถัดไปที่ยังไม่ถึง (รอรับบริการ) ของผู้ป่วยจากแอป · ส่งใหม่เมื่อเปลี่ยน
+    const today = todayISO();
+    const appPatients = state.patients.filter((p) => p.id.startsWith("app-p-"));
+    for (const p of appPatients) {
+      const up = state.appointments
+        .filter((a) => a.patientId === p.id && a.status === "waiting" && a.painAfter === undefined && a.date >= today && !a.bridgeRef)
+        .sort((x, y) => (x.date + x.start).localeCompare(y.date + y.start));
+      const first = up[0];
+      const next = first ? { date: first.date, start: first.start, therapist: state.therapists.find((t) => t.id === first.therapistId)?.name ?? "" } : null;
+      const course = p.course ? { name: p.course.name, total: p.course.total, used: p.course.used } : undefined;
+      if (!next && !course) continue;
+      sendToApp(`plan:${p.id}:${JSON.stringify([next, up.length, course])}`, { type: "plan", patientId: p.id, next, upcoming: up.length, course });
+    }
+  }, [state.decisions, state.appointments, state.therapists, state.services, state.patients]);
 
   const patientMap = useMemo(() => new Map(state.patients.map((p) => [p.id, p])), [state.patients]);
   const patientById = useCallback((id: string) => patientMap.get(id) ?? state.patients[0], [patientMap, state.patients]);
