@@ -66,7 +66,8 @@ export function CloudBridge() {
   const patientFor = (row: CloudAppt): Patient => {
     const st = ref.current;
     const cp = row.tw_patients;
-    const found = st.patients.find((p) => p.cloudId === row.patient_id) ?? (cp?.phone ? st.patients.find((p) => p.phone.replace(/\D/g, "") === cp.phone!.replace(/\D/g, "")) : undefined);
+    const digits = cp?.phone?.replace(/\D/g, "") ?? "";
+    const found = st.patients.find((p) => p.cloudId === row.patient_id) ?? (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits) : undefined);
     if (found) {
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id } });
       return found;
@@ -126,7 +127,8 @@ export function CloudBridge() {
         cloudId: row.id,
         patientId: p.id,
         serviceId: serviceFor(row.service),
-        therapistId: st.therapists[0].id,
+        // ผู้บำบัดที่ผู้ป่วยเลือกในแอป (ตามชื่อ) · ไม่ระบุ = คนแรก
+        therapistId: st.therapists.find((t) => row.therapist && (t.name === row.therapist || row.therapist.includes(t.name) || t.name.includes(row.therapist)))?.id ?? st.therapists[0].id,
         date: row.date ?? todayISO(),
         start: row.start ?? "10:00",
         painScore: as.pain ?? 5,
@@ -202,8 +204,18 @@ export function CloudBridge() {
         void pushNotify(p.title, p.body ?? row.summary ?? "", local ? "/patients" : undefined);
       })
       .subscribe();
+    // สำรอง: realtime หลุดได้ (iPad พักหน้าจอ / Wi-Fi) → ตรวจการจองที่ยังไม่จบทุก 5 วินาที
+    const poll = window.setInterval(async () => {
+      const open = [...known.current].filter(([, st]) => !["paid", "closed", "rejected", "cancelled", "no_show"].includes(st)).map(([id]) => id);
+      if (!open.length) return;
+      const { data } = await cloud.from("tw_appointments").select(join).in("id", open);
+      (data as CloudAppt[] | null)?.forEach((r) => {
+        if (r.status !== known.current.get(r.id) || r.status === "checked_in") inbound(r);
+      });
+    }, 5000);
     return () => {
       alive = false;
+      window.clearInterval(poll);
       void cloud.removeChannel(ch);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
