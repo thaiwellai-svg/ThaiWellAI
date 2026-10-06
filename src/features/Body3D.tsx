@@ -348,7 +348,10 @@ export function Body3D({
   pain,
   element,
   trend,
+  heatLabel = "ปวดน้อย → มาก",
 }: {
+  /** legend text for the heat colour */
+  heatLabel?: string;
   /** pain change since the first visit, shown under the pain badge */
   trend?: { better: boolean; label: string };
   /** latest pain score (0–10) shown as a badge on the stage */
@@ -896,7 +899,7 @@ export function Body3D({
       {legend && (
         <div className="b3__legend">
           <span className="b3__scale">
-            <i /> ปวดน้อย → มาก
+            <i /> {heatLabel}
           </span>
           {avoid.length > 0 && (
             <span>

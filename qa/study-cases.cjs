@@ -190,6 +190,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const before = (await state(p)).appointments.length;
     await p.click('button[aria-label="เพิ่มคิวนัด"]'); await p.waitForTimeout(900);
     await p.locator('.book__person:not(.book__new)').nth(3).click(); await p.waitForTimeout(400);
+    // late in the day today can be full — then book the next open day
+    for (let i = 0; i < 4 && !(await p.locator('.book__slots .tchip:not([disabled])').count()); i++) {
+      await p.locator('.cpick__day--today ~ .cpick__day:not([disabled])').nth(i).click(); await p.waitForTimeout(400);
+    }
     const slot = p.locator('.book__slots .tchip:not([disabled])').first();
     if (await slot.count()) await slot.click();
     await p.waitForTimeout(300);
@@ -647,6 +651,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex((await p.locator('.rc-msg.is-ai').last().innerText()).includes('ข้อ 2/5'), 'ตอบแล้วถามข้อ 2 ต่อทันที');
     await send('ลมปลายปัตคาด');
     await send('นวดรักษาเส้นอิทา 45 นาที แล้วประคบสมุนไพร');
+    await send('ใช่');
     a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.diagnoses.length > 0 && a.diagnoses[0].code, 'เติมวินิจฉัยพร้อมรหัส ICD-10');
     ex(a.procedures.some((x) => x.minutes === 45), 'เติมหัตถการ 45 นาที');
@@ -693,12 +698,51 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await send('ใช่');
     let a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.diagnoses.length === 1, 'ตอบ “ใช่” → บันทึกเฉพาะการวินิจฉัยที่ถามยืนยัน');
-    ex((await p.locator('.rc-ai button').count()) > 0, 'AI เสนอหัตถการพร้อมตำแหน่งและเวลา');
+    ex((await p.locator('.rc-body__list span').count()) > 0 && (await p.locator('.rc-body canvas').count()) === 1, 'AI เสนอหัตถการพร้อมตำแหน่งบนหุ่นและเวลา');
     await send('ใช่ค่ะ');
     a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.procedures.length > 0 && a.procedures.some((x) => x.minutes), 'บันทึกหัตถการที่เสนอพร้อมเวลา');
     ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-pain button').count()) === 11, 'แล้วถาม Pain หลังนวดต่อ');
     ex((await p.locator('.cr__ai').count()) === 0, 'ไม่มีปุ่ม AI กลางฟอร์มแล้ว');
+  });
+
+  await check('N06', 'therapist', 'ผู้บำบัดเล่ารวดเดียวหลายเรื่อง', 'AI จำส่วนที่พูดล่วงหน้า แล้วถามยืนยันทีละข้อ', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    await chatIdle(p);
+    ex(/แจ้งมา|ตรวจพบ/.test(await p.locator('.rc-msg.is-ai').last().innerText()), 'ข้อ 1 AI เสนออาการจากที่คนไข้แจ้งมา');
+    const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
+    await send('บ่าขวาตึง กดเจ็บ วันนี้นวดรักษาเส้นอิทา 45 นาที หลังนวดปวดเหลือ 3');
+    let a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.findings && !(a.procedures?.length), 'บันทึกอาการ ส่วนหัตถการยังรอยืนยัน');
+    await send('ใช่');
+    ex(/เมื่อกี้บอกว่า/.test(await p.locator('.rc-msg.is-ai').last().innerText()), 'ถึงข้อหัตถการ AI ถามยืนยันสิ่งที่พูดไว้');
+    await send('ใช่');
+    ex(/เมื่อกี้บอกว่า.*3/.test(await p.locator('.rc-msg.is-ai').last().innerText()), 'ถึงข้อ Pain AI ถามยืนยัน “ปวดเหลือ 3”');
+    await send('ใช่');
+    a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.procedures.some((x) => x.minutes === 45), 'หัตถการ 45 นาทีถูกบันทึก');
+    ex((await p.locator('.vs__panel button[aria-pressed="true"]', { hasText: /^3$/ }).count()) === 1, 'Pain หลังนวด = 3 ตามที่พูด');
+  });
+
+  await check('N07', 'therapist', 'สั่งหัตถการและตำแหน่งด้วยคำพูด', 'หุ่น 3D แสดง heatmap ตามตำแหน่งที่พูด หลายจุด + เตือนจุดห้ามนวด', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    await chatIdle(p);
+    const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
+    await send('บ่าขวาตึง กดเจ็บ');
+    await send('ใช่');
+    ex((await p.locator('.rc-body canvas').count()) === 1, 'ข้อหัตถการแสดงหุ่น 3D ในแชท');
+    await send('นวดรักษาที่คอ บ่า ไหล่ และหลังส่วนล่าง 45 นาที');
+    const list = await p.locator('.rc-body__list').last().innerText();
+    ex(/คอ/.test(list) && /หลังส่วนล่าง/.test(list) && /45/.test(list), 'พูดหลายตำแหน่ง → ข้อเสนอและหุ่นอัปเดตตามที่พูด');
+    const intake = await p.evaluate((id) => document.body.innerText.includes('ไม่ให้นวด'), id);
+    ex(intake, 'แสดงจุดที่คนไข้ไม่ให้นวด');
+    await send('ใช่');
+    const a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.procedures.some((x) => /คอ/.test(x.area || '') && x.minutes === 45), 'ตอบ “ใช่” → บันทึกหัตถการพร้อมตำแหน่งและเวลา');
   });
 
   // ===== CROSS-CUTTING =====

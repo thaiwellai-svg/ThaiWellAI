@@ -8,8 +8,13 @@ import { THAI_MASSAGE_KNOWLEDGE, chatJSON, fileToWav, startMic, transcribe, type
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
 import { dxCode, procCode } from "../data/codes";
 import { samuthan } from "../data/samuthan";
+import { intakeOfVisit } from "../data/intake";
+import { bestForElement, outcomeRows } from "../data/outcomes";
 import { DEFAULT_CALL_VOICE, speak, stopSpeaking, unlockAudio } from "./tts";
 import { VoiceWave } from "./VoiceWave";
+import { Body3D } from "./Body3D";
+import { BODY_AREAS, toArea, type BodyArea } from "./BodyMap";
+import { elementProfile } from "../data/elements";
 import type { Appointment } from "../data/types";
 import "./voice-note.css";
 
@@ -55,6 +60,19 @@ const SET: { slot: Exclude<Slot, "summary">; label: string }[] = [
   { slot: "pain", label: "Pain หลังนวด" },
   { slot: "advice", label: "คำแนะนำผู้ป่วย" },
 ];
+/** every body area mentioned in free text ("บ่า ไหล่ขวา และเอว" → บ่า, ไหล่, หลังส่วนล่าง) */
+export function areasIn(text: string): BodyArea[] {
+  const out = new Set<BodyArea>();
+  for (const a of BODY_AREAS) if (text.includes(a)) out.add(a);
+  for (const w of text.split(/[\s,·/]+|และ|กับ/)) {
+    const a = w && toArea(w);
+    if (a) out.add(a);
+  }
+  // "หลัง" alone means the back in general
+  if (/หลัง(?!ส่วน|นวด)/.test(text) && !out.has("หลังส่วนบน") && !out.has("หลังส่วนล่าง")) out.add("หลังส่วนบน");
+  return [...out];
+}
+
 const ASK = {
   finding: "เริ่มจากอาการก่อนนะคะ วันนี้ตรวจเจออะไรบ้างคะ ปวดหรือตึงตรงไหน",
   dx: "แล้ววินิจฉัยว่าเป็นอะไรคะ",
@@ -188,6 +206,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       const r = await chatJSON<{ advice: string }>(
         `คุณเป็นแพทย์แผนไทย เขียน "คำแนะนำถึงผู้ป่วย" หลังรับบริการ ภาษาไทยสุภาพ อ่านง่าย 2–4 ข้อสั้น ๆ ขึ้นบรรทัดใหม่ทีละข้อ ขึ้นต้นด้วย "• " เน้นสิ่งที่ทำได้ที่บ้าน (ประคบ ท่าฤาษีดัดตน สมุนไพร อาหารที่ควรเลี่ยง) และอาการที่ควรกลับมาพบ ตอบ JSON {"advice":"..."}\n${THAI_MASSAGE_KNOWLEDGE}`,
         JSON.stringify({
+          ข้อมูลทั้งหมด: context(),
           อาการสำคัญ: p.complaint,
           สิ่งที่ตรวจพบวันนี้: l.findings,
           วินิจฉัย: l.dx.map((d) => d.name),
@@ -207,16 +226,45 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     }
   };
 
+  // answers given early (e.g. pain or procedures said while answering the findings) — confirmed when their turn comes
+  const held = useRef<{ dx?: string[]; proc?: Extract["procedures"]; pain?: number }>({});
+  useEffect(() => {
+    held.current = {};
+  }, [appt.id]);
+  const prevVisits = () =>
+    store.appointments
+      .filter((a) => a.patientId === p.id && a.status === "done" && a.id !== appt.id)
+      .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
+      .slice(0, 3);
+  /** everything the clinic knows that helps the AI think like the therapist's colleague */
+  const context = () => {
+    const l = latest.current;
+    const ik = intakeOfVisit(appt, p);
+    const sc = p.screening;
+    const sm = samuthan(p, { time: appt.start });
+    const ev = bestForElement(outcomeRows(store.appointments, store.patients), sm.factors[0].element, store.services)
+      .slice(0, 3)
+      .map((x) => `${x.service.name} ปวดลดเฉลี่ย ${x.mean.toFixed(1)} (${x.n} ครั้ง)`);
+    return {
+      ผู้ป่วย: { เพศ: p.gender, อายุ: p.age, อาการสำคัญ: p.complaint, โรคประจำตัว: p.conditions, แพ้: p.allergies ?? [] },
+      แจ้งมาก่อนนัด: ik && { อาการ: ik.complaint, เป็นมา: ik.duration, จุดที่อยากให้เน้น: ik.focusAreas, จุดที่ไม่ให้นวด: ik.avoidAreas, แรงนวดที่ต้องการ: ik.pressure, ยาที่ใช้: ik.medications, ยาเพิ่มเสี่ยงเลือดออก: ik.bloodThinner, ชาอ่อนแรง: ik.numbness, ลักษณะงาน: ik.occupation },
+      คัดกรองที่เคาน์เตอร์: sc && { ความดัน: sc.bpSys ? `${sc.bpSys}/${sc.bpDia}` : undefined, จุดที่ปวด: sc.painAreas, หลีกเลี่ยง: sc.avoid, แรงนวด: sc.pressure, ยาเพิ่มเสี่ยงเลือดออก: sc.bloodThinner },
+      ธาตุ: { เจ้าเรือน: sm.factors[0].element, เสี่ยงเสียสมดุลตอนนี้: sm.top, แนวทาง: sm.plan },
+      ครั้งก่อน: prevVisits().map((a) => ({ วันที่: a.date, บริการ: store.serviceById(a.serviceId).name, ตรวจพบ: a.findings, วินิจฉัย: a.diagnoses?.map((d) => d.name), หัตถการ: a.procedures?.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" ")), ปวด: `${a.painBefore}→${a.painAfter ?? "?"}` })),
+      ผลจริงของคลินิกกับธาตุเดียวกัน: ev,
+      วันนี้: { บริการที่นัด: `${s.name} ${s.minutes} นาที`, ปวดก่อนนวด: appt.painBefore, ตรวจพบ: l.findings, วินิจฉัย: l.dx.map((d) => d.name), หัตถการ: l.pr.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" ")), ปวดหลังนวด: l.pain },
+    };
+  };
+
   /** the AI proposes the diagnosis / procedures from what is known so far */
   const suggest = async (slot: "dx" | "proc"): Promise<Sug[]> => {
     const l = latest.current;
-    const sm = samuthan(p, { time: appt.start });
     try {
       const r = await chatJSON<{ items: Sug[] }>(
         slot === "dx"
-          ? `คุณเป็นแพทย์แผนไทย เสนอการวินิจฉัยที่น่าจะเป็น 1–3 ข้อ เรียงจากมากไปน้อย ใช้ชื่อจากรายการนี้ถ้าตรง ${JSON.stringify(DX_PICK)} · why = เหตุผลสั้นมาก ไม่เกิน 6 คำ อ้างจากอาการ · ตอบ JSON {"items":[{"name":"","why":""}]}\n${THAI_MASSAGE_KNOWLEDGE}`
-          : `คุณเป็นแพทย์แผนไทย เสนอหัตถการที่น่าจะทำวันนี้ 1–2 ข้อ ใช้ชื่อจากรายการนี้ ${JSON.stringify(PROC_PICK)} พร้อมตำแหน่ง/เส้นประธาน (area) และนาที (minutes รวมไม่เกินเวลาบริการ) · area สั้น ๆ (เช่น "บ่า ไหล่ขวา" หรือ "เส้นอิทา ปิงคลา") · why ไม่เกิน 6 คำ · ตอบ JSON {"items":[{"name":"","area":"","minutes":0,"why":""}]}\n${THAI_MASSAGE_KNOWLEDGE}`,
-        JSON.stringify({ อาการที่ตรวจพบ: l.findings, อาการสำคัญ: p.complaint, วินิจฉัย: l.dx.map((d) => d.name), โรคประจำตัว: p.conditions, ธาตุที่เสี่ยง: sm.top, บริการที่นัด: `${s.name} ${s.minutes} นาที` }),
+          ? `คุณเป็นแพทย์แผนไทยผู้เชี่ยวชาญ คิดอย่างรอบคอบจากข้อมูลทั้งหมด (สิ่งที่ตรวจพบวันนี้สำคัญที่สุด รองลงมาคืออาการที่แจ้งมา ประวัติครั้งก่อน ธาตุ) แล้วเสนอการวินิจฉัยที่น่าจะเป็น 1–3 ข้อ เรียงจากมากไปน้อย ใช้ชื่อจากรายการนี้ถ้าตรง ${JSON.stringify(DX_PICK)} · why = เหตุผลสั้นมาก ไม่เกิน 6 คำ · ตอบ JSON {"items":[{"name":"","why":""}]}\n${THAI_MASSAGE_KNOWLEDGE}`
+          : `คุณเป็นแพทย์แผนไทยผู้เชี่ยวชาญ เสนอหัตถการที่เหมาะที่สุดวันนี้ 1–2 ข้อ ใช้ชื่อจากรายการนี้ ${JSON.stringify(PROC_PICK)} พร้อมตำแหน่ง/เส้นประธาน (area) และนาที (minutes รวมไม่เกินเวลาบริการที่นัด) โดยดูวินิจฉัย จุดที่อยากให้เน้น สิ่งที่ได้ผลครั้งก่อน และผลจริงของคลินิก · ความปลอดภัย: ห้ามเสนอตำแหน่งที่ไม่ให้นวด/หลีกเลี่ยง · ยาเพิ่มเสี่ยงเลือดออกหรือแรงนวดเบา → ระบุแรงเบาใน why · ธาตุไฟเสี่ยง → เลี่ยงประคบร้อนจัด · area สั้น ๆ (เช่น "บ่า ไหล่ขวา" หรือ "เส้นอิทา ปิงคลา") · why ไม่เกิน 6 คำ · ตอบ JSON {"items":[{"name":"","area":"","minutes":0,"why":""}]}\n${THAI_MASSAGE_KNOWLEDGE}`,
+        JSON.stringify(context()),
       );
       const items = (r.items ?? []).filter((x) => x?.name).slice(0, slot === "dx" ? 3 : 2);
       if (items.length) return items;
@@ -228,10 +276,23 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     }
   };
   const short = (n: string) => n.replace(/\s*\(.*\)/, "");
+  /** areas the patient asked not to be massaged */
+  const avoidAreas = () => [...new Set((intakeOfVisit(appt, p)?.avoidAreas ?? []).map((a) => toArea(a)).filter(Boolean) as BodyArea[])];
+  /** a spoken warning when a proposal touches a no-massage area */
+  const avoidWarn = (items: Sug[]) => {
+    const hit = items.flatMap((x) => areasIn(x.area ?? "")).filter((a) => avoidAreas().includes(a));
+    return hit.length ? ` แต่${[...new Set(hit)].join(" ")}คนไข้แจ้งว่าไม่ให้นวดนะคะ ยืนยันจริงไหมคะ` : "";
+  };
 
   /** ask for whatever is still missing (with its component) */
   const askNext = (prefix = "") => ask(missing(), prefix);
-  const question = (slot: Slot) => (slot === "pain" ? `${ASK.pain} ก่อนนวดอยู่ที่ ${appt.painBefore}` : slot in ASK ? ASK[slot as keyof typeof ASK] : "");
+  const question = (slot: Slot) => {
+    if (slot === "pain") {
+      const last = prevVisits()[0];
+      return `${ASK.pain} ก่อนนวดอยู่ที่ ${appt.painBefore}${last?.painAfter !== undefined ? ` ครั้งก่อนหลังนวดเหลือ ${last.painAfter}` : ""}`;
+    }
+    return slot in ASK ? ASK[slot as keyof typeof ASK] : "";
+  };
   /** ask one question of the set (also used when a step in the question strip is tapped) */
   const ask = async (slot: Slot, prefix = "") => {
     if (slot === "advice") {
@@ -256,18 +317,42 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     }
     setPick([]);
     setOthers(false);
+    if (slot === "finding") {
+      // start from what the patient told us before the visit
+      const ik = intakeOfVisit(appt, p);
+      const told = [ik?.complaint ?? p.complaint, ik?.focusAreas?.length ? `อยากให้เน้น${ik.focusAreas.join(" ")}` : ""].filter(Boolean).join(" ");
+      if (told) {
+        setSug({ slot, items: [{ name: told }] });
+        const q = `${prefix}คนไข้แจ้งมาว่า${told} วันนี้ตรวจแล้วเป็นตามนี้ไหมคะ หรือเล่าสิ่งที่ตรวจพบได้เลย`;
+        say("ai", q, slot);
+        void voice(q);
+        return;
+      }
+    }
+    if (slot === "pain" && held.current.pain !== undefined) {
+      const n = held.current.pain;
+      setSug({ slot, items: [{ name: String(n) }] });
+      const q = `${prefix}เมื่อกี้บอกว่าหลังนวดปวดเหลือ ${n} ใช่ไหมคะ`;
+      say("ai", q, slot);
+      void voice(q);
+      return;
+    }
     if (slot === "dx" || slot === "proc") {
+      const early: Sug[] | undefined = slot === "dx" ? held.current.dx?.map((name) => ({ name, why: "จากที่บอกไว้" })) : held.current.proc?.map((x) => ({ ...x, why: "จากที่บอกไว้" }));
       setThinking(true);
-      const items = await suggest(slot);
+      const items = early?.length ? early : await suggest(slot);
       setThinking(false);
       setSug({ slot, items });
       setPick(items.length ? (slot === "dx" ? [items[0].name] : items.map((x) => x.name)) : []);
       const top = items[0];
+      const lastDx = prevVisits()[0]?.diagnoses?.map((d) => d.name) ?? [];
       const q = !top
         ? question(slot)
-        : slot === "dx"
-          ? `จากที่ตรวจพบ น่าจะเป็น${short(top.name)}ค่ะ ใช่ไหมคะ หรือบอกการวินิจฉัยอื่นได้เลย`
-          : `วันนี้${items.map((x) => `${x.name}${x.area ? `ที่${x.area}` : ""}${x.minutes ? ` ${x.minutes} นาที` : ""}`).join(" และ ")} ใช่ไหมคะ`;
+        : early?.length
+          ? `เมื่อกี้บอกว่า${slot === "dx" ? short(top.name) : items.map((x) => `${x.name}${x.area ? `ที่${x.area}` : ""}${x.minutes ? ` ${x.minutes} นาที` : ""}`).join(" และ ")} ใช่ไหมคะ`
+          : slot === "dx"
+            ? `จากที่ตรวจพบ น่าจะเป็น${short(top.name)}${lastDx.includes(top.name) ? " เหมือนครั้งก่อน" : ""}ค่ะ ใช่ไหมคะ หรือบอกการวินิจฉัยอื่นได้เลย`
+            : `วันนี้${items.map((x) => `${x.name}${x.area ? `ที่${x.area}` : ""}${x.minutes ? ` ${x.minutes} นาที` : ""}`).join(" และ ")} ใช่ไหมคะ${avoidWarn(items)}`;
       say("ai", prefix + q, slot);
       void voice(prefix + q);
       return;
@@ -318,8 +403,18 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       return;
     }
     const slot: Slot = asked && asked !== "intro" ? asked : missing();
+    const yes = /^(ใช่|ถูก|โอเค|ok|ตามนั้น|ได้|ครับ|ค่ะ)/i.test(t);
+    // procedures are confirmed on the body: "ใช่" records what is shown
+    if (slot === "proc" && yes && sugRef.current?.slot === "proc" && sugRef.current.items.length) {
+      apply({ diagnoses: [], procedures: sugRef.current.items.map((x) => ({ name: x.name, area: x.area, minutes: x.minutes ?? null })), painAfter: null, advice: "" });
+      held.current.proc = undefined;
+      setThinking(false);
+      await askNext("บันทึกหัตถการแล้วค่ะ ");
+      return;
+    }
     const nextSlot = (SET[SET.findIndex((x) => x.slot === slot) + 1]?.slot ?? "summary") as Slot;
-    const nextQ = nextSlot === "pain" ? question("pain") : null;
+    // held answers are confirmed by ask() ("เมื่อกี้บอกว่า…"), so the model only writes the next question when nothing is held
+    const nextQ = nextSlot === "pain" && held.current.pain === undefined ? question("pain") : null;
     type Turn = Extract & { heard?: string; got?: boolean; reply?: string };
     let x: Turn;
     let local = false;
@@ -328,11 +423,11 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         `คุณคือ "ผู้ช่วยบันทึกการรักษา" ในคลินิกแพทย์แผนไทย ผู้หญิง พูดภาษาไทยเป็นธรรมชาติ อบอุ่น กระชับ เหมือนเพื่อนร่วมงานคุยกัน ลงท้าย ค่ะ/นะคะ
 งานของคุณในแต่ละตา:
 1) heard: แก้ข้อความที่ได้จากระบบถอดเสียงให้ถูกต้องตามศัพท์แพทย์แผนไทย (เช่น "เอตา"→"อิทา", "ปัตตคาด"→"ปัตคาด", ตัวเลขที่พูดเป็นคำให้เป็นเลข) โดยไม่เปลี่ยนความหมาย ถ้าเป็นข้อความที่พิมพ์มาให้คงเดิม
-2) ดึงข้อมูล "เฉพาะเรื่องที่ถาม" (เรื่องที่ถาม: ${SET.find((x) => x.slot === slot)?.label}) ห้ามอนุมานเรื่องอื่น ห้ามเดาสิ่งที่ไม่ได้พูด · ถ้าผู้ใช้ตอบรับสิ่งที่คุณเสนอ (เช่น "ใช่" "ถูก" "โอเค" "ตามนั้น") ให้ใช้รายการที่เสนอทั้งหมด (พร้อม area/minutes) · ถ้าแก้บางส่วน ให้ใช้ตามที่แก้
-3) reply: ถ้าได้คำตอบ (got=true) ทวนสั้น ๆ แบบธรรมชาติ 1 ประโยค (ไม่ต้องทวนทุกคำ) แล้วถาม "คำถามถัดไป" ด้วยสำนวนพูดของคุณเอง ถ้าคำถามถัดไปเป็น null ให้ตอบรับสั้น ๆ อย่างเดียว · ถ้ายังไม่ได้คำตอบ (got=false) ขอให้ตอบเรื่องที่ถามอีกครั้งอย่างสุภาพ · ไม่เกิน 2 ประโยคสั้น ไม่ใช้ bullet ไม่ใช้อีโมจิ ไม่ใส่รหัสโรค
+2) ดึงข้อมูลเรื่องที่ถาม (${SET.find((x) => x.slot === slot)?.label}) และถ้าผู้ใช้พูดเรื่องอื่นในชุดมาด้วย (วินิจฉัย หัตถการ ปวดหลังนวด) ให้ใส่ด้วย แต่ห้ามอนุมานหรือเดาสิ่งที่ไม่ได้พูด · ถ้าผู้ใช้ตอบรับสิ่งที่คุณเสนอ (เช่น "ใช่" "ถูก" "โอเค" "ตามนั้น") ให้ใช้รายการที่เสนอทั้งหมด (พร้อม area/minutes; ถ้าเรื่องที่ถามคือปวดหลังนวด ตัวเลขที่เสนอคือ painAfter) · ถ้าแก้บางส่วน ให้ใช้ตามที่แก้ · ห้ามใช้ตัวเลขหรือข้อมูลจาก "ครั้งก่อน" เป็นคำตอบของวันนี้ · ถ้าตอบ "ใช่" แต่ไม่ได้เสนออะไรไว้ ให้ got=false
+3) reply: ถ้าได้คำตอบ (got=true) ทวนสั้น ๆ แบบธรรมชาติ 1 ประโยค เฉพาะเรื่องที่ถาม (เรื่องอื่นที่พูดมาจะถามยืนยันทีหลัง ห้ามบอกว่าบันทึกแล้ว) แล้วถาม "คำถามถัดไป" ด้วยสำนวนพูดของคุณเอง ถ้าคำถามถัดไปเป็น null ให้ตอบรับสั้น ๆ อย่างเดียว · ถ้ายังไม่ได้คำตอบ (got=false) ขอให้ตอบเรื่องที่ถามอีกครั้งอย่างสุภาพ · ไม่เกิน 2 ประโยคสั้น ไม่ใช้ bullet ไม่ใช้อีโมจิ ไม่ใส่รหัสโรค
 ตอบ JSON เท่านั้น: {"heard":"...","got":true,"findings":"","diagnoses":[],"procedures":[{"name":"","area":"","minutes":null}],"painAfter":null,"reply":"..."}
 ชื่อที่ใช้ได้ถ้าตรงความหมาย: วินิจฉัย ${JSON.stringify(DX_PICK)} · หัตถการ ${JSON.stringify(PROC_PICK)}`,
-        JSON.stringify({ เรื่องที่ถาม: question(slot), ข้อความล่าสุดของคุณ: turn.current.last?.role === "ai" ? turn.current.last.text : null, สิ่งที่คุณเสนอไว้: sugRef.current?.slot === slot ? (slot === "dx" ? sugRef.current.items.slice(0, 1) : sugRef.current.items) : null, ข้อความ: t, มาจากเสียงพูด: spoken, คำถามถัดไป: nextQ, บริการวันนี้: s.name, ปวดก่อนนวด: appt.painBefore }),
+        JSON.stringify({ ข้อมูลผู้ป่วยและการรักษา: context(), เรื่องที่ถาม: question(slot), ข้อความล่าสุดของคุณ: turn.current.last?.role === "ai" ? turn.current.last.text : null, สิ่งที่คุณเสนอไว้: sugRef.current?.slot === slot ? (slot === "dx" ? sugRef.current.items.slice(0, 1) : sugRef.current.items) : null, ข้อความ: t, มาจากเสียงพูด: spoken, คำถามถัดไป: nextQ, บริการวันนี้: s.name, ปวดก่อนนวด: appt.painBefore }),
       );
     } catch {
       x = parseLocal(t, s.name);
@@ -342,11 +437,30 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     if (heard !== t) setMsgs((ms) => ms.map((m) => (m.id === me.id ? { ...m, text: heard } : m)));
     // one question at a time: keep only the answer to the question that was asked
     const only: Extract = { diagnoses: [], procedures: [], painAfter: null, advice: "" };
-    if (slot === "finding") only.findings = x.findings?.trim() || heard;
+    if (slot === "finding") only.findings = x.findings?.trim() || (/^(ใช่|ถูก|โอเค|ตามนั้น)/.test(heard) && sugRef.current?.slot === "finding" ? sugRef.current.items[0].name : heard);
     if (slot === "dx") only.diagnoses = x.diagnoses ?? [];
-    if (slot === "proc") only.procedures = (x.procedures ?? []).filter((q) => q?.name);
     if (slot === "pain") only.painAfter = x.painAfter;
+    if (slot === "proc") {
+      // what was said becomes the proposal on the body; recorded after "ใช่"
+      const said = (x.procedures ?? []).filter((q) => q?.name);
+      const places = areasIn(heard).join(" ");
+      const base = said.length ? said : (sugRef.current?.slot === "proc" ? sugRef.current.items : [{ name: s.name, minutes: s.minutes }]);
+      const items: Sug[] = base.map((q, i) => ({ name: q.name, minutes: q.minutes ?? null, area: (said.length ? q.area : undefined) || (i === 0 && places ? places : q.area) || undefined }));
+      setThinking(false);
+      setSug({ slot: "proc", items });
+      setPick(items.map((q) => q.name));
+      const r = `${items.map((q) => `${q.name}${q.area ? `ที่${q.area}` : ""}${q.minutes ? ` ${q.minutes} นาที` : ""}`).join(" และ ")} ใช่ไหมคะ ดูตำแหน่งบนหุ่นได้เลยค่ะ${avoidWarn(items)}`;
+      say("ai", r, "proc");
+      void voice(r);
+      return;
+    }
     const got = apply(only);
+    // anything said ahead of its question is kept and confirmed later
+    if (slot !== "dx" && x.diagnoses?.length) held.current.dx = x.diagnoses;
+    if (x.procedures?.some((q) => q?.name)) held.current.proc = x.procedures.filter((q) => q?.name);
+    if (slot !== "pain" && typeof x.painAfter === "number") held.current.pain = x.painAfter;
+    if (slot === "dx") held.current.dx = undefined;
+    if (slot === "pain") held.current.pain = undefined;
     setThinking(false);
     const reply = !local ? x.reply?.trim() : "";
     if (!got.length) {
@@ -543,7 +657,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   /** quick replies under the current question */
   const QUICK: Partial<Record<Slot, string[]>> = {
-    finding: ["บ่าขวาตึง กดเจ็บ ยกแขนลำบาก", "ปวดหลังส่วนล่าง ร้าวลงสะโพกซ้าย", "เข่าซ้ายฝืด ลุกนั่งลำบาก"],
+    finding: ["ใช่ ตามที่แจ้งมา", "บ่าขวาตึง กดเจ็บ ยกแขนลำบาก", "ปวดหลังส่วนล่าง ร้าวลงสะโพกซ้าย"],
     advice: ["เพิ่มท่าฤาษีดัดตน", "เน้นประคบร้อนที่บ้าน", "เพิ่มอาหารที่ควรเลี่ยง", "ให้สั้นลง"],
     summary: ["เพิ่มนัดติดตามอาการใน 1 สัปดาห์", "ให้สั้นลง"],
   };
@@ -751,6 +865,39 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       );
     if (m.kind === "dx" || m.kind === "proc") {
       const ai = sug?.slot === m.kind ? sug.items : [];
+      if (m.kind === "proc") {
+        // heat = the proposed places + whatever is being said right now
+        const marked = new Set<BodyArea>([...ai.flatMap((x) => areasIn(x.area ?? "")), ...(rec ? areasIn(live) : [])]);
+        const heat = Object.fromEntries([...marked].map((a) => [a, 0.9])) as Partial<Record<BodyArea, number>>;
+        const avoid = avoidAreas();
+        const clash = [...marked].filter((a) => avoid.includes(a));
+        const toggleArea = (a: BodyArea) => {
+          if (!ai.length) return;
+          const cur = areasIn(ai[0].area ?? "");
+          const next = cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a];
+          setSug({ slot: "proc", items: ai.map((x, i) => (i === 0 ? { ...x, area: next.join(" ") } : x)) });
+        };
+        return (
+          <div className="rc-body">
+            <Body3D compact sex={p.gender} element={elementProfile(p).birth} heatmap={heat} avoid={avoid} onToggle={toggleArea} heatLabel="ตำแหน่งที่นวด" />
+            <div className="rc-body__list">
+              {ai.map((x) => (
+                <span key={x.name}>
+                  <b>{x.name}</b>
+                  <small>{[x.area || "แตะหุ่นหรือพูดตำแหน่ง", x.minutes ? `${x.minutes} นาที` : ""].filter(Boolean).join(" · ")}</small>
+                </span>
+              ))}
+              {clash.length > 0 ? <em className="is-clash">ตรงกับจุดที่คนไข้ไม่ให้นวด: {clash.join(", ")}</em> : avoid.length > 0 && <em>ไม่ให้นวด: {avoid.join(", ")}</em>}
+            </div>
+            <div className="rc-body__acts">
+              <span>พูดหรือแตะเพื่อเปลี่ยนตำแหน่ง · ได้หลายจุด</span>
+              <button type="button" className="rc-ok" disabled={!ai.length} onClick={() => void onUser("ใช่")}>
+                <Check size={13} strokeWidth={3} /> ยืนยัน
+              </button>
+            </div>
+          </div>
+        );
+      }
       const opts = (m.kind === "dx" ? DX_PICK : PROC_PICK).filter((o) => !ai.some((x) => x.name === o));
       const toggle = (o: string) => setPick((x) => (x.includes(o) ? x.filter((y) => y !== o) : [...x, o]));
       return (
