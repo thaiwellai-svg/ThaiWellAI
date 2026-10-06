@@ -661,10 +661,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await p.getByRole('button', { name: 'แก้ไข' }).click();
     await p.locator('textarea[aria-label="แก้คำแนะนำถึงผู้ป่วย"]').fill('• ประคบร้อนที่บ่าวันละ 15 นาที');
     await p.getByRole('button', { name: 'ใช้คำแนะนำนี้' }).click(); await chatIdle(p);
-    ex((await p.locator('.rc-sum').count()) === 1, 'แสดงการ์ดสรุปที่แก้ได้');
-    await p.getByRole('button', { name: 'บันทึก', exact: true }).click(); await p.waitForTimeout(900);
+    ex((await p.locator('.rs2 .rs2__row.is-ok').count()) === 5, 'การ์ดสรุปการรักษาครบ 5 ข้อ');
+    await p.locator('.rs2__save').click(); await p.waitForTimeout(900);
     a = (await state(p)).appointments.find((x) => x.id === id);
-    ex(a.painAfter === 3, 'Pain หลังนวด = 3 จากการแตะใน component');
+    ex(a.painAfter === 3, 'กด “บันทึกการรักษา” ในการ์ดสรุป → Pain หลังนวด = 3 ถูกบันทึก');
     ex(a.advice === '• ประคบร้อนที่บ่าวันละ 15 นาที', 'คำแนะนำที่แก้เองถูกบันทึก');
   });
 

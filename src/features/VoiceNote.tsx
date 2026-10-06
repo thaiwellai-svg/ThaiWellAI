@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AudioLines, Check, FileAudio, Pencil, RefreshCw, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
 import { clsx } from "clsx";
@@ -22,6 +22,8 @@ export const VOICE_FILL = "thaiwell:voice-fill";
 export type VoiceFill = { apptId: string; painAfter?: number; advice?: string; /** start over: clear the drafts */ clear?: boolean };
 /** …and announces its own drafts so the chat knows what is already filled */
 export const RECORD_DRAFT = "thaiwell:record-draft";
+/** asks the treatment-record form to save (same as its “บันทึก” button) */
+export const RECORD_SAVE = "thaiwell:record-save";
 
 const TH_NUM: Record<string, number> = { ศูนย์: 0, หนึ่ง: 1, สอง: 2, สาม: 3, สี่: 4, ห้า: 5, หก: 6, เจ็ด: 7, แปด: 8, เก้า: 9, สิบ: 10 };
 const thDigits = (s: string) => s.replace(/[๐-๙]/g, (d) => String("๐๑๒๓๔๕๖๗๘๙".indexOf(d)));
@@ -85,6 +87,9 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const [speaking, setSpeaking] = useState(false);
   const [pick, setPick] = useState<string[]>([]);
   const [editAdvice, setEditAdvice] = useState(false);
+  const [editF, setEditF] = useState(false);
+  const [editPain, setEditPain] = useState(false);
+  const [fText, setFText] = useState("");
   const mic = useRef<MicRec | null>(null);
   const seq = useRef(0);
   const list = useRef<HTMLDivElement>(null);
@@ -512,6 +517,170 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     </div>
   );
 
+  /** advice to the patient: read / edit / rewrite (used by the advice question and the summary) */
+  const adviceBox = (asking: boolean) => (
+    <div className="rc-adv">
+      <header>
+        <b>คำแนะนำถึงผู้ป่วย</b>
+        <button type="button" onClick={() => setEditAdvice((v) => !v)}>
+          {editAdvice ? <Check size={13} /> : <Pencil size={13} />} {editAdvice ? "เสร็จ" : "แก้ไข"}
+        </button>
+      </header>
+      {editAdvice ? <textarea value={advice} rows={5} onChange={(e) => saveAdvice(e.target.value)} aria-label="แก้คำแนะนำถึงผู้ป่วย" autoFocus /> : <p className="rc-adv__text">{advice || "—"}</p>}
+      <div className="rc-adv__acts">
+        <button
+          type="button"
+          onClick={async () => {
+            setThinking(true);
+            saveAdvice(await draftAdvice());
+            setThinking(false);
+          }}
+        >
+          <RefreshCw size={13} /> เขียนใหม่
+        </button>
+        {asking && (
+          <button
+            type="button"
+            className="is-go"
+            onClick={() => {
+              setEditAdvice(false);
+              say("me", "ใช้คำแนะนำนี้");
+              void askNext();
+            }}
+          >
+            <Check size={13} strokeWidth={3} /> ใช้คำแนะนำนี้
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  /** the treatment summary: every answer in one card, editable, saved from here */
+  const summary = () => {
+    const done = steps.filter((x) => x.value).length;
+    const drop = pain !== undefined ? appt.painBefore - pain : 0;
+    const ready = pain !== undefined && dx.length > 0 && pr.length > 0;
+    const row = (n: number, label: string, body: ReactNode, ok: boolean) => (
+      <div className={clsx("rs2__row", ok && "is-ok")}>
+        <i>{ok ? <Check size={11} strokeWidth={3.2} /> : n}</i>
+        <div>
+          <small>{label}</small>
+          {body}
+        </div>
+      </div>
+    );
+    return (
+      <div className="rs2">
+        <header className="rs2__head">
+          <span>
+            <b>สรุปการรักษา</b>
+            <small>
+              {p.name} · {s.name}
+            </small>
+          </span>
+          <em className={done === SET.length ? "is-ok" : undefined}>
+            {done === SET.length ? <Check size={12} strokeWidth={3} /> : null} ครบ {done}/{SET.length}
+          </em>
+        </header>
+        {row(
+          1,
+          "อาการที่ตรวจพบ",
+          editF ? (
+            <div className="rs2__edit">
+              <textarea rows={2} value={fText} onChange={(e) => setFText(e.target.value)} aria-label="แก้อาการที่ตรวจพบ" autoFocus />
+              <button
+                type="button"
+                onClick={() => {
+                  store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: fText.trim() || undefined }, log: "แก้อาการที่ตรวจพบ" });
+                  setEditF(false);
+                }}
+              >
+                <Check size={13} /> เสร็จ
+              </button>
+            </div>
+          ) : (
+            <p
+              className="rs2__t"
+              onClick={() => {
+                setFText(findings);
+                setEditF(true);
+              }}
+              role="button"
+              title="แตะเพื่อแก้"
+            >
+              {findings || "—"} <Pencil size={11} />
+            </p>
+          ),
+          !!findings,
+        )}
+        {row(
+          2,
+          "วินิจฉัย",
+          <div className="rs2__chips">
+            {dx.map((d) => (
+              <span key={d.name}>
+                {d.name.replace(/\s*\(.*\)/, "")}
+                {d.code && <u>{d.code}</u>}
+                <button type="button" aria-label={`ลบ ${d.name}`} onClick={() => removeDx(d.name)}>
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+            {!dx.length && <p className="rs2__t">—</p>}
+          </div>,
+          dx.length > 0,
+        )}
+        {row(
+          3,
+          "หัตถการ",
+          <div className="rs2__chips">
+            {pr.map((x) => (
+              <span key={x.name} className="is-proc">
+                <span>
+                  <b>{x.name}</b>
+                  {(x.area || x.minutes) && <small>{[x.area, x.minutes ? `${x.minutes} นาที` : ""].filter(Boolean).join(" · ")}</small>}
+                </span>
+                <button type="button" aria-label={`ลบ ${x.name}`} onClick={() => removePr(x.name)}>
+                  <X size={11} />
+                </button>
+              </span>
+            ))}
+            {!pr.length && <p className="rs2__t">—</p>}
+          </div>,
+          pr.length > 0,
+        )}
+        {row(
+          4,
+          "Pain หลังนวด",
+          <>
+            <div className="rs2__pain">
+              <b>
+                {appt.painBefore} <span>→</span> {pain ?? "?"}
+              </b>
+              {pain !== undefined && <em className={drop > 0 ? "is-down" : undefined}>{drop > 0 ? `ลดลง ${drop} (${Math.round((drop / Math.max(1, appt.painBefore)) * 100)}%)` : drop === 0 ? "เท่าเดิม" : `เพิ่มขึ้น ${-drop}`}</em>}
+              <button type="button" className="rs2__link" onClick={() => setEditPain((v) => !v)}>
+                {editPain ? <Check size={12} /> : <Pencil size={12} />} {editPain ? "เสร็จ" : "แก้"}
+              </button>
+            </div>
+            {(editPain || pain === undefined) && <PainRow sm onPick={(n) => (savePain(n), setEditPain(false))} />}
+          </>,
+          pain !== undefined,
+        )}
+        {row(5, "", adviceBox(false), !!advice.trim())}
+        <button
+          type="button"
+          className="rs2__save"
+          disabled={!ready}
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_SAVE, { detail: { apptId: appt.id } }));
+          }}
+        >
+          <Check size={15} strokeWidth={3} /> {ready ? "บันทึกการรักษา" : "ยังขาดวินิจฉัย / หัตถการ / Pain"}
+        </button>
+      </div>
+    );
+  };
+
   /** the component attached to an AI question */
   const widget = (m: Msg) => {
     if (m.kind === "intro")
@@ -560,79 +729,11 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         </div>
       );
     }
-    if (m.kind === "advice" || m.kind === "summary")
+    if (m.kind === "summary") return summary();
+    if (m.kind === "advice")
       return (
         <div className="rc-card">
-          {m.kind === "summary" && (
-            <dl className="rc-sum">
-              <dt>ตรวจพบ</dt>
-              <dd>
-                <p className="rc-sum__t">{findings || "—"}</p>
-              </dd>
-              <dt>วินิจฉัย</dt>
-              <dd>
-                {dx.map((d) => (
-                  <span key={d.name}>
-                    {d.name}
-                    <button type="button" aria-label={`ลบ ${d.name}`} onClick={() => removeDx(d.name)}>
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-              </dd>
-              <dt>หัตถการ</dt>
-              <dd>
-                {pr.map((x) => (
-                  <span key={x.name}>
-                    {x.name}
-                    {x.area ? ` · ${x.area}` : ""}
-                    {x.minutes ? ` · ${x.minutes} นาที` : ""}
-                    <button type="button" aria-label={`ลบ ${x.name}`} onClick={() => removePr(x.name)}>
-                      <X size={11} />
-                    </button>
-                  </span>
-                ))}
-              </dd>
-              <dt>Pain หลังนวด</dt>
-              <dd>
-                <PainRow sm onPick={savePain} />
-              </dd>
-            </dl>
-          )}
-          <div className="rc-adv">
-            <header>
-              <b>คำแนะนำถึงผู้ป่วย</b>
-              <button type="button" onClick={() => setEditAdvice((v) => !v)}>
-                {editAdvice ? <Check size={13} /> : <Pencil size={13} />} {editAdvice ? "เสร็จ" : "แก้ไข"}
-              </button>
-            </header>
-            {editAdvice ? <textarea value={advice} rows={5} onChange={(e) => saveAdvice(e.target.value)} aria-label="แก้คำแนะนำถึงผู้ป่วย" autoFocus /> : <p className="rc-adv__text">{advice || "—"}</p>}
-            <div className="rc-adv__acts">
-              <button
-                type="button"
-                onClick={async () => {
-                  setThinking(true);
-                  saveAdvice(await draftAdvice());
-                  setThinking(false);
-                }}
-              >
-                <RefreshCw size={13} /> เขียนใหม่
-              </button>
-              {m.kind === "advice" && (
-                <button
-                  type="button"
-                  className="is-go"
-                  onClick={() => {
-                    setEditAdvice(false);
-                    say("me", "ใช้คำแนะนำนี้");
-                    void askNext();
-                  }}
-                >
-                  <Check size={13} strokeWidth={3} /> ใช้คำแนะนำนี้
-                </button>
-              )}
-            </div>
-          </div>
+          {adviceBox(true)}
         </div>
       );
     return null;

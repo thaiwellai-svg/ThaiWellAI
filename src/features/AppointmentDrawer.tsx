@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, AudioLines, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { clsx } from "clsx";
@@ -14,7 +14,7 @@ import { useLatest } from "./useLatest";
 import { PayPanel, METHOD_LABEL, makePayment } from "./billing";
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, RecSection } from "./ClinicalRecord";
-import { RECORD_DRAFT, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
+import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
@@ -88,6 +88,13 @@ export function AppointmentDrawer({
     };
     window.addEventListener(VOICE_FILL, on);
     return () => window.removeEventListener(VOICE_FILL, on);
+  }, [id]);
+  // the chat's summary card can save the record (same as the footer button)
+  const saveRecord = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const on = (e: Event) => (e as CustomEvent<VoiceFill>).detail.apptId === id && saveRecord.current?.();
+    window.addEventListener(RECORD_SAVE, on);
+    return () => window.removeEventListener(RECORD_SAVE, on);
   }, [id]);
   // …and tell the chat what the form holds now
   useEffect(() => {
@@ -233,7 +240,13 @@ export function AppointmentDrawer({
         จบการรักษา
       </Button>
     );
-  else if (stage === "assess")
+  if (stage === "assess" && painAfter !== undefined && appt.diagnoses?.length && appt.procedures?.length)
+    saveRecord.current = () => {
+      step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
+      deductStock(store, appt.id, appt.serviceId, store.settings.staffName);
+    };
+  else saveRecord.current = null;
+  if (stage === "assess")
     footer = (
       <Button size="lg" fill disabled={painAfter === undefined || !(appt.diagnoses?.length && appt.procedures?.length)} leading={<Check size={16} />} onClick={() => {
           step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
