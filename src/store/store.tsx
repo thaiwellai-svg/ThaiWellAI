@@ -63,8 +63,8 @@ type Action =
   | { type: "reset" }
   /** ข้อมูลจากฐานข้อมูล (ตอนเข้าสู่ระบบ) */
   | { type: "hydrate"; state: State }
-  /** อีกเครื่องแก้ข้อมูล (realtime) — item = null คือถูกลบ */
-  | { type: "remote"; collection: Collection; id: string; item: unknown | null };
+  /** อีกเครื่องแก้ข้อมูล (realtime) */
+  | { type: "remote"; update: (s: State) => State };
 
 const VERSION = 26;
 const KEY = "thaiwell.backoffice";
@@ -72,9 +72,6 @@ const KEY = "thaiwell.backoffice";
 const MISSING_PATIENT: Patient = { id: "", hn: "-", name: "ไม่พบข้อมูลผู้ป่วย", gender: "หญิง", age: 0, phone: "", conditions: [], complaint: "", painHistory: [], registeredOn: "" };
 const MISSING_THERAPIST: Therapist = { id: "", name: "ยังไม่ระบุผู้บำบัด", role: "", color: "#8a8f87", shifts: [], services: [] };
 
-/** ชุดข้อมูลในฐานข้อมูล (bo_store.collection) */
-export const COLLECTIONS = ["patients", "appointments", "requests", "decisions", "notifications", "therapists", "services", "audit"] as const;
-export type Collection = (typeof COLLECTIONS)[number] | "meta";
 
 /** ใช้งานจริง: เริ่มจากว่าง — มีแค่บริการตั้งต้น (แก้ได้ในตั้งค่า) และค่าตั้งต้นของคลินิก */
 export function emptyLive(): State {
@@ -135,18 +132,8 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "hydrate":
       return action.state;
-    case "remote": {
-      if (action.collection === "meta") {
-        const m = action.item as { key: string; value: unknown } | null;
-        return m ? { ...state, [m.key]: m.value } : state;
-      }
-      const list = state[action.collection] as { id: string }[];
-      const rest = list.filter((x) => x.id !== action.id);
-      if (!action.item) return { ...state, [action.collection]: rest };
-      const i = list.findIndex((x) => x.id === action.id);
-      const next = i >= 0 ? list.map((x) => (x.id === action.id ? (action.item as { id: string }) : x)) : [action.item as { id: string }, ...list];
-      return { ...state, [action.collection]: next };
-    }
+    case "remote":
+      return action.update(state);
     case "approve": {
       const req = state.requests.find((r) => r.id === action.id);
       if (!req) return state;
@@ -335,7 +322,15 @@ function reducer(state: State, action: Action): State {
         ...state,
         therapists: exists
           ? state.therapists.map((t) => (t.id === p.id ? { ...t, ...p } : t))
-          : [...state.therapists, { ...p, shifts: [], services: [] }],
+          : // ผู้บำบัดใหม่: เข้าเวรตามเวลาเปิดคลินิก (วันที่เปิด) รับทุกบริการ — ปรับได้ที่หน้าจัดตารางงาน
+            [
+              ...state.therapists,
+              {
+                ...p,
+                shifts: [{ days: [0, 1, 2, 3, 4, 5, 6].filter((d) => !state.settings.closedWeekdays.includes(d)), start: state.settings.openTime, end: state.settings.closeTime, services: state.services.map((x) => x.id) }],
+                services: state.services.map((x) => x.id),
+              },
+            ],
       };
     }
     case "removeTherapist":

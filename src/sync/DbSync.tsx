@@ -1,58 +1,92 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { COLLECTIONS, emptyLive, useStore, type Collection, type State } from "../store/store";
+import { emptyLive, useStore, type State } from "../store/store";
+import type { Biz } from "../data/biz";
 import { withBirthDate } from "../data/elements";
 import { DEFAULT_SETTINGS } from "../data/seed";
 import { cloud } from "./cloud";
 
 /**
- * ข้อมูลระบบคลินิกทั้งหมดอยู่ในฐานข้อมูล (bo_store: collection + id + data)
- *   เข้าสู่ระบบ → โหลดทั้งหมดมาใส่ร้านค้า · แก้อะไร → บันทึกเฉพาะแถวที่เปลี่ยน · เครื่องอื่นแก้ → รับมาทันที (realtime)
- * ผู้ป่วย นัด คำขอ ผลการพิจารณา แจ้งเตือน ผู้บำบัด บริการ ประวัติการแก้ไข = แถวละรายการ
- * ตั้งค่าคลินิก / คลังสินค้า-แพ็กเกจ-ค่ามือ-ปิดยอด (biz) = แถวใน "meta"
+ * ข้อมูลระบบคลินิกทั้งหมดอยู่ในฐานข้อมูล — ตารางแยกตามประเภท (supabase/clinic-tables.sql)
+ *   เข้าสู่ระบบ → โหลดทุกตารางมาใส่ร้านค้า · แก้อะไร → บันทึกเฉพาะแถวที่เปลี่ยน · เครื่องอื่นแก้ → รับมาทันที (realtime)
+ * แต่ละแถว: id + data (ข้อมูลครบ) · คอลัมน์อ่านง่าย (ชื่อ วันที่ สถานะ ยอดเงิน) ฐานข้อมูลดึงจาก data เอง
  */
 const DEVICE = `d${Math.random().toString(36).slice(2, 10)}`;
-const META_KEYS = ["settings", "biz"] as const;
-type Snap = Record<string, Map<string, unknown>>;
 
-const pick = (s: State) => s;
+type Item = { id: string };
+/** ตาราง ↔ รายการในร้านค้า */
+const LISTS: { table: string; get: (s: State) => Item[]; set: (s: State, v: Item[]) => State }[] = [
+  ...(["patients", "appointments", "requests", "decisions", "notifications", "therapists", "services", "audit"] as const).map((k) => ({
+    table: `clinic_${k}`,
+    get: (s: State) => s[k] as unknown as Item[],
+    set: (s: State, v: Item[]) => ({ ...s, [k]: v }),
+  })),
+  ...(
+    [
+      ["items", "clinic_stock_items"],
+      ["moves", "clinic_stock_moves"],
+      ["packages", "clinic_packages"],
+      ["sales", "clinic_package_sales"],
+      ["closings", "clinic_day_closings"],
+      ["waitlist", "clinic_waitlist"],
+      ["docs", "clinic_documents"],
+    ] as const
+  ).map(([k, table]) => ({
+    table,
+    get: (s: State) => s.biz[k] as unknown as Item[],
+    set: (s: State, v: Item[]) => ({ ...s, biz: { ...s.biz, [k]: v } as Biz }),
+  })),
+];
+/** แถวเดี่ยวใน clinic_config */
+const CONFIG: { id: string; get: (s: State) => unknown; set: (s: State, v: unknown) => State }[] = [
+  { id: "settings", get: (s) => s.settings, set: (s, v) => ({ ...s, settings: { ...DEFAULT_SETTINGS, ...(v as State["settings"]) } }) },
+  ...(["usage", "rates", "memberDiscount", "seq"] as const).map((k) => ({
+    id: `biz_${k}`,
+    get: (s: State) => s.biz[k],
+    set: (s: State, v: unknown) => ({ ...s, biz: { ...s.biz, [k]: v } as Biz }),
+  })),
+];
+
+type Snap = Record<string, Map<string, unknown>>;
 const snapOf = (s: State): Snap => {
   const out: Snap = {};
-  for (const c of COLLECTIONS) out[c] = new Map((s[c] as { id: string }[]).map((x) => [x.id, x]));
-  out.meta = new Map(META_KEYS.map((k) => [k, s[k]]));
+  for (const l of LISTS) out[l.table] = new Map(l.get(s).map((x) => [x.id, x]));
+  out.clinic_config = new Map(CONFIG.map((c) => [c.id, c.get(s)]));
   return out;
 };
 
-async function loadAll(): Promise<Map<string, { id: string; data: unknown }[]>> {
-  const out = new Map<string, { id: string; data: unknown }[]>();
-  // ทีละ 1000 แถว (ขีดจำกัดต่อครั้งของ Supabase)
+async function loadTable(table: string) {
+  const rows: { id: string; data: unknown }[] = [];
   for (let from = 0; ; from += 1000) {
-    const { data, error } = await cloud.from("bo_store").select("collection,id,data").range(from, from + 999);
-    if (error) throw error;
-    for (const r of data ?? []) {
-      const list = out.get(r.collection) ?? [];
-      list.push({ id: r.id, data: r.data });
-      out.set(r.collection, list);
-    }
+    const { data, error } = await cloud.from(table).select("id,data").range(from, from + 999);
+    if (error) throw new Error(`${table}: ${error.message}`);
+    rows.push(...((data ?? []) as { id: string; data: unknown }[]));
     if (!data || data.length < 1000) break;
   }
-  return out;
+  return rows;
 }
 
-function fromRows(rows: Map<string, { id: string; data: unknown }[]>): State {
-  const base = emptyLive();
-  const s: State = { ...base };
-  for (const c of COLLECTIONS) {
-    const list = rows.get(c);
-    if (list) (s as unknown as Record<string, unknown>)[c] = list.map((r) => r.data);
+async function loadAll(): Promise<{ state: State; empty: boolean }> {
+  let s = emptyLive();
+  let total = 0;
+  const lists = await Promise.all(LISTS.map((l) => loadTable(l.table)));
+  LISTS.forEach((l, i) => {
+    total += lists[i].length;
+    // คลินิกใหม่: ยังไม่มีบริการในตาราง → ใช้บริการตั้งต้น (จะถูกบันทึกลงตารางรอบแรก)
+    if (lists[i].length || l.table !== "clinic_services") s = l.set(s, lists[i].map((r) => r.data as Item));
+  });
+  const config = await loadTable("clinic_config");
+  total += config.length;
+  for (const r of config) {
+    const c = CONFIG.find((x) => x.id === r.id);
+    if (c) s = c.set(s, r.data);
   }
-  for (const m of rows.get("meta") ?? []) (s as unknown as Record<string, unknown>)[m.id] = m.data;
-  // ใหม่กว่าก่อน (แสดงผลเรียงตามเดิมของแต่ละหน้า)
-  s.audit = [...s.audit].sort((a, b) => b.at.localeCompare(a.at));
-  s.notifications = [...s.notifications].sort((a, b) => b.at.localeCompare(a.at));
-  s.settings = { ...DEFAULT_SETTINGS, ...base.settings, ...s.settings };
-  s.biz = { ...base.biz, ...s.biz };
-  s.patients = s.patients.map(withBirthDate);
-  return s;
+  s = {
+    ...s,
+    audit: [...s.audit].sort((a, b) => b.at.localeCompare(a.at)),
+    notifications: [...s.notifications].sort((a, b) => b.at.localeCompare(a.at)),
+    patients: s.patients.map(withBirthDate),
+  };
+  return { state: s, empty: total === 0 };
 }
 
 export function DbSync({ children, fallback }: { children: ReactNode; fallback: ReactNode }) {
@@ -68,12 +102,11 @@ export function DbSync({ children, fallback }: { children: ReactNode; fallback: 
   useEffect(() => {
     let alive = true;
     loadAll()
-      .then((rows) => {
+      .then(({ state, empty }) => {
         if (!alive) return;
-        const s = fromRows(rows);
-        // ฐานข้อมูลว่าง (คลินิกใหม่) → ยังไม่มี snapshot เดิม → บันทึกค่าตั้งต้นลงฐานข้อมูลรอบแรก
-        snap.current = rows.size ? snapOf(s) : { meta: new Map(), ...Object.fromEntries(COLLECTIONS.map((c) => [c, new Map()])) };
-        store.dispatch({ type: "hydrate", state: s });
+        // ฐานข้อมูลว่าง (คลินิกใหม่) → snapshot ว่าง → ค่าตั้งต้น (บริการ ตั้งค่า) ถูกบันทึกลงตารางรอบแรก
+        snap.current = empty ? Object.fromEntries([...LISTS.map((l) => [l.table, new Map()]), ["clinic_config", new Map()]]) : snapOf(state);
+        store.dispatch({ type: "hydrate", state });
         setReady(true);
       })
       .catch((e) => alive && setError(e?.message ?? String(e)));
@@ -87,50 +120,56 @@ export function DbSync({ children, fallback }: { children: ReactNode; fallback: 
     if (!ready || !snap.current) return;
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
-      const s = pick(latest.current as unknown as State);
       const prev = snap.current!;
-      const now = snapOf(s);
-      const upserts: { collection: string; id: string; data: unknown; updated_by: string; updated_at: string }[] = [];
-      const deletes: { collection: string; id: string }[] = [];
+      const now = snapOf(latest.current as unknown as State);
       const at = new Date().toISOString();
-      for (const c of [...COLLECTIONS, "meta"] as Collection[]) {
-        const a = prev[c] ?? new Map();
-        const b = now[c];
-        for (const [id, v] of b) if (a.get(id) !== v) upserts.push({ collection: c, id, data: v, updated_by: DEVICE, updated_at: at });
-        for (const id of a.keys()) if (!b.has(id)) deletes.push({ collection: c, id });
+      const jobs: Promise<unknown>[] = [];
+      for (const table of Object.keys(now)) {
+        const a = prev[table] ?? new Map();
+        const b = now[table];
+        const up = [...b].filter(([id, v]) => a.get(id) !== v).map(([id, v]) => ({ id, data: v, updated_by: DEVICE, updated_at: at }));
+        const del = [...a.keys()].filter((id) => !b.has(id));
+        for (let i = 0; i < up.length; i += 400)
+          jobs.push(
+            Promise.resolve(cloud.from(table).upsert(up.slice(i, i + 400))).then(({ error: e }) => e && console.warn(table, e.message)),
+          );
+        for (let i = 0; i < del.length; i += 200) jobs.push(Promise.resolve(cloud.from(table).delete().in("id", del.slice(i, i + 200))));
       }
-      if (!upserts.length && !deletes.length) return;
       snap.current = now;
-      void (async () => {
-        for (let i = 0; i < upserts.length; i += 400) {
-          const { error: e } = await cloud.from("bo_store").upsert(upserts.slice(i, i + 400));
-          if (e) console.warn("bo_store upsert", e.message);
-        }
-        for (const c of new Set(deletes.map((d) => d.collection))) {
-          const ids = deletes.filter((d) => d.collection === c).map((d) => d.id);
-          for (let i = 0; i < ids.length; i += 200) await cloud.from("bo_store").delete().eq("collection", c).in("id", ids.slice(i, i + 200));
-        }
-      })();
+      void Promise.all(jobs);
     }, 400);
   }, [ready, store]);
 
-  // เครื่องอื่นแก้ → รับมา (ไม่ส่งกลับ: snapshot ชี้ไปที่ข้อมูลชิ้นเดียวกัน)
+  // เครื่องอื่นแก้ → รับมา (ไม่ส่งกลับ: snapshot ชี้ไปที่ข้อมูลชิ้นเดียวกับในร้านค้า)
   useEffect(() => {
     if (!ready) return;
-    const ch = cloud
-      .channel("bo-store")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bo_store" }, (ev) => {
-        const row = (ev.eventType === "DELETE" ? ev.old : ev.new) as { collection: Collection; id: string; data?: unknown; updated_by?: string };
-        if (!row?.collection || row.updated_by === DEVICE) return;
-        const item = ev.eventType === "DELETE" ? null : row.data;
-        const m = snap.current?.[row.collection];
+    let ch = cloud.channel("clinic-tables");
+    for (const table of [...LISTS.map((l) => l.table), "clinic_config"]) {
+      ch = ch.on("postgres_changes", { event: "*", schema: "public", table }, (ev) => {
+        const row = (ev.eventType === "DELETE" ? ev.old : ev.new) as { id: string; data?: unknown; updated_by?: string };
+        if (!row?.id || row.updated_by === DEVICE) return;
+        const item = ev.eventType === "DELETE" ? null : (row.data ?? null);
+        const m = snap.current?.[table];
         if (m) {
           if (item === null) m.delete(row.id);
           else m.set(row.id, item);
         }
-        latest.current.dispatch({ type: "remote", collection: row.collection, id: row.id, item: row.collection === "meta" && item !== null ? { key: row.id, value: item } : item });
-      })
-      .subscribe();
+        const list = LISTS.find((l) => l.table === table);
+        const conf = CONFIG.find((c) => c.id === row.id);
+        latest.current.dispatch({
+          type: "remote",
+          update: (s) => {
+            if (table === "clinic_config") return conf && item !== null ? conf.set(s, item) : s;
+            if (!list) return s;
+            const cur = list.get(s);
+            if (item === null) return list.set(s, cur.filter((x) => x.id !== row.id));
+            const i = cur.findIndex((x) => x.id === row.id);
+            return list.set(s, i >= 0 ? cur.map((x) => (x.id === row.id ? (item as Item) : x)) : [item as Item, ...cur]);
+          },
+        });
+      });
+    }
+    ch.subscribe();
     return () => void cloud.removeChannel(ch);
   }, [ready]);
 
