@@ -637,16 +637,22 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const id = (await state(p)).__id;
     await openVisit(p, id);
     ex((await p.locator('.vp__voice .rc').count()) === 1, 'ขั้นบันทึกการรักษาเปิดแผงผู้ช่วยบันทึกการรักษาด้านขวาเอง');
-    ex((await p.locator('.rc-msg.is-ai').count()) === 1, 'AI เปิดบทสนทนาก่อน');
-    ex((await p.locator('.rc-steps li').count()) === 4, 'แสดงชุดคำถาม 4 ข้อ');
+    ex((await p.locator('.rc-msg.is-ai').count()) === 2 && (await p.locator('.rc-set li').count()) === 5, 'AI เปิดด้วยชุดคำถาม 5 ข้อ แล้วถามข้อแรก');
+    ex((await p.locator('.rc-steps li').count()) === 5, 'แสดงชุดคำถาม 5 ข้อ');
     ex((await p.locator('.rc-quick button').count()) > 0, 'มีตัวอย่างคำตอบให้แตะ');
-    await p.fill('textarea[aria-label="สรุปการรักษา"]', 'ลมปลายปัตคาด บ่าขวาตึง นวดรักษาเส้นอิทา 45 นาที แล้วประคบสมุนไพรต่อ');
-    await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p);
+    const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
+    ex((await p.locator('.rc-msg.is-ai').last().innerText()).includes('ข้อ 1/5'), 'เริ่มจากข้อ 1 ของชุดคำถาม');
+    await send('บ่าขวาตึง กดเจ็บ ยกแขนลำบาก');
     let a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.findings?.includes('บ่าขวา') && !(a.diagnoses?.length), 'ข้อ 1 เก็บเฉพาะอาการที่ตรวจพบ ไม่เดาข้ออื่น');
+    ex((await p.locator('.rc-msg.is-ai').last().innerText()).includes('ข้อ 2/5'), 'ตอบแล้วถามข้อ 2 ต่อทันที');
+    await send('ลมปลายปัตคาด');
+    await send('นวดรักษาเส้นอิทา 45 นาที แล้วประคบสมุนไพร');
+    a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.diagnoses.length > 0 && a.diagnoses[0].code, 'เติมวินิจฉัยพร้อมรหัส ICD-10');
     ex(a.procedures.some((x) => x.minutes === 45), 'เติมหัตถการ 45 นาที');
     ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-pain button').count()) === 11, 'AI ถามคะแนนปวดพร้อมแถบเลือก 0–10');
-    ex((await p.locator('.rc-steps button.is-done').count()) === 2 && (await p.locator('.rc-steps button.is-now').innerText()).includes('Pain'), 'ชุดคำถาม: ตอบแล้ว 2 ข้อ กำลังถาม Pain');
+    ex((await p.locator('.rc-steps button.is-done').count()) === 3 && (await p.locator('.rc-steps button.is-now').innerText()).includes('Pain'), 'ชุดคำถาม: ตอบแล้ว 3 ข้อ กำลังถาม Pain');
     await p.locator('.rc-steps button', { hasText: 'หัตถการ' }).click(); await p.waitForTimeout(500);
     ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-chips').count()) === 1, 'แตะข้อในชุดคำถาม → AI ถามข้อนั้นใหม่พร้อมตัวเลือก');
     await p.locator('.rc-steps button', { hasText: 'Pain' }).click(); await p.waitForTimeout(500);
@@ -665,7 +671,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(a.advice === '• ประคบร้อนที่บ่าวันละ 15 นาที', 'คำแนะนำที่แก้เองถูกบันทึก');
   });
 
-  await check('N04', 'therapist', 'ผู้บำบัดส่งเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'เสียง → WAV → ถอดเสียง → AI → เติมบันทึก', async (p, ex) => {
+  await check('N04', 'therapist', 'ผู้บำบัดส่งเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'เสียง → WAV → ถอดเสียง → ตอบข้อ 1 → ถามข้อ 2', async (p, ex) => {
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
@@ -675,9 +681,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const heard = await p.locator('.rc-msg.is-me').first().innerText();
     ex(/ปัต/.test(heard) && /ประคบ/.test(heard), 'ถอดเสียงภาษาไทยเป็นข้อความในแชท');
     const a = (await state(p)).appointments.find((x) => x.id === id);
-    ex(a.diagnoses.some((d) => d.name.includes('ปัตคาด')), 'วินิจฉัยลมปลายปัตคาด');
-    ex(a.procedures.some((x) => x.name.includes('ประคบ')), 'หัตถการมีประคบสมุนไพร');
-    ex((await p.locator('.vs__panel button[aria-pressed="true"]', { hasText: /^3$/ }).count()) === 1, 'เลือก Pain หลังนวด = 3 ในฟอร์มจากคำพูด "ปวดเหลือสาม"');
+    ex(!!a.findings && /บ่า|ปัต/.test(a.findings), 'เสียงตอบข้อ 1 (อาการที่ตรวจพบ) ถูกบันทึก');
+    ex((await p.locator('.rc-msg.is-ai').last().innerText()).includes('ข้อ 2/5'), 'แล้วถามข้อ 2 ต่อ');
   });
 
   // ===== CROSS-CUTTING =====

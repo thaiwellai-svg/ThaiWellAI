@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, FileAudio, Headphones, Mic, Pencil, RefreshCw, RotateCcw, Send, Sparkles, Square, Volume2, X } from "lucide-react";
+import { Check, FileAudio, Mic, Pencil, RefreshCw, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
+import { useToast } from "../design-system";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
 import { dxCode, procCode } from "../data/codes";
@@ -12,13 +13,13 @@ import { VoiceWave } from "./VoiceWave";
 import type { Appointment } from "../data/types";
 import "./voice-note.css";
 
-type Extract = { diagnoses: string[]; procedures: { name: string; area?: string; minutes?: number | null }[]; painAfter: number | null; advice: string };
-type Slot = "dx" | "proc" | "pain" | "advice" | "summary";
-type Msg = { id: number; role: "ai" | "me"; text: string; kind?: Slot };
+type Extract = { findings?: string; diagnoses: string[]; procedures: { name: string; area?: string; minutes?: number | null }[]; painAfter: number | null; advice: string };
+type Slot = "finding" | "dx" | "proc" | "pain" | "advice" | "summary";
+type Msg = { id: number; role: "ai" | "me"; text: string; kind?: Slot | "intro" };
 
 /** the treatment-record form listens for this to fill Pain-after and advice (they are local drafts there) */
 export const VOICE_FILL = "thaiwell:voice-fill";
-export type VoiceFill = { apptId: string; painAfter?: number; advice?: string };
+export type VoiceFill = { apptId: string; painAfter?: number; advice?: string; /** start over: clear the drafts */ clear?: boolean };
 /** …and announces its own drafts so the chat knows what is already filled */
 export const RECORD_DRAFT = "thaiwell:record-draft";
 
@@ -44,11 +45,21 @@ export function parseLocal(text: string, serviceName: string): Extract {
   return { diagnoses, procedures, painAfter: pain ?? null, advice: adv };
 }
 
+/** the question set, in clinical order */
+const SET: { slot: Exclude<Slot, "summary">; label: string }[] = [
+  { slot: "finding", label: "อาการที่ตรวจพบ" },
+  { slot: "dx", label: "วินิจฉัย" },
+  { slot: "proc", label: "หัตถการ" },
+  { slot: "pain", label: "Pain หลังนวด" },
+  { slot: "advice", label: "คำแนะนำผู้ป่วย" },
+];
 const ASK = {
-  dx: "วันนี้วินิจฉัยว่าอะไรคะ เลือกด้านล่างหรือพูดบอกได้เลย",
+  finding: "วันนี้ตรวจพบอะไรบ้างคะ เช่น ตำแหน่งที่ปวด ตึง กดเจ็บ หรือลักษณะอาการ",
+  dx: "วินิจฉัยว่าอะไรคะ เลือกด้านล่างหรือพูดบอกได้เลย",
   proc: "ทำหัตถการอะไรบ้างคะ นวดเส้นไหน กี่นาที",
   pain: "หลังนวดผู้ป่วยให้คะแนนปวดเท่าไรคะ",
 };
+const no = (slot: Slot) => SET.findIndex((x) => x.slot === slot) + 1;
 
 /**
  * ผู้ช่วยบันทึกการรักษา — a chat with the AI. The therapist talks (live transcript while speaking), types, or taps the
@@ -64,6 +75,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [pain, setPain] = useState<number | undefined>(appt.painAfter);
   const [advice, setAdvice] = useState(appt.advice ?? "");
+  const toast = useToast();
   const [thinking, setThinking] = useState(false);
   const [draft, setDraft] = useState("");
   const [voiceMode, setVoiceMode] = useState(false);
@@ -86,15 +98,16 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const canRecord = secure && !!navigator.mediaDevices?.getUserMedia;
   const dx = appt.diagnoses ?? [];
   const pr = appt.procedures ?? [];
-  const latest = useRef({ dx, pr, pain, advice });
-  latest.current = { dx, pr, pain, advice };
+  const findings = appt.findings ?? "";
+  const latest = useRef({ findings, dx, pr, pain, advice });
+  latest.current = { findings, dx, pr, pain, advice };
   const last = msgs[msgs.length - 1];
   const pending = last?.role === "ai" ? last.kind : undefined;
   // read through refs: voice mode finishes a turn from the mic callback, which closes over an older render
   const turn = useRef({ last, pending });
   turn.current = { last, pending };
 
-  const say = (role: Msg["role"], text: string, kind?: Slot) => {
+  const say = (role: Msg["role"], text: string, kind?: Msg["kind"]) => {
     const m: Msg = { id: ++seq.current, role, text, kind };
     setMsgs((x) => [...x, m]);
     return m;
@@ -145,6 +158,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   const missing = (): Slot => {
     const l = latest.current;
+    if (!l.findings.trim()) return "finding";
     if (!l.dx.length) return "dx";
     if (!l.pr.length) return "proc";
     if (l.pain === undefined) return "pain";
@@ -160,6 +174,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         `คุณเป็นแพทย์แผนไทย เขียน "คำแนะนำถึงผู้ป่วย" หลังรับบริการ ภาษาไทยสุภาพ อ่านง่าย 2–4 ข้อสั้น ๆ ขึ้นบรรทัดใหม่ทีละข้อ ขึ้นต้นด้วย "• " เน้นสิ่งที่ทำได้ที่บ้าน (ประคบ ท่าฤาษีดัดตน สมุนไพร อาหารที่ควรเลี่ยง) และอาการที่ควรกลับมาพบ ตอบ JSON {"advice":"..."}\n${THAI_MASSAGE_KNOWLEDGE}`,
         JSON.stringify({
           อาการสำคัญ: p.complaint,
+          สิ่งที่ตรวจพบวันนี้: l.findings,
           วินิจฉัย: l.dx.map((d) => d.name),
           หัตถการ: l.pr.map((x) => [x.name, x.area].filter(Boolean).join(" ")),
           ปวดก่อนหลัง: `${appt.painBefore} → ${l.pain ?? "?"}`,
@@ -190,7 +205,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         setThinking(false);
         saveAdvice(a);
       }
-      const t = `${prefix}${had ? "คำแนะนำถึงผู้ป่วยตอนนี้ค่ะ" : "ร่างคำแนะนำถึงผู้ป่วยให้แล้วค่ะ"} แก้ได้เลย หรือบอกให้ปรับตรงไหน`;
+      const t = `${prefix}ข้อ ${no("advice")}/${SET.length} · ${had ? "คำแนะนำถึงผู้ป่วยตอนนี้ค่ะ" : "ร่างคำแนะนำถึงผู้ป่วยให้แล้วค่ะ"} แก้ได้เลย หรือบอกให้ปรับตรงไหน`;
       say("ai", t, "advice");
       void voice(t);
       return;
@@ -202,7 +217,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       return;
     }
     setPick([]);
-    const q = slot === "pain" ? `${ASK.pain} ก่อนนวดอยู่ที่ ${appt.painBefore}` : ASK[slot];
+    const q = `ข้อ ${no(slot)}/${SET.length} · ${slot === "pain" ? `${ASK.pain} ก่อนนวดอยู่ที่ ${appt.painBefore}` : ASK[slot]}`;
     say("ai", prefix + q, slot);
     void voice(prefix + q);
   };
@@ -213,13 +228,16 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     for (const n of x.diagnoses ?? []) if (n && !ndx.some((d) => d.name === n)) ndx.push({ name: n, code: dxCode(n)?.code, kind: ndx.length ? "secondary" : "principal" });
     const npr = [...l.pr];
     for (const q of x.procedures ?? []) if (q?.name && !npr.some((y) => y.name === q.name)) npr.push({ name: q.name, code: procCode(q.name)?.code, area: q.area || undefined, minutes: q.minutes ?? (npr.length ? undefined : s.minutes) });
-    if (ndx.length !== l.dx.length || npr.length !== l.pr.length) {
-      store.dispatch({ type: "updateAppointment", id: appt.id, patch: { diagnoses: ndx, procedures: npr }, log: "บันทึกด้วยเสียง: ผู้ช่วย AI เติมวินิจฉัย/หัตถการ" });
-      latest.current = { ...latest.current, dx: ndx, pr: npr };
+    const xf = x.findings?.trim() ?? "";
+    const nf = !xf || l.findings.includes(xf) ? l.findings : xf.includes(l.findings.trim()) || !l.findings.trim() ? xf : `${l.findings.trim()} · ${xf}`;
+    if (ndx.length !== l.dx.length || npr.length !== l.pr.length || nf !== l.findings) {
+      store.dispatch({ type: "updateAppointment", id: appt.id, patch: { diagnoses: ndx, procedures: npr, findings: nf || undefined }, log: "บันทึกด้วยเสียง: ผู้ช่วย AI เติมบันทึกการรักษา" });
+      latest.current = { ...latest.current, findings: nf, dx: ndx, pr: npr };
     }
     if (typeof x.painAfter === "number" && x.painAfter >= 0 && x.painAfter <= 10) savePain(Math.round(x.painAfter));
     if (x.advice?.trim() && !latest.current.advice.trim()) saveAdvice(x.advice.trim());
     return [
+      xf && !l.findings.includes(xf) ? `ตรวจพบ ${xf}` : "",
       x.diagnoses?.length ? `วินิจฉัย ${x.diagnoses.join(", ")}` : "",
       x.procedures?.length ? `หัตถการ ${x.procedures.map((q) => q.name + (q.minutes ? ` ${q.minutes} นาที` : "")).join(", ")}` : "",
       typeof x.painAfter === "number" ? `ปวดหลังนวด ${x.painAfter}` : "",
@@ -248,19 +266,30 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     try {
       x = await chatJSON<Extract>(
         `คุณช่วยผู้บำบัดแพทย์แผนไทยแปลงคำพูดเป็นบันทึกเวชระเบียน ตอบ JSON เท่านั้น:
-{"diagnoses":["การวินิจฉัยแผนไทย"],"procedures":[{"name":"หัตถการ","area":"ตำแหน่ง/เส้นประธาน","minutes":นาทีหรือnull}],"painAfter":ตัวเลข0-10หรือnull,"advice":"คำแนะนำถึงผู้ป่วย หรือ \\"\\""}
+{"findings":"อาการ/สิ่งที่ตรวจพบวันนี้ (ตำแหน่ง ลักษณะ) หรือ \\"\\"","diagnoses":["การวินิจฉัยแผนไทย"],"procedures":[{"name":"หัตถการ","area":"ตำแหน่ง/เส้นประธาน","minutes":นาทีหรือnull}],"painAfter":ตัวเลข0-10หรือnull,"advice":"คำแนะนำถึงผู้ป่วย หรือ \\"\\""}
 ใช้ชื่อจากรายการแนะนำถ้าตรงความหมาย: วินิจฉัย ${JSON.stringify(DX_PICK)} · หัตถการ ${JSON.stringify(PROC_PICK)}
-คำพูดมาจากระบบถอดเสียง อาจสะกดผิด (เช่น "เอตา" = "อิทา") · ตัวเลขที่พูดเป็นคำให้แปลงเป็นเลข · ถ้าเป็นคำตอบสั้น ๆ ให้ตีความตามคำถามล่าสุด
-อย่าเดาสิ่งที่ไม่ได้พูด ไม่ได้พูดถึงให้เป็น [] หรือ null`,
+คำพูดมาจากระบบถอดเสียง อาจสะกดผิด (เช่น "เอตา" = "อิทา") · ตัวเลขที่พูดเป็นคำให้แปลงเป็นเลข · ถ้าเป็นคำตอบสั้น ๆ ให้ตีความตามคำถามล่าสุด (ถ้าคำถามล่าสุดถามสิ่งที่ตรวจพบ ให้ใส่ใน findings)
+อย่าเดาสิ่งที่ไม่ได้พูด ห้ามอนุมานวินิจฉัยหรือหัตถการจากอาการ ต้องพูดชื่อออกมาจึงใส่ ไม่ได้พูดถึงให้เป็น [] หรือ null`,
         JSON.stringify({ คำถามล่าสุด: prev?.role === "ai" ? prev.text : null, คำพูด: t, บริการวันนี้: s.name, painก่อนนวด: appt.painBefore }),
       );
     } catch {
       x = parseLocal(t, s.name);
       local = true;
     }
-    const got = apply(x);
+    // one question at a time: keep only the answer to the question that was asked, then move to the next one
+    const slot: Slot = asked && asked !== "intro" ? asked : missing();
+    const only: Extract = { diagnoses: [], procedures: [], painAfter: null, advice: "" };
+    if (slot === "finding") only.findings = x.findings?.trim() || t;
+    if (slot === "dx") only.diagnoses = x.diagnoses ?? [];
+    if (slot === "proc") only.procedures = x.procedures ?? [];
+    if (slot === "pain") only.painAfter = x.painAfter;
+    const got = apply(only);
     setThinking(false);
-    await askNext(got.length ? `รับทราบค่ะ ${got.join(" · ")}${local ? " (ออฟไลน์)" : ""} ` : "ขอโทษค่ะ ยังจับใจความไม่ได้ ");
+    if (!got.length) {
+      await ask(slot, "ขอโทษค่ะ ยังไม่ได้คำตอบข้อนี้\n");
+      return;
+    }
+    await askNext(`รับทราบค่ะ ${got.join(" · ")}${local ? " (ออฟไลน์)" : ""}\n`);
   };
 
   // ── microphone with live transcript ──
@@ -344,20 +373,50 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     setLevel(0);
   };
 
-  const opening = () => `เล่าการรักษาของคุณ${p.name.replace(/^(นางสาว|นาง|นาย)\s*/, "")}วันนี้ได้เลยค่ะ เช่น อาการที่พบ เส้นที่นวด กี่นาที และคะแนนปวดหลังนวด`;
-  useEffect(() => {
+  const intro = () => `เริ่มบันทึกการรักษาของคุณ${p.name.replace(/^(นางสาว|นาง|นาย)\s*/, "")}ค่ะ มี ${SET.length} คำถาม ตอบทีละข้อ ตอบแล้วจะถามข้อต่อไปให้เลย แตะไมค์เพื่อคุยด้วยเสียงได้`;
+  /** intro with the question set, then the first unanswered question */
+  const begin = () => {
     seq.current = 0;
-    setMsgs([{ id: ++seq.current, role: "ai", text: opening() }]);
+    setMsgs([{ id: ++seq.current, role: "ai", text: intro(), kind: "intro" }]);
+    void askNext();
+  };
+  useEffect(() => {
+    begin();
   }, [appt.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** start over: clear what the assistant filled (undo from the toast) */
+  const restart = () => {
+    cancel();
+    stopSpeaking();
+    const before = { findings: appt.findings, diagnoses: appt.diagnoses, procedures: appt.procedures, pain, advice };
+    store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: undefined, diagnoses: [], procedures: [] }, log: "เริ่มบันทึกการรักษาใหม่" });
+    window.dispatchEvent(new CustomEvent<VoiceFill>(VOICE_FILL, { detail: { apptId: appt.id, clear: true } }));
+    setPain(undefined);
+    setAdvice("");
+    setEditAdvice(false);
+    latest.current = { findings: "", dx: [], pr: [], pain: undefined, advice: "" };
+    begin();
+    toast({
+      message: "ล้างบันทึกการรักษาและเริ่มใหม่แล้ว",
+      action: {
+        label: "เลิกทำ",
+        onClick: () => {
+          store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: before.findings, diagnoses: before.diagnoses, procedures: before.procedures }, log: "ย้อนการเริ่มใหม่" });
+          fill({ painAfter: before.pain, advice: before.advice });
+          setPain(before.pain);
+          setAdvice(before.advice);
+        },
+      },
+    });
+  };
 
   const toggleVoice = () => {
     const on = !voiceMode;
     setVoiceMode(on);
     vm.current = on;
     if (on) {
-      unlockAudio(); // inside the tap
-      const lastAi = [...msgs].reverse().find((m) => m.role === "ai");
-      if (lastAi) void voice(lastAi.text);
+      unlockAudio(); // inside the tap, so the AI's spoken replies can play later
+      void listen();
     } else {
       stopSpeaking();
       setSpeaking(false);
@@ -378,12 +437,14 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const lastAiId = useMemo(() => [...msgs].reverse().find((m) => m.role === "ai")?.id, [msgs]);
 
   /** the question set, shown as a strip above the chat */
-  const steps: { slot: Slot; label: string; value?: string }[] = [
-    { slot: "dx", label: "วินิจฉัย", value: dx.map((d) => d.name.replace(/\s*\(.*\)/, "")).join(", ") || undefined },
-    { slot: "proc", label: "หัตถการ", value: pr.map((x) => x.name.replace("เพื่อการรักษา", "รักษา").replace("เพื่อสุขภาพ", "สุขภาพ") + (x.minutes ? ` ${x.minutes}น.` : "")).join(", ") || undefined },
-    { slot: "pain", label: "Pain หลังนวด", value: pain !== undefined ? `${appt.painBefore} → ${pain}` : undefined },
-    { slot: "advice", label: "คำแนะนำผู้ป่วย", value: advice.trim() ? `${advice.trim().split("\n").length} ข้อ` : undefined },
-  ];
+  const value: Record<Exclude<Slot, "summary">, string | undefined> = {
+    finding: findings.trim() || undefined,
+    dx: dx.map((d) => d.name.replace(/\s*\(.*\)/, "")).join(", ") || undefined,
+    proc: pr.map((x) => x.name.replace("เพื่อการรักษา", "รักษา").replace("เพื่อสุขภาพ", "สุขภาพ") + (x.minutes ? ` ${x.minutes}น.` : "")).join(", ") || undefined,
+    pain: pain !== undefined ? `${appt.painBefore} → ${pain}` : undefined,
+    advice: advice.trim() ? `${advice.trim().split("\n").length} ข้อ` : undefined,
+  };
+  const steps = SET.map((x) => ({ ...x, value: value[x.slot] }));
   const doneCount = steps.filter((x) => x.value).length;
   const askAgain = (slot: Slot) => {
     if (thinking || rec) return;
@@ -393,16 +454,15 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   };
 
   /** quick replies under the current question */
-  const QUICK: Partial<Record<Slot | "open", string[]>> = {
-    open: [`ลมปลายปัตคาด นวดรักษาเส้นอิทา ${s.minutes} นาที ปวดเหลือ 3`, `ปวดหลังส่วนล่าง นวดรักษาและประคบสมุนไพร ปวดเหลือ 4`],
+  const QUICK: Partial<Record<Slot, string[]>> = {
+    finding: ["บ่าขวาตึง กดเจ็บ ยกแขนลำบาก", "ปวดหลังส่วนล่าง ร้าวลงสะโพกซ้าย", "เข่าซ้ายฝืด ลุกนั่งลำบาก"],
     proc: [`นวดรักษาเส้นอิทา ปิงคลา ${s.minutes} นาที`, "ประคบสมุนไพร 20 นาที", "สอนท่าฤาษีดัดตน"],
     advice: ["เพิ่มท่าฤาษีดัดตน", "เน้นประคบร้อนที่บ้าน", "เพิ่มอาหารที่ควรเลี่ยง", "ให้สั้นลง"],
     summary: ["เพิ่มนัดติดตามอาการใน 1 สัปดาห์", "ให้สั้นลง"],
   };
   const quickFor = (m: Msg) => {
     if (m.id !== lastAiId || thinking || rec) return [];
-    const key = m.kind ?? (m.id === msgs[0]?.id ? "open" : undefined);
-    return key ? (QUICK[key] ?? []) : [];
+    return m.kind && m.kind !== "intro" ? (QUICK[m.kind] ?? []) : [];
   };
 
   const PainRow = ({ sm, onPick }: { sm?: boolean; onPick: (n: number) => void }) => (
@@ -417,6 +477,16 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   /** the component attached to an AI question */
   const widget = (m: Msg) => {
+    if (m.kind === "intro")
+      return (
+        <ol className="rc-set">
+          {steps.map((x, i) => (
+            <li key={x.slot} className={x.value ? "is-done" : undefined}>
+              <i>{x.value ? <Check size={10} strokeWidth={3.2} /> : i + 1}</i> {x.label}
+            </li>
+          ))}
+        </ol>
+      );
     if (m.id !== lastAiId || thinking) return null;
     if (m.kind === "pain")
       return (
@@ -458,6 +528,10 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         <div className="rc-card">
           {m.kind === "summary" && (
             <dl className="rc-sum">
+              <dt>ตรวจพบ</dt>
+              <dd>
+                <p className="rc-sum__t">{findings || "—"}</p>
+              </dd>
               <dt>วินิจฉัย</dt>
               <dd>
                 {dx.map((d) => (
@@ -534,9 +608,11 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
           <Sparkles size={14} />
         </span>
         <span className="rc-top__t">{speaking ? "AI กำลังพูด…" : rec ? "กำลังฟัง…" : thinking ? "AI กำลังคิด…" : "พูด พิมพ์ หรือแตะตัวเลือก"}</span>
-        <button type="button" className={clsx("rc-mode", voiceMode && "is-on")} aria-pressed={voiceMode} onClick={toggleVoice} title="โหมดเสียง: AI พูดถามและฟังคำตอบเอง">
-          <Headphones size={14} /> โหมดเสียง
-        </button>
+        {voiceMode && (
+          <span className="rc-mode is-on">
+            <i /> คุยด้วยเสียง
+          </span>
+        )}
       </div>
 
       <div className="rc-steps" aria-label="ชุดคำถาม">
@@ -627,17 +703,35 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       </div>
 
       <AnimatePresence initial={false} mode="wait">
-        {rec ? (
-          <motion.div key="rec" className="rc-bar is-rec" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button type="button" className="rc-x" onClick={cancel} aria-label="ยกเลิกการอัด">
+        {voiceMode ? (
+          <motion.div key="live" className="rc-bar is-rec" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button type="button" className="rc-x" onClick={toggleVoice} aria-label="จบการคุยด้วยเสียง" title="จบการคุยด้วยเสียง">
               <X size={17} />
             </button>
             <span className="rc-rec">
-              <i /> {voiceMode ? "พูดจบแล้วรอสักครู่ ระบบส่งเอง" : "กำลังฟัง"}
+              {rec ? (
+                <>
+                  <i /> กำลังฟัง · พูดได้เลย
+                </>
+              ) : speaking ? (
+                <>
+                  <Volume2 size={14} /> AI กำลังตอบ…
+                </>
+              ) : (
+                <>
+                  <Sparkles size={14} /> AI กำลังคิด…
+                </>
+              )}
             </span>
-            <button type="button" className="rc-stop" onClick={() => void finish()} aria-label="หยุดบันทึกเสียง">
-              <Square size={12} fill="currentColor" /> ส่ง
-            </button>
+            {rec ? (
+              <button type="button" className="rc-stop" onClick={() => void finish()} aria-label="หยุดบันทึกเสียง">
+                <Send size={13} /> ส่งเลย
+              </button>
+            ) : speaking ? (
+              <button type="button" className="rc-stop" onClick={() => (stopSpeaking(), setSpeaking(false), void listen())} aria-label="พูดแทรก">
+                <Mic size={13} /> พูดแทรก
+              </button>
+            ) : null}
           </motion.div>
         ) : (
           <motion.div key="type" className="rc-bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -665,11 +759,9 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
               <button
                 type="button"
                 className="rc-send is-mic"
-                onClick={() => {
-                  unlockAudio();
-                  void listen();
-                }}
-                aria-label="พูดเพื่อบันทึก"
+                onClick={toggleVoice}
+                aria-label="เปิดคุยด้วยเสียง"
+                title="คุยกับ AI ด้วยเสียง"
                 disabled={!canRecord || thinking}
               >
                 <Mic size={18} />
@@ -680,16 +772,8 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       </AnimatePresence>
       <div className="rc-foot">
         {!canRecord ? <span>ไมค์ใช้ได้เมื่อเปิดผ่าน https หรือในแอป · พิมพ์ตอบได้ตามปกติ</span> : <span>ทุกคำตอบเติมลงฟอร์มด้านซ้ายทันที</span>}
-        <button
-          type="button"
-          onClick={() => {
-            cancel();
-            stopSpeaking();
-            seq.current = 0;
-            setMsgs([{ id: ++seq.current, role: "ai", text: opening() }]);
-          }}
-        >
-          <RotateCcw size={12} /> เริ่มใหม่
+        <button type="button" onClick={restart}>
+          <RotateCcw size={12} /> เริ่มใหม่ทั้งหมด
         </button>
       </div>
       <input

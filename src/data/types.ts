@@ -192,6 +192,8 @@ export interface Appointment {
   endedAt?: string;
   /** after-treatment note from the therapist */
   advice?: string;
+  /** อาการ / สิ่งที่ตรวจพบวันนี้ (from the treatment assistant) */
+  findings?: string;
   /** pre-visit self-assessment carried over from the booking request */
   intake?: Intake;
   /** วินิจฉัย — Thai traditional diagnosis (principal first) */

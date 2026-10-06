@@ -626,3 +626,61 @@
 .rc-quick button:hover {
   background: #e3ecf9;
 }
+.rc-steps li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.rc-set {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.rc-set li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #f4f7f5;
+  font: 600 12.5px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.rc-set li i {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px #c4cdc6;
+  font: 700 10px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.rc-set li.is-done {
+  color: #2f6f4a;
+}
+.rc-set li.is-done i {
+  background: var(--color-brand);
+  box-shadow: none;
+  color: var(--white);
+}
+.rc-sum__t {
+  margin: 0;
+  font: 500 12.5px/1.45 var(--font-sans);
+  color: var(--color-text);
+}
+.rc-mode.is-on {
+  gap: 6px;
+}
+.rc-mode.is-on i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff6b5a;
+  animation: rc-blink 1.2s ease-in-out infinite;
+}
+.rc-rec svg {
+  color: #9fd7b0;
+}

@@ -78,6 +78,11 @@ export function AppointmentDrawer({
     const on = (e: Event) => {
       const d = (e as CustomEvent<VoiceFill>).detail;
       if (d.apptId !== id) return;
+      if (d.clear) {
+        setPainAfter(undefined);
+        setAdvice("");
+        return;
+      }
       if (d.painAfter !== undefined) setPainAfter(d.painAfter);
       if (d.advice) setAdvice(d.advice);
     };
@@ -480,6 +485,7 @@ export function AppointmentDrawer({
                       <b>{baht(appt.payment?.amount ?? s.price)} ฿</b>
                     </span>
                   </div>
+                  {appt.findings && <p className="vs__advice">ตรวจพบ: {appt.findings}</p>}
                   {appt.advice && <p className="vs__advice">“{appt.advice}”</p>}
                   {onNext && next && appt.paid && (
                     <button type="button" className="vs__next" onClick={() => onNext(next.id)}>
