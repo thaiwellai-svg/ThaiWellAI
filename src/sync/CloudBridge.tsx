@@ -4,7 +4,7 @@ import { useToast } from "../design-system";
 import { queueNumber } from "../features/AppointmentDrawer";
 import { todayISO } from "../data/thaiDate";
 import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
-import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudStatus } from "./cloud";
+import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
 
 type Store = ReturnType<typeof useStore>;
 
@@ -138,7 +138,12 @@ export function CloudBridge() {
       toast({ message: `คำขอจองใหม่จากแอป · ${p.name}` });
       return;
     }
-    if (!local) return;
+    if (!local) {
+      // cancelled in the app before the clinic answered → the pending request goes away
+      const req = st.requests.find((r) => r.cloudId === row.id);
+      if (req && row.status === "cancelled") st.dispatch({ type: "reject", id: req.id, reason: row.note ?? "ผู้ป่วยยกเลิกจากแอป" });
+      return;
+    }
     if (row.status === "checked_in" && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
       const q = queueNumber(st.appointments, local);
       st.dispatch({ type: "updateAppointment", id: local.id, patch: {}, log: `เช็กอินจากแอป · คิว ${q}` });
@@ -177,6 +182,14 @@ export function CloudBridge() {
         if (!id) return;
         const { data } = await cloud.from("tw_appointments").select(join).eq("id", id).single();
         if (data) inbound(data as CloudAppt);
+      })
+      // notes the app sends outside a booking (pre-visit self-check, how the patient felt afterwards, complaints) become notifications
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "tw_events", filter: "kind=eq.app.note" }, (ev) => {
+        const row = ev.new as CloudEvent;
+        const p = (row.payload ?? {}) as { title?: string; body?: string; patientId?: string };
+        if (row.source !== "app" || !p.title) return;
+        const local = p.patientId ? ref.current.patients.find((x) => x.cloudId === p.patientId) : undefined;
+        ref.current.dispatch({ type: "bridgeIn", event: { id: `ev${row.id}`, at: row.at, type: "note", title: p.title, body: p.body ?? row.summary ?? "", patientId: local?.id } });
       })
       .subscribe();
     return () => {
