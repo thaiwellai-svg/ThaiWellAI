@@ -73,6 +73,24 @@ export function areasIn(text: string): BodyArea[] {
   return [...out];
 }
 
+/** "หัตถการ", "แก้วินิจฉัย", "ขอดูสรุปหน่อย" → the section the user wants to record or edit */
+const TOPICS: [Slot, RegExp][] = [
+  ["finding", /^(อาการ(ที่ตรวจพบ)?|สิ่งที่ตรวจพบ|ตรวจพบ)$/],
+  ["dx", /^(การ)?วินิจฉัย$/],
+  ["proc", /^(หัตถ?การ|หัตการ)$/],
+  ["pain", /^(pain|เพน|คะแนนปวด|ความปวด|ปวด)(หลังนวด)?$/i],
+  ["advice", /^คำแนะนำ(ถึงผู้ป่วย|ผู้ป่วย|คนไข้)?$/],
+  ["summary", /^(ดู)?สรุป(การรักษา)?$/],
+];
+export function topicOf(text: string): Slot | null {
+  const c = text
+    .trim()
+    .replace(/^(แก้ไข|แก้|ขอดู|ขอ|ไปที่|ไป|ดู|บันทึก|เปิด|กลับไป)\s*/, "")
+    .replace(/\s*(หน่อย|ค่ะ|คะ|ครับ|นะ)+$/, "")
+    .trim();
+  return TOPICS.find(([, re]) => re.test(c))?.[0] ?? null;
+}
+
 const ASK = {
   finding: "เริ่มจากอาการก่อนนะคะ วันนี้ตรวจเจออะไรบ้างคะ ปวดหรือตึงตรงไหน",
   dx: "แล้ววินิจฉัยว่าเป็นอะไรคะ",
@@ -228,6 +246,8 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   // answers given early (e.g. pain or procedures said while answering the findings) — confirmed when their turn comes
   const held = useRef<{ dx?: string[]; proc?: Extract["procedures"]; pain?: number }>({});
+  // a section opened by name: show what is recorded and let the answer replace it
+  const editing = useRef<Slot | null>(null);
   useEffect(() => {
     held.current = {};
   }, [appt.id]);
@@ -310,13 +330,24 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       return;
     }
     if (slot === "summary") {
-      const t = `${prefix}ครบทุกเรื่องแล้วค่ะ ลองดูสรุปด้านล่าง แก้ได้ทุกช่อง เรียบร้อยแล้วกดบันทึกในฟอร์มได้เลยนะคะ`;
+      const l = latest.current;
+      const lack = [!l.findings.trim() && "อาการ", !l.dx.length && "วินิจฉัย", !l.pr.length && "หัตถการ", l.pain === undefined && "Pain หลังนวด", !l.advice.trim() && "คำแนะนำ"].filter(Boolean);
+      const t = lack.length
+        ? `${prefix}สรุปตอนนี้ค่ะ ยังขาด${lack.join(" ")} พิมพ์หรือพูดชื่อหัวข้อเพื่อบันทึกต่อได้เลยนะคะ`
+        : `${prefix}ครบทุกเรื่องแล้วค่ะ ลองดูสรุปด้านล่าง แก้ได้ทุกช่อง แล้วกดบันทึกการรักษาได้เลยนะคะ`;
       say("ai", t, "summary");
       void voice(t);
       return;
     }
     setPick([]);
     setOthers(false);
+    if (slot === "finding" && editing.current === "finding" && latest.current.findings.trim()) {
+      setSug({ slot, items: [{ name: latest.current.findings }] });
+      const q = `${prefix}ตอนนี้บันทึกอาการไว้ว่า ${latest.current.findings} พิมพ์หรือพูดใหม่เพื่อแก้ได้เลยค่ะ`;
+      say("ai", q, slot);
+      void voice(q);
+      return;
+    }
     if (slot === "finding") {
       // start from what the patient told us before the visit
       const ik = intakeOfVisit(appt, p);
@@ -338,13 +369,21 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       return;
     }
     if (slot === "dx" || slot === "proc") {
+      const l = latest.current;
+      const recorded: Sug[] = editing.current === slot ? (slot === "dx" ? l.dx.map((d) => ({ name: d.name, why: "บันทึกไว้แล้ว" })) : l.pr.map((x) => ({ name: x.name, area: x.area, minutes: x.minutes ?? null, why: "บันทึกไว้แล้ว" }))) : [];
       const early: Sug[] | undefined = slot === "dx" ? held.current.dx?.map((name) => ({ name, why: "จากที่บอกไว้" })) : held.current.proc?.map((x) => ({ ...x, why: "จากที่บอกไว้" }));
       setThinking(true);
-      const items = early?.length ? early : await suggest(slot);
+      const items = recorded.length ? recorded : early?.length ? early : await suggest(slot);
       setThinking(false);
       setSug({ slot, items });
-      setPick(items.length ? (slot === "dx" ? [items[0].name] : items.map((x) => x.name)) : []);
+      setPick(items.length ? (slot === "dx" && !recorded.length ? [items[0].name] : items.map((x) => x.name)) : []);
       const top = items[0];
+      if (recorded.length) {
+        const q = `${prefix}ตอนนี้บันทึก${slot === "dx" ? "วินิจฉัย" : "หัตถการ"}ไว้ว่า ${items.map((x) => `${short(x.name)}${x.area ? `ที่${x.area}` : ""}${x.minutes ? ` ${x.minutes} นาที` : ""}`).join(" และ ")} ${slot === "dx" ? "เลือกใหม่" : "แตะหุ่น"}หรือพูดเพื่อแก้ได้เลยค่ะ เสร็จแล้วตอบ “ใช่”`;
+        say("ai", q, slot);
+        void voice(q);
+        return;
+      }
       const lastDx = prevVisits()[0]?.diagnoses?.map((d) => d.name) ?? [];
       const q = !top
         ? question(slot)
@@ -370,7 +409,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     const npr = [...l.pr];
     for (const q of x.procedures ?? []) if (q?.name && !npr.some((y) => y.name === q.name)) npr.push({ name: q.name, code: procCode(q.name)?.code, area: q.area || undefined, minutes: q.minutes ?? (npr.length ? undefined : s.minutes) });
     const xf = x.findings?.trim() ?? "";
-    const nf = !xf || l.findings.includes(xf) ? l.findings : xf.includes(l.findings.trim()) || !l.findings.trim() ? xf : `${l.findings.trim()} · ${xf}`;
+    const nf = xf && editing.current === "finding" ? xf : !xf || l.findings.includes(xf) ? l.findings : xf.includes(l.findings.trim()) || !l.findings.trim() ? xf : `${l.findings.trim()} · ${xf}`;
     if (ndx.length !== l.dx.length || npr.length !== l.pr.length || nf !== l.findings) {
       store.dispatch({ type: "updateAppointment", id: appt.id, patch: { diagnoses: ndx, procedures: npr, findings: nf || undefined }, log: "บันทึกด้วยเสียง: ผู้ช่วย AI เติมบันทึกการรักษา" });
       latest.current = { ...latest.current, findings: nf, dx: ndx, pr: npr };
@@ -390,6 +429,15 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     const t = text.trim();
     if (!t) return;
     const me = say("me", t);
+    // a section name opens that section with its recorder
+    const topic = topicOf(t);
+    if (topic) {
+      stopSpeaking();
+      editing.current = topic;
+      setEditAdvice(false);
+      await ask(topic);
+      return;
+    }
     setThinking(true);
     const { pending: asked } = turn.current;
     if (asked === "advice" || asked === "summary") {
@@ -406,8 +454,12 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     const yes = /^(ใช่|ถูก|โอเค|ok|ตามนั้น|ได้|ครับ|ค่ะ)/i.test(t);
     // procedures are confirmed on the body: "ใช่" records what is shown
     if (slot === "proc" && yes && sugRef.current?.slot === "proc" && sugRef.current.items.length) {
-      apply({ diagnoses: [], procedures: sugRef.current.items.map((x) => ({ name: x.name, area: x.area, minutes: x.minutes ?? null })), painAfter: null, advice: "" });
+      // the proposal is the whole list → it replaces what was recorded
+      const procedures = sugRef.current.items.map((x) => ({ name: x.name, code: procCode(x.name)?.code, area: x.area || undefined, minutes: x.minutes ?? undefined }));
+      store.dispatch({ type: "updateAppointment", id: appt.id, patch: { procedures }, log: "บันทึกด้วยเสียง: หัตถการ" });
+      latest.current = { ...latest.current, pr: procedures };
       held.current.proc = undefined;
+      editing.current = null;
       setThinking(false);
       await askNext("บันทึกหัตถการแล้วค่ะ ");
       return;
@@ -445,7 +497,19 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       const said = (x.procedures ?? []).filter((q) => q?.name);
       const places = areasIn(heard).join(" ");
       const base = said.length ? said : (sugRef.current?.slot === "proc" ? sugRef.current.items : [{ name: s.name, minutes: s.minutes }]);
-      const items: Sug[] = base.map((q, i) => ({ name: q.name, minutes: q.minutes ?? null, area: (said.length ? q.area : undefined) || (i === 0 && places ? places : q.area) || undefined }));
+      // "เพิ่มหลังส่วนบน" adds, "เอาเข่าออก" removes, otherwise the spoken places replace the first procedure's
+      const adding = /เพิ่ม/.test(heard);
+      const removing = /ออก|ลบ|ไม่ต้อง/.test(heard);
+      const placeFor = (cur: string | undefined) => {
+        if (!places) return cur;
+        const now = areasIn(cur ?? "");
+        const spoken = areasIn(heard);
+        if (removing) return now.filter((a) => !spoken.includes(a)).join(" ");
+        if (adding) return [...new Set([...now, ...spoken])].join(" ");
+        return places;
+      };
+      const minutesSaid = Number((heard.match(/(\d{2,3})\s*นาที/) ?? [])[1]) || null;
+      const items: Sug[] = base.map((q, i) => ({ name: q.name, minutes: (i === 0 && minutesSaid) || q.minutes || null, area: (said.length ? q.area : undefined) || (i === 0 ? placeFor(q.area) : q.area) || undefined }));
       setThinking(false);
       setSug({ slot: "proc", items });
       setPick(items.map((q) => q.name));
@@ -455,6 +519,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       return;
     }
     const got = apply(only);
+    if (got.length) editing.current = null;
     // anything said ahead of its question is kept and confirmed later
     if (slot !== "dx" && x.diagnoses?.length) held.current.dx = x.diagnoses;
     if (x.procedures?.some((q) => q?.name)) held.current.proc = x.procedures.filter((q) => q?.name);
@@ -936,7 +1001,13 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
               const known = (n: string) => sug?.items.find((y) => y.name === n);
               const x: Extract = m.kind === "dx" ? { diagnoses: pick, procedures: [], painAfter: null, advice: "" } : { diagnoses: [], procedures: pick.map((name) => ({ name, area: known(name)?.area, minutes: known(name)?.minutes ?? null })), painAfter: null, advice: "" };
               say("me", pick.join(", "));
-              apply(x);
+              if (m.kind === "dx") {
+                // the chips are the whole selection → replace
+                const diagnoses = pick.map((n, i) => ({ name: n, code: dxCode(n)?.code, kind: (i ? "secondary" : "principal") as "secondary" | "principal" }));
+                store.dispatch({ type: "updateAppointment", id: appt.id, patch: { diagnoses }, log: "บันทึกด้วยเสียง: วินิจฉัย" });
+                latest.current = { ...latest.current, dx: diagnoses };
+              } else apply(x);
+              editing.current = null;
               void askNext("ได้เลยค่ะ ");
             }}
           >
@@ -1065,7 +1136,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             <textarea
               value={draft}
               rows={1}
-              placeholder={pending === "advice" || pending === "summary" ? "บอกให้ปรับคำแนะนำ…" : "พิมพ์ตอบ…"}
+              placeholder={pending === "advice" || pending === "summary" ? "บอกให้ปรับคำแนะนำ หรือพิมพ์ชื่อหัวข้อ…" : "พิมพ์ตอบ หรือพิมพ์ชื่อหัวข้อ เช่น หัตถการ"}
               aria-label="สรุปการรักษา"
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {

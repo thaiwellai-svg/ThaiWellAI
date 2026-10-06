@@ -745,6 +745,24 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(a.procedures.some((x) => /คอ/.test(x.area || '') && x.minutes === 45), 'ตอบ “ใช่” → บันทึกหัตถการพร้อมตำแหน่งและเวลา');
   });
 
+  await check('N08', 'therapist', 'พิมพ์ชื่อหัวข้อในแชท', 'เปิดหัวข้อพร้อมเครื่องมือบันทึก / แก้ของเดิม / ดูสรุป', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    await chatIdle(p);
+    const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
+    await send('หัตถการ');
+    ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-body canvas').count()) === 1, 'พิมพ์ “หัตถการ” → เปิดหัวข้อหัตถการพร้อมหุ่น');
+    await send('นวดรักษาที่บ่า ไหล่ 30 นาที'); await send('ใช่');
+    await send('แก้หัตถการ');
+    ex(/บันทึกหัตถการไว้ว่า/.test(await p.locator('.rc-msg.is-ai').last().innerText()), '“แก้หัตถการ” → แสดงของที่บันทึกไว้ให้แก้');
+    await send('เพิ่มหลังส่วนบน'); await send('ใช่');
+    const a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.procedures.length === 1 && /บ่า/.test(a.procedures[0].area) && /หลังส่วนบน/.test(a.procedures[0].area), 'พูด “เพิ่ม…” → เพิ่มตำแหน่งต่อจากเดิม ไม่ซ้ำรายการ');
+    await send('สรุป');
+    ex((await p.locator('.rs2').count()) === 1 && /ยังขาด/.test(await p.locator('.rc-msg.is-ai').last().innerText()), '“สรุป” → การ์ดสรุป พร้อมบอกหัวข้อที่ยังขาด');
+  });
+
   // ===== CROSS-CUTTING =====
   await check('X01', 'reception', 'ทุกหน้า', 'เปิดได้ไม่มี error (แนวนอน + แนวตั้ง)', async (p, ex) => {
     const s = await state(p);
