@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { DEFAULT_SETTINGS } from "../../data/seed";
+import { resetBothSystems } from "../../sync/demo";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -713,7 +715,7 @@ export default function Settings() {
         open={confirmReset}
         onClose={() => setConfirmReset(false)}
         title="รีเซ็ตข้อมูลจำลอง?"
-        subtitle="ข้อมูลผู้ป่วย คิว และการชำระเงินที่บันทึกไว้ในเครื่องนี้จะถูกแทนด้วยชุดตัวอย่างใหม่ ย้อนกลับไม่ได้"
+        subtitle="ข้อมูลผู้ป่วย คิว และการชำระเงินในเครื่องนี้ และข้อมูลที่เชื่อมกับแอป ThaiWell AI (cloud) จะถูกแทนด้วยชุดตัวอย่างใหม่ ย้อนกลับไม่ได้ · แอปบนมือถือให้ปิดแล้วเปิดใหม่"
         footer={
           <>
             <Button variant="outline" size="lg" fill onClick={() => setConfirmReset(false)}>
@@ -725,9 +727,10 @@ export default function Settings() {
               fill
               leading={<RotateCcw size={16} />}
               onClick={() => {
-                store.dispatch({ type: "reset" });
+                // ข้อมูลสาธิตชุดเดียวกับแอป ThaiWell AI → รีเซ็ต cloud ไปพร้อมกัน
                 setConfirmReset(false);
-                toast({ message: "รีเซ็ตข้อมูลจำลองแล้ว" });
+                toast({ message: "รีเซ็ตข้อมูลจำลองทั้ง 2 ระบบแล้ว" });
+                resetBothSystems(store.dispatch, DEFAULT_SETTINGS.clinicName);
               }}
             >
               รีเซ็ตข้อมูล

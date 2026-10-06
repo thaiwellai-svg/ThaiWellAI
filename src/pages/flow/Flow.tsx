@@ -6,9 +6,12 @@ import { Button } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
 import { addISODays, todayISO } from "../../data/thaiDate";
 import { FLOW, STATUS_TH, cloud, logEvent, updateAppt, type CloudAppt, type CloudEvent } from "../../sync/cloud";
+import { useStore } from "../../store/store";
+import { DEFAULT_SETTINGS } from "../../data/seed";
+import { DEMO_APP_USER, resetBothSystems } from "../../sync/demo";
 import "./flow.css";
 
-const DEMO = { id: "app-demo-1", name: "นางสาว ปิยะนุช ทดสอบแอป", phone: "0899990001", gender: "หญิง", age: 34 };
+const DEMO = DEMO_APP_USER;
 const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 /**
@@ -16,6 +19,7 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: 
  * (every hand-off, live) and where each booking is on the right. The real patient app writes the same tables.
  */
 export default function Flow() {
+  const store = useStore();
   const [events, setEvents] = useState<CloudEvent[]>([]);
   const [appts, setAppts] = useState<CloudAppt[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
@@ -26,7 +30,7 @@ export default function Flow() {
 
   const load = async () => {
     const [{ data: ev, error }, { data: ap }] = await Promise.all([
-      cloud.from("tw_events").select("*").order("id", { ascending: false }).limit(60),
+      cloud.from("tw_events").select("*").gt("id", 0).order("id", { ascending: false }).limit(60),
       cloud.from("tw_appointments").select("*, tw_patients(*)").order("created_at", { ascending: false }).limit(20),
     ]);
     setOnline(!error);
@@ -39,6 +43,7 @@ export default function Flow() {
       .channel("tw-flow")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "tw_events" }, (e) => {
         const ev = e.new as CloudEvent;
+        if (ev.id < 0) return;
         fresh.current.add(ev.id);
         setEvents((x) => [ev, ...x].slice(0, 60));
         window.setTimeout(() => fresh.current.delete(ev.id), 2500);
@@ -91,11 +96,9 @@ export default function Flow() {
     await updateAppt(current.id, { status: "cancelled", note: "ผู้ป่วยยกเลิกจากแอป" });
     await logEvent("app", "booking.cancelled", current, DEMO.name, "ผู้ป่วยยกเลิกนัดจากแอป");
   };
-  const reset = async () => {
-    if (!window.confirm("ล้างข้อมูลทดสอบทั้งหมดใน cloud?")) return;
-    await cloud.from("tw_events").delete().gt("id", 0);
-    await cloud.from("tw_appointments").delete().neq("id", "");
-    await load();
+  const reset = () => {
+    if (!window.confirm("รีเซ็ตข้อมูลสาธิตทั้ง 2 ระบบ? (หลังบ้าน + cloud · แอปบนมือถือให้ปิดแล้วเปิดใหม่)")) return;
+    resetBothSystems(store.dispatch, DEFAULT_SETTINGS.clinicName);
   };
 
   const stages = useMemo(() => FLOW.filter((s) => s !== "closed"), []);
@@ -112,7 +115,7 @@ export default function Flow() {
             <i /> {online === null ? "กำลังเชื่อมต่อ…" : online ? "เชื่อมต่อ Supabase แล้ว" : "เชื่อมต่อไม่ได้"}
           </span>
           <Button variant="white" size="md" leading={<RotateCcw size={15} />} onClick={reset}>
-            ล้างข้อมูลทดสอบ
+            รีเซ็ตข้อมูลสาธิต
           </Button>
         </>
       }
@@ -261,7 +264,11 @@ export default function Flow() {
               {events.map((e) => (
                 <motion.div key={e.id} layout initial={{ opacity: 0, y: -10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} className={clsx("fl-ev", `is-${e.source}`, fresh.current.has(e.id) && "is-fresh")}>
                   <span className="fl-ev__dir">
-                    {e.source === "app" ? (
+                    {e.source === "system" ? (
+                      <>
+                        <Cloud size={13} /> ระบบ
+                      </>
+                    ) : e.source === "app" ? (
                       <>
                         <Smartphone size={13} /> แอป <ArrowRight size={13} /> <Building2 size={13} /> คลินิก
                       </>

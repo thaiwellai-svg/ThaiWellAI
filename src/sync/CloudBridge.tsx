@@ -4,6 +4,8 @@ import { useToast } from "../design-system";
 import { queueNumber } from "../features/AppointmentDrawer";
 import { todayISO } from "../data/thaiDate";
 import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
+import { AVAILABILITY_KEY } from "../features/appBridge";
+import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
 
@@ -176,7 +178,10 @@ export function CloudBridge() {
   useEffect(() => {
     let alive = true;
     const join = "*, tw_patients(*)";
-    void cloud
+    // ข้อมูลสาธิตชุดเดียวกับแอป: รีเซ็ตที่ขอไว้ → ใส่ใหม่ทั้งหมด · ครั้งแรก → ใส่ส่วนที่ยังไม่มี
+    void (takeDemoReseed() ? resetDemoCloud(ref.current) : ensureDemoCloud(ref.current))
+      .catch(() => undefined)
+      .then(() => cloud
       .from("tw_appointments")
       .select(join)
       .not("status", "in", "(closed,rejected,cancelled)")
@@ -185,7 +190,15 @@ export function CloudBridge() {
         if (!alive) return;
         (data as CloudAppt[] | null)?.forEach(inbound);
         setReady(true);
-      });
+      }));
+    // เวลาว่างจริงของคลินิก → แอปบนมือถือใช้จองรอบที่ว่างจริง
+    const avail = window.setInterval(() => {
+      try {
+        void publishCloudAvailability(localStorage.getItem(AVAILABILITY_KEY)).catch(() => undefined);
+      } catch {
+        /* storage unavailable */
+      }
+    }, 5000);
     const ch = cloud
       .channel("tw-clinic")
       .on("postgres_changes", { event: "*", schema: "public", table: "tw_appointments" }, async (ev) => {
@@ -216,6 +229,7 @@ export function CloudBridge() {
     return () => {
       alive = false;
       window.clearInterval(poll);
+      window.clearInterval(avail);
       void cloud.removeChannel(ch);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

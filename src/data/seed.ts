@@ -86,7 +86,8 @@ export const THERAPISTS: Therapist[] = BASE_THERAPISTS.map((t) =>
 );
 
 export const DEFAULT_SETTINGS: ClinicSettings = {
-  clinicName: "คลินิกแพทย์แผนไทย ThaiWell",
+  // ชื่อเดียวกับคลินิกที่เชื่อมในแอป ThaiWell AI (PLACES "skv")
+  clinicName: "คลินิกแพทย์แผนไทย สาขาสุขุมวิท",
   promptpayId: "0812345678",
   autoSendSlip: true,
   rooms: [
@@ -94,7 +95,7 @@ export const DEFAULT_SETTINGS: ClinicSettings = {
     { id: "rb", name: "ห้องนวดไทย B", beds: [{ id: "B1", name: "เตียง B1" }, { id: "B2", name: "เตียง B2" }] },
     { id: "rh", name: "ห้องประคบสมุนไพร", beds: [{ id: "H1", name: "เตียง H1" }, { id: "H2", name: "เตียง H2" }] },
   ],
-  staffName: "คุณสมศักดิ์ รักดี",
+  staffName: "คุณวราภรณ์ ใจเย็น",
   staffRole: "เจ้าหน้าที่ประจำคลินิก",
   openTime: "08:00",
   closeTime: "16:00",
@@ -119,6 +120,7 @@ export const DEFAULT_SETTINGS: ClinicSettings = {
   backdrop: "reception",
 };
 
+/** ผู้รับบริการจำลองที่มาเอง/โทรจอง (ไม่เยอะ) — ผู้ใช้หลักของเดโมมาจากแอป ThaiWell AI (DEMO_* ด้านล่าง) */
 const NAMES: [string, "ชาย" | "หญิง"][] = [
   ["นาย สุรชัย ใจดี", "ชาย"],
   ["นางสาว พิมพ์ชนก วงศ์ใหญ่", "หญิง"],
@@ -130,38 +132,7 @@ const NAMES: [string, "ชาย" | "หญิง"][] = [
   ["นาย อนุชา แก้วประเสริฐ", "ชาย"],
   ["นางสาว ณัฐธิดา จันทร์เพ็ญ", "หญิง"],
   ["นาย ประเสริฐ ทองคำ", "ชาย"],
-  ["นาง วันเพ็ญ อินทร์แก้ว", "หญิง"],
-  ["นาย เกียรติศักดิ์ มณีรัตน์", "ชาย"],
-  ["นางสาว ศิริพร ชัยมงคล", "หญิง"],
-  ["นาย สมบัติ เรืองศรี", "ชาย"],
-  ["นาง จันทร์ฉาย บุญญาธิการ", "หญิง"],
-  ["นาย ภานุวัฒน์ ศักดิ์ดี", "ชาย"],
-  ["นางสาว อรวรรณ พูลสวัสดิ์", "หญิง"],
-  ["นาย ชัยวัฒน์ นาคสุข", "ชาย"],
-  ["นาง ละเอียด คงเจริญ", "หญิง"],
-  ["นาย ปกรณ์ วิเศษสุวรรณ", "ชาย"],
-  ["นางสาว มณีรัตน์ หอมจันทร์", "หญิง"],
-  ["นาย ยุทธนา ศรีสมบูรณ์", "ชาย"],
-  ["นาง สุดารัตน์ เพชรสุวรรณ", "หญิง"],
-  ["นาย สุเมธ ขาวสะอาด", "ชาย"],
-  ["นางสาว ปวีณา ทิพย์มณี", "หญิง"],
-  ["นาย อำนาจ รักษ์ไทย", "ชาย"],
-  ["นาง ประไพ จิตต์มั่น", "หญิง"],
-  ["นาย ณรงค์ สายสุวรรณ", "ชาย"],
-  ["นางสาว วราภรณ์ ดวงแก้ว", "หญิง"],
-  ["นาย ไพโรจน์ ศรีเมือง", "ชาย"],
-  ["นาง อุไรวรรณ ทองสุข", "หญิง"],
-  ["นาย กิตติพงษ์ สมใจ", "ชาย"],
-  ["นางสาว ชนิดา บุญประเสริฐ", "หญิง"],
-  ["นาย สมหมาย ดีเลิศ", "ชาย"],
-  ["นาง รัชนี ฉิมพลี", "หญิง"],
-  ["นาย ธนพล วงศ์สวัสดิ์", "ชาย"],
-  ["นางสาว นันทนา แสงอรุณ", "หญิง"],
-  ["นาย วีระพงษ์ สุขเกษม", "ชาย"],
   ["นาง ทองใบ ประจำถิ่น", "หญิง"],
-  ["นาย ศุภชัย มหาวงศ์", "ชาย"],
-  ["นางสาว ภัทรา ชูเกียรติ", "หญิง"],
-  ["นาย บรรจง เนียมหอม", "ชาย"],
 ];
 
 const COMPLAINTS = [
@@ -260,7 +231,7 @@ export function createSeed(): SeedData {
       // Today — fill every slot but one of the therapists on duty, so a walk-in can still be seated.
       const plan: { start: string; type: "booked" | "walkin" }[] = [];
       for (const t of SLOTS) {
-        const n = Math.max(0, THERAPISTS.filter((th) => onDuty(th, date, t)).length - 1);
+        const n = Math.min(2, Math.max(0, THERAPISTS.filter((th) => onDuty(th, date, t)).length - 1));
         for (let j = 0; j < n; j++) plan.push({ start: t, type: (plan.length + 1) % 6 === 0 ? "walkin" : "booked" });
       }
       plan.sort((a, b) => a.start.localeCompare(b.start));
@@ -289,7 +260,7 @@ export function createSeed(): SeedData {
       continue;
     }
 
-    const count = offset < 0 ? int(16, 26) : Math.max(4, int(20, 30) - offset);
+    const count = offset < 0 ? int(6, 10) : Math.max(2, int(7, 11) - Math.floor(offset / 2));
     for (let k = 0; k < count; k++) {
       const start = pick(SLOTS);
       const painBefore = int(3, 8);
@@ -335,47 +306,24 @@ export function createSeed(): SeedData {
   });
   appointments.splice(0, appointments.length, ...kept);
 
-  /* ── Booking requests awaiting approval ───────────────── */
+  /* ── Booking requests: มาจากแอป ThaiWell AI ผ่าน cloud เท่านั้น (src/sync/demo.ts) ── */
   const clean: Screening = { fever: false, highBP: false, menstruation: false, pregnant: false, recentSurgery: false, contagious: false };
-  const flagged: Partial<Screening>[] = [{}, { highBP: true, bpSystolic: 168 }, {}, { recentSurgery: true }, {}, { menstruation: true }, {}, {}, { fever: true }, {}];
-  const requestPatients = ["p1", "p9", "p14", "p6", "p21", "p2", "p33", "p27", "p11", "p38"];
-  // requests 2, 5 and 7 deliberately ask for a slot that is already taken
-  const busySlot = (k: number) => {
-    const day = addISODays(today, 1 + (k % 6));
-    const taken = appointments.find((ap) => ap.date === day && ap.status === "waiting");
-    return taken ? { date: day, start: taken.start, therapistId: taken.therapistId } : null;
-  };
-  const requests: BookingRequest[] = requestPatients.map((pid, k) => ({
-    id: `r${k + 1}`,
-    patientId: pid,
-    serviceId: k === 0 ? "s1" : patients[Number(pid.slice(1)) - 1].course?.serviceId ?? pick(["s1", "s2", "s4"]),
-    therapistId: k === 0 ? "t1" : pick(THERAPISTS).id,
-    date: addISODays(today, 1 + (k % 6)),
-    start: k === 0 ? "09:00" : pick(SLOTS),
-    painScore: k === 0 ? 6 : int(3, 9),
-    screening: { ...clean, ...flagged[k] },
-    note: k === 3 ? "ผ่าตัดไส้ติ่งเมื่อ 2 สัปดาห์ก่อน" : k === 8 ? "มีไข้ต่ำ ๆ ตั้งแต่เมื่อวาน" : undefined,
-    submittedAt: new Date(Date.now() - (k * 47 + 6) * 60_000).toISOString(),
-    ...([2, 5, 7].includes(k) ? busySlot(k) ?? {} : {}),
-  }));
+  const requests: BookingRequest[] = [];
 
   const thaiDateWeekday = (d: string) => "วัน" + ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"][fromISODate(d).getDay()];
   const noShow = appointments.find((a) => a.date === today && a.start === "08:00" && a.status !== "done") ?? appointments.find((a) => a.date === today && a.start === "08:00")!;
   const noShowName = patients.find((p) => p.id === noShow.patientId)!.name;
   const notifications: Notification[] = [
-    { id: "n1", kind: "request", title: "คำขอจองคิวใหม่", body: "นาย สุรชัย ใจดี ขอจองนวดไทยเพื่อสุขภาพ · พรุ่งนี้ 09:00 น.", at: requests[0].submittedAt, read: false, link: "/requests", ref: requests[0].id },
-    { id: "n2", kind: "alert", title: "พบข้อควรระวังจากแบบคัดกรอง", body: "ความดันตัวบน 168 mmHg — ต้องให้แพทย์แผนไทยประเมินก่อน", at: requests[1].submittedAt, read: false, link: "/requests", ref: requests[1].id },
     { id: "n3", kind: "noshow", title: "ผู้ป่วยไม่มาตามนัด", body: `${noShowName} · รอบ 08:00 น. เลยเวลา 15 นาที`, at: new Date(Date.now() - 95 * 60_000).toISOString(), read: false, link: "/appointments", ref: noShow.id },
     { id: "n4", kind: "staff", title: "เจ้าหน้าที่แจ้งลา", body: `พท.ป. อรุณี แก้วมณี ลาป่วย${thaiDateWeekday(workdayAhead(2, true))} · มีคิวที่ต้องย้ายผู้บำบัด`, at: new Date(Date.now() - 180 * 60_000).toISOString(), read: false, link: "/planner", ref: "t3" },
-    { id: "n5", kind: "info", title: "ครบกำหนดติดตามผล 48 ชม.", ref: "followup", body: "ผู้รับบริการ 6 รายรอส่งแบบประเมิน Pain Score หลังนวด", at: new Date(Date.now() - 240 * 60_000).toISOString(), read: true, link: "/patients" },
-    { id: "n6", kind: "request", title: "ยืนยันนัดผ่านแอป ThaiWell AI", body: "นาง สมพร แสงทอง ยืนยันนัดวันศุกร์ 13:00 น.", at: new Date(Date.now() - 1560 * 60_000).toISOString(), read: true, link: "/appointments", ref: "p3" },
-    { id: "n7", kind: "info", title: "เครดิตใกล้หมด", ref: "credits", body: "ผู้รับบริการ 4 รายเหลือเครดิต 1 ครั้ง · แนะนำนัดพบแพทย์ต่อแผน", at: new Date(Date.now() - 1800 * 60_000).toISOString(), read: true, link: "/patients" },
+    { id: "n5", kind: "info", title: "ครบกำหนดติดตามผล 48 ชม.", ref: "followup", body: "ผู้รับบริการ 3 รายรอส่งแบบประเมิน Pain Score หลังนวด", at: new Date(Date.now() - 240 * 60_000).toISOString(), read: true, link: "/patients" },
+    { id: "n7", kind: "info", title: "เครดิตใกล้หมด", ref: "credits", body: "ผู้รับบริการ 2 รายเหลือเครดิต 1 ครั้ง · แนะนำนัดพบแพทย์ต่อแผน", at: new Date(Date.now() - 1800 * 60_000).toISOString(), read: true, link: "/patients" },
   ];
 
 
   /* ── Past decisions (history tab) ─────────────────────── */
   const REJECT_REASONS = ["คิวเต็มช่วงเวลาที่ขอ", "ผลคัดกรองไม่ผ่าน ต้องพบแพทย์ก่อน", "เครดิตคงเหลือไม่พอ", "ผู้ป่วยขอยกเลิก"];
-  const decisions: RequestDecision[] = Array.from({ length: 16 }, (_, k) => {
+  const decisions: RequestDecision[] = Array.from({ length: 6 }, (_, k) => {
     const pid = `p${int(1, patients.length)}`;
     const hoursAgo = 3 + k * int(5, 11);
     const decidedAt = new Date(Date.now() - hoursAgo * 3600_000);
@@ -415,7 +363,7 @@ export function createSeed(): SeedData {
       const at = new Date(`${a.date}T${a.start}:00`);
       at.setMinutes(at.getMinutes() + 65);
       const be = at.getFullYear() + 543;
-      const n = (seq.get(String(be)) ?? 0) + 1;
+      const n = (seq.get(String(be)) ?? 200) + 1;
       seq.set(String(be), n);
       const no = `RC${be}-${String(n).padStart(6, "0")}`;
       a.startedAt = new Date(`${a.date}T${a.start}:00`).toISOString();
@@ -533,7 +481,104 @@ export function createSeed(): SeedData {
     }
   }
 
+  addAppUser(patients, appointments, today);
+
   return { patients, appointments, requests, notifications, decisions };
+}
+
+/* ── ผู้ใช้แอป ThaiWell AI ตัวอย่าง: คุณสมศักดิ์ รักดี ──────────────────────────────────────────
+ * ข้อมูลชุดเดียวกับแอป (homeFeed.ts TREATMENT_CASES · SAMPLE_BILLS) — ประวัติ คะแนนปวด ผู้บำบัด บิล ตรงกันทุกครั้ง
+ * นัดที่ยังไม่จบมี cloudId → อยู่ใน Supabase ด้วย (src/sync/demo.ts) ทั้งสองระบบจึงเห็นและแก้สถานะเดียวกัน */
+export const DEMO_PATIENT = { id: "p-somsak", cloudId: "app-p-zk6srq", name: "คุณสมศักดิ์ รักดี" };
+export const DEMO_REFS = { officeToday: "tw-demo-office-6", lungBill: "tw-demo-lung-3", lungNext: "tw-demo-lung-4" };
+
+function addAppUser(patients: Patient[], appointments: Appointment[], today: string) {
+  const visit = (date: string, serviceId: string, therapistId: string, start: string, painBefore: number, painAfter: number, dx: string, proc: string[], extra: Partial<Appointment> = {}): Appointment => {
+    const min = SERVICES.find((x) => x.id === serviceId)?.minutes ?? 60;
+    const at = new Date(`${date}T${start}:00`);
+    return {
+      id: `a-somsak-${date}`,
+      patientId: DEMO_PATIENT.id,
+      serviceId,
+      therapistId,
+      date,
+      start,
+      status: "done",
+      type: "booked",
+      painBefore,
+      painAfter,
+      paid: true,
+      startedAt: at.toISOString(),
+      endedAt: new Date(at.getTime() + min * 60_000).toISOString(),
+      diagnoses: [{ name: dx, kind: "principal" }],
+      procedures: proc.map((name, i) => ({ name, minutes: i === 0 ? min : undefined, area: i === 0 ? "คอ บ่า ไหล่" : undefined })),
+      payment: { no: `RC2569-${date.replace(/-/g, "").slice(2)}`, method: "credit", amount: 0, status: "paid", at: new Date(at.getTime() + (min + 10) * 60_000).toISOString() },
+      ...extra,
+    };
+  };
+  const OFFICE = "ลมปลายปัตคาดสัญญาณ 4 (คอ บ่า ไหล่)";
+  const LUNG = "ภูมิแพ้ทางเดินหายใจ";
+  const LBP = "ลมปลายปัตคาดสัญญาณ 4 หลัง (ปวดหลังส่วนล่าง)";
+  const history: Appointment[] = [
+    // ปวดหลัง (จบคอร์สแล้ว — แท็บประวัติในแอป)
+    ...([["2026-03-03", 7, 5], ["2026-03-17", 6, 4], ["2026-03-31", 5, 3], ["2026-04-14", 4, 2], ["2026-04-28", 3, 1], ["2026-05-12", 2, 1]] as const).map(([d, b, a]) =>
+      visit(d, "s5", "t2", "09:00", b, a, LBP, ["นวดไทยเพื่อการรักษา", "ประคบสมุนไพร"]),
+    ),
+    // ออฟฟิศซินโดรม (คอร์ส 8 ครั้ง ใช้ไป 5)
+    ...([["2026-06-14", 8, 6], ["2026-06-28", 8, 5], ["2026-07-12", 7, 5], ["2026-08-02", 7, 4], ["2026-08-30", 6, 3]] as const).map(([d, b, a]) =>
+      visit(d, "s2", "t2", "10:00", b, a, OFFICE, ["นวดไทยแบบราชสำนัก", "กดจุดสัญญาณ 4 หลัง"]),
+    ),
+    // ภูมิแพ้ (จ่ายรายครั้ง 400 บาท: นวดหน้า ศีรษะ ไหล่ + ลูกประคบ)
+    ...([["2026-07-19", 6, 5], ["2026-08-02", 6, 4], ["2026-08-16", 5, 3]] as const).map(([d, b, a]) =>
+      visit(d, "s1", "t3", "14:00", b, a, LUNG, ["นวดหน้า ศีรษะ ไหล่", "ลูกประคบสมุนไพร"], {
+        id: `a-somsak-lung-${d}`,
+        payment: { no: `RC2569-${d.replace(/-/g, "").slice(2)}L`, method: "promptpay", amount: 400, status: "paid", at: new Date(`${d}T15:10:00`).toISOString() },
+      }),
+    ),
+  ];
+  // ครั้งที่ 5 ของออฟฟิศซินโดรม: จ่าย 450 บาท ใบเสร็จ RC2569-000123 (ตรงกับใบเสร็จในแอป)
+  const o5 = history.find((a) => a.date === "2026-08-30")!;
+  o5.payment = { no: "RC2569-000123", method: "promptpay", amount: 450, status: "paid", at: new Date("2026-08-30T12:20:00").toISOString() };
+  // ภูมิแพ้ครั้งที่ 3: บิล 400 บาท ส่งเข้าแอป ยังไม่จ่าย
+  const l3 = history.find((a) => a.date === "2026-08-16" && a.serviceId === "s1")!;
+  l3.paid = false;
+  l3.cloudId = DEMO_REFS.lungBill;
+  l3.payment = { no: "RC2569-000118", method: "app", amount: 400, status: "pending", at: new Date("2026-08-16T15:10:00").toISOString() };
+
+  // วันนี้: ออฟฟิศซินโดรมครั้งที่ 6 — รอบถัดไปที่ยังทัน · ผู้บำบัดที่เข้าเวรและรับนวดรักษารอบนั้น
+  const hour = Math.min(15, Math.max(8, new Date().getHours() + 1));
+  const start = `${String(hour === 12 ? 13 : hour).padStart(2, "0")}:00`;
+  const duty = BASE_THERAPISTS.filter((t) => onDuty(t, today, start));
+  const t = duty.find((x) => servicesAt(x, today, start).includes("s2")) ?? duty.find((x) => servicesAt(x, today, start).includes("s1")) ?? BASE_THERAPISTS[1];
+  const svc = servicesAt(t, today, start).includes("s2") ? "s2" : "s1";
+  // คิวเดิมของผู้บำบัดคนนี้รอบนั้น → ย้ายไปคนอื่น/ลบ (ไม่ให้ชน)
+  for (let i = appointments.length - 1; i >= 0; i--) if (appointments[i].date === today && appointments[i].start === start && appointments[i].therapistId === t.id) appointments.splice(i, 1);
+  const office6: Appointment = { id: "a-somsak-today", patientId: DEMO_PATIENT.id, serviceId: svc, therapistId: t.id, date: today, start, status: "waiting", type: "booked", painBefore: 6, paid: false, cloudId: DEMO_REFS.officeToday, note: "จองผ่านแอป ThaiWell AI · ออฟฟิศซินโดรม ครั้งที่ 6/8" };
+  // ภูมิแพ้ครั้งที่ 4: นัดล่วงหน้า (ไม่ตรงวันที่ผู้บำบัดลา)
+  let next = workdayAhead(4, true);
+  if (THERAPISTS.find((x) => x.id === "t3")?.exceptions?.[next]) next = workdayAhead(5, true);
+  const lung4: Appointment = { id: "a-somsak-lung-next", patientId: DEMO_PATIENT.id, serviceId: "s1", therapistId: "t3", date: next, start: "14:00", status: "waiting", type: "booked", painBefore: 4, paid: false, cloudId: DEMO_REFS.lungNext, note: "จองผ่านแอป ThaiWell AI · รักษาภูมิแพ้ ครั้งที่ 4" };
+  for (let i = appointments.length - 1; i >= 0; i--) if (appointments[i].date === next && appointments[i].start === "14:00" && appointments[i].therapistId === "t3") appointments.splice(i, 1);
+  appointments.push(...history, office6, lung4);
+
+  const done = history.filter((a) => a.painAfter !== undefined);
+  patients.unshift({
+    id: DEMO_PATIENT.id,
+    hn: "TW-000123",
+    name: DEMO_PATIENT.name,
+    gender: "ชาย",
+    age: 34,
+    phone: "081-234-0123",
+    conditions: ["ความดันโลหิตสูง"],
+    allergies: [],
+    complaint: "ปวดคอ บ่า ไหล่ จากการทำงาน (ออฟฟิศซินโดรม) · ภูมิแพ้ทางเดินหายใจ",
+    course: { name: "นวดไทยเพื่อการรักษา 8 ครั้ง", serviceId: "s2", total: 8, used: 5, startedOn: "2026-06-14", expiresOn: addISODays(today, 60) },
+    painHistory: done.map((a) => ({ date: a.date, score: a.painBefore })),
+    registeredOn: "2026-03-03",
+    birthMonth: 2,
+    cloudId: DEMO_PATIENT.cloudId,
+    member: true,
+  });
 }
 
 export const slotTimes = (open: string, close: string, step: number) => {

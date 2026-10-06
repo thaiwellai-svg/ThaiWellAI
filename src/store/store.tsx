@@ -61,7 +61,7 @@ type Action =
   | { type: "bridgeIn"; event: AppEvent }
   | { type: "reset" };
 
-const VERSION = 25;
+const VERSION = 26;
 const KEY = "thaiwell.backoffice";
 
 function fresh(): State {

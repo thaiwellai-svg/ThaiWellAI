@@ -71,6 +71,13 @@ async function registerViaCard(p) {
   await p.click('.ap-card'); await p.waitForTimeout(1300);
   await p.click('.crd__btn.is-primary'); await p.waitForTimeout(2600);
 }
+
+// ผู้ป่วยที่มีคอร์สและนัดล่วงหน้ามากที่สุด (ไม่ใช่ผู้ใช้แอปตัวอย่าง — นัดของเขาอยู่ใน cloud)
+async function coursePatient(p) {
+  const s = await state(p);
+  const n = (pt) => s.appointments.filter((a) => a.patientId === pt.id && a.status === 'waiting' && !a.calledAt && a.date > today()).length;
+  return s.patients.filter((pt) => pt.course && !pt.cloudId).sort((a, b) => n(b) - n(a))[0].name;
+}
 async function next(p, ms = 1800) { await p.getByRole('button', { name: 'ถัดไป' }).click(); await p.waitForTimeout(ms); }
 async function answer(p, idx, yes) { await p.locator('.ap-qn__row').nth(idx).locator('.ap-qn__opt').nth(yes ? 1 : 0).click(); }
 async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500); }
@@ -219,6 +226,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   });
 
   await check('R11', 'reception', 'คำขอจองจากแอป · ความดันสูง', 'ปฏิเสธพร้อมเหตุผล + เลิกทำ', async (p, ex) => {
+    // คำขอจากแอปที่ความดันสูง (คำขอทั้งหมดมาจากแอป — ใส่ตรงเพื่อไม่แตะข้อมูลใน cloud)
+    await mutate(p, `const q = { id: 'rq-qa-bp', patientId: s.patients[3].id, serviceId: 's2', therapistId: 't2', date: __arg, start: '10:00', painScore: 6, screening: { fever: false, highBP: true, bpSystolic: 172, menstruation: false, pregnant: false, recentSurgery: false, contagious: false }, submittedAt: new Date().toISOString() }; s.requests.unshift(q);`, today());
+    const before = (await state(p)).requests.length;
     await go(p, '/requests', 1500);
     await p.locator('.rq__row', { hasText: 'ต้องพบแพทย์' }).first().click(); await p.waitForTimeout(800);
     ex((await p.locator('.rq2__verdict.is-stop').count()) === 1, 'หน้าคำขอขึ้นแดง "ควรให้แพทย์ประเมิน"');
@@ -229,7 +239,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const toast = p.getByRole('button', { name: 'เลิกทำ' });
     if (await toast.count()) { await toast.click(); await p.waitForTimeout(600); }
     s = await state(p);
-    ex(s.requests.length >= 10, 'เลิกทำแล้วคำขอกลับมา');
+    ex(s.requests.length === before, 'เลิกทำแล้วคำขอกลับมา');
   });
 
   // ===== THERAPIST =====
@@ -345,7 +355,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   await check('C05', 'cashier', 'ผู้ป่วยขอคืนเงิน', 'ยกเลิกใบเสร็จ + คืนเงิน (หน้ารายละเอียดบิล)', async (p, ex) => {
     await go(p, '/billing', 1200);
     await p.locator('button', { hasText: 'ประวัติการชำระ' }).first().click(); await p.waitForTimeout(500);
-    await p.locator('.bl2-rc', { hasText: '450' }).first().click(); await p.waitForTimeout(1200);
+    await p.locator('button', { hasText: '30 วัน' }).first().click(); await p.waitForTimeout(500);
+    await p.locator('.bl2-rc', { hasText: '฿', hasNotText: 'สมศักดิ์' }).first().click(); await p.waitForTimeout(1200);
     ex(p.url().includes('/billing/'), 'เปิดหน้ารายละเอียดบิล');
     const id = p.url().split('/').pop();
     await p.getByRole('button', { name: 'ใบเสร็จ', exact: true }).click(); await p.waitForTimeout(1000);
@@ -367,8 +378,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   // ===== DOCTOR =====
   await check('D01', 'doctor', 'ผู้ป่วยมีคอร์ส · ต้องการยกเลิกบางวัน', 'ยกเลิกนัดตามแผน (เลือกวัน) + คืนเครดิต + เลิกทำ', async (p, ex) => {
+    const who = await coursePatient(p);
     await go(p, '/patients', 1300);
-    await p.locator('.prow', { hasText: 'อรวรรณ' }).first().click(); await p.waitForTimeout(800);
+    await p.locator('.prow', { hasText: who }).first().click(); await p.waitForTimeout(800);
     const before = await p.locator('.pd2__legend').innerText();
     await p.click('.pd2__cancel'); await p.waitForTimeout(600);
     await p.locator('.cx__scope button').nth(0).click();
@@ -382,10 +394,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   await check('D02', 'doctor', 'เลื่อนนัด', 'หน้ารายละเอียดนัด → เลื่อน', async (p, ex) => {
     const s = await state(p);
-    const a = s.appointments.find((x) => x.status === 'waiting' && x.date > today());
+    const a = s.appointments.find((x) => x.status === 'waiting' && x.date > today() && !x.cloudId);
     await go(p, '/appointments/' + a.id, 1200);
     await p.getByRole('button', { name: 'เลื่อนนัด', exact: true }).click(); await p.waitForTimeout(500);
-    await p.locator('.ad__slots button:not([disabled])').last().click();
+    await p.locator('.ad__slots button:not([disabled])', { hasNotText: a.start }).last().click();
     await p.getByRole('button', { name: 'ยืนยันเลื่อนนัด' }).click(); await p.waitForTimeout(800);
     const a2 = (await state(p)).appointments.find((x) => x.id === a.id);
     ex(a2.start !== a.start, `เวลาเปลี่ยน ${a.start} → ${a2.start}`);
@@ -449,15 +461,16 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   });
 
   await check('D04', 'doctor', 'ผู้ป่วยหยุดคอร์ส', 'ยกเลิกนัดที่เหลือทั้งหมดของแผน', async (p, ex) => {
+    const who = await coursePatient(p);
     await go(p, '/patients', 1300);
-    await p.locator('.prow', { hasText: 'อรวรรณ' }).first().click(); await p.waitForTimeout(800);
+    await p.locator('.prow', { hasText: who }).first().click(); await p.waitForTimeout(800);
     await p.click('.pd2__cancel'); await p.waitForTimeout(600);
     const n = await p.locator('.cx__dates button').count();
     await p.locator('.cx__scope button').nth(1).click();
     await p.locator('.cx__seg button', { hasText: 'คลินิกยกเลิก' }).click();
     await p.getByRole('button', { name: new RegExp(`ยกเลิก ${n} นัด`) }).click(); await p.waitForTimeout(1000);
     const s = await state(p);
-    const pt = s.patients.find((x) => x.name.includes('อรวรรณ'));
+    const pt = s.patients.find((x) => x.name === who);
     const left = s.appointments.filter((a) => a.patientId === pt.id && a.status === 'waiting' && !a.calledAt && a.date >= today()).length;
     ex(left === 0, `ยกเลิกครบ ${n} นัด`);
     ex(s.appointments.filter((a) => a.cancel?.by === 'clinic').length === n, 'บันทึกว่าคลินิกเป็นผู้ยกเลิก');

@@ -382,3 +382,7 @@
     min-height: 480px;
   }
 }
+.fl-ev.is-system {
+  align-self: center;
+  background: var(--sage-100);
+}
