@@ -635,9 +635,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
-    await p.getByRole('button', { name: 'พิมพ์แทน' }).click(); await p.waitForTimeout(300);
+    ex((await p.locator('.vp__voice').count()) === 1, 'ขั้นบันทึกการรักษาเปิดแผงสรุปด้วยเสียงด้านขวาให้เอง');
+    await p.locator('.vp__voice').getByRole('button', { name: 'พิมพ์แทน' }).click(); await p.waitForTimeout(300);
     await p.fill('textarea[aria-label="สรุปการรักษา"]', 'ลมปลายปัตคาด บ่าขวาตึง นวดรักษาเส้นอิทา 45 นาที ประคบสมุนไพรต่อ ปวดเหลือ 3 แนะนำประคบร้อนที่บ้าน');
-    await p.getByRole('button', { name: 'ให้ AI เติม' }).click();
+    await p.getByRole('button', { name: 'ให้ AI สรุป' }).click();
     await p.waitForSelector('.vn.is-done', { timeout: 60000 });
     const a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.diagnoses.length > 0 && a.diagnoses[0].code, 'เติมวินิจฉัยพร้อมรหัส ICD-10');
@@ -645,6 +646,21 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(a.log.some((l) => l.label.startsWith('บันทึกด้วยเสียง')), 'บันทึกที่มาในไทม์ไลน์');
     await p.getByRole('button', { name: 'บันทึก', exact: true }).click(); await p.waitForTimeout(900);
     ex((await state(p)).appointments.find((x) => x.id === id).painAfter === 3, 'Pain หลังนวด = 3 จากคำพูด');
+  });
+
+  await check('N04', 'therapist', 'ผู้บำบัดอัดเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'เสียง → WAV → ถอดเสียง → AI → เติมบันทึก', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    await p.locator('input[aria-label="ไฟล์เสียงสรุปการรักษา"]').setInputFiles(path.join(__dirname, 'fixtures/voice-summary-th.m4a'));
+    await p.waitForSelector('.vn.is-done, .vn.is-error', { timeout: 60000 });
+    ex((await p.locator('.vn.is-done').count()) === 1, 'ถอดเสียงและสรุปสำเร็จ');
+    const heard = await p.locator('.vn__heard').innerText().catch(() => '');
+    ex(/ปัต/.test(heard) && /ประคบ/.test(heard), 'ได้ข้อความภาษาไทยจากเสียง');
+    const a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.diagnoses.some((d) => d.name.includes('ปัตคาด')), 'วินิจฉัยลมปลายปัตคาด');
+    ex(a.procedures.some((x) => x.name.includes('ประคบ')), 'หัตถการมีประคบสมุนไพร');
+    ex((await p.locator('.vs__panel button[aria-pressed="true"]', { hasText: /^3$/ }).count()) === 1, 'เลือก Pain หลังนวด = 3 ให้');
   });
 
   // ===== CROSS-CUTTING =====

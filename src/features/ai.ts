@@ -58,16 +58,123 @@ export async function ocrFile(file: File, signal?: AbortSignal): Promise<string>
 
 export const ASR = { url: "https://asr2.bmscloud.in.th/v1/audio/transcriptions", model: "Qwen/Qwen3-ASR-1.7B" };
 
-/** Thai speech → text (OpenAI-compatible transcription endpoint). */
-export async function transcribe(audio: Blob, filename = "voice.webm"): Promise<string> {
+/** Float PCM (any rate, mono) → 16 kHz mono 16-bit WAV — the format the ASR server reads. */
+export async function pcmToWav16k(pcm: Float32Array, rate: number): Promise<Blob> {
+  const out = 16000;
+  let data = pcm;
+  if (rate !== out) {
+    const off = new OfflineAudioContext(1, Math.max(1, Math.ceil((pcm.length * out) / rate)), out);
+    const b = off.createBuffer(1, pcm.length, rate);
+    b.copyToChannel(pcm as Float32Array<ArrayBuffer>, 0);
+    const node = off.createBufferSource();
+    node.buffer = b;
+    node.connect(off.destination);
+    node.start();
+    data = (await off.startRendering()).getChannelData(0);
+  }
+  const buf = new ArrayBuffer(44 + data.length * 2);
+  const v = new DataView(buf);
+  const str = (o: number, t: string) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  str(0, "RIFF");
+  v.setUint32(4, 36 + data.length * 2, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, out, true);
+  v.setUint32(28, out * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  str(36, "data");
+  v.setUint32(40, data.length * 2, true);
+  for (let i = 0; i < data.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, data[i])) * 0x7fff, true);
+  return new Blob([buf], { type: "audio/wav" });
+}
+
+/**
+ * Microphone → raw PCM straight from Web Audio (no MediaRecorder / codec round-trip, so the sample rate is exact).
+ * Works on iPad Safari and desktop browsers in a secure context (https or localhost).
+ */
+export async function startMic(onLevel?: (v: number) => void) {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const ctx = new AC();
+  await ctx.resume().catch(() => {});
+  const src = ctx.createMediaStreamSource(stream);
+  const proc = ctx.createScriptProcessor(4096, 1, 1);
+  const chunks: Float32Array[] = [];
+  proc.onaudioprocess = (e) => {
+    const d = e.inputBuffer.getChannelData(0);
+    chunks.push(new Float32Array(d));
+    if (onLevel) {
+      let peak = 0;
+      for (let i = 0; i < d.length; i += 16) peak = Math.max(peak, Math.abs(d[i]));
+      onLevel(Math.min(1, peak * 2.2));
+    }
+  };
+  // a muted sink keeps the processor running without echoing the mic to the speaker
+  const mute = ctx.createGain();
+  mute.gain.value = 0;
+  src.connect(proc);
+  proc.connect(mute);
+  mute.connect(ctx.destination);
+  const close = () => {
+    proc.disconnect();
+    src.disconnect();
+    stream.getTracks().forEach((t) => t.stop());
+    ctx.close().catch(() => {});
+  };
+  return {
+    /** stop and return a 16 kHz WAV plus the recorded length in seconds */
+    async stop() {
+      const rate = ctx.sampleRate;
+      close();
+      const n = chunks.reduce((a, c) => a + c.length, 0);
+      const pcm = new Float32Array(n);
+      let o = 0;
+      for (const c of chunks) {
+        pcm.set(c, o);
+        o += c.length;
+      }
+      return { wav: await pcmToWav16k(pcm, rate), seconds: n / rate };
+    },
+    cancel: close,
+  };
+}
+export type Mic = Awaited<ReturnType<typeof startMic>>;
+
+/** An audio file (e.g. an iPad Voice Memo .m4a) → 16 kHz WAV for the ASR server. */
+export async function fileToWav(file: Blob): Promise<{ wav: Blob; seconds: number }> {
+  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const ctx = new AC();
+  try {
+    const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+    // mix down to mono
+    const pcm = new Float32Array(buf.length);
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) pcm[i] += d[i] / buf.numberOfChannels;
+    }
+    return { wav: await pcmToWav16k(pcm, buf.sampleRate), seconds: buf.duration };
+  } finally {
+    ctx.close().catch(() => {});
+  }
+}
+
+/** Thai speech → text (OpenAI-compatible transcription endpoint). Send a WAV (see startMic). */
+export async function transcribe(wav: Blob): Promise<string> {
   const fd = new FormData();
-  fd.append("file", audio, filename);
+  fd.append("file", wav, "voice.wav");
   fd.append("model", ASR.model);
   fd.append("language", "th");
   const res = await fetch(ASR.url, { method: "POST", body: fd });
   if (!res.ok) throw new Error(`ASR ${res.status}`);
   const data = await res.json();
-  return String(data.text ?? "").trim();
+  // the model prefixes its output with "language Thai<asr_text>"
+  return String(data.text ?? "")
+    .replace(/^.*<asr_text>/s, "")
+    .trim();
 }
 
 export interface ChatMsg {

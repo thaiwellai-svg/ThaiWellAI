@@ -2,14 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Workspace } from "../../features/Workspace";
-import { X, Maximize2, Minimize2, ClipboardList, Hourglass, ListFilter, Play, ReceiptText, UserX, CircleCheck } from "lucide-react";
+import { X, AudioLines, Maximize2, Minimize2, ClipboardList, Hourglass, ListFilter, Play, ReceiptText, UserX, CircleCheck } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, EmptyState, IconButton, SearchField, spring } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import { FilterMenu } from "../../features/FilterMenu";
-import { AppointmentDrawer, queueNumber } from "../../features/AppointmentDrawer";
+import { AppointmentDrawer, queueNumber, stageOf as visitStage } from "../../features/AppointmentDrawer";
+import { VoiceNote } from "../../features/VoiceNote";
 import { PatientDrawer, PatientHealth } from "../../features/PatientDrawer";
 import { isOverdue, jobRank, stageMeta, stageOf, type Stage } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
@@ -28,6 +29,8 @@ export default function Visits() {
   const [f, setF] = useState<F>("all");
   const [patient, setPatient] = useState<string | null>(null);
   const [history, setHistory] = useState(false);
+  // voice-summary side panel (treatment-record step)
+  const [voice, setVoice] = useState(false);
   // record fills the screen (list + health box hidden) — toggled from the record's ••• toolbar
   const [solo, setSolo] = useState(false);
   // narrow list: photo + name only
@@ -169,12 +172,19 @@ export default function Visits() {
                 onNext={(n) => setParams({ id: n })}
                 onHistory={() => {
                   // opening the health box leaves full-screen mode
+                  setVoice(false);
                   if (solo) {
                     setSolo(false);
                     setHistory(true);
                   } else setHistory((v) => !v);
                 }}
                 historyOpen={history && !solo}
+                onVoice={(open) => {
+                  setSolo(false);
+                  setHistory(false);
+                  setVoice((v) => open ?? !v);
+                }}
+                voiceOpen={voice && !solo}
               />
             ) : (
               <div className="vp__none">
@@ -184,6 +194,28 @@ export default function Visits() {
           </div>
         </div>
           ) },
+          ...(voice && sel && !solo && visitStage(sel) === "assess"
+            ? [{ id: "voice", width: 360, min: 300, max: 520, collapsible: true, node: (
+            <div className="panel vp__hist vp__voice">
+              <div className="sheet">
+                <div className="vp__hist-head">
+                  <div>
+                    <b>
+                      <AudioLines size={15} /> สรุปการรักษาด้วยเสียง
+                    </b>
+                    <small>{store.patientById(sel.patientId).name} · AI เติมบันทึกให้</small>
+                  </div>
+                  <IconButton label="ปิด" variant="soft" size="sm" onClick={() => setVoice(false)}>
+                    <X size={15} />
+                  </IconButton>
+                </div>
+                <div className="vp__hist-body scroll-y scroll-y--light">
+                  <VoiceNote appt={sel} bare />
+                </div>
+              </div>
+            </div>
+            ) }]
+            : []),
           ...(history && sel && !solo
             ? [{ id: "health", width: 340, min: 280, max: 520, collapsible: true, node: (
             <div className="panel vp__hist">

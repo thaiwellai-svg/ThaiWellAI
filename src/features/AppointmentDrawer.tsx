@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ArrowRight, AudioLines, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, Field, IconButton, Input, Textarea, useToast } from "../design-system";
@@ -14,7 +14,7 @@ import { useLatest } from "./useLatest";
 import { PayPanel, METHOD_LABEL, makePayment } from "./billing";
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, RecSection } from "./ClinicalRecord";
-import { VoiceNote } from "./VoiceNote";
+import { VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
@@ -50,6 +50,8 @@ export function AppointmentDrawer({
   onNext,
   onHistory,
   historyOpen,
+  onVoice,
+  voiceOpen,
 }: {
   id: string | null;
   onClose: () => void;
@@ -59,6 +61,9 @@ export function AppointmentDrawer({
   /** inline page: toggle the separate history box */
   onHistory?: () => void;
   historyOpen?: boolean;
+  /** opens the voice-summary side panel (visits page) */
+  onVoice?: (open?: boolean) => void;
+  voiceOpen?: boolean;
 }) {
   const store = useStore();
   const navigate = useNavigate();
@@ -68,6 +73,17 @@ export function AppointmentDrawer({
 
   const [painAfter, setPainAfter] = useState<number | undefined>();
   const [advice, setAdvice] = useState("");
+  // the voice summary (side panel or inline) fills these drafts
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<VoiceFill>).detail;
+      if (d.apptId !== id) return;
+      if (d.painAfter !== undefined) setPainAfter(d.painAfter);
+      if (d.advice) setAdvice(d.advice);
+    };
+    window.addEventListener(VOICE_FILL, on);
+    return () => window.removeEventListener(VOICE_FILL, on);
+  }, [id]);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [useCredit, setUseCredit] = useState(true);
   // ending far earlier than the service time needs a reason
@@ -87,6 +103,13 @@ export function AppointmentDrawer({
   }, [id]);
 
   const stage = appt ? stageOf(appt) : "waiting";
+  // reaching the treatment-record step opens the voice-summary panel once per visit
+  const [autoVoiceFor, setAutoVoiceFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!onVoice || stage !== "assess" || !appt || autoVoiceFor === appt.id) return;
+    setAutoVoiceFor(appt.id);
+    onVoice(true);
+  }, [stage, appt, onVoice, autoVoiceFor]);
   const [cancelling, setCancelling] = useState(false);
   // a contraindication found at today's screening must be cleared by a Thai traditional doctor before the massage starts
   const [override, setOverride] = useState(false);
@@ -292,6 +315,11 @@ export function AppointmentDrawer({
                 <HeartPulse size={16} />
               </button>
             )}
+            {onVoice && stage === "assess" && (
+              <button type="button" className={clsx("vs__hbtn vs__vbtn", voiceOpen && "is-on")} aria-pressed={!!voiceOpen} onClick={() => onVoice()} aria-label="สรุปการรักษาด้วยเสียง" title="สรุปการรักษาด้วยเสียง">
+                <AudioLines size={16} />
+              </button>
+            )}
           </section>
           <div className="vs__facts">
             <span>
@@ -384,7 +412,6 @@ export function AppointmentDrawer({
                     { done: !!appt.procedures?.length, label: "หัตถการ" },
                   ]} />
                   <div className="rs-stack">
-                    <VoiceNote appt={appt} onPain={setPainAfter} onAdvice={setAdvice} />
                     <RecSection n={1} title="ความปวดหลังนวด" hint={`ก่อนนวด ${appt.painBefore}/10 · ให้ผู้ป่วยเลือก`} done={painAfter !== undefined}>
                       <PainScale value={painAfter} onChange={setPainAfter} />
                       {painAfter !== undefined && (
@@ -471,6 +498,7 @@ export function AppointmentDrawer({
           {credits && <CreditPips info={credits} name={p.course!.name} />}
 
           <section className="vs__ctx">
+            {stage === "assess" && !onVoice && <VoiceNote appt={appt} />}
             {(() => {
               const ik = intakeOfVisit(appt, p);
               const al = ik ? intakeAlerts(ik, store.settings.bpThreshold) : [];

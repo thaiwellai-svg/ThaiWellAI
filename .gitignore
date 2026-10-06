@@ -27,3 +27,6 @@ dist-ssr
 .preview.log
 qa/shots/
 qa/results.json
+
+# local HTTPS cert for the iPad preview (mic needs https)
+.cert/

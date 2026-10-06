@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "qa": "node qa/study-cases.cjs"
+    "qa": "node qa/study-cases.cjs",
+    "preview:https": "vite preview --config vite.https.config.ts --host 0.0.0.0 --port 5189 --strictPort"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.1",
