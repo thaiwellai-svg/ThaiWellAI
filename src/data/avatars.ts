@@ -1,11 +1,19 @@
 import type { Patient } from "./types";
 
 /**
- * Demo portraits: "Notionists" illustrations by Zoish via DiceBear — CC0 1.0, not real people.
+ * Portraits: "Notionists" illustrations by Zoish via DiceBear — CC0 1.0, not real people.
+ * Staff can pick one for a therapist (stored as "avatar:<key>" so it survives rebuilds), or take a real photo.
  * Real patient photos are captured in-app by staff (see features/photo.ts) and win over these.
  */
 const files = import.meta.glob<string>("../assets/avatars/*.svg", { eager: true, query: "?url", import: "default" });
 const DEMO = Object.fromEntries(Object.entries(files).map(([path, url]) => [path.split("/").pop()!.replace(".svg", ""), url]));
 
-export const patientPhoto = (p: Pick<Patient, "id" | "photo">) => p.photo ?? DEMO[p.id];
-export const therapistPhoto = (t: { id: string; photo?: string }) => t.photo ?? DEMO[t.id];
+/** ตัวเลือก avatar ทั้งหมด (ชุดภาพเดียวกับระบบสาธิต) — ผู้บำบัดก่อน แล้วตามลำดับเลข */
+export const AVATAR_CHOICES = Object.keys(DEMO).sort((a, b) => (a[0] === b[0] ? Number(a.slice(1)) - Number(b.slice(1)) : a[0] === "t" ? -1 : 1));
+export const avatarUrl = (key: string) => DEMO[key];
+export const avatarValue = (key: string) => `avatar:${key}`;
+/** "avatar:t3" → URL ของภาพ · รูปถ่าย (data URL) → ตามเดิม */
+export const resolvePhoto = (photo?: string) => (photo?.startsWith("avatar:") ? DEMO[photo.slice(7)] : photo);
+
+export const patientPhoto = (p: Pick<Patient, "id" | "photo">) => resolvePhoto(p.photo) ?? DEMO[p.id];
+export const therapistPhoto = (t: { id: string; photo?: string }) => resolvePhoto(t.photo) ?? DEMO[t.id];

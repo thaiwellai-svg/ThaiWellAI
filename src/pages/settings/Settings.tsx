@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  MapPin,
   GraduationCap,
   Bell,
   Building2,
@@ -44,7 +45,7 @@ import { Avatar, Badge, Button, Dialog, Field, Input, Select, Switch, ease, spri
 import { WorkPage } from "../../layout/WorkPage";
 import { TH_WEEKDAYS, TH_WEEKDAYS_SHORT, baht, fromMinutes } from "../../data/thaiDate";
 import type { ClinicSettings, Service, ShareTopic, Therapist } from "../../data/types";
-import { therapistPhoto } from "../../data/avatars";
+import { AVATAR_CHOICES, avatarUrl, avatarValue, resolvePhoto, therapistPhoto } from "../../data/avatars";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { UserGuide } from "../../features/UserGuide";
 import { signOut } from "../../features/session";
@@ -59,7 +60,7 @@ import "./settings.css";
 
 const SECTIONS = [
   { id: "account", label: "บัญชีผู้ใช้งาน", desc: "โปรไฟล์ · ตำแหน่ง · รหัสผ่าน", icon: UserRound, tint: "#4c845a" },
-  { id: "clinic", label: "คลินิก", desc: "ชื่อหน่วยบริการ · พื้นหลังแอป", icon: Building2, tint: "#5b7fa6" },
+  { id: "clinic", label: "คลินิก", desc: "ชื่อ · ที่อยู่ · โลเคชั่น · พื้นหลังแอป", icon: Building2, tint: "#5b7fa6" },
   { id: "hours", label: "เวลาทำการและคิว", desc: "เวลาเปิด–ปิด · วันทำการ · เตียง", icon: Clock3, tint: "#d08a3c" },
   { id: "services", label: "บริการและราคา", desc: "รายการบริการของคลินิก", icon: Sparkles, tint: "#b0739a" },
   { id: "staff", label: "ผู้บำบัด", desc: "รายชื่อและตารางงาน", icon: Stethoscope, tint: "#3e9a8f" },
@@ -160,7 +161,8 @@ export default function Settings() {
   const [saved, setSaved] = useState(0);
   const [editSvc, setEditSvc] = useState<string | null>(null);
   const [editStaff, setEditStaff] = useState<string | null>(null);
-  const [clinicEdit, setClinicEdit] = useState<string | null>(null);
+  const [clinicEdit, setClinicEdit] = useState<ClinicForm | null>(null);
+  const [locating, setLocating] = useState(false);
   const [askOut, setAskOut] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const toast = useToast();
@@ -301,13 +303,36 @@ export default function Settings() {
 
                 {active === "clinic" && (
                   <>
-                    <Group title="ข้อมูลคลินิก">
+                    <Group title="ข้อมูลคลินิก" desc="ชื่อ ที่อยู่ เบอร์โทร และตำแหน่ง แสดงในหน้า “สถานที่” ของแอป ThaiWell AI ให้ผู้ใช้โทร/นำทางมาได้">
                       <div className="st-row">
                         <div className="st-row__text">
                           <small>ชื่อหน่วยบริการ</small>
                           <b>{settings.clinicName}</b>
+                          <small>{settings.clinicAddress || "ยังไม่ได้ระบุที่อยู่"}</small>
+                          <small>
+                            {settings.clinicPhone ? `โทร ${settings.clinicPhone}` : "ยังไม่ได้ระบุเบอร์โทร"} ·{" "}
+                            {settings.clinicLat !== undefined && settings.clinicLng !== undefined ? (
+                              <a href={`https://www.google.com/maps?q=${settings.clinicLat},${settings.clinicLng}`} target="_blank" rel="noreferrer">
+                                ดูตำแหน่งบนแผนที่
+                              </a>
+                            ) : (
+                              "ยังไม่ได้ปักตำแหน่ง"
+                            )}
+                          </small>
                         </div>
-                        <Button variant="outline" size="md" leading={<PenLine size={15} />} onClick={() => setClinicEdit(settings.clinicName)}>
+                        <Button
+                          variant="outline"
+                          size="md"
+                          leading={<PenLine size={15} />}
+                          onClick={() =>
+                            setClinicEdit({
+                              name: settings.clinicName,
+                              address: settings.clinicAddress ?? "",
+                              phone: settings.clinicPhone ?? "",
+                              where: settings.clinicLat !== undefined && settings.clinicLng !== undefined ? `${settings.clinicLat}, ${settings.clinicLng}` : "",
+                            })
+                          }
+                        >
                           แก้ไข
                         </Button>
                       </div>
@@ -659,7 +684,7 @@ export default function Settings() {
           </span>
         }
         title="แก้ไขข้อมูลคลินิก"
-        subtitle="ชื่อนี้แสดงบนหน้าหลักและข้อความถึงผู้ป่วย"
+        subtitle="แสดงบนหน้าหลัก ข้อความถึงผู้ป่วย และหน้า “สถานที่” ในแอปผู้ใช้"
         footer={
           <>
             <Button variant="outline" size="lg" onClick={() => setClinicEdit(null)}>
@@ -667,10 +692,16 @@ export default function Settings() {
             </Button>
             <Button
               size="lg"
-              disabled={!clinicEdit?.trim()}
+              disabled={!clinicEdit?.name.trim() || (!!clinicEdit?.where.trim() && !parseLatLng(clinicEdit.where))}
               leading={<Check size={16} />}
               onClick={() => {
-                set("clinicName", clinicEdit!.trim());
+                const c = clinicEdit!;
+                const ll = parseLatLng(c.where);
+                store.dispatch({
+                  type: "updateSettings",
+                  patch: { clinicName: c.name.trim(), clinicAddress: c.address.trim() || undefined, clinicPhone: c.phone.trim() || undefined, clinicLat: ll?.[0], clinicLng: ll?.[1] },
+                });
+                setSaved(Date.now());
                 setClinicEdit(null);
               }}
             >
@@ -679,9 +710,55 @@ export default function Settings() {
           </>
         }
       >
-        <Field label="ชื่อหน่วยบริการ">
-          <Input value={clinicEdit ?? ""} onChange={(e) => setClinicEdit(e.target.value)} autoFocus />
-        </Field>
+        {clinicEdit && (
+          <div className="clinic-form">
+            <Field label="ชื่อหน่วยบริการ">
+              <Input value={clinicEdit.name} onChange={(e) => setClinicEdit({ ...clinicEdit, name: e.target.value })} autoFocus />
+            </Field>
+            <Field label="ที่อยู่">
+              <textarea className="tw-input clinic-form__addr" rows={3} value={clinicEdit.address} onChange={(e) => setClinicEdit({ ...clinicEdit, address: e.target.value })} placeholder="เลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์" />
+            </Field>
+            <Field label="เบอร์โทรคลินิก">
+              <Input inputMode="tel" value={clinicEdit.phone} onChange={(e) => setClinicEdit({ ...clinicEdit, phone: e.target.value })} placeholder="02-123-4567" />
+            </Field>
+            <Field
+              label="ตำแหน่งบนแผนที่"
+              hint={clinicEdit.where.trim() && !parseLatLng(clinicEdit.where) ? "อ่านพิกัดไม่ได้ — วางลิงก์ Google Maps หรือพิมพ์ เช่น 13.7337, 100.5717" : "อยู่ที่คลินิก → กด “ใช้ตำแหน่งปัจจุบัน” · หรือคัดลอกลิงก์จาก Google Maps มาวาง"}
+            >
+              <div className="clinic-form__loc">
+                <Input value={clinicEdit.where} onChange={(e) => setClinicEdit({ ...clinicEdit, where: e.target.value })} placeholder="ลิงก์ Google Maps หรือ ละติจูด, ลองจิจูด" />
+                <Button
+                  variant="outline"
+                  size="md"
+                  leading={<MapPin size={15} />}
+                  disabled={locating}
+                  onClick={() => {
+                    if (!navigator.geolocation) return toast({ message: "อุปกรณ์นี้หาตำแหน่งไม่ได้" });
+                    setLocating(true);
+                    navigator.geolocation.getCurrentPosition(
+                      (pos) => {
+                        setLocating(false);
+                        setClinicEdit((c) => c && { ...c, where: `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}` });
+                      },
+                      () => {
+                        setLocating(false);
+                        toast({ message: "หาตำแหน่งไม่ได้ — อนุญาตการเข้าถึงตำแหน่ง หรือวางลิงก์ Google Maps แทน" });
+                      },
+                      { enableHighAccuracy: true, timeout: 15000 },
+                    );
+                  }}
+                >
+                  {locating ? "กำลังหา…" : "ใช้ตำแหน่งปัจจุบัน"}
+                </Button>
+              </div>
+              {parseLatLng(clinicEdit.where) && (
+                <a className="clinic-form__map" href={`https://www.google.com/maps?q=${parseLatLng(clinicEdit.where)!.join(",")}`} target="_blank" rel="noreferrer">
+                  ตรวจตำแหน่งบน Google Maps ({parseLatLng(clinicEdit.where)!.map((x) => x.toFixed(5)).join(", ")})
+                </a>
+              )}
+            </Field>
+          </div>
+        )}
       </Dialog>
       <Dialog
         open={askOut}
@@ -927,6 +1004,17 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
 const ROLES = ["แพทย์แผนไทยประยุกต์", "แพทย์แผนไทย", "นักศึกษาแพทย์แผนไทย", "ผู้ช่วยแพทย์แผนไทย"];
 const COLORS = ["#4c845a", "#c1723e", "#077dd7", "#8b5cf6", "#d97706", "#0f766e", "#db2777", "#64748b"];
 
+type ClinicForm = { name: string; address: string; phone: string; where: string };
+/** "13.73, 100.57" · ลิงก์ Google Maps (@lat,lng / q=lat,lng / !3dlat!4dlng) → [lat, lng] */
+function parseLatLng(text: string): [number, number] | null {
+  const t = text.trim();
+  const m = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/.exec(t) ?? /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/.exec(t) ?? /(?:q|ll|query|destination)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/.exec(t) ?? /^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/.exec(t);
+  if (!m) return null;
+  const lat = Number(m[1]);
+  const lng = Number(m[2]);
+  return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? [lat, lng] : null;
+}
+
 /** Add or edit a therapist's profile: photo, name, role, phone and colour (schedule lives in จัดตารางงาน). */
 function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose: () => void; onSaved: () => void }) {
   const store = useStore();
@@ -1000,11 +1088,11 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
     >
       <div className="svc">
         <div className="tp-hero">
-          <PhotoPicker name={f.name || "?"} src={f.photo ?? (current ? therapistPhoto(current) : undefined)} size="xl" onPick={(photo) => setF({ ...f, photo })} />
+          <PhotoPicker name={f.name || "?"} src={resolvePhoto(f.photo) ?? (current ? therapistPhoto(current) : undefined)} size="xl" onPick={(photo) => setF({ ...f, photo })} />
           <div className="tp-hero__text">
             <b>{f.name.trim() || "ชื่อผู้บำบัด"}</b>
             <small>{f.role}</small>
-            <span className="tw-meta">แตะรูปเพื่อถ่ายหรือเลือกจากคลังภาพ</span>
+            <span className="tw-meta">เลือก avatar ด้านล่าง หรือแตะรูปเพื่อถ่าย/เลือกจากคลังภาพ</span>
           </div>
         </div>
 
@@ -1016,6 +1104,20 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
             <Field label="เบอร์โทรศัพท์" hint={phoneOk ? undefined : "รูปแบบเบอร์ไม่ถูกต้อง"}>
               <Input inputMode="tel" value={f.phone ?? ""} onChange={(e) => setF({ ...f, phone: e.target.value })} placeholder="081-234-5678" />
             </Field>
+          </div>
+        </div>
+
+        <div className="st-group">
+          <div className="st-group__head">
+            <h3>Avatar</h3>
+            <p>ภาพประจำตัวที่แสดงในตารางนัด คิว และในแอปผู้ใช้</p>
+          </div>
+          <div className="tp-avatars" role="radiogroup" aria-label="เลือก avatar">
+            {AVATAR_CHOICES.map((k) => (
+              <button key={k} type="button" role="radio" aria-checked={f.photo === avatarValue(k)} aria-label={`avatar ${k}`} onClick={() => setF({ ...f, photo: avatarValue(k) })}>
+                <img src={avatarUrl(k)} alt="" />
+              </button>
+            ))}
           </div>
         </div>
 

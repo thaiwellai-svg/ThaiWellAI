@@ -292,6 +292,11 @@ export type ShareTopic = "visits" | "pain" | "advice" | "credits" | "screening" 
 
 export interface ClinicSettings {
   clinicName: string;
+  /** ที่อยู่ เบอร์โทร และพิกัดของคลินิก — แสดงในหน้า "สถานที่" ของแอปผู้ใช้ (นำทาง โทร) */
+  clinicAddress?: string;
+  clinicPhone?: string;
+  clinicLat?: number;
+  clinicLng?: number;
   /** VoxCPM voice id used to announce queue calls */
   callVoice?: string;
   /** treatment rooms and their beds */

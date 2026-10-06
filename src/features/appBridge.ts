@@ -116,7 +116,9 @@ export const AVAILABILITY_KEY = "thaiwell.bridge.availability";
 export interface Availability {
   at: string;
   clinicName: string;
-  therapists: { id: string; name: string; role: string }[];
+  /** ที่อยู่ เบอร์ พิกัด → หน้า "สถานที่" ในแอปผู้ใช้ */
+  clinic?: { name: string; address?: string; phone?: string; lat?: number; lng?: number };
+  therapists: { id: string; name: string; role: string; photo?: string }[];
   days: Record<string, Record<string, Record<string, string[]>>>;
 }
 export const publishAvailability = (a: Availability) => write(AVAILABILITY_KEY, a);

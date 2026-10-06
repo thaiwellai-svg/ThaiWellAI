@@ -536,7 +536,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-    publishAvailability({ at: new Date().toISOString(), clinicName: state.settings.clinicName, therapists: state.therapists.map((t) => ({ id: t.id, name: t.name, role: t.role })), days });
+    const st = state.settings;
+    publishAvailability({
+      at: new Date().toISOString(),
+      clinicName: st.clinicName,
+      clinic: { name: st.clinicName, address: st.clinicAddress, phone: st.clinicPhone, lat: st.clinicLat, lng: st.clinicLng },
+      // avatar ที่เลือก (ไม่ส่งรูปถ่าย — ใหญ่เกินไป) → แอปแสดงภาพเดียวกัน
+      therapists: state.therapists.map((t) => ({ id: t.id, name: t.name, role: t.role, photo: t.photo?.startsWith("avatar:") ? t.photo : undefined })),
+      days,
+    });
   }, [state.appointments, state.therapists, state.services, state.settings]);
   // ส่ง: ผลการพิจารณาคำขอจากแอป · นวดเสร็จ (คะแนนหลังนวด) · ยกเลิก/ไม่มา
   useEffect(() => {
