@@ -178,14 +178,19 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   };
 
   /** ask for whatever is still missing (with its component) */
-  const askNext = async (prefix = "") => {
-    const slot = missing();
+  const askNext = (prefix = "") => ask(missing(), prefix);
+  /** ask one question of the set (also used when a step in the question strip is tapped) */
+  const ask = async (slot: Slot, prefix = "") => {
     if (slot === "advice") {
-      setThinking(true);
-      const a = await draftAdvice();
-      setThinking(false);
-      saveAdvice(a);
-      const t = `${prefix}ร่างคำแนะนำถึงผู้ป่วยให้แล้วค่ะ แก้ได้เลย หรือบอกให้ปรับตรงไหน`;
+      let a = latest.current.advice;
+      const had = !!a.trim();
+      if (!had) {
+        setThinking(true);
+        a = await draftAdvice();
+        setThinking(false);
+        saveAdvice(a);
+      }
+      const t = `${prefix}${had ? "คำแนะนำถึงผู้ป่วยตอนนี้ค่ะ" : "ร่างคำแนะนำถึงผู้ป่วยให้แล้วค่ะ"} แก้ได้เลย หรือบอกให้ปรับตรงไหน`;
       say("ai", t, "advice");
       void voice(t);
       return;
@@ -372,6 +377,34 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   const lastAiId = useMemo(() => [...msgs].reverse().find((m) => m.role === "ai")?.id, [msgs]);
 
+  /** the question set, shown as a strip above the chat */
+  const steps: { slot: Slot; label: string; value?: string }[] = [
+    { slot: "dx", label: "วินิจฉัย", value: dx.map((d) => d.name.replace(/\s*\(.*\)/, "")).join(", ") || undefined },
+    { slot: "proc", label: "หัตถการ", value: pr.map((x) => x.name.replace("เพื่อการรักษา", "รักษา").replace("เพื่อสุขภาพ", "สุขภาพ") + (x.minutes ? ` ${x.minutes}น.` : "")).join(", ") || undefined },
+    { slot: "pain", label: "Pain หลังนวด", value: pain !== undefined ? `${appt.painBefore} → ${pain}` : undefined },
+    { slot: "advice", label: "คำแนะนำผู้ป่วย", value: advice.trim() ? `${advice.trim().split("\n").length} ข้อ` : undefined },
+  ];
+  const doneCount = steps.filter((x) => x.value).length;
+  const askAgain = (slot: Slot) => {
+    if (thinking || rec) return;
+    stopSpeaking();
+    setPick([]);
+    void ask(slot);
+  };
+
+  /** quick replies under the current question */
+  const QUICK: Partial<Record<Slot | "open", string[]>> = {
+    open: [`ลมปลายปัตคาด นวดรักษาเส้นอิทา ${s.minutes} นาที ปวดเหลือ 3`, `ปวดหลังส่วนล่าง นวดรักษาและประคบสมุนไพร ปวดเหลือ 4`],
+    proc: [`นวดรักษาเส้นอิทา ปิงคลา ${s.minutes} นาที`, "ประคบสมุนไพร 20 นาที", "สอนท่าฤาษีดัดตน"],
+    advice: ["เพิ่มท่าฤาษีดัดตน", "เน้นประคบร้อนที่บ้าน", "เพิ่มอาหารที่ควรเลี่ยง", "ให้สั้นลง"],
+    summary: ["เพิ่มนัดติดตามอาการใน 1 สัปดาห์", "ให้สั้นลง"],
+  };
+  const quickFor = (m: Msg) => {
+    if (m.id !== lastAiId || thinking || rec) return [];
+    const key = m.kind ?? (m.id === msgs[0]?.id ? "open" : undefined);
+    return key ? (QUICK[key] ?? []) : [];
+  };
+
   const PainRow = ({ sm, onPick }: { sm?: boolean; onPick: (n: number) => void }) => (
     <div className={clsx("rc-pain", sm && "is-sm")} role="group" aria-label="คะแนนปวดหลังนวด">
       {Array.from({ length: 11 }, (_, n) => (
@@ -506,6 +539,34 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         </button>
       </div>
 
+      <div className="rc-steps" aria-label="ชุดคำถาม">
+        <div className="rc-steps__head">
+          <b>ชุดคำถาม</b>
+          <i>
+            <i style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+          </i>
+          <small>
+            {doneCount}/{steps.length}
+          </small>
+        </div>
+        <ol>
+          {steps.map((x, i) => {
+            const now = pending === x.slot;
+            return (
+              <li key={x.slot}>
+                <button type="button" className={clsx(x.value && "is-done", now && "is-now")} onClick={() => askAgain(x.slot)} title={`ถามเรื่อง${x.label}อีกครั้ง`}>
+                  <i>{x.value ? <Check size={11} strokeWidth={3.2} /> : i + 1}</i>
+                  <span>
+                    <b>{x.label}</b>
+                    <small>{x.value ?? (now ? "กำลังถาม…" : "ยังไม่ได้ตอบ")}</small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
       <div className="rc-list scroll-y scroll-y--light" ref={list}>
         {msgs.map((m) => (
           <motion.div key={m.id} className={`rc-msg is-${m.role}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
@@ -530,6 +591,15 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
                 </button>
               )}
               {widget(m)}
+              {quickFor(m).length > 0 && (
+                <div className="rc-quick">
+                  {quickFor(m).map((q) => (
+                    <button key={q} type="button" onClick={() => void onUser(q)}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.div>
         ))}
