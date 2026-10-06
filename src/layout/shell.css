@@ -794,7 +794,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: 4px;
-  padding: 12px 10px 48px;
+  padding: 40px 10px 14px;
   border-radius: 28px;
 }
 .dock-strip.is-side .dock__item {
@@ -842,13 +842,17 @@
   color: var(--color-text);
   text-align: left;
 }
+/* side: ••• sits at the top of the sidebar; its menu opens downwards, fully on screen */
 .dock-strip.is-side .dock__ctl {
   left: calc(12px + 102px);
-  bottom: calc(12px + 14px);
+  top: calc(12px + 12px);
+  bottom: auto;
 }
 .dock-strip.is-side .dock__menu {
-  left: 0;
-  translate: -50% 0;
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: -84px;
+  translate: 0 0;
 }
 html[data-dock="side"] .shell__page {
   left: 216px;
@@ -867,10 +871,10 @@ html[data-dock="side"] .shell__page {
     padding: 0;
   }
   .dock-strip.is-side .dock__ctl {
-    left: calc(12px + 30px);
+    left: calc(12px + 16px);
   }
   .dock-strip.is-side .dock__menu {
-    translate: 0 0;
+    left: 0;
   }
   html[data-dock="side"] .shell__page {
     left: 84px;
