@@ -102,11 +102,13 @@ export default function Visits() {
       eyebrow="รับบริการ"
       title={isToday ? "รับบริการวันนี้" : `รับบริการ ${thaiDate(today)}`}
       bell={false}
+      trailing={
+        <IconButton label="QR เช็กอิน" title="QR เช็กอิน" onClick={() => setQrOpen(true)}>
+          <QrCode size={20} />
+        </IconButton>
+      }
       actions={
         <>
-          <IconButton label="QR เช็กอิน" title="QR เช็กอิน" onClick={() => setQrOpen(true)}>
-            <QrCode size={20} />
-          </IconButton>
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN หรือเลขคิว" shortcut={false} />
           <FilterMenu
             label="สถานะ"

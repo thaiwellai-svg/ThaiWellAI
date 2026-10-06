@@ -416,12 +416,13 @@ export default function Dashboard() {
           </div>
         </div>
       }
+      trailing={
+        <IconButton label="QR เช็กอิน" title="QR เช็กอิน" onClick={() => setQrOpen(true)}>
+          <QrCode size={20} />
+        </IconButton>
+      }
       actions={
         <>
-          {/* เปิด QR เช็กอินให้ผู้ป่วยสแกนรับคิวได้ทันทีจากหน้าแรก */}
-          <IconButton label="QR เช็กอิน" title="QR เช็กอิน" onClick={() => setQrOpen(true)}>
-            <QrCode size={20} />
-          </IconButton>
           <SearchField className="phead-search" value={query} onChange={setQuery} />
         </>
       }

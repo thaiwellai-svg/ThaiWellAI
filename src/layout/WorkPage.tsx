@@ -7,6 +7,8 @@ interface WorkPageProps {
   eyebrow: ReactNode;
   title: ReactNode;
   actions?: ReactNode;
+  /** ปุ่มท้ายสุดของแถบบน (หลังกระดิ่งแจ้งเตือน) */
+  trailing?: ReactNode;
   toolbar?: ReactNode;
   /** show the notification bell in the header (default true) */
   bell?: boolean;
@@ -16,7 +18,7 @@ interface WorkPageProps {
 }
 
 /** Scaffold for every non-dashboard page: blurred spa backdrop, white title, glass actions. */
-export function WorkPage({ eyebrow, title, actions, toolbar, bell = true, lead, children }: WorkPageProps) {
+export function WorkPage({ eyebrow, title, actions, trailing, toolbar, bell = true, lead, children }: WorkPageProps) {
   return (
     <motion.div className="work" variants={stagger(0.04, 0.06)} initial="hidden" animate="show">
       <motion.header className="work__head" variants={fadeUp}>
@@ -29,6 +31,7 @@ export function WorkPage({ eyebrow, title, actions, toolbar, bell = true, lead, 
         <div className="work__actions">
           {actions}
           {bell && <NotificationBell />}
+          {trailing}
         </div>
       </motion.header>
       {toolbar && <motion.div variants={fadeUp}>{toolbar}</motion.div>}
