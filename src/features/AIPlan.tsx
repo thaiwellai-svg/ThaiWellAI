@@ -13,6 +13,9 @@ import { AI, THAI_MASSAGE_KNOWLEDGE, chatJSON, ocrFile } from "./ai";
 import { CoursePlanDialog } from "../pages/planner/PatientPlanner";
 import "./aiplan.css";
 import { usePatientPrint } from "./PatientPrint";
+import { SamuthanPanel } from "./Samuthan";
+import { samuthan } from "../data/samuthan";
+import { bestForElement, outcomeRows } from "../data/outcomes";
 
 /** ธาตุเจ้าเรือน · อายุสมุฏฐาน · อุตุสมุฏฐาน of the patient */
 export function ElementCard({ p }: { p: Patient }) {
@@ -69,6 +72,7 @@ export function ElementCard({ p }: { p: Patient }) {
           <p>{info.care}</p>
         </div>
       </div>
+      <SamuthanPanel p={p} />
     </section>
   );
 }
@@ -120,6 +124,12 @@ export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side pan
       const req = store.requests.find((r) => r.patientId === p.id);
       const context = {
         patient: { gender: p.gender, age: p.age, complaint: p.complaint, conditions: p.conditions, painHistory: p.painHistory.slice(-8) },
+        samuthan: (() => {
+          const sm = samuthan(p);
+          return { factors: sm.factors.map((f) => `${f.title}: ธาตุ${f.element} (${f.label})`), symptomElements: sm.signs, elementAtRisk: sm.top, guidance: sm.plan };
+        })(),
+        // real-world outcomes of this clinic for patients with the same birth element (mean pain drop per service)
+        clinicEvidence: bestForElement(outcomeRows(store.appointments, store.patients), prof.birth, store.services).map((x) => ({ service: x.service.name, meanPainDrop: +x.mean.toFixed(1), visits: x.n, improvedShare: Math.round(x.improved * 100) + "%" })),
         elements: { birthElement: prof.birth, birthMonth: TH_MONTH[prof.month - 1], ageElement: `${prof.age.element} (${prof.age.label})`, seasonElement: `${prof.season.element} (${prof.season.label})` },
         currentCourse: p.course ? { name: p.course.name, total: p.course.total, used: p.course.used } : null,
         latestScreening: req?.screening,
@@ -135,7 +145,7 @@ export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side pan
       };
       const system = `คุณคือผู้ช่วยวางแผนการรักษาด้วยการแพทย์แผนไทยสำหรับแพทย์แผนไทยในคลินิก ตอบเป็นภาษาไทย กระชับ อ้างอิงทฤษฎีธาตุและเส้นประธานสิบ
 ${THAI_MASSAGE_KNOWLEDGE}
-ข้อกำหนด: เลือกบริการจากรายการ services เท่านั้น (ใช้ id) · ถ้ามีข้อห้าม ให้ referToDoctor=true และระบุใน precautions · ห้ามวินิจฉัยโรคแผนปัจจุบัน · แผนนี้เป็นร่างให้แพทย์แผนไทยตรวจสอบ
+ข้อกำหนด: เลือกบริการจากรายการ services เท่านั้น (ใช้ id) · ใช้ samuthan (สมุฏฐานวินิจฉัย 5 ด้าน) ประเมินธาตุที่กำเริบ · ให้น้ำหนักกับ clinicEvidence (ผลจริงของคลินิกกับผู้ป่วยธาตุเดียวกัน) และอ้างตัวเลขใน elementNote ถ้าใช้ · ถ้ามีข้อห้าม ให้ referToDoctor=true และระบุใน precautions · ห้ามวินิจฉัยโรคแผนปัจจุบัน · แผนนี้เป็นร่างให้แพทย์แผนไทยตรวจสอบ
 ตอบเป็น JSON เท่านั้น รูปแบบ:
 {"summary":"สรุปอาการและเป้าหมาย 1-2 ประโยค","massageType":"นวดเพื่อสุขภาพ"|"นวดเพื่อการรักษา","elementNote":"การประเมินธาตุที่เกี่ยวข้องกับอาการ","goals":["..."],"sessions":จำนวนครั้งรวม,"frequency":"เช่น สัปดาห์ละ 2 ครั้ง","phases":[{"title":"ระยะ","weeks":"สัปดาห์ที่ 1-2","serviceId":"s1","focus":"เส้นประธาน/จุดที่เน้น","technique":"กด คลึง ประคบ ฯลฯ"}],"herbs":["สมุนไพร/ลูกประคบที่เหมาะ"],"homeCare":["ท่าฤาษีดัดตน/การดูแลที่บ้าน"],"precautions":["..."],"referToDoctor":false}`;
       const res = await chatJSON<Omit<AIPlan, "at" | "model">>(system, JSON.stringify(context));

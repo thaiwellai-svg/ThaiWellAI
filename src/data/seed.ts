@@ -12,6 +12,7 @@ import type {
 } from "./types";
 import { addISODays, fromISODate, fromMinutes, todayISO } from "./thaiDate";
 import { onDuty, servicesAt } from "./domain";
+import { birthElement, birthMonthOf } from "./elements";
 
 /* Deterministic PRNG so the demo data is identical on every load. */
 function mulberry32(seed: number) {
@@ -499,6 +500,36 @@ export function createSeed(): SeedData {
       if (a.status !== "done" && !(a.status === "active" && a.painAfter !== undefined)) continue;
       a.diagnoses = [{ name: DX[a.serviceId] ?? DX.s1, kind: "principal" }];
       a.procedures = (PR[a.serviceId] ?? PR.s1).map((name, i) => ({ name, minutes: i === 0 ? svcMin(a.serviceId) : undefined, area: i === 0 ? "เส้นอิทา ปิงคลา บ่าและหลัง" : undefined }));
+    }
+  }
+
+  // past outcomes follow Thai-medicine expectations (heat suits ดิน/น้ำ, not ไฟ; treatment massage suits ลม),
+  // so the outcomes dashboard has real patterns to surface
+  {
+    const RELIEF: Record<string, number> = { s1: 2.0, s2: 3.0, s3: 2.2, s4: 1.5, s5: 3.2 };
+    const byId = new Map(patients.map((p) => [p.id, p]));
+    // pain on arrival eases over a course of visits
+    const past = appointments.filter((a) => a.status === "done" && a.date < today).sort((x, y) => (x.date + x.start).localeCompare(y.date + y.start));
+    const seen = new Map<string, number>();
+    const base = new Map<string, number>();
+    for (const a of past) {
+      const i = seen.get(a.patientId) ?? 0;
+      seen.set(a.patientId, i + 1);
+      if (!base.has(a.patientId)) base.set(a.patientId, 6 + Math.floor(rnd() * 3));
+      a.painBefore = Math.max(2, Math.min(9, Math.round(base.get(a.patientId)! - 0.45 * i + (rnd() - 0.5) * 1.6)));
+    }
+    for (const a of appointments) {
+      if (a.status !== "done" || a.date >= today) continue;
+      const p = byId.get(a.patientId);
+      if (!p) continue;
+      const el = birthElement(birthMonthOf(p));
+      const heat = a.serviceId === "s3" || a.serviceId === "s5";
+      let r = RELIEF[a.serviceId] ?? 2;
+      if (heat && el === "ไฟ") r -= 1.4;
+      if (heat && (el === "ดิน" || el === "น้ำ")) r += 0.7;
+      if (a.serviceId === "s2" && el === "ลม") r += 0.9;
+      r += (rnd() - 0.5) * 1.8;
+      a.painAfter = Math.max(0, Math.min(a.painBefore, Math.round(a.painBefore - r)));
     }
   }
 

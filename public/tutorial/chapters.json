@@ -1986,5 +1986,234 @@
     ]
    }
   ]
+ },
+ "voice": {
+  "id": "voice",
+  "poster": "media/voice-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "ปุ่มไมค์ในขั้นบันทึกการรักษา",
+    "detail": "หลังจบการนวด กดปุ่มไมค์สีเขียว แล้วพูดสรุปการรักษาตามปกติ · กดปุ่มสี่เหลี่ยมเมื่อพูดจบ",
+    "start": "media/voice-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 35.08,
+      "y": 67.8,
+      "w": 6,
+      "h": 6,
+      "frame": "media/voice-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "พูดหรือพิมพ์สรุป",
+    "detail": "ระบบถอดเสียงภาษาไทย · ถ้าใช้ไมค์ไม่ได้ กด “พิมพ์แทน”",
+    "start": "media/voice-f3.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 64.91,
+      "y": 68.96,
+      "w": 7.98,
+      "h": 4.15,
+      "frame": "media/voice-f4.webp"
+     },
+     {
+      "kind": "type",
+      "text": "ลมปลายปัตคาด บ่าขวาตึง นวดรักษาเส้นอิทาปิงคลา 45 นาที ประคบสมุนไพรต่อ ปวดเหลือ 3 แนะนำประคบร้อนที่บ้านวันละ 15 นาที",
+      "x": 46.5,
+      "y": 77.2,
+      "w": 27.24,
+      "h": 9.51,
+      "frame": "media/voice-f5.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "AI เติมบันทึกให้",
+    "detail": "AI แยกเป็นวินิจฉัย (พร้อมรหัส ICD-10) หัตถการและเส้นที่นวด Pain หลังนวด และคำแนะนำ แล้วเติมลงแบบฟอร์ม",
+    "start": "media/voice-f6.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 64.85,
+      "y": 79.76,
+      "w": 8.1,
+      "h": 4.39,
+      "frame": "media/voice-f7.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ตรวจแล้วกดบันทึก",
+    "detail": "แก้ไขได้ตามปกติ · ไม่ถูกต้องกด “ย้อนกลับ” · การบันทึกด้วยเสียงถูกนับในหน้าผลการรักษาเป็นเวลาที่ประหยัดได้",
+    "start": "media/voice-f8.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/voice-f9.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "samuthan": {
+  "id": "samuthan",
+  "poster": "media/samuthan-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "การ์ดธาตุเจ้าเรือน",
+    "detail": "เปิดผู้ป่วย แล้วเลื่อนลงไปที่การ์ดธาตุเจ้าเรือน",
+    "start": "media/samuthan-f1.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/samuthan-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "สมุฏฐาน 5 ด้าน + อาการวันนี้",
+    "detail": "ธาตุสมุฏฐาน (เดือนเกิด) · อายุ · ฤดู · เวลา · ถิ่นที่อยู่จากที่อยู่ในบัตร · กรอบสีคือปัจจัยที่ชี้ไปยังธาตุเดียวกัน",
+    "start": "media/samuthan-f3.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/samuthan-f4.webp"
+     },
+     {
+      "kind": "point",
+      "x": 71.19,
+      "y": 68.29,
+      "w": 6,
+      "h": 6,
+      "frame": "media/samuthan-f5.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ธาตุที่เสี่ยงเสียสมดุลและแนวทางดูแล",
+    "detail": "แถบสมดุลธาตุ ธาตุที่ควรระวังตอนนี้ และแนวทางนวด ประคบ สมุนไพร สิ่งที่ควรเลี่ยง",
+    "start": "media/samuthan-f6.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/samuthan-f7.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ผลจริงของคลินิก",
+    "detail": "บริการที่ทำให้ผู้ป่วยธาตุเดียวกันปวดลดลงมากที่สุด จากบันทึกของคลินิกเอง · ข้อมูลนี้ส่งให้ AI วางแผนการรักษาด้วย",
+    "start": "media/samuthan-f8.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/samuthan-f9.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "insights": {
+  "id": "insights",
+  "poster": "media/insights-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "ผลการรักษาภาพรวม",
+    "detail": "ปวดเฉลี่ยก่อน → หลังนวด ช่วงความเชื่อมั่น 95% และสัดส่วนที่ดีขึ้นอย่างมีนัยสำคัญทางคลินิก",
+    "start": "media/insights-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 20.34,
+      "y": 18.29,
+      "w": 6,
+      "h": 6,
+      "frame": "media/insights-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "ข้อค้นพบจากข้อมูล",
+    "detail": "ระบบหากลุ่มที่ได้ผลต่างจากค่าเฉลี่ยและอธิบายเป็นภาษาธรรมดา เช่น ธาตุไฟกับการประคบร้อนได้ผลน้อย · กราฟขวาแสดงปวดที่ลดลงตามจำนวนครั้งที่มา",
+    "start": "media/insights-f3.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 28.81,
+      "y": 36.59,
+      "w": 6,
+      "h": 6,
+      "frame": "media/insights-f4.webp"
+     },
+     {
+      "kind": "point",
+      "x": 85.59,
+      "y": 46.34,
+      "w": 6,
+      "h": 6,
+      "frame": "media/insights-f5.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ประสิทธิผลตามบริการและอาการ",
+    "detail": "แท่ง = ปวดลดลงเฉลี่ย · เส้นบาง = ช่วงความเชื่อมั่น 95%",
+    "start": "media/insights-f6.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/insights-f7.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ธาตุ × บริการ และส่งออกข้อมูลวิจัย",
+    "detail": "ช่องที่มีกรอบคือบริการที่ได้ผลดีที่สุดของแต่ละธาตุ · กด “ส่งออกข้อมูลวิจัย” ได้ CSV ที่ไม่มีชื่อหรือเลขบัตรผู้ป่วย",
+    "start": "media/insights-f8.webp",
+    "actions": [
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/insights-f9.webp"
+     },
+     {
+      "kind": "point",
+      "x": 108.31,
+      "y": 6.1,
+      "w": 6,
+      "h": 6,
+      "frame": "media/insights-f10.webp"
+     }
+    ]
+   }
+  ]
  }
 }

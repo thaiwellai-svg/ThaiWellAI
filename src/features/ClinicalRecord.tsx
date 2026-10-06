@@ -12,7 +12,7 @@ import { Body3D } from "./Body3D";
 import "./clinical.css";
 
 /** common Thai-traditional-medicine findings for quick picking (code is filled by the clinic's coder) */
-const DX_PICK = [
+export const DX_PICK = [
   "ลมปลายปัตคาด (ปวดกล้ามเนื้อคอ บ่า ไหล่)",
   "ลมปลายปัตคาดสัญญาณ 4 หลัง (ปวดหลังส่วนล่าง)",
   "ลมจับโปงแห้งเข่า (ข้อเข่าเสื่อม)",
@@ -22,7 +22,7 @@ const DX_PICK = [
   "ตะคริว",
   "นอนไม่หลับ / เครียดสะสม",
 ];
-const PROC_PICK = [
+export const PROC_PICK = [
   "นวดไทยเพื่อการรักษา",
   "นวดไทยเพื่อสุขภาพ",
   "ประคบสมุนไพร",

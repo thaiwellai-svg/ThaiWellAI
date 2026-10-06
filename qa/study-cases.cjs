@@ -600,11 +600,54 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(!!(await dl), 'ส่งออก CSV ได้');
   });
 
+
+  // ===== INNOVATION (outcomes evidence / สมุฏฐานวินิจฉัย / voice record) =====
+  await check('N01', 'doctor', 'ผู้ป่วยเปิดประวัติ', 'สมุฏฐานวินิจฉัย 5 ด้าน + ผลจริงของคลินิก', async (p, ex) => {
+    await go(p, '/patients', 1500);
+    await p.locator('.smt').scrollIntoViewIfNeeded();
+    ex((await p.locator('.smt__factors > div').count()) === 6, 'แสดงสมุฏฐาน 5 ด้าน + อาการวันนี้');
+    ex((await p.locator('.smt__verdict b').innerText()).startsWith('ธาตุ'), 'สรุปธาตุที่เสี่ยงเสียสมดุล');
+    ex((await p.locator('.smt__ev span').count()) > 0, 'แสดงบริการที่ได้ผลดีที่สุดกับธาตุเดียวกันจากข้อมูลคลินิก');
+  });
+
+  await check('N02', 'admin', 'ผู้บริหาร / งานวิจัย', 'แดชบอร์ดผลการรักษา + ส่งออกข้อมูลไม่ระบุตัวตน', async (p, ex) => {
+    await go(p, '/insights', 1500);
+    const lead = await p.locator('.ins-hero__lead').innerText();
+    ex(/ลดลงเฉลี่ย/.test(lead), 'สรุปปวดก่อน → หลังนวด');
+    ex((await p.locator('.ins-finds li').count()) > 0, 'มีข้อค้นพบจากข้อมูล');
+    ex((await p.locator('.ins-heat__cell').count()) === 4 * (await state(p)).services.length, 'ตารางธาตุ × บริการครบ');
+    const dl = p.waitForEvent('download', { timeout: 4000 }).catch(() => null);
+    await p.getByRole('button', { name: 'ส่งออกข้อมูลวิจัย' }).click();
+    const d = await dl;
+    ex(!!d, 'ส่งออก CSV ได้');
+    if (d) {
+      const txt = fs.readFileSync(await d.path(), 'utf8');
+      const s = await state(p);
+      ex(!s.patients.slice(0, 20).some((x) => txt.includes(x.name) || txt.includes(x.hn)), 'ไฟล์ไม่มีชื่อและ HN ผู้ป่วย');
+    }
+  });
+
+  await check('N03', 'therapist', 'จบการนวด ผู้บำบัดพูดสรุป', 'บันทึกด้วยเสียง → AI เติมวินิจฉัย หัตถการ Pain คำแนะนำ', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    await p.getByRole('button', { name: 'พิมพ์แทน' }).click(); await p.waitForTimeout(300);
+    await p.fill('textarea[aria-label="สรุปการรักษา"]', 'ลมปลายปัตคาด บ่าขวาตึง นวดรักษาเส้นอิทา 45 นาที ประคบสมุนไพรต่อ ปวดเหลือ 3 แนะนำประคบร้อนที่บ้าน');
+    await p.getByRole('button', { name: 'ให้ AI เติม' }).click();
+    await p.waitForSelector('.vn.is-done', { timeout: 60000 });
+    const a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.diagnoses.length > 0 && a.diagnoses[0].code, 'เติมวินิจฉัยพร้อมรหัส ICD-10');
+    ex(a.procedures.length > 0, 'เติมหัตถการ');
+    ex(a.log.some((l) => l.label.startsWith('บันทึกด้วยเสียง')), 'บันทึกที่มาในไทม์ไลน์');
+    await p.getByRole('button', { name: 'บันทึก', exact: true }).click(); await p.waitForTimeout(900);
+    ex((await state(p)).appointments.find((x) => x.id === id).painAfter === 3, 'Pain หลังนวด = 3 จากคำพูด');
+  });
+
   // ===== CROSS-CUTTING =====
   await check('X01', 'reception', 'ทุกหน้า', 'เปิดได้ไม่มี error (แนวนอน + แนวตั้ง)', async (p, ex) => {
     const s = await state(p);
     const a = s.appointments.find((x) => x.payment);
-    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/commission', '/tutorial/'];
+    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/commission', '/insights', '/tutorial/'];
     for (const vp of [{ width: 1366, height: 1024 }, { width: 820, height: 1180 }]) {
       await p.setViewportSize(vp);
       for (const r of routes) {

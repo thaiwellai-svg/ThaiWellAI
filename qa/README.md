@@ -1,6 +1,6 @@
 # Study cases (end-to-end)
 
-39 end-to-end cases covering different patient types and staff roles (reception, therapist, cashier, doctor, admin). The tests drive the real UI in WebKit at iPad size.
+42 end-to-end cases covering different patient types and staff roles (reception, therapist, cashier, doctor, admin). The tests drive the real UI in WebKit at iPad size.
 
 ```bash
 npm run build && npx vite preview --port 5188   # in another terminal

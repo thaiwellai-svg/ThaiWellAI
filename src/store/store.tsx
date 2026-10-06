@@ -55,7 +55,7 @@ type Action =
   | { type: "biz"; update: (b: Biz) => Biz; log: string; cat?: AuditEntry["cat"]; patientId?: string }
   | { type: "reset" };
 
-const VERSION = 24;
+const VERSION = 25;
 const KEY = "thaiwell.backoffice";
 
 function fresh(): State {

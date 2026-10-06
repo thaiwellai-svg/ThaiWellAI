@@ -14,6 +14,7 @@ import { useLatest } from "./useLatest";
 import { PayPanel, METHOD_LABEL, makePayment } from "./billing";
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, RecSection } from "./ClinicalRecord";
+import { VoiceNote } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
@@ -383,6 +384,7 @@ export function AppointmentDrawer({
                     { done: !!appt.procedures?.length, label: "หัตถการ" },
                   ]} />
                   <div className="rs-stack">
+                    <VoiceNote appt={appt} onPain={setPainAfter} onAdvice={setAdvice} />
                     <RecSection n={1} title="ความปวดหลังนวด" hint={`ก่อนนวด ${appt.painBefore}/10 · ให้ผู้ป่วยเลือก`} done={painAfter !== undefined}>
                       <PainScale value={painAfter} onChange={setPainAfter} />
                       {painAfter !== undefined && (

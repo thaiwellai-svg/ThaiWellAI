@@ -29,6 +29,7 @@ const Inventory = lazy(() => import("../pages/biz/Inventory"));
 const Packages = lazy(() => import("../pages/biz/Packages"));
 const Commission = lazy(() => import("../pages/biz/Commission"));
 const DayClose = lazy(() => import("../pages/biz/DayClose"));
+const Insights = lazy(() => import("../pages/insights/Insights"));
 const Requests = lazy(() => import("../pages/requests/Requests"));
 const Login = lazy(() => import("../pages/login/Login"));
 const RoomScene = lazy(() => import("./room3d/RoomScene"));
@@ -132,6 +133,7 @@ export function AppShell() {
             <Route path="/inventory" element={<Page><Inventory /></Page>} />
             <Route path="/packages" element={<Page><Packages /></Page>} />
             <Route path="/billing/:id" element={<Page><BillDetail /></Page>} />
+            <Route path="/insights" element={<Page><Insights /></Page>} />
             <Route path="/requests" element={<Page><Requests /></Page>} />
             <Route path="/design-system" element={<Page><DesignSystem /></Page>} />
             <Route path="*" element={<Page><Dashboard /></Page>} />

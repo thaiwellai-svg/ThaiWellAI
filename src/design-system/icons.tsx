@@ -52,6 +52,14 @@ export const PlannerIcon = (p: P) => (
   </svg>
 );
 
+export const InsightsIcon = (p: P) => (
+  <svg {...base(p)}>
+    <rect style={tone} x="3.5" y="3.5" width="17" height="17" rx="3.6" />
+    <path d="M7.5 15.5l3-3.4 2.6 2.2 3.9-5" />
+    <path d="M14.4 9.3h2.6v2.6" />
+  </svg>
+);
+
 export const VisitIcon = (p: P) => (
   <svg {...base(p)}>
     <rect style={tone} x="4.5" y="4" width="15" height="17" rx="3.4" />
