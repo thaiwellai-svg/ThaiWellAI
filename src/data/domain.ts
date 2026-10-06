@@ -1,4 +1,5 @@
 import type { Appointment, AppointmentStatus, ClinicSettings, DayBlock, Patient, Screening, Therapist } from "./types";
+import { LIVE } from "./mode";
 import type { BadgeTone } from "../design-system";
 import { fromISODate, todayISO } from "./thaiDate";
 
@@ -10,18 +11,20 @@ export const STATUS_META: Record<AppointmentStatus, { label: string; tone: Badge
   cancelled: { label: "ยกเลิก", tone: "neutral", color: "var(--neutral-400)" },
 };
 
-export type Stage = "waiting" | "called" | "treating" | "assess" | "billing" | "done" | "absent" | "cancelled";
+export type Stage = "checkin" | "waiting" | "called" | "treating" | "assess" | "billing" | "done" | "absent" | "cancelled";
 
 /** Where a visit is in the counter flow: รอ → เรียกคิว → รับบริการ → ประเมิน → ชำระเงิน → เสร็จสิ้น */
 export function stageOf(a: Appointment): Stage {
   if (a.status === "absent" || a.status === "cancelled") return a.status;
   if (a.status === "done") return "done";
-  if (a.status === "waiting") return a.calledAt ? "called" : "waiting";
+  // ใช้งานจริง: ยังไม่เช็กอิน (สแกน QR / เช็กอินที่เคาน์เตอร์) → ยังไม่มีคิว
+  if (a.status === "waiting") return a.calledAt ? "called" : LIVE && !a.checkinQueue ? "checkin" : "waiting";
   if (!a.endedAt) return "treating";
   return a.painAfter === undefined ? "assess" : "billing";
 }
 
 export const STAGE_META: Record<Stage, { label: string; tone: BadgeTone; color: string; next?: string }> = {
+  checkin: { label: "รอเช็กอินเข้ารับบริการ", tone: "neutral", color: "var(--neutral-400)", next: "เช็กอิน" },
   waiting: { label: "รอรับบริการ", tone: "warning", color: "var(--status-waiting)", next: "เรียกคิว" },
   called: { label: "เรียกคิวแล้ว", tone: "info", color: "#3b82c4", next: "เริ่ม" },
   treating: { label: "กำลังรับบริการ", tone: "info", color: "var(--status-active)", next: "จบ" },

@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, Field, IconButton, Input, Textarea, useToast } from "../design-system";
@@ -37,9 +38,16 @@ const STEPS: { key: Stage; label: string; icon: typeof Play }[] = [
 export const clock = (iso?: string) => (iso ? new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) : "");
 
 /** queue number: order of that day's visits */
+/** เลขคิวเช็กอินถัดไปของวันนั้น (Q001, Q002, …) */
+export function nextCheckinQueue(all: Appointment[], date: string) {
+  const last = Math.max(0, ...all.filter((x) => x.date === date && x.checkinQueue).map((x) => Number(x.checkinQueue!.slice(1)) || 0));
+  return `Q${String(last + 1).padStart(3, "0")}`;
+}
+
 export function queueNumber(all: Appointment[], a: Appointment) {
-  // เช็กอินแล้ว → เลขคิวตามลำดับที่มาถึง
+  // เช็กอินแล้ว → เลขคิวตามลำดับที่มาถึง · ใช้งานจริงยังไม่เช็กอิน = ยังไม่มีคิว
   if (a.checkinQueue) return a.checkinQueue;
+  if (LIVE) return "";
   const day = all.filter((x) => x.date === a.date).sort((x, y) => x.start.localeCompare(y.start) || x.id.localeCompare(y.id));
   return `A${String(day.findIndex((x) => x.id === a.id) + 1).padStart(3, "0")}`;
 }
@@ -143,7 +151,7 @@ export function AppointmentDrawer({
     if (!appt) return null;
     return (
       store.appointments
-        .filter((a) => a.date === appt.date && a.id !== appt.id && ["waiting", "called", "treating", "assess", "billing"].includes(stageOf(a)))
+        .filter((a) => a.date === appt.date && a.id !== appt.id && ["checkin", "waiting", "called", "treating", "assess", "billing"].includes(stageOf(a)))
         .sort((a, b) => a.start.localeCompare(b.start))[0] ?? null
     );
   }, [store.appointments, appt]);
@@ -199,8 +207,30 @@ export function AppointmentDrawer({
   const stopToday = stopFlags.length > 0;
   const startNow = (note?: string) => step({ status: "active", startedAt: nowIso(), bedId: bed! }, `เริ่มรับบริการ · ${bedName(store.settings, bed!)} · ${t.name}${note ? ` · ${note}` : ""}`);
 
+  // เช็กอินที่เคาน์เตอร์ (ผู้ป่วยไม่ได้ใช้แอป / สแกนไม่ได้) → เลขคิวต่อแถวเดียวกับที่สแกน QR
+  const counterCheckin = () => {
+    const q = nextCheckinQueue(store.appointments, appt.date);
+    step({ checkinQueue: q, checkedInAt: nowIso() }, `เช็กอินที่เคาน์เตอร์ · คิว ${q}`, `${p.name} เช็กอินแล้ว · คิว ${q}`);
+  };
+
   let footer: React.ReactNode = null;
-  if (stage === "waiting")
+  if (stage === "checkin")
+    footer = (
+      <>
+        <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
+          ยกเลิกนัด
+        </Button>
+        {appt.date <= todayISO() && (
+          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `บันทึก ${p.name} ไม่มาตามนัด`)}>
+            ไม่มา
+          </Button>
+        )}
+        <Button size="lg" fill leading={<ScanLine size={16} />} disabled={appt.date !== todayISO()} onClick={counterCheckin}>
+          เช็กอินที่เคาน์เตอร์
+        </Button>
+      </>
+    );
+  else if (stage === "waiting")
     footer = (
       <>
         <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
@@ -399,6 +429,12 @@ export function AppointmentDrawer({
 
           <AnimatePresence mode="wait" initial={false}>
             <motion.section key={stage} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+              {stage === "checkin" && (
+                <>
+                  <StepHead n={1} title="รอเช็กอินเข้ารับบริการ" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR เช็กอินที่เคาน์เตอร์ในแอป หรือกด “เช็กอินที่เคาน์เตอร์” · เช็กอินแล้วได้เลขคิวตามลำดับที่มาถึง" : "เช็กอินได้ในวันนัด"} />
+                  <PainLine v={appt.painBefore} />
+                </>
+              )}
               {(stage === "waiting" || stage === "called") && (
                 <>
                   <StepHead

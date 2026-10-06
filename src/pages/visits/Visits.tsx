@@ -5,7 +5,7 @@ import { Workspace } from "../../features/Workspace";
 import { X, QrCode, AudioLines, Maximize2, Minimize2, ClipboardList, Hourglass, ListFilter, Play, ReceiptText, UserX, CircleCheck } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
-import { Avatar, Button, EmptyState, IconButton, SearchField, spring } from "../../design-system";
+import { Avatar, EmptyState, IconButton, SearchField, spring } from "../../design-system";
 import { CheckinQr } from "../../features/CheckinQr";
 import { WorkPage } from "../../layout/WorkPage";
 import { ListModeMenu } from "../../features/ListModeMenu";
@@ -21,7 +21,7 @@ import "../appointments/appointments.css";
 import "./visits.css";
 
 type F = "all" | "waiting" | "progress" | "billing" | "done";
-const GROUP: Record<Stage, F> = { waiting: "waiting", called: "progress", treating: "progress", assess: "progress", billing: "billing", done: "done", absent: "done", cancelled: "done" };
+const GROUP: Record<Stage, F> = { checkin: "waiting", waiting: "waiting", called: "progress", treating: "progress", assess: "progress", billing: "billing", done: "done", absent: "done", cancelled: "done" };
 
 /** รับบริการ — today's visits on the left, the full visit record (flow · วินิจฉัย · หัตถการ · payment) on the right. */
 export default function Visits() {
@@ -104,9 +104,9 @@ export default function Visits() {
       bell={false}
       actions={
         <>
-          <Button variant="white" size="md" leading={<QrCode size={16} />} onClick={() => setQrOpen(true)}>
-            QR เช็กอิน
-          </Button>
+          <IconButton label="QR เช็กอิน" title="QR เช็กอิน" onClick={() => setQrOpen(true)}>
+            <QrCode size={20} />
+          </IconButton>
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN หรือเลขคิว" shortcut={false} />
           <FilterMenu
             label="สถานะ"
@@ -156,7 +156,7 @@ export default function Visits() {
                   </span>
                   <span className="vp__q">
                     <b>{a.start}</b>
-                    <small>คิว {queueNumber(store.appointments, a)}</small>
+                    <small>{queueNumber(store.appointments, a) ? `คิว ${queueNumber(store.appointments, a)}` : stageOf(a) === "checkin" ? "รอเช็กอิน" : ""}</small>
                   </span>
                   {slim && (
                     <span className="vp__slim">

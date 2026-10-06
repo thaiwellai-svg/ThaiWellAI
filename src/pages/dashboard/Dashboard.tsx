@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
-import { CalendarCheck2, ChevronLeft, ChevronRight, Maximize2, Minimize2, Minus, Plus, SearchX, X } from "lucide-react";
+import { QrCode, CalendarCheck2, ChevronLeft, ChevronRight, Maximize2, Minimize2, Minus, Plus, SearchX, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useNavigate } from "react-router-dom";
 import { useStore } from "../../store/store";
-import { AnimatedNumber, Avatar, Card, EmptyState, SearchField, fadeUp, listItem, spring } from "../../design-system";
+import { AnimatedNumber, Avatar, Card, IconButton, EmptyState, SearchField, fadeUp, listItem, spring } from "../../design-system";
+import { CheckinQr } from "../../features/CheckinQr";
 import { blocksOn, jobRank, stageOf, STATUS_META } from "../../data/domain";
 import { TH_WEEKDAYS_SHORT, addISODays, baht, fromISODate, startOfWeek, thaiDateLong, thaiMonthYear, toISODate, todayISO } from "../../data/thaiDate";
 import { therapistPhoto } from "../../data/avatars";
@@ -61,6 +62,7 @@ function useWidgetLayout() {
 export default function Dashboard() {
   const store = useStore();
   const today = todayISO();
+  const [qrOpen, setQrOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -400,6 +402,8 @@ export default function Dashboard() {
   );
 
   return (
+    <>
+    <CheckinQr open={qrOpen} onClose={() => setQrOpen(false)} />
     <WorkPage
       eyebrow=""
       title=""
@@ -412,7 +416,15 @@ export default function Dashboard() {
           </div>
         </div>
       }
-      actions={<SearchField className="phead-search" value={query} onChange={setQuery} />}
+      actions={
+        <>
+          {/* เปิด QR เช็กอินให้ผู้ป่วยสแกนรับคิวได้ทันทีจากหน้าแรก */}
+          <IconButton label="QR เช็กอิน" title="QR เช็กอิน" onClick={() => setQrOpen(true)}>
+            <QrCode size={20} />
+          </IconButton>
+          <SearchField className="phead-search" value={query} onChange={setQuery} />
+        </>
+      }
     >
       <Workspace
         storageKey="thaiwell.dash.layout"
@@ -428,6 +440,7 @@ export default function Dashboard() {
       <ApproveDialog request={approving} onClose={() => setApproving(null)} />
       <RejectDialog request={rejecting} onClose={() => setRejecting(null)} />
     </WorkPage>
+    </>
   );
 }
 

@@ -46,6 +46,7 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
       summary: `ส่งผลการรักษา · ปวด ${a.painBefore} → ${a.painAfter}${a.advice ? " · พร้อมคำแนะนำ" : ""}`,
     };
   if (a.startedAt) return { status: "in_service", patch: {}, kind: "service.started", summary: `เริ่มรับบริการ · ${t.name}` };
+  if (!a.calledAt && a.checkinQueue) return { status: "checked_in", patch: { queue_no: a.checkinQueue }, kind: "queue.issued", summary: `เช็กอินที่คลินิก · คิว ${a.checkinQueue}` };
   if (a.calledAt) return { status: "called", patch: { queue_no: queueNumber(store.appointments, a) }, kind: "queue.called", summary: `เรียกคิว ${queueNumber(store.appointments, a)} เข้ารับบริการ` };
   return { status: "confirmed", patch: { date: a.date, start: a.start, therapist: t.name, service: s.name }, kind: "booking.confirmed", summary: `ยืนยันนัด ${a.date} ${a.start} น. · ${t.name}` };
 }
