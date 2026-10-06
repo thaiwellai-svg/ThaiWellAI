@@ -30,3 +30,4 @@ qa/results.json
 
 # local HTTPS cert for the iPad preview (mic needs https)
 .cert/
+.preview-https.log
