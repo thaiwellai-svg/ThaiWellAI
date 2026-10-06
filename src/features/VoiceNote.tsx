@@ -683,8 +683,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         {rec && (
           <div className="rc-msg is-me is-live">
             <div className="rc-bub">
-              <VoiceWave level={level} height={34} />
-              <p>{live || "กำลังฟัง…"}</p>
+              <p>{live || "…"}</p>
             </div>
           </div>
         )}
@@ -708,20 +707,9 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             <button type="button" className="rc-x" onClick={toggleVoice} aria-label="จบการคุยด้วยเสียง" title="จบการคุยด้วยเสียง">
               <X size={17} />
             </button>
-            <span className="rc-rec">
-              {rec ? (
-                <>
-                  <i /> กำลังฟัง · พูดได้เลย
-                </>
-              ) : speaking ? (
-                <>
-                  <Volume2 size={14} /> AI กำลังตอบ…
-                </>
-              ) : (
-                <>
-                  <Sparkles size={14} /> AI กำลังคิด…
-                </>
-              )}
+            <span className="rc-live">
+              <VoiceWave level={level} speak={speaking} calm={!rec && !speaking} height={44} />
+              <small>{rec ? "กำลังฟัง · พูดได้เลย" : speaking ? "AI กำลังตอบ" : thinking ? "AI กำลังคิด…" : "กำลังเปิดไมค์…"}</small>
             </span>
             {rec ? (
               <button type="button" className="rc-stop" onClick={() => void finish()} aria-label="หยุดบันทึกเสียง">

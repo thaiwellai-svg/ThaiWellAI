@@ -684,3 +684,37 @@
 .rc-rec svg {
   color: #9fd7b0;
 }
+/* voice conversation: the input bar becomes the waveform */
+.rc-live {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+}
+.rc-live .vw {
+  height: 40px;
+}
+.rc-live .vw path {
+  filter: brightness(1.9) saturate(1.2);
+}
+.rc-live small {
+  margin-top: -4px;
+  font: 600 10.5px/1 var(--font-sans);
+  letter-spacing: 0.2px;
+  color: rgba(255, 255, 255, 0.7);
+}
+.rc-bar.is-rec {
+  padding: 6px 8px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #1f2d25, #24313f);
+}
+/* live transcript reads as a normal (in-progress) message */
+.rc-msg.is-live .rc-bub {
+  width: auto;
+  background: #2f6f4a;
+  opacity: 0.75;
+}

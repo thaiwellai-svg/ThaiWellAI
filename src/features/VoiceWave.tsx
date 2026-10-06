@@ -4,10 +4,10 @@ import { useEffect, useRef } from "react";
  * Siri-style flowing waveform: three layered sine ribbons whose height follows the live mic level.
  * `level` 0..1 (smoothed here) · `calm` flattens it into a slow shimmer while the AI is working.
  */
-export function VoiceWave({ level, calm = false, height = 96 }: { level: number; calm?: boolean; height?: number }) {
+export function VoiceWave({ level, calm = false, speak = false, height = 96 }: { level: number; calm?: boolean; /** the AI is talking: a speech-like rhythm without a mic level */ speak?: boolean; height?: number }) {
   const ref = useRef<SVGSVGElement>(null);
-  const live = useRef({ level, calm });
-  live.current = { level, calm };
+  const live = useRef({ level, calm, speak });
+  live.current = { level, calm, speak };
 
   useEffect(() => {
     const svg = ref.current;
@@ -29,7 +29,8 @@ export function VoiceWave({ level, calm = false, height = 96 }: { level: number;
       const t = (now - t0) / 1000;
       // idle breathing so the line never looks dead, speech lifts it to full height
       const breathe = 0.16 + 0.06 * Math.sin(t * 2.4);
-      const target = live.current.calm ? 0.07 + 0.04 * Math.sin(t * 2) : Math.min(1, breathe + live.current.level * 0.85);
+      const talk = 0.28 + 0.55 * Math.abs(Math.sin(t * 4.7) * Math.sin(t * 1.9 + 1));
+      const target = live.current.speak ? talk : live.current.calm ? 0.07 + 0.04 * Math.sin(t * 2) : Math.min(1, breathe + live.current.level * 0.85);
       amp += (target - amp) * (target > amp ? 0.35 : 0.12); // fast attack, slow release // ease towards the mic level
       waves.forEach((w, i) => {
         let d = `M0 ${mid}`;
