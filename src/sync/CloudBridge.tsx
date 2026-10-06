@@ -6,6 +6,7 @@ import { todayISO } from "../data/thaiDate";
 import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
 import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
+import { defaultAppAvatar } from "../data/avatars";
 import { validCheckinCode } from "../features/checkinCode";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
@@ -74,6 +75,13 @@ export function CloudBridge() {
   // nothing is pushed until the cloud's current state has been read
   const [ready, setReady] = useState(false);
 
+  /** avatar ที่ผู้ใช้เปลี่ยนในแอป → รูปในคลินิก (รูปถ่ายจริงที่เจ้าหน้าที่ถ่ายไว้ไม่ถูกแทน) */
+  const syncPhoto = (p: Patient, cp?: CloudAppt["tw_patients"]) => {
+    // ยังไม่มีรูปเลย → รูปตั้งต้นตามเพศแบบในแอป
+    const avatar = cp?.profile?.avatar ?? (!p.photo && cp ? defaultAppAvatar(cp.gender ?? undefined) : undefined);
+    if (!p.id || !avatar || p.photo === avatar || (p.photo && !p.photo.startsWith("avatar:"))) return;
+    ref.current.dispatch({ type: "updatePatient", id: p.id, patch: { photo: avatar } });
+  };
   /** the local patient for an app account (registered on first booking) */
   const patientFor = (row: CloudAppt): Patient => {
     const st = ref.current;
@@ -85,6 +93,7 @@ export function CloudBridge() {
       (cp?.citizen_id ? st.patients.find((p) => p.citizenId?.replace(/\D/g, "") === cp.citizen_id) : undefined) ??
       (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits) : undefined);
     if (found) {
+      syncPhoto(found, cp);
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
       return found;
     }
@@ -105,6 +114,8 @@ export function CloudBridge() {
       ...(cp?.birth_date ? { birthDate: cp.birth_date } : {}),
       ...(cp?.address ? { address: cp.address } : {}),
       ...(cp?.email ? { email: cp.email } : {}),
+      // รูปโปรไฟล์ = avatar ที่ผู้ใช้เลือกในแอป · ไม่ได้เลือก = รูปตั้งต้นตามเพศ (ตรงกับในแอป)
+      photo: cp?.profile?.avatar ?? defaultAppAvatar(cp?.gender ?? undefined),
     };
     st.dispatch({ type: "addPatient", patient: p });
     void cloud.from("tw_patients").update({ clinic_hn: p.hn }).eq("id", row.patient_id);
@@ -196,6 +207,7 @@ export function CloudBridge() {
           st.dispatch({ type: "updateAppointment", id: local.id, patch: { date: row.date, start: row.start, ...(t ? { therapistId: t.id } : {}) }, log: `ตรงกับนัดในแอป ${row.date} ${row.start} น.` });
       }
     }
+    syncPhoto(st.patientById(local.patientId), row.tw_patients);
     const who = st.patientById(local.patientId).name;
     // เช็กอินต้องสแกน QR ที่เคาน์เตอร์ (เปลี่ยนทุก 30 วินาที = มาถึงคลินิกจริง) · รหัสผิด/หมดอายุ/ไม่ใช่วันนัด → ส่งกลับให้สแกนใหม่
     if (row.status === "checked_in" && !DEMO && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
@@ -276,6 +288,12 @@ export function CloudBridge() {
     }, 3000);
     const ch = cloud
       .channel("tw-clinic")
+      // ผู้ใช้เปลี่ยนรูปโปรไฟล์ในแอป (ไม่ต้องรอจองครั้งถัดไป)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tw_patients" }, (ev) => {
+        const cp = ev.new as NonNullable<CloudAppt["tw_patients"]>;
+        const p = ref.current.patients.find((x) => x.cloudId === cp?.id);
+        if (p) syncPhoto(p, cp);
+      })
       .on("postgres_changes", { event: "*", schema: "public", table: "tw_appointments" }, async (ev) => {
         const id = (ev.new as CloudAppt)?.id;
         if (!id) return;

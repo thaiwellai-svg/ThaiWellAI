@@ -47,6 +47,8 @@ export interface CloudPatient {
   birth_date?: string | null;
   address?: string | null;
   email?: string | null;
+  /** ข้อมูลโปรไฟล์จากแอป (avatar ที่ผู้ใช้เลือก) */
+  profile?: { avatar?: string } | null;
 }
 
 /** what the patient told the app before booking */

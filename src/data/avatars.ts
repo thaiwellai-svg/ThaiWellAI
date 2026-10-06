@@ -9,7 +9,10 @@ const files = import.meta.glob<string>("../assets/avatars/*.svg", { eager: true,
 const DEMO = Object.fromEntries(Object.entries(files).map(([path, url]) => [path.split("/").pop()!.replace(".svg", ""), url]));
 
 /** ตัวเลือก avatar ทั้งหมด (ชุดภาพเดียวกับระบบสาธิต) — ผู้บำบัดก่อน แล้วตามลำดับเลข */
-export const AVATAR_CHOICES = Object.keys(DEMO).sort((a, b) => (a[0] === b[0] ? Number(a.slice(1)) - Number(b.slice(1)) : a[0] === "t" ? -1 : 1));
+const ORDER: Record<string, number> = { t: 0, p: 1, u: 2 };
+export const AVATAR_CHOICES = Object.keys(DEMO).sort((a, b) => (a[0] === b[0] ? Number(a.slice(1)) - Number(b.slice(1)) : (ORDER[a[0]] ?? 3) - (ORDER[b[0]] ?? 3)));
+/** รูปตั้งต้นของผู้ใช้แอปตามเพศ (ตรงกับในแอป ThaiWell AI) */
+export const defaultAppAvatar = (gender?: string) => (gender === "หญิง" ? "avatar:u1" : "avatar:u2");
 export const avatarUrl = (key: string) => DEMO[key];
 export const avatarValue = (key: string) => `avatar:${key}`;
 /** "avatar:t3" → URL ของภาพ · รูปถ่าย (data URL) → ตามเดิม */
