@@ -699,25 +699,127 @@
   flex: 1 1 280px;
 }
 
-/* dock tucked away (treatment assistant): only a small arrow tab stays */
-.dock__handle {
+/* ── dock layout: ••• handle + bar / mini / side ── */
+.dock__ctl {
   position: absolute;
   left: 50%;
-  bottom: 6px;
-  z-index: 1;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 26px;
-  margin-left: -28px;
-  border-radius: 14px 14px 10px 10px;
-  background: rgba(30, 40, 34, 0.72);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-  color: #fff;
+  bottom: calc(var(--dock-gap) + 68px);
+  z-index: 2;
+  translate: -50% 0;
   pointer-events: auto;
+  transition: bottom 0.35s var(--ease-out);
 }
-.dock-strip.is-tucked .dock {
+.dock-strip.is-mini .dock__ctl {
+  bottom: calc(var(--dock-gap) + 2px);
+}
+.dock__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 18px;
+  border-radius: 99px;
+  background: rgba(20, 28, 24, 0.22);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: background 0.2s ease, box-shadow 0.2s ease, width 0.2s ease;
+}
+.dock__more i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.dock__more:hover,
+.dock__more.is-open {
+  width: 46px;
+  background: rgba(20, 28, 24, 0.6);
+  box-shadow: 0 0 0 2px rgba(127, 191, 106, 0.55), 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.dock__more:hover i,
+.dock__more.is-open i {
+  background: #fff;
+  transform: scale(1.15);
+}
+.dock__menu {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  min-width: 210px;
+  padding: 6px;
+  border-radius: 16px;
+  translate: -50% 0;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 14px 34px rgba(20, 30, 25, 0.22);
+}
+.dock__menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font: 600 13px/1.2 var(--font-sans);
+  color: var(--color-text);
+  text-align: left;
+}
+.dock__menu button:hover {
+  background: var(--sage-50);
+}
+.dock__menu button[aria-checked="true"] {
+  background: #eaf4ed;
+  color: #23633d;
+}
+.dock__menu button span {
+  flex: 1;
+}
+/* mini: only the ••• stays */
+.dock-strip.is-mini .dock {
   pointer-events: none;
+}
+/* side: a vertical bar on the left, pages move over */
+.dock-strip.is-side {
+  top: 0;
+  right: auto;
+  width: 84px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0 16px 12px;
+}
+.dock-strip.is-side .dock {
+  flex-direction: column;
+}
+.dock-strip.is-side .dock__sep {
+  width: 32px;
+  height: auto;
+  padding: 3px 0;
+  justify-content: center;
+}
+.dock-strip.is-side .dock__sep::before {
+  width: 24px;
+  height: 1px;
+}
+.dock-strip.is-side .dock__tip {
+  left: calc(100% + 14px);
+  bottom: auto;
+  top: 50%;
+  translate: 0 -50%;
+}
+.dock-strip.is-side .dock__ctl {
+  left: calc(12px + 36px);
+  bottom: calc(var(--dock-gap) + 6px);
+}
+.dock-strip.is-side .dock__menu {
+  left: 0;
+  translate: 0 0;
+}
+html[data-dock="side"] .shell__page {
+  left: 84px;
+}
+html[data-dock="side"],
+html[data-dock="mini"] {
+  --dock-height: 30px;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Check, Minimize2, PanelBottom, PanelLeft } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
@@ -40,46 +40,99 @@ export const tuckDock = (on: boolean) => {
   window.dispatchEvent(new CustomEvent<boolean>(DOCK_AUTO, { detail: on }));
 };
 
+export type DockMode = "bar" | "mini" | "side";
+const MODE_KEY = "thaiwell.dock.mode";
+const readMode = (): DockMode => {
+  try {
+    const v = localStorage.getItem(MODE_KEY);
+    return v === "mini" || v === "side" ? v : "bar";
+  } catch {
+    return "bar";
+  }
+};
+const MODES: { id: DockMode; label: string; Icon: typeof PanelBottom }[] = [
+  { id: "bar", label: "ขยาย · แถบด้านล่าง", Icon: PanelBottom },
+  { id: "mini", label: "ย่อ · ซ่อนแถบเมนู", Icon: Minimize2 },
+  { id: "side", label: "แถบด้านข้าง", Icon: PanelLeft },
+];
+
 export function Dock({ onAssistant }: { onAssistant: () => void }) {
   const { pathname } = useLocation();
   const [hover, setHover] = useState<string | null>(null);
-  // tucked: a page asked for the room; hidden: what the user currently sees (the arrow toggles it)
+  // the user's chosen layout (remembered) · tucked: a page asked for the room · temp: a choice made while tucked
+  const [mode, setModeState] = useState<DockMode>(readMode);
   const [tucked, setTucked] = useState(tuckRequested);
-  const [hidden, setHidden] = useState(tuckRequested);
+  const [temp, setTemp] = useState<DockMode | null>(null);
+  const [menu, setMenu] = useState(false);
   useEffect(() => {
     const apply = (v: boolean) => {
       setTucked(v);
-      setHidden(v);
+      setTemp(null);
     };
     const on = (e: Event) => apply((e as CustomEvent<boolean>).detail);
     window.addEventListener(DOCK_AUTO, on);
     apply(tuckRequested);
     return () => window.removeEventListener(DOCK_AUTO, on);
   }, []);
+  // a tuck request folds the bottom bar away; a side bar doesn't cover anything so it stays
+  const view: DockMode = temp ?? (tucked && mode === "bar" ? "mini" : mode);
+  const choose = (m: DockMode) => {
+    setMenu(false);
+    if (tucked) setTemp(m);
+    else {
+      setModeState(m);
+      try {
+        localStorage.setItem(MODE_KEY, m);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+  // pages make room for the side bar / reclaim the bottom space when the bar is hidden
+  useEffect(() => {
+    document.documentElement.dataset.dock = view;
+    return () => {
+      delete document.documentElement.dataset.dock;
+    };
+  }, [view]);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: PointerEvent) => !(e.target as HTMLElement).closest(".dock__more, .dock__menu") && setMenu(false);
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [menu]);
+  const side = view === "side";
+  const hidden = view === "mini";
 
   return (
-    <div className={clsx("dock-strip", hidden && "is-tucked")}>
-      {tucked && (
-        <motion.button
-          type="button"
-          className="dock__handle"
-          aria-label={hidden ? "แสดงแถบเมนู" : "ซ่อนแถบเมนู"}
-          title={hidden ? "แสดงแถบเมนู" : "ซ่อนแถบเมนู"}
-          onClick={() => setHidden((v) => !v)}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: hidden ? 0 : -78 }}
-          transition={spring.soft}
-        >
-          {hidden ? <ChevronUp size={18} strokeWidth={2.4} /> : <ChevronDown size={18} strokeWidth={2.4} />}
-        </motion.button>
-      )}
+    <div className={clsx("dock-strip", `is-${view}`)}>
+      <div className="dock__ctl">
+        <button type="button" className={clsx("dock__more", menu && "is-open")} aria-label="รูปแบบแถบเมนู" aria-expanded={menu} title="รูปแบบแถบเมนู" onClick={() => setMenu((v) => !v)}>
+          <i />
+          <i />
+          <i />
+        </button>
+        <AnimatePresence>
+          {menu && (
+            <motion.div className="dock__menu" role="menu" initial={{ opacity: 0, y: 6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.97 }} transition={{ duration: 0.15 }}>
+              {MODES.map(({ id, label, Icon }) => (
+                <button key={id} type="button" role="menuitemradio" aria-checked={view === id} onClick={() => choose(id)}>
+                  <Icon size={16} />
+                  <span>{label}</span>
+                  {view === id && <Check size={14} strokeWidth={3} />}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
       <motion.nav
         className="dock"
         aria-label="เมนูหลัก"
         aria-hidden={hidden || undefined}
-        initial={{ y: 40, opacity: 0 }}
-        animate={hidden ? { y: 130, opacity: 0 } : { y: 0, opacity: 1 }}
-        transition={hidden ? spring.soft : { ...spring.soft, delay: tucked ? 0 : 0.25 }}
+        initial={side ? { x: -40, opacity: 0 } : { y: 40, opacity: 0 }}
+        animate={hidden ? { y: 130, x: 0, opacity: 0 } : { y: 0, x: 0, opacity: 1 }}
+        transition={spring.soft}
       >
         <span className="tw-frost" aria-hidden />
         <LayoutGroup>
@@ -105,7 +158,7 @@ export function Dock({ onAssistant }: { onAssistant: () => void }) {
                     <Icon />
                   </motion.span>
                   <AnimatePresence initial={false}>
-                    {active && (
+                    {active && !side && (
                       <motion.span
                         key="label"
                         className="dock__label"
