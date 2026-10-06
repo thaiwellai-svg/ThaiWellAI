@@ -127,7 +127,28 @@ export async function startMic(onLevel?: (v: number) => void) {
     stream.getTracks().forEach((t) => t.stop());
     ctx.close().catch(() => {});
   };
+  const join = (list: Float32Array[]) => {
+    const n = list.reduce((a, c) => a + c.length, 0);
+    const pcm = new Float32Array(n);
+    let o = 0;
+    for (const c of list) {
+      pcm.set(c, o);
+      o += c.length;
+    }
+    return pcm;
+  };
   return {
+    /** WAV of what has been said so far (last `maxSec` seconds) without stopping — for the live transcript */
+    async peek(maxSec = 30) {
+      const rate = ctx.sampleRate;
+      const keep: Float32Array[] = [];
+      let n = 0;
+      for (let i = chunks.length - 1; i >= 0 && n < maxSec * rate; i--) {
+        keep.unshift(chunks[i]);
+        n += chunks[i].length;
+      }
+      return { wav: await pcmToWav16k(join(keep), rate), seconds: n / rate };
+    },
     /** stop and return a 16 kHz WAV plus the recorded length in seconds */
     async stop() {
       const rate = ctx.sampleRate;
@@ -174,9 +195,11 @@ export async function transcribe(wav: Blob): Promise<string> {
   if (!res.ok) throw new Error(`ASR ${res.status}`);
   const data = await res.json();
   // the model prefixes its output with "language Thai<asr_text>"
-  return String(data.text ?? "")
+  const text = String(data.text ?? "")
     .replace(/^.*<asr_text>/s, "")
     .trim();
+  // noise sometimes comes back as a stray non-Thai token ("嗯。") — treat anything without Thai letters or digits as silence
+  return /[\u0E00-\u0E7F0-9]/.test(text) ? text : "";
 }
 
 export interface ChatMsg {

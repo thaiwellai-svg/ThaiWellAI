@@ -201,15 +201,15 @@ export default function Visits() {
                 <div className="vp__hist-head">
                   <div>
                     <b>
-                      <AudioLines size={15} /> สรุปการรักษาด้วยเสียง
+                      <AudioLines size={15} /> ผู้ช่วยบันทึกการรักษา
                     </b>
-                    <small>{store.patientById(sel.patientId).name} · AI เติมบันทึกให้</small>
+                    <small>{store.patientById(sel.patientId).name} · คุยกับ AI แล้วเติมบันทึกให้</small>
                   </div>
                   <IconButton label="ปิด" variant="soft" size="sm" onClick={() => setVoice(false)}>
                     <X size={15} />
                   </IconButton>
                 </div>
-                <div className="vp__hist-body scroll-y scroll-y--light">
+                <div className="vp__hist-body vp__voice-body">
                   <VoiceNote appt={sel} bare />
                 </div>
               </div>

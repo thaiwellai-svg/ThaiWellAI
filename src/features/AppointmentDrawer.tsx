@@ -14,7 +14,7 @@ import { useLatest } from "./useLatest";
 import { PayPanel, METHOD_LABEL, makePayment } from "./billing";
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, RecSection } from "./ClinicalRecord";
-import { VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
+import { RECORD_DRAFT, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
@@ -84,6 +84,10 @@ export function AppointmentDrawer({
     window.addEventListener(VOICE_FILL, on);
     return () => window.removeEventListener(VOICE_FILL, on);
   }, [id]);
+  // …and tell the chat what the form holds now
+  useEffect(() => {
+    if (id) window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_DRAFT, { detail: { apptId: id, painAfter, advice } }));
+  }, [id, painAfter, advice]);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [useCredit, setUseCredit] = useState(true);
   // ending far earlier than the service time needs a reason

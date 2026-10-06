@@ -121,3 +121,51 @@ export async function announce(text: string, voice = DEFAULT_CALL_VOICE, opts: {
 /** queue call sentence */
 export const callText = (queueNo: string, name: string, room?: string) =>
   `ขอเชิญหมายเลข ${spellQueue(queueNo)} คุณ${name.replace(/^(นางสาว|นาง|นาย)\s*/, "")}${room ? ` ที่${room}` : ""} ค่ะ`;
+
+/** Speak and resolve when playback has finished (for turn-taking in voice mode). Call the first time from a tap. */
+export async function speak(text: string, voice = DEFAULT_CALL_VOICE): Promise<void> {
+  if (!player) unlock();
+  try {
+    const url = await fetchSpeech(text, voice, 9000);
+    const p = player!;
+    p.pause();
+    p.src = url;
+    // never wait forever if "ended" doesn't fire: ~0.16 s per character + 3 s
+    const cap = 3000 + text.length * 160;
+    await new Promise<void>((res, rej) => {
+      const t = window.setTimeout(res, cap);
+      const done = () => (window.clearTimeout(t), res());
+      p.onended = done;
+      p.onpause = done;
+      p.onerror = () => (window.clearTimeout(t), rej(new Error("play")));
+      p.play().catch((e) => (window.clearTimeout(t), rej(e)));
+    });
+  } catch {
+    await new Promise<void>((res) => {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "th-TH";
+        u.rate = 0.95;
+        u.onend = () => res();
+        u.onerror = () => res();
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(u);
+        setTimeout(res, 15000);
+      } catch {
+        res();
+      }
+    });
+  }
+}
+
+/** unlock audio output inside a tap so later replies can play without one (iPad) */
+export const unlockAudio = () => unlock();
+
+export function stopSpeaking() {
+  try {
+    player?.pause();
+    window.speechSynthesis?.cancel();
+  } catch {
+    /* ignore */
+  }
+}

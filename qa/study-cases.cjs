@@ -631,36 +631,47 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     }
   });
 
-  await check('N03', 'therapist', 'จบการนวด ผู้บำบัดพูดสรุป', 'บันทึกด้วยเสียง → AI เติมวินิจฉัย หัตถการ Pain คำแนะนำ', async (p, ex) => {
+  const chatIdle = async (p) => { await p.waitForTimeout(300); await p.waitForFunction(() => !document.querySelector('.rc-typing'), null, { timeout: 60000 }); await p.waitForTimeout(300); };
+  await check('N03', 'therapist', 'จบการนวด ผู้บำบัดคุยกับผู้ช่วย AI', 'แชท: เล่า → AI ถามคะแนนปวด (component) → ร่างคำแนะนำ → สั่งแก้ → สรุป → บันทึก', async (p, ex) => {
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
-    ex((await p.locator('.vp__voice').count()) === 1, 'ขั้นบันทึกการรักษาเปิดแผงสรุปด้วยเสียงด้านขวาให้เอง');
-    await p.locator('.vp__voice').getByRole('button', { name: 'พิมพ์แทน' }).click(); await p.waitForTimeout(300);
-    await p.fill('textarea[aria-label="สรุปการรักษา"]', 'ลมปลายปัตคาด บ่าขวาตึง นวดรักษาเส้นอิทา 45 นาที ประคบสมุนไพรต่อ ปวดเหลือ 3 แนะนำประคบร้อนที่บ้าน');
-    await p.getByRole('button', { name: 'ให้ AI สรุป' }).click();
-    await p.waitForSelector('.vn.is-done', { timeout: 60000 });
-    const a = (await state(p)).appointments.find((x) => x.id === id);
+    ex((await p.locator('.vp__voice .rc').count()) === 1, 'ขั้นบันทึกการรักษาเปิดแผงผู้ช่วยบันทึกการรักษาด้านขวาเอง');
+    ex((await p.locator('.rc-msg.is-ai').count()) === 1, 'AI เปิดบทสนทนาก่อน');
+    await p.fill('textarea[aria-label="สรุปการรักษา"]', 'ลมปลายปัตคาด บ่าขวาตึง นวดรักษาเส้นอิทา 45 นาที แล้วประคบสมุนไพรต่อ');
+    await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p);
+    let a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.diagnoses.length > 0 && a.diagnoses[0].code, 'เติมวินิจฉัยพร้อมรหัส ICD-10');
-    ex(a.procedures.length > 0, 'เติมหัตถการ');
-    ex(a.log.some((l) => l.label.startsWith('บันทึกด้วยเสียง')), 'บันทึกที่มาในไทม์ไลน์');
+    ex(a.procedures.some((x) => x.minutes === 45), 'เติมหัตถการ 45 นาที');
+    ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-pain button').count()) === 11, 'AI ถามคะแนนปวดพร้อมแถบเลือก 0–10');
+    await p.locator('.rc-msg.is-ai').last().locator('.rc-pain button').nth(3).click(); await chatIdle(p);
+    ex((await p.locator('.rc-adv__text').count()) === 1 && (await p.locator('.rc-adv__text').innerText()).length > 20, 'AI ร่างคำแนะนำถึงผู้ป่วย');
+    await p.fill('textarea[aria-label="สรุปการรักษา"]', 'เพิ่มท่ายืดคอวันละ 3 ครั้ง');
+    await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p);
+    ex(/3/.test(await p.locator('.rc-adv__text').innerText()), 'สั่งแก้คำแนะนำด้วยข้อความได้');
+    await p.getByRole('button', { name: 'แก้ไข' }).click();
+    await p.locator('textarea[aria-label="แก้คำแนะนำถึงผู้ป่วย"]').fill('• ประคบร้อนที่บ่าวันละ 15 นาที');
+    await p.getByRole('button', { name: 'ใช้คำแนะนำนี้' }).click(); await chatIdle(p);
+    ex((await p.locator('.rc-sum').count()) === 1, 'แสดงการ์ดสรุปที่แก้ได้');
     await p.getByRole('button', { name: 'บันทึก', exact: true }).click(); await p.waitForTimeout(900);
-    ex((await state(p)).appointments.find((x) => x.id === id).painAfter === 3, 'Pain หลังนวด = 3 จากคำพูด');
+    a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.painAfter === 3, 'Pain หลังนวด = 3 จากการแตะใน component');
+    ex(a.advice === '• ประคบร้อนที่บ่าวันละ 15 นาที', 'คำแนะนำที่แก้เองถูกบันทึก');
   });
 
-  await check('N04', 'therapist', 'ผู้บำบัดอัดเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'เสียง → WAV → ถอดเสียง → AI → เติมบันทึก', async (p, ex) => {
+  await check('N04', 'therapist', 'ผู้บำบัดส่งเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'เสียง → WAV → ถอดเสียง → AI → เติมบันทึก', async (p, ex) => {
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
     await p.locator('input[aria-label="ไฟล์เสียงสรุปการรักษา"]').setInputFiles(path.join(__dirname, 'fixtures/voice-summary-th.m4a'));
-    await p.waitForSelector('.vn.is-done, .vn.is-error', { timeout: 60000 });
-    ex((await p.locator('.vn.is-done').count()) === 1, 'ถอดเสียงและสรุปสำเร็จ');
-    const heard = await p.locator('.vn__heard').innerText().catch(() => '');
-    ex(/ปัต/.test(heard) && /ประคบ/.test(heard), 'ได้ข้อความภาษาไทยจากเสียง');
+    await p.waitForFunction(() => document.querySelectorAll('.rc-msg.is-me').length > 0, null, { timeout: 60000 });
+    await chatIdle(p);
+    const heard = await p.locator('.rc-msg.is-me').first().innerText();
+    ex(/ปัต/.test(heard) && /ประคบ/.test(heard), 'ถอดเสียงภาษาไทยเป็นข้อความในแชท');
     const a = (await state(p)).appointments.find((x) => x.id === id);
     ex(a.diagnoses.some((d) => d.name.includes('ปัตคาด')), 'วินิจฉัยลมปลายปัตคาด');
     ex(a.procedures.some((x) => x.name.includes('ประคบ')), 'หัตถการมีประคบสมุนไพร');
-    ex((await p.locator('.vs__panel button[aria-pressed="true"]', { hasText: /^3$/ }).count()) === 1, 'เลือก Pain หลังนวด = 3 ให้');
+    ex((await p.locator('.vs__panel button[aria-pressed="true"]', { hasText: /^3$/ }).count()) === 1, 'เลือก Pain หลังนวด = 3 ในฟอร์มจากคำพูด "ปวดเหลือสาม"');
   });
 
   // ===== CROSS-CUTTING =====
