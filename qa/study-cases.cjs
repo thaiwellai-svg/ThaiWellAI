@@ -248,8 +248,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex((await early.count()) > 0, 'จบก่อนเวลาต้องระบุเหตุผล');
     await early.locator('button[aria-pressed]').first().click();
     await early.getByRole('button', { name: /จบ|ยืนยัน/ }).last().click(); await p.waitForTimeout(1200);
-    if (!((await state(p)).appointments.find((a) => a.id === id).diagnoses?.length)) { await p.locator('.cr__add').nth(0).locator('.cr__chips button').first().click(); await p.waitForTimeout(300); }
-    await p.locator('.cr__add').nth(1).locator('.cr__chips button').first().click(); await p.waitForTimeout(300);
+    if (!((await state(p)).appointments.find((a) => a.id === id).diagnoses?.length)) { await p.locator('.cr__add', { has: p.locator('input[placeholder^="พิมพ์หรือเลือกการวินิจฉัย"]') }).locator('.cr__chips button').first().click(); await p.waitForTimeout(300); }
+    await p.locator('.cr__add', { has: p.locator('input[placeholder^="พิมพ์หรือเลือกหัตถการ"]') }).locator('.cr__chips button').first().click(); await p.waitForTimeout(300);
     const s1 = await state(p); const ap = s1.appointments.find((a) => a.id === id);
     ex(ap.diagnoses?.length && ap.diagnoses[0].code, 'วินิจฉัยได้รหัส ICD-10 อัตโนมัติ');
     ex(ap.procedures?.length && ap.procedures[0].code, 'หัตถการได้รหัส ICD-9-CM อัตโนมัติ');

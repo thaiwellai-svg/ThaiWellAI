@@ -792,14 +792,10 @@ function Frame(props: { inline?: boolean; open: boolean; onClose: () => void; le
   );
 }
 
-/** "ขั้นที่ n/6" header with a short hint or a checklist of what this step needs */
-function StepHead({ n, title, hint, todo, action }: { n: number; title: string; hint?: string; todo?: { done: boolean; label: string }[]; action?: React.ReactNode }) {
+/** step header with a short hint, a checklist, or an action */
+function StepHead({ title, hint, todo, action }: { n?: number; title: string; hint?: string; todo?: { done: boolean; label: string }[]; action?: React.ReactNode }) {
   return (
     <div className="vs__stephead">
-      <span className="vs__stepno">
-        ขั้นที่ {n}
-        <small>/6</small>
-      </span>
       {action ? (
         <div className="vs__stephead-row">
           <h3>{title}</h3>
