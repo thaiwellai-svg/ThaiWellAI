@@ -779,45 +779,106 @@
 .dock-strip.is-mini .dock {
   pointer-events: none;
 }
-/* side: a vertical bar on the left, pages move over */
+/* side: a full-height sidebar with icons + names, pages move over */
 .dock-strip.is-side {
   top: 0;
   right: auto;
-  width: 84px;
+  width: 216px;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 0 16px 12px;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 12px 0 12px 12px;
 }
 .dock-strip.is-side .dock {
+  flex: 1;
   flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 12px 10px 48px;
+  border-radius: 28px;
+}
+.dock-strip.is-side .dock__item {
+  width: 100%;
+}
+.dock-strip.is-side .dock__link,
+.dock-strip.is-side .dock__item--active .dock__link {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 12px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 16px;
+}
+.dock-strip.is-side .dock__pill {
+  border-radius: 16px;
+}
+.dock__name {
+  position: relative;
+  font: 600 14px/1.5 var(--font-sans);
+  white-space: nowrap;
+  color: inherit;
+}
+.dock-strip.is-side .dock__item--active .dock__name {
+  color: var(--color-text);
 }
 .dock-strip.is-side .dock__sep {
-  width: 32px;
+  width: 100%;
   height: auto;
-  padding: 3px 0;
+  margin-top: auto;
+  padding: 8px 6px;
   justify-content: center;
 }
 .dock-strip.is-side .dock__sep::before {
-  width: 24px;
+  width: 100%;
   height: 1px;
 }
-.dock-strip.is-side .dock__tip {
-  left: calc(100% + 14px);
-  bottom: auto;
-  top: 50%;
-  translate: 0 -50%;
+.dock-strip.is-side .dock__item:has(.dock__ai) {
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px;
+}
+.dock__name--ai {
+  font: 700 14px/1.5 var(--font-sans);
+  color: var(--color-text);
+  text-align: left;
 }
 .dock-strip.is-side .dock__ctl {
-  left: calc(12px + 36px);
-  bottom: calc(var(--dock-gap) + 6px);
+  left: calc(12px + 102px);
+  bottom: calc(12px + 14px);
 }
 .dock-strip.is-side .dock__menu {
   left: 0;
-  translate: 0 0;
+  translate: -50% 0;
 }
 html[data-dock="side"] .shell__page {
-  left: 84px;
+  left: 216px;
+}
+/* narrow screens (iPad portrait): icons only */
+@media (max-width: 1000px) {
+  .dock-strip.is-side {
+    width: 84px;
+  }
+  .dock-strip.is-side .dock__name {
+    display: none;
+  }
+  .dock-strip.is-side .dock__link,
+  .dock-strip.is-side .dock__item--active .dock__link {
+    justify-content: center;
+    padding: 0;
+  }
+  .dock-strip.is-side .dock__ctl {
+    left: calc(12px + 30px);
+  }
+  .dock-strip.is-side .dock__menu {
+    translate: 0 0;
+  }
+  html[data-dock="side"] .shell__page {
+    left: 84px;
+  }
+  .dock-strip.is-side .dock__item:has(.dock__ai) {
+    justify-content: center;
+    padding: 4px 0;
+  }
 }
 html[data-dock="side"],
 html[data-dock="mini"] {

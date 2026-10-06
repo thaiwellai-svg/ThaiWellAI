@@ -157,6 +157,7 @@ export function Dock({ onAssistant }: { onAssistant: () => void }) {
                   >
                     <Icon />
                   </motion.span>
+                  {side && <span className="dock__name">{label}</span>}
                   <AnimatePresence initial={false}>
                     {active && !side && (
                       <motion.span
@@ -172,7 +173,7 @@ export function Dock({ onAssistant }: { onAssistant: () => void }) {
                     )}
                   </AnimatePresence>
                 </NavLink>
-                <AnimatePresence>{hover === to && <Tip label={label} />}</AnimatePresence>
+                <AnimatePresence>{hover === to && !side && <Tip label={label} />}</AnimatePresence>
               </motion.div>
             );
           })}
@@ -206,7 +207,12 @@ export function Dock({ onAssistant }: { onAssistant: () => void }) {
                 </svg>
               </span>
             </motion.button>
-            <AnimatePresence>{hover === "ai" && <Tip label="ผู้ช่วย AI" />}</AnimatePresence>
+            {side && (
+              <button type="button" className="dock__name dock__name--ai" onClick={onAssistant}>
+                ผู้ช่วย AI
+              </button>
+            )}
+            <AnimatePresence>{hover === "ai" && !side && <Tip label="ผู้ช่วย AI" />}</AnimatePresence>
           </motion.div>
         </LayoutGroup>
       </motion.nav>
