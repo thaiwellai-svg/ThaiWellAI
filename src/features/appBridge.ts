@@ -17,19 +17,54 @@ export const CLINIC_ALIVE_KEY = "thaiwell.bridge.clinicAlive";
 const SEEN_KEY = "thaiwell.bridge.seenByClinic";
 const SENT_KEY = "thaiwell.bridge.sentByClinic";
 
+/** นัดในหลังบ้าน: id นัด (หลังอนุมัติ) หรือ id คำขอจอง (ยังรออนุมัติ) */
+export type AppTarget = { apptId?: string; ref?: string };
 export type AppEvent =
   | { id: string; at: string; type: "booking"; request: BookingRequest; patient: Patient }
-  | { id: string; at: string; type: "note"; title: string; body: string; patientId?: string };
+  | { id: string; at: string; type: "note"; title: string; body: string; patientId?: string }
+  /** เช็กอินในแอป → บันทึกว่ามาถึง + ออกเลขคิว */
+  | ({ id: string; at: string; type: "checkin" } & AppTarget)
+  /** ประเมินก่อนนวดจากแอป → ความปวดก่อนนวดของนัดนั้น */
+  | ({ id: string; at: string; type: "preVisit"; pain: number; adverse?: string; risk?: string; red?: boolean } & AppTarget)
+  /** ประเมินหลังนวดในแอป */
+  | ({ id: string; at: string; type: "selfPost"; pain: number; adverse?: string[] } & AppTarget)
+  /** ผู้ป่วยยกเลิก/เลื่อนจากแอป */
+  | ({ id: string; at: string; type: "cancel"; reason: string } & AppTarget)
+  /** จ่ายบิลในแอป */
+  | ({ id: string; at: string; type: "pay" } & AppTarget);
 
+/** บันทึกการรักษาที่ส่งให้แอป */
+export interface RecordOut {
+  findings?: string;
+  diagnoses?: string[];
+  procedures?: string[];
+  advice?: string;
+  therapist?: string;
+}
 export type ClinicEvent =
-  | { id: string; at: string; type: "approved"; ref: string; date: string; start: string; therapist: string; service: string }
+  | { id: string; at: string; type: "approved"; ref: string; apptId?: string; date: string; start: string; therapist: string; service: string }
   | { id: string; at: string; type: "rejected"; ref: string; reason: string }
-  | { id: string; at: string; type: "completed"; ref: string; painBefore: number; painAfter?: number }
+  | ({ id: string; at: string; type: "completed"; ref: string; apptId?: string; painBefore: number; painAfter?: number } & RecordOut)
   | { id: string; at: string; type: "cancelled" | "absent"; ref: string }
+  /** คลินิกย้ายวัน/เวลา/ผู้บำบัดของนัดที่อนุมัติแล้ว */
+  | { id: string; at: string; type: "moved"; ref: string; apptId: string; date: string; start: string; therapist: string }
   /** นวดครั้งต่อ ๆ ไปตามแผน (นัดที่คลินิกลงเอง ไม่ได้มาจากคำขอในแอป) */
-  | { id: string; at: string; type: "visit"; patientId: string; apptId: string; date: string; painBefore: number; painAfter: number }
-  /** แผนการรักษา: นัดถัดไปที่คลินิกลงไว้ + คอร์ส (ส่งใหม่เมื่อเปลี่ยน) */
-  | { id: string; at: string; type: "plan"; patientId: string; next: { date: string; start: string; therapist: string } | null; upcoming: number; course?: { name: string; total: number; used: number } };
+  | ({ id: string; at: string; type: "visit"; patientId: string; apptId: string; date: string; painBefore: number; painAfter: number } & RecordOut)
+  /** แผนการรักษา: นัดถัดไปที่คลินิกลงไว้ + คอร์ส + แผนที่แพทย์อนุมัติ (ส่งใหม่เมื่อเปลี่ยน) */
+  | {
+      id: string;
+      at: string;
+      type: "plan";
+      patientId: string;
+      next: { apptId?: string; date: string; start: string; therapist: string } | null;
+      upcoming: number;
+      course?: { name: string; total: number; used: number };
+      approvedPlan?: { summary: string; sessions: number; frequency: string; homeCare: string[] };
+    }
+  /** วันนัด: เช็กอินแล้ว (เลขคิว) · เรียกคิว · กำลังรับบริการ */
+  | { id: string; at: string; type: "status"; patientId: string; apptId: string; ref?: string; state: "checked_in" | "called" | "in_service"; queue?: string }
+  /** บิล/ใบเสร็จของคลินิก */
+  | { id: string; at: string; type: "bill"; patientId: string; apptId: string; ref?: string; amount: number; items: string[]; status: "pending" | "paid"; receiptNo?: string; paidAt?: string };
 
 interface Box {
   toClinic: AppEvent[];

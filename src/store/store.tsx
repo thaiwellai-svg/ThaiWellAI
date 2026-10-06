@@ -206,18 +206,68 @@ function reducer(state: State, action: Action): State {
     case "addPatient":
       return { ...state, patients: [action.patient, ...state.patients] };
     case "bridgeIn": {
-      // จากแอปผู้ป่วย: คำขอจอง (+ ลงทะเบียนผู้ป่วยถ้ายังไม่มี) · แจ้งเตือนทั่วไป
+      // จากแอปผู้ป่วย: คำขอจอง (+ ลงทะเบียนผู้ป่วยถ้ายังไม่มี) · เช็กอิน · ประเมินก่อน/หลังนวด · ยกเลิก · จ่ายบิล · แจ้งเตือนทั่วไป
       const e = action.event;
+      const now = new Date().toISOString();
+      const notify = (title: string, body: string, kind: Notification["kind"], ref?: string, link = "/appointments"): Notification => ({ id: nextId("n"), kind, title, body, at: e.at, read: false, link, ref });
       if (e.type === "booking") {
         if (state.requests.some((r) => r.id === e.request.id)) return state;
         const known = state.patients.some((p) => p.id === e.patient.id);
         const patients = known ? state.patients.map((p) => (p.id === e.patient.id ? { ...p, complaint: e.patient.complaint } : p)) : [e.patient, ...state.patients];
         const svc = state.services.find((x) => x.id === e.request.serviceId);
-        const n: Notification = { id: nextId("n"), kind: "request", title: "คำขอจองจากแอป", body: `${e.patient.name} ขอจอง${svc ? svc.name : ""} · ${e.request.date} ${e.request.start} น.`, at: e.at, read: false, link: "/requests", ref: e.request.id };
+        const n = notify("คำขอจองจากแอป", `${e.patient.name} ขอจอง${svc ? svc.name : ""} · ${e.request.date} ${e.request.start} น.`, "request", e.request.id, "/requests");
         return { ...state, patients, requests: [e.request, ...state.requests], notifications: [n, ...state.notifications] };
       }
-      const n: Notification = { id: nextId("n"), kind: "alert", title: e.title, body: e.body, at: e.at, read: false, link: e.patientId ? "/patients" : undefined, ref: e.patientId };
-      return { ...state, notifications: [n, ...state.notifications] };
+      if (e.type === "note") return { ...state, notifications: [notify(e.title, e.body, "alert", e.patientId, e.patientId ? "/patients" : ""), ...state.notifications] };
+      // นัดที่แอปหมายถึง: id นัด หรือคำขอที่อนุมัติแล้ว (bridgeRef)
+      const appt = state.appointments.find((a) => (e.apptId && a.id === e.apptId) || (e.ref && a.bridgeRef === e.ref));
+      const pname = (pid?: string) => state.patients.find((p) => p.id === pid)?.name ?? "ผู้ป่วย";
+      const patchAppt = (patch: Partial<Appointment>, label: string) =>
+        state.appointments.map((a) => (a.id === appt!.id ? { ...a, ...patch, log: [...(a.log ?? []), { at: now, label }] } : a));
+      if (e.type === "cancel") {
+        // ยังเป็นคำขอ (ยังไม่อนุมัติ) → ปิดคำขอ · อนุมัติแล้ว → ยกเลิกนัด
+        const req = !appt && e.ref ? state.requests.find((r) => r.id === e.ref) : undefined;
+        if (req) {
+          const decision: RequestDecision = { id: nextId("d"), request: req, outcome: "rejected", reason: `ผู้ป่วยยกเลิกจากแอป${e.reason ? ` · ${e.reason}` : ""}`, decidedAt: now, decidedBy: "แอป ThaiWell AI" };
+          return { ...state, requests: state.requests.filter((r) => r.id !== req.id), decisions: [decision, ...state.decisions], notifications: [notify("ผู้ป่วยยกเลิกคำขอจอง", `${pname(req.patientId)} · ${req.date} ${req.start} น.`, "info", req.id, "/requests"), ...state.notifications] };
+        }
+        if (!appt || appt.status === "cancelled" || appt.startedAt) return state;
+        return {
+          ...state,
+          appointments: patchAppt({ status: "cancelled", cancel: { at: now, by: "patient", reason: e.reason || "ยกเลิกจากแอป", staff: "แอป ThaiWell AI" } }, "ผู้ป่วยยกเลิกนัดจากแอป"),
+          notifications: [notify("ผู้ป่วยยกเลิกนัดจากแอป", `${pname(appt.patientId)} · ${appt.date} ${appt.start} น.`, "info", appt.id), ...state.notifications],
+        };
+      }
+      if (!appt) return state;
+      if (e.type === "checkin") {
+        if (appt.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) return state;
+        return { ...state, appointments: patchAppt({}, "เช็กอินจากแอป"), notifications: [notify("ผู้ป่วยเช็กอินจากแอป", `${pname(appt.patientId)} · นัด ${appt.start} น.`, "info", appt.id), ...state.notifications] };
+      }
+      if (e.type === "preVisit") {
+        const extra = [e.adverse && e.adverse !== "ไม่มี" ? `หลังนวดครั้งก่อน${e.adverse}` : "", e.risk && e.risk !== "ไม่มี" ? e.risk : ""].filter(Boolean).join(" · ");
+        return {
+          ...state,
+          appointments: patchAppt(appt.startedAt ? {} : { painBefore: e.pain }, `ประเมินก่อนนวดจากแอป · ปวด ${e.pain}/10${extra ? ` · ${extra}` : ""}`),
+          notifications: [notify(e.red ? "ประเมินก่อนนวด: ควรพบแพทย์ก่อน" : "ประเมินก่อนนวดจากแอป", `${pname(appt.patientId)} · ปวด ${e.pain}/10${extra ? ` · ${extra}` : ""}`, e.red ? "alert" : "info", appt.id), ...state.notifications],
+        };
+      }
+      if (e.type === "selfPost") {
+        const extra = e.adverse?.filter((x) => x !== "ไม่มี").join(", ");
+        return {
+          ...state,
+          appointments: patchAppt({}, `ประเมินหลังนวดจากแอป · ปวด ${e.pain}/10${extra ? ` · ${extra}` : ""}`),
+          notifications: [notify(extra ? "อาการผิดปกติหลังนวด (แอป)" : "ประเมินหลังนวดจากแอป", `${pname(appt.patientId)} · ปวด ${e.pain}/10${extra ? ` · ${extra}` : ""}`, extra ? "alert" : "info", appt.id), ...state.notifications],
+        };
+      }
+      if (e.type === "pay") {
+        if (appt.payment?.status !== "pending") return state;
+        return {
+          ...state,
+          appointments: patchAppt({ payment: { ...appt.payment, status: "paid", method: "app", at: now, no: appt.payment.no ?? `RC-APP-${Date.now().toString().slice(-6)}` }, paid: true, status: "done" }, "ชำระเงินผ่านแอปแล้ว"),
+          notifications: [notify("ชำระเงินผ่านแอปแล้ว", `${pname(appt.patientId)} · ${appt.payment.amount} บาท`, "info", appt.id, "/billing"), ...state.notifications],
+        };
+      }
+      return state;
     }
     case "updatePatient":
       return { ...state, patients: state.patients.map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)) };
@@ -331,10 +381,13 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
       return { cat: "นัดหมาย", text: `ลบนัด ${action.ids.length} รายการ`, patientId: appt(action.ids[0])?.patientId };
     case "addPatient":
       return { cat: "ผู้ป่วย", text: `ลงทะเบียนผู้ป่วยใหม่ ${action.patient.hn}`, patientId: action.patient.id };
-    case "bridgeIn":
-      return action.event.type === "booking"
-        ? { cat: "นัดหมาย", text: `รับคำขอจองจากแอป ${action.event.request.date} ${action.event.request.start}`, patientId: action.event.patient.id }
-        : { cat: "ระบบ", text: `แจ้งจากแอป: ${action.event.title}` };
+    case "bridgeIn": {
+      const e = action.event;
+      if (e.type === "booking") return { cat: "นัดหมาย", text: `รับคำขอจองจากแอป ${e.request.date} ${e.request.start}`, patientId: e.patient.id };
+      if (e.type === "note") return { cat: "ระบบ", text: `แจ้งจากแอป: ${e.title}` };
+      const label: Record<string, string> = { checkin: "ผู้ป่วยเช็กอินจากแอป", preVisit: "รับผลประเมินก่อนนวดจากแอป", selfPost: "รับผลประเมินหลังนวดจากแอป", cancel: "ผู้ป่วยยกเลิกจากแอป", pay: "ชำระเงินผ่านแอป" };
+      return { cat: e.type === "pay" ? "การเงิน" : "นัดหมาย", text: label[e.type] ?? "แอป" };
+    }
     case "updatePatient": {
       const k = Object.keys(action.patch);
       const NAMES: Record<string, string> = { photo: "รูปโปรไฟล์", course: "คอร์ส", aiPlan: "แผนการรักษา AI", documents: "เอกสารแนบ", birthMonth: "เดือนเกิด", complaint: "อาการสำคัญ", conditions: "โรคประจำตัว", allergies: "การแพ้", phone: "เบอร์โทร" };
@@ -449,33 +502,60 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (d.outcome === "approved" && d.slot) {
         const t = state.therapists.find((x) => x.id === d.slot!.therapistId);
         const svc = state.services.find((x) => x.id === d.request.serviceId);
-        sendToApp(`approved:${d.request.id}`, { type: "approved", ref: d.request.id, date: d.slot.date, start: d.slot.start, therapist: t?.name ?? "", service: svc?.id ?? d.request.serviceId });
+        const appt = state.appointments.find((a) => a.bridgeRef === d.request.id);
+        sendToApp(`approved:${d.request.id}`, { type: "approved", ref: d.request.id, apptId: appt?.id, date: d.slot.date, start: d.slot.start, therapist: t?.name ?? "", service: svc?.id ?? d.request.serviceId });
       } else if (d.outcome === "rejected") sendToApp(`rejected:${d.request.id}`, { type: "rejected", ref: d.request.id, reason: d.reason ?? "" });
     }
+    const tName = (id: string) => state.therapists.find((t) => t.id === id)?.name ?? "";
+    // เลขคิวแบบเดียวกับหน้านัด (ลำดับในวันนั้น)
+    const queueOf = (a: Appointment) => {
+      const day = state.appointments.filter((x) => x.date === a.date).sort((x, y) => x.start.localeCompare(y.start) || x.id.localeCompare(y.id));
+      return `A${String(day.findIndex((x) => x.id === a.id) + 1).padStart(3, "0")}`;
+    };
     for (const a of state.appointments) {
       if (!a.patientId.startsWith("app-p-")) continue;
-      // บันทึกคะแนนหลังนวดแล้ว (ขั้นบันทึกการรักษา — ก่อนชำระเงิน) หรือปิดนัด → นวดเสร็จ
+      const base = { patientId: a.patientId, apptId: a.id, ref: a.bridgeRef };
+      // วันนัด: เช็กอิน (เลขคิว) · เรียกคิว · เริ่มรับบริการ
+      if (a.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) sendToApp(`checkin:${a.id}`, { type: "status", ...base, state: "checked_in", queue: queueOf(a) });
+      if (a.calledAt) sendToApp(`called:${a.id}`, { type: "status", ...base, state: "called", queue: queueOf(a) });
+      if (a.startedAt) sendToApp(`started:${a.id}`, { type: "status", ...base, state: "in_service" });
+      // บันทึกการรักษา (คะแนนหลังนวดที่ผู้ป่วยเลือก + วินิจฉัย หัตถการ คำแนะนำ) — ตั้งแต่ขั้นบันทึก ไม่ต้องรอชำระเงิน
       const finished = a.painAfter !== undefined || a.status === "done";
+      const rec = {
+        findings: a.findings,
+        diagnoses: a.diagnoses?.map((d) => d.name),
+        procedures: a.procedures?.map((x) => [x.name, x.area, x.minutes ? `${x.minutes} นาที` : ""].filter(Boolean).join(" · ")),
+        advice: a.advice,
+        therapist: tName(a.therapistId),
+      };
       if (a.bridgeRef) {
-        if (finished) sendToApp(`done:${a.bridgeRef}`, { type: "completed", ref: a.bridgeRef, painBefore: a.painBefore, painAfter: a.painAfter });
+        // คลินิกย้ายนัด (วัน/เวลา/ผู้บำบัด) ก่อนรับบริการ → แจ้งแอป (ครั้งแรกตรงกับที่อนุมัติ แอปไม่แจ้งซ้ำ)
+        if (a.status === "waiting" && !a.startedAt) sendToApp(`slot:${a.id}:${a.date} ${a.start} ${a.therapistId}`, { type: "moved", ref: a.bridgeRef, apptId: a.id, date: a.date, start: a.start, therapist: tName(a.therapistId) });
+        if (finished) sendToApp(`done:${a.bridgeRef}`, { type: "completed", ref: a.bridgeRef, apptId: a.id, painBefore: a.painBefore, painAfter: a.painAfter, ...rec });
         else if (a.status === "cancelled" || a.status === "absent") sendToApp(`${a.status}:${a.bridgeRef}`, { type: a.status, ref: a.bridgeRef });
       } else if (finished) {
         // ครั้งต่อ ๆ ไปตามแผนของคลินิก
-        sendToApp(`visit:${a.id}`, { type: "visit", patientId: a.patientId, apptId: a.id, date: a.date, painBefore: a.painBefore, painAfter: a.painAfter ?? a.painBefore });
+        sendToApp(`visit:${a.id}`, { type: "visit", patientId: a.patientId, apptId: a.id, date: a.date, painBefore: a.painBefore, painAfter: a.painAfter ?? a.painBefore, ...rec });
+      }
+      // บิลจริงของคลินิก: ส่งเรียกเก็บในแอป · ชำระแล้ว (ใบเสร็จ)
+      const pay = a.payment;
+      if (pay && pay.status !== "void") {
+        const svc = state.services.find((x) => x.id === a.serviceId);
+        sendToApp(`bill:${a.id}:${pay.status}`, { type: "bill", ...base, amount: pay.amount, items: [svc?.name ?? "ค่าบริการ"], status: pay.status, receiptNo: pay.no, paidAt: pay.status === "paid" ? pay.at : undefined });
       }
     }
-    // แผนการรักษา: นัดถัดไปที่ยังไม่ถึง (รอรับบริการ) ของผู้ป่วยจากแอป · ส่งใหม่เมื่อเปลี่ยน
+    // แผนการรักษา: นัดถัดไปที่ยังไม่ถึง (รอรับบริการ) + คอร์ส + แผนที่แพทย์อนุมัติ · ส่งใหม่เมื่อเปลี่ยน
     const today = todayISO();
-    const appPatients = state.patients.filter((p) => p.id.startsWith("app-p-"));
-    for (const p of appPatients) {
+    for (const p of state.patients.filter((x) => x.id.startsWith("app-p-"))) {
       const up = state.appointments
         .filter((a) => a.patientId === p.id && a.status === "waiting" && a.painAfter === undefined && a.date >= today && !a.bridgeRef)
         .sort((x, y) => (x.date + x.start).localeCompare(y.date + y.start));
       const first = up[0];
-      const next = first ? { date: first.date, start: first.start, therapist: state.therapists.find((t) => t.id === first.therapistId)?.name ?? "" } : null;
+      const next = first ? { apptId: first.id, date: first.date, start: first.start, therapist: tName(first.therapistId) } : null;
       const course = p.course ? { name: p.course.name, total: p.course.total, used: p.course.used } : undefined;
-      if (!next && !course) continue;
-      sendToApp(`plan:${p.id}:${JSON.stringify([next, up.length, course])}`, { type: "plan", patientId: p.id, next, upcoming: up.length, course });
+      const approvedPlan = p.aiPlan?.approved ? { summary: p.aiPlan.summary, sessions: p.aiPlan.sessions, frequency: p.aiPlan.frequency, homeCare: p.aiPlan.homeCare } : undefined;
+      if (!next && !course && !approvedPlan) continue;
+      sendToApp(`plan:${p.id}:${JSON.stringify([next, up.length, course, approvedPlan?.summary])}`, { type: "plan", patientId: p.id, next, upcoming: up.length, course, approvedPlan });
     }
   }, [state.decisions, state.appointments, state.therapists, state.services, state.patients]);
 
