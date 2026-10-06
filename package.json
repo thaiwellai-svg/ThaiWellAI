@@ -9,9 +9,13 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "qa": "node qa/study-cases.cjs",
-    "preview:https": "vite preview --config vite.https.config.ts --host 0.0.0.0 --port 5189 --strictPort"
+    "preview:https": "vite preview --config vite.https.config.ts --host 0.0.0.0 --port 5189 --strictPort",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "cap open ios",
+    "ios:device": "sh scripts/ios-device.sh"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.2",
     "@react-three/fiber": "^9.8.1",
     "@types/qrcode": "^1.5.6",
     "clsx": "^2.1.1",
@@ -25,6 +29,8 @@
     "three-subdivide": "^1.1.5"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",

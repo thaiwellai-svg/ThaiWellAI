@@ -127,6 +127,17 @@ npx vite preview --host 0.0.0.0 --port 5188
 
 หลัง build ใหม่ แท็บที่เปิดอยู่จะรีโหลดเองจาก `version.json`
 
+## แอป iPad (native)
+
+ห่อเว็บแอปเป็นแอป iOS ด้วย Capacitor (`ios/`, bundle id `ai.thaiwell.backoffice`) — ข้อมูลอยู่ในเครื่อง ใช้ไมค์ได้ (สรุปการรักษาด้วยเสียง) โดยไม่ต้องพึ่ง https
+
+```bash
+npm run ios:device   # build → cap sync → xcodebuild (Release) → ติดตั้งและเปิดบน iPad ที่เชื่อมต่อ
+npm run ios:open     # เปิดใน Xcode
+```
+
+ต้องมี Xcode, iPad ที่จับคู่และเปิด Developer Mode, และบัญชี Apple Development (ตั้ง DEVELOPMENT_TEAM ไว้ในโปรเจกต์) · แอปที่เซ็นด้วยบัญชีนักพัฒนาฟรีใช้ได้ 7 วัน ต้องติดตั้งใหม่หลังหมดอายุ
+
 ## Deploy
 
 ทุกครั้งที่ push เข้า `main` ระบบ GitHub Actions (`.github/workflows/deploy.yml`) จะ build แล้ว deploy ขึ้น GitHub Pages ให้อัตโนมัติ
