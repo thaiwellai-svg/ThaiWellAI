@@ -1028,17 +1028,6 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   return (
     <section className="rc" aria-label="ผู้ช่วยบันทึกการรักษา">
-      <div className="rc-top">
-        <span className={clsx("rc-orb", (speaking || thinking || rec) && "is-on")}>
-          <Sparkles size={14} />
-        </span>
-        <span className="rc-top__t">{speaking ? "AI กำลังพูด…" : rec ? "กำลังฟัง…" : thinking ? "AI กำลังคิด…" : "พูด พิมพ์ หรือแตะตัวเลือก"}</span>
-        {voiceMode && (
-          <span className="rc-mode is-on">
-            <i /> คุยด้วยเสียง
-          </span>
-        )}
-      </div>
 
       <div className="rc-list scroll-y scroll-y--light" ref={list}>
         {msgs.map((m) => (
