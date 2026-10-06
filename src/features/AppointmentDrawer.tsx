@@ -13,7 +13,7 @@ import { patientPhoto, therapistPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
 import { PayPanel, METHOD_LABEL, makePayment } from "./billing";
 import { ReceiptDialog } from "./Receipt";
-import { ClinicalRecord, RecSection } from "./ClinicalRecord";
+import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
@@ -429,12 +429,14 @@ export function AppointmentDrawer({
               {stage === "assess" && (
                 <>
                   <StepHead n={4} title="บันทึกการรักษา" todo={[
-                    { done: painAfter !== undefined, label: "Pain Score หลังนวด" },
                     { done: !!appt.diagnoses?.length, label: "วินิจฉัย" },
                     { done: !!appt.procedures?.length, label: "หัตถการ" },
+                    { done: painAfter !== undefined, label: "Pain หลังนวด" },
                   ]} />
                   <div className="rs-stack">
-                    <RecSection n={1} title="ความปวดหลังนวด" hint={`ก่อนนวด ${appt.painBefore}/10 · ให้ผู้ป่วยเลือก`} done={painAfter !== undefined}>
+                    <FindingsField appt={appt} n={1} />
+                    <ClinicalRecord appt={appt} embedded />
+                    <RecSection n={4} title="ความปวดหลังนวด" hint={`ก่อนนวด ${appt.painBefore}/10 · ให้ผู้ป่วยเลือก`} done={painAfter !== undefined}>
                       <PainScale value={painAfter} onChange={setPainAfter} />
                       {painAfter !== undefined && (
                         <p className={clsx("vs__delta", painAfter < appt.painBefore && "is-good")}>
@@ -446,8 +448,7 @@ export function AppointmentDrawer({
                         </p>
                       )}
                     </RecSection>
-                    <ClinicalRecord appt={appt} embedded />
-                    <RecSection n={4} title="คำแนะนำถึงผู้ป่วย" hint="ไม่บังคับ · ส่งไปแอป ThaiWell AI" done={!!advice.trim()}>
+                    <RecSection n={5} title="คำแนะนำถึงผู้ป่วย" hint="ไม่บังคับ · ส่งไปแอป ThaiWell AI" done={!!advice.trim()}>
                       <Textarea value={advice} onChange={(e) => setAdvice(e.target.value)} placeholder="เช่น ประคบร้อนที่บ่าวันละ 15 นาที · ท่าฤาษีดัดตนแก้ลมปลายปัตคาด" />
                     </RecSection>
                   </div>

@@ -8,7 +8,6 @@ import { elementProfile } from "../data/elements";
 import type { Appointment, Diagnosis, Procedure } from "../data/types";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON } from "./ai";
 import { dxCode, procCode } from "../data/codes";
-import { Body3D } from "./Body3D";
 import "./clinical.css";
 
 /** common Thai-traditional-medicine findings for quick picking (code is filled by the clinic's coder) */
@@ -32,6 +31,39 @@ export const PROC_PICK = [
   "สอนท่าฤาษีดัดตน",
   "พอกสมุนไพร",
 ];
+
+/** อาการที่ตรวจพบ — free text, shared with the treatment assistant (appointment.findings) */
+export function FindingsField({ appt, n = 1 }: { appt: Appointment; n?: number }) {
+  const store = useStore();
+  const [v, setV] = useState(appt.findings ?? "");
+  // the assistant may fill it while the form is open
+  useEffect(() => setV(appt.findings ?? ""), [appt.findings]);
+  const save = () => {
+    const t = v.trim();
+    if (t !== (appt.findings ?? "")) store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: t || undefined }, log: "บันทึกอาการที่ตรวจพบ" });
+  };
+  const QUICK = ["ตึง", "กดเจ็บ", "ปวดร้าว", "ชา", "ข้อติด", "บวม"];
+  return (
+    <RecSection n={n} title="อาการที่ตรวจพบ" hint="ตำแหน่งและลักษณะอาการวันนี้" done={!!(appt.findings ?? "").trim()}>
+      <textarea className="cr__findings" rows={2} value={v} onChange={(e) => setV(e.target.value)} onBlur={save} placeholder="เช่น บ่าขวาตึง กดเจ็บ ยกแขนลำบาก" aria-label="อาการที่ตรวจพบ" />
+      <div className="cr__chips">
+        {QUICK.map((q) => (
+          <button
+            key={q}
+            type="button"
+            onClick={() => {
+              const t = v.trim() ? `${v.trim()} ${q}` : q;
+              setV(t);
+              store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: t }, log: "บันทึกอาการที่ตรวจพบ" });
+            }}
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+    </RecSection>
+  );
+}
 
 /** numbered block of the treatment record — number turns into a check when done */
 export function RecSection({ n, title, hint, done, action, children }: { n: number; title: string; hint?: ReactNode; done?: boolean; action?: ReactNode; children: ReactNode }) {
@@ -222,7 +254,6 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
                   </button>
                 )}
               </div>
-              <Body3D compact sex={store.patientById(appt.patientId).gender} pain={appt.painAfter ?? appt.painBefore} element={elementProfile(store.patientById(appt.patientId)).birth} selected={areas} onToggle={locked ? undefined : (a) => toggleArea(a)} />
               <div className="cr__field">
                 <span>ตำแหน่ง</span>
                 <div className="cr__toggles">
