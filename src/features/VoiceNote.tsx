@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, FileAudio, Mic, Pencil, RefreshCw, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
+import { AudioLines, Check, FileAudio, Pencil, RefreshCw, RotateCcw, Send, Sparkles, Volume2, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { useToast } from "../design-system";
@@ -15,7 +15,7 @@ import "./voice-note.css";
 
 type Extract = { findings?: string; diagnoses: string[]; procedures: { name: string; area?: string; minutes?: number | null }[]; painAfter: number | null; advice: string };
 type Slot = "finding" | "dx" | "proc" | "pain" | "advice" | "summary";
-type Msg = { id: number; role: "ai" | "me"; text: string; kind?: Slot | "intro" };
+type Msg = { id: number; role: "ai" | "me"; text: string; kind?: Slot | "intro"; /** question number shown as a small tag */ step?: number };
 
 /** the treatment-record form listens for this to fill Pain-after and advice (they are local drafts there) */
 export const VOICE_FILL = "thaiwell:voice-fill";
@@ -54,10 +54,10 @@ const SET: { slot: Exclude<Slot, "summary">; label: string }[] = [
   { slot: "advice", label: "คำแนะนำผู้ป่วย" },
 ];
 const ASK = {
-  finding: "วันนี้ตรวจพบอะไรบ้างคะ เช่น ตำแหน่งที่ปวด ตึง กดเจ็บ หรือลักษณะอาการ",
-  dx: "วินิจฉัยว่าอะไรคะ เลือกด้านล่างหรือพูดบอกได้เลย",
-  proc: "ทำหัตถการอะไรบ้างคะ นวดเส้นไหน กี่นาที",
-  pain: "หลังนวดผู้ป่วยให้คะแนนปวดเท่าไรคะ",
+  finding: "เริ่มจากอาการก่อนนะคะ วันนี้ตรวจเจออะไรบ้างคะ ปวดหรือตึงตรงไหน",
+  dx: "แล้ววินิจฉัยว่าเป็นอะไรคะ",
+  proc: "วันนี้ทำหัตถการอะไรไปบ้างคะ นวดเส้นไหน นานเท่าไหร่",
+  pain: "หลังนวดคนไข้ให้คะแนนปวดเท่าไหร่คะ",
 };
 const no = (slot: Slot) => SET.findIndex((x) => x.slot === slot) + 1;
 
@@ -111,7 +111,8 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   turn.current = { last, pending };
 
   const say = (role: Msg["role"], text: string, kind?: Msg["kind"]) => {
-    const m: Msg = { id: ++seq.current, role, text, kind };
+    const step = role === "ai" && kind && kind !== "intro" && kind !== "summary" ? no(kind) : undefined;
+    const m: Msg = { id: ++seq.current, role, text, kind, step };
     setMsgs((x) => [...x, m]);
     return m;
   };
@@ -197,6 +198,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
 
   /** ask for whatever is still missing (with its component) */
   const askNext = (prefix = "") => ask(missing(), prefix);
+  const question = (slot: Slot) => (slot === "pain" ? `${ASK.pain} ก่อนนวดอยู่ที่ ${appt.painBefore}` : slot in ASK ? ASK[slot as keyof typeof ASK] : "");
   /** ask one question of the set (also used when a step in the question strip is tapped) */
   const ask = async (slot: Slot, prefix = "") => {
     if (slot === "advice") {
@@ -208,19 +210,19 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         setThinking(false);
         saveAdvice(a);
       }
-      const t = `${prefix}ข้อ ${no("advice")}/${SET.length} · ${had ? "คำแนะนำถึงผู้ป่วยตอนนี้ค่ะ" : "ร่างคำแนะนำถึงผู้ป่วยให้แล้วค่ะ"} แก้ได้เลย หรือบอกให้ปรับตรงไหน`;
+      const t = `${prefix}${had ? "นี่คือคำแนะนำถึงคนไข้ตอนนี้ค่ะ" : "ร่างคำแนะนำถึงคนไข้ไว้ให้แล้วนะคะ"} อยากปรับตรงไหนบอกได้เลยค่ะ`;
       say("ai", t, "advice");
       void voice(t);
       return;
     }
     if (slot === "summary") {
-      const t = `${prefix}บันทึกครบแล้วค่ะ ตรวจสรุปด้านล่าง แก้ได้ทุกช่อง แล้วกด “บันทึก” ในฟอร์มได้เลย`;
+      const t = `${prefix}ครบทุกเรื่องแล้วค่ะ ลองดูสรุปด้านล่าง แก้ได้ทุกช่อง เรียบร้อยแล้วกดบันทึกในฟอร์มได้เลยนะคะ`;
       say("ai", t, "summary");
       void voice(t);
       return;
     }
     setPick([]);
-    const q = `ข้อ ${no(slot)}/${SET.length} · ${slot === "pain" ? `${ASK.pain} ก่อนนวดอยู่ที่ ${appt.painBefore}` : ASK[slot]}`;
+    const q = question(slot);
     say("ai", prefix + q, slot);
     void voice(prefix + q);
   };
@@ -247,52 +249,70 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     ].filter(Boolean);
   };
 
-  /** one user turn (spoken or typed) */
-  const onUser = async (text: string) => {
+  /** one user turn (spoken or typed): fix the transcript, take the answer to the question asked, reply naturally */
+  const onUser = async (text: string, spoken = false) => {
     const t = text.trim();
     if (!t) return;
-    say("me", t);
+    const me = say("me", t);
     setThinking(true);
-    const { last: prev, pending: asked } = turn.current;
+    const { pending: asked } = turn.current;
     if (asked === "advice" || asked === "summary") {
       // a request to change the advice
       const a = await draftAdvice(t);
       saveAdvice(a);
       setThinking(false);
-      const r = "ปรับคำแนะนำให้แล้วค่ะ";
+      const r = "ปรับให้แล้วค่ะ ลองดูอีกทีนะคะ";
       say("ai", r, "advice");
       void voice(r);
       return;
     }
-    let x: Extract;
+    const slot: Slot = asked && asked !== "intro" ? asked : missing();
+    const nextSlot = (SET[SET.findIndex((x) => x.slot === slot) + 1]?.slot ?? "summary") as Slot;
+    const nextQ = nextSlot === "advice" || nextSlot === "summary" ? null : question(nextSlot);
+    type Turn = Extract & { heard?: string; got?: boolean; reply?: string };
+    let x: Turn;
     let local = false;
     try {
-      x = await chatJSON<Extract>(
-        `คุณช่วยผู้บำบัดแพทย์แผนไทยแปลงคำพูดเป็นบันทึกเวชระเบียน ตอบ JSON เท่านั้น:
-{"findings":"อาการ/สิ่งที่ตรวจพบวันนี้ (ตำแหน่ง ลักษณะ) หรือ \\"\\"","diagnoses":["การวินิจฉัยแผนไทย"],"procedures":[{"name":"หัตถการ","area":"ตำแหน่ง/เส้นประธาน","minutes":นาทีหรือnull}],"painAfter":ตัวเลข0-10หรือnull,"advice":"คำแนะนำถึงผู้ป่วย หรือ \\"\\""}
-ใช้ชื่อจากรายการแนะนำถ้าตรงความหมาย: วินิจฉัย ${JSON.stringify(DX_PICK)} · หัตถการ ${JSON.stringify(PROC_PICK)}
-คำพูดมาจากระบบถอดเสียง อาจสะกดผิด (เช่น "เอตา" = "อิทา") · ตัวเลขที่พูดเป็นคำให้แปลงเป็นเลข · ถ้าเป็นคำตอบสั้น ๆ ให้ตีความตามคำถามล่าสุด (ถ้าคำถามล่าสุดถามสิ่งที่ตรวจพบ ให้ใส่ใน findings)
-อย่าเดาสิ่งที่ไม่ได้พูด ห้ามอนุมานวินิจฉัยหรือหัตถการจากอาการ ต้องพูดชื่อออกมาจึงใส่ ไม่ได้พูดถึงให้เป็น [] หรือ null`,
-        JSON.stringify({ คำถามล่าสุด: prev?.role === "ai" ? prev.text : null, คำพูด: t, บริการวันนี้: s.name, painก่อนนวด: appt.painBefore }),
+      x = await chatJSON<Turn>(
+        `คุณคือ "ผู้ช่วยบันทึกการรักษา" ในคลินิกแพทย์แผนไทย ผู้หญิง พูดภาษาไทยเป็นธรรมชาติ อบอุ่น กระชับ เหมือนเพื่อนร่วมงานคุยกัน ลงท้าย ค่ะ/นะคะ
+งานของคุณในแต่ละตา:
+1) heard: แก้ข้อความที่ได้จากระบบถอดเสียงให้ถูกต้องตามศัพท์แพทย์แผนไทย (เช่น "เอตา"→"อิทา", "ปัตตคาด"→"ปัตคาด", ตัวเลขที่พูดเป็นคำให้เป็นเลข) โดยไม่เปลี่ยนความหมาย ถ้าเป็นข้อความที่พิมพ์มาให้คงเดิม
+2) ดึงข้อมูล "เฉพาะเรื่องที่ถาม" (เรื่องที่ถาม: ${SET.find((x) => x.slot === slot)?.label}) ห้ามอนุมานเรื่องอื่น ห้ามเดาสิ่งที่ไม่ได้พูด
+3) reply: ถ้าได้คำตอบ (got=true) ทวนสั้น ๆ แบบธรรมชาติ 1 ประโยค (ไม่ต้องทวนทุกคำ) แล้วถาม "คำถามถัดไป" ด้วยสำนวนพูดของคุณเอง ถ้าคำถามถัดไปเป็น null ให้ตอบรับสั้น ๆ อย่างเดียว · ถ้ายังไม่ได้คำตอบ (got=false) ขอให้ตอบเรื่องที่ถามอีกครั้งอย่างสุภาพ · ไม่เกิน 2 ประโยคสั้น ไม่ใช้ bullet ไม่ใช้อีโมจิ ไม่ใส่รหัสโรค
+ตอบ JSON เท่านั้น: {"heard":"...","got":true,"findings":"","diagnoses":[],"procedures":[{"name":"","area":"","minutes":null}],"painAfter":null,"reply":"..."}
+ชื่อที่ใช้ได้ถ้าตรงความหมาย: วินิจฉัย ${JSON.stringify(DX_PICK)} · หัตถการ ${JSON.stringify(PROC_PICK)}`,
+        JSON.stringify({ เรื่องที่ถาม: question(slot), ข้อความ: t, มาจากเสียงพูด: spoken, คำถามถัดไป: nextQ, บริการวันนี้: s.name, ปวดก่อนนวด: appt.painBefore }),
       );
     } catch {
       x = parseLocal(t, s.name);
       local = true;
     }
-    // one question at a time: keep only the answer to the question that was asked, then move to the next one
-    const slot: Slot = asked && asked !== "intro" ? asked : missing();
+    const heard = spoken && x.heard?.trim() ? x.heard.trim() : t;
+    if (heard !== t) setMsgs((ms) => ms.map((m) => (m.id === me.id ? { ...m, text: heard } : m)));
+    // one question at a time: keep only the answer to the question that was asked
     const only: Extract = { diagnoses: [], procedures: [], painAfter: null, advice: "" };
-    if (slot === "finding") only.findings = x.findings?.trim() || t;
+    if (slot === "finding") only.findings = x.findings?.trim() || heard;
     if (slot === "dx") only.diagnoses = x.diagnoses ?? [];
-    if (slot === "proc") only.procedures = x.procedures ?? [];
+    if (slot === "proc") only.procedures = (x.procedures ?? []).filter((q) => q?.name);
     if (slot === "pain") only.painAfter = x.painAfter;
     const got = apply(only);
     setThinking(false);
+    const reply = !local ? x.reply?.trim() : "";
     if (!got.length) {
-      await ask(slot, "ขอโทษค่ะ ยังไม่ได้คำตอบข้อนี้\n");
+      setPick([]);
+      const r = reply && x.got === false ? reply : `ขอโทษค่ะ ยังไม่ได้ยินเรื่องนี้ชัด ${question(slot)}`;
+      say("ai", r, slot);
+      void voice(r);
       return;
     }
-    await askNext(`รับทราบค่ะ ${got.join(" · ")}${local ? " (ออฟไลน์)" : ""}\n`);
+    if (!nextQ || missing() !== nextSlot) {
+      await askNext(reply ? `${reply} ` : "รับทราบค่ะ ");
+      return;
+    }
+    setPick([]);
+    const r = reply || `รับทราบค่ะ ${got.join(" · ")} ${nextQ}`;
+    say("ai", r, nextSlot);
+    void voice(r);
   };
 
   // ── microphone with live transcript ──
@@ -380,7 +400,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       const heard = await transcribe(wav);
       setSending(false);
       setLive("");
-      if (heard) await onUser(heard);
+      if (heard) await onUser(heard, true);
       else if (vm.current) void listen();
     } catch {
       setSending(false);
@@ -396,7 +416,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     setLevel(0);
   };
 
-  const intro = () => `เริ่มบันทึกการรักษาของคุณ${p.name.replace(/^(นางสาว|นาง|นาย)\s*/, "")}ค่ะ มี ${SET.length} คำถาม ตอบทีละข้อ ตอบแล้วจะถามข้อต่อไปให้เลย แตะไมค์เพื่อคุยด้วยเสียงได้`;
+  const intro = () => `สวัสดีค่ะ มาบันทึกการรักษาของคุณ${p.name.replace(/^(นางสาว|นาง|นาย)\s*/, "")}กันนะคะ วันนี้มี ${SET.length} เรื่อง เดี๋ยวถามไปทีละข้อค่ะ จะพิมพ์หรือแตะปุ่มคลื่นเสียงเพื่อคุยกันก็ได้นะคะ`;
   /** intro with the question set, then the first unanswered question */
   const begin = () => {
     seq.current = 0;
@@ -532,7 +552,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
               const x: Extract = m.kind === "dx" ? { diagnoses: pick, procedures: [], painAfter: null, advice: "" } : { diagnoses: [], procedures: pick.map((name) => ({ name })), painAfter: null, advice: "" };
               say("me", pick.join(", "));
               apply(x);
-              void askNext();
+              void askNext("ได้เลยค่ะ ");
             }}
           >
             ยืนยัน
@@ -641,6 +661,11 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
               </span>
             )}
             <div className="rc-bub">
+              {m.step && (
+                <span className="rc-tag">
+                  ข้อ {m.step}/{SET.length}
+                </span>
+              )}
               <p>{m.text}</p>
               {m.role === "ai" && !voiceMode && (
                 <button
@@ -693,9 +718,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       <AnimatePresence initial={false} mode="wait">
         {voiceMode ? (
           <motion.div key="live" className="rc-bar is-rec" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button type="button" className="rc-x" onClick={toggleVoice} aria-label="จบการคุยด้วยเสียง" title="จบการคุยด้วยเสียง">
-              <X size={17} />
-            </button>
+
             <span
               className="rc-live"
               role="button"
@@ -712,6 +735,9 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
               <VoiceWave level={level} speak={speaking} calm={!rec && !speaking} height={44} />
               <small>{rec ? "กำลังฟัง · หยุดพูดแล้วส่งให้เอง" : sending ? "กำลังส่ง…" : speaking ? "AI กำลังตอบ · แตะเพื่อพูดแทรก" : thinking ? "AI กำลังคิด…" : "กำลังเปิดไมค์…"}</small>
             </span>
+            <button type="button" className="rc-x" onClick={toggleVoice} aria-label="จบการคุยด้วยเสียง" title="จบการคุยด้วยเสียง">
+              <X size={17} />
+            </button>
 
           </motion.div>
         ) : (
@@ -745,7 +771,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
                 title="คุยกับ AI ด้วยเสียง"
                 disabled={!canRecord || thinking}
               >
-                <Mic size={18} />
+                <AudioLines size={19} strokeWidth={2.3} />
               </button>
             )}
           </motion.div>
@@ -772,7 +798,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             const { wav } = await fileToWav(f);
             const heard = await transcribe(wav);
             setThinking(false);
-            if (heard) await onUser(heard);
+            if (heard) await onUser(heard, true);
           } catch {
             setThinking(false);
             say("ai", "เปิดไฟล์เสียงนี้ไม่ได้ค่ะ ลองไฟล์ .m4a .mp3 หรือ .wav");

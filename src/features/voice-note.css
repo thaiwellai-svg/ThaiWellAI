@@ -732,5 +732,19 @@
   animation: rc-blink 1s steps(2) infinite;
 }
 .rc-bar.is-rec .rc-live {
-  margin-right: 44px; /* balance the ✕ so the wave sits centred */
+  margin-left: 44px; /* balance the ✕ on the right so the wave sits centred */
+}
+.rc-tag {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #eef6f2;
+  font: 700 10.5px/1.4 var(--font-sans);
+  color: #2f7f6a;
+}
+.rc-send.is-mic {
+  width: 42px;
+  border-radius: 21px;
+  background: linear-gradient(135deg, #4c845a, #2f8f9a 60%, #6a5ae0);
 }
