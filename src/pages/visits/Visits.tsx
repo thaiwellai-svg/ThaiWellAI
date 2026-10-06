@@ -11,6 +11,7 @@ import { ListModeMenu } from "../../features/ListModeMenu";
 import { FilterMenu } from "../../features/FilterMenu";
 import { AppointmentDrawer, queueNumber, stageOf as visitStage } from "../../features/AppointmentDrawer";
 import { VoiceNote } from "../../features/VoiceNote";
+import { tuckDock } from "../../layout/Dock";
 import { PatientDrawer, PatientHealth } from "../../features/PatientDrawer";
 import { isOverdue, jobRank, stageMeta, stageOf, type Stage } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
@@ -58,6 +59,15 @@ export default function Visits() {
   }, [slimPref]);
   const slim = slimPref || narrow;
   const selected = params.get("id");
+  const assistantOpen = (() => {
+    const a = store.appointments.find((x) => x.id === selected);
+    return voice && !solo && !!a && visitStage(a) === "assess";
+  })();
+  // the assistant gets the room: tuck the dock away (an arrow brings it back)
+  useEffect(() => {
+    tuckDock(assistantOpen);
+  }, [assistantOpen]);
+  useEffect(() => () => void tuckDock(false), []);
   // the list follows the opened visit's day (today by default)
   const today = store.appointments.find((a) => a.id === selected)?.date ?? todayISO();
   const isToday = today === todayISO();

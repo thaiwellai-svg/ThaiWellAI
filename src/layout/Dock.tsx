@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
@@ -31,18 +32,54 @@ function Tip({ label }: { label: string }) {
   );
 }
 
+/** a page can ask the dock to tuck itself away (e.g. while the treatment assistant is open) */
+export const DOCK_AUTO = "thaiwell:dock-auto";
+let tuckRequested = false; // survives the page asking before the dock is listening
+export const tuckDock = (on: boolean) => {
+  tuckRequested = on;
+  window.dispatchEvent(new CustomEvent<boolean>(DOCK_AUTO, { detail: on }));
+};
+
 export function Dock({ onAssistant }: { onAssistant: () => void }) {
   const { pathname } = useLocation();
   const [hover, setHover] = useState<string | null>(null);
+  // tucked: a page asked for the room; hidden: what the user currently sees (the arrow toggles it)
+  const [tucked, setTucked] = useState(tuckRequested);
+  const [hidden, setHidden] = useState(tuckRequested);
+  useEffect(() => {
+    const apply = (v: boolean) => {
+      setTucked(v);
+      setHidden(v);
+    };
+    const on = (e: Event) => apply((e as CustomEvent<boolean>).detail);
+    window.addEventListener(DOCK_AUTO, on);
+    apply(tuckRequested);
+    return () => window.removeEventListener(DOCK_AUTO, on);
+  }, []);
 
   return (
-    <div className="dock-strip">
+    <div className={clsx("dock-strip", hidden && "is-tucked")}>
+      {tucked && (
+        <motion.button
+          type="button"
+          className="dock__handle"
+          aria-label={hidden ? "แสดงแถบเมนู" : "ซ่อนแถบเมนู"}
+          title={hidden ? "แสดงแถบเมนู" : "ซ่อนแถบเมนู"}
+          onClick={() => setHidden((v) => !v)}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: hidden ? 0 : -78 }}
+          transition={spring.soft}
+        >
+          {hidden ? <ChevronUp size={18} strokeWidth={2.4} /> : <ChevronDown size={18} strokeWidth={2.4} />}
+        </motion.button>
+      )}
       <motion.nav
         className="dock"
         aria-label="เมนูหลัก"
+        aria-hidden={hidden || undefined}
         initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ ...spring.soft, delay: 0.25 }}
+        animate={hidden ? { y: 130, opacity: 0 } : { y: 0, opacity: 1 }}
+        transition={hidden ? spring.soft : { ...spring.soft, delay: tucked ? 0 : 0.25 }}
       >
         <span className="tw-frost" aria-hidden />
         <LayoutGroup>

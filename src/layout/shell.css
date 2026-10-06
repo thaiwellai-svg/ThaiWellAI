@@ -698,3 +698,26 @@
 .apg__lead {
   flex: 1 1 280px;
 }
+
+/* dock tucked away (treatment assistant): only a small arrow tab stays */
+.dock__handle {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 26px;
+  margin-left: -28px;
+  border-radius: 14px 14px 10px 10px;
+  background: rgba(30, 40, 34, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  color: #fff;
+  pointer-events: auto;
+}
+.dock-strip.is-tucked .dock {
+  pointer-events: none;
+}
