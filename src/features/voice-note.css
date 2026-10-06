@@ -731,3 +731,6 @@
   background: rgba(255, 255, 255, 0.85);
   animation: rc-blink 1s steps(2) infinite;
 }
+.rc-bar.is-rec .rc-live {
+  margin-right: 44px; /* balance the ✕ so the wave sits centred */
+}

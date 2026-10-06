@@ -730,15 +730,23 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             <button type="button" className="rc-x" onClick={toggleVoice} aria-label="จบการคุยด้วยเสียง" title="จบการคุยด้วยเสียง">
               <X size={17} />
             </button>
-            <span className="rc-live">
+            <span
+              className="rc-live"
+              role="button"
+              aria-label="พูดแทรก"
+              onClick={() => {
+                // tap the wave while the AI talks = interrupt and speak
+                if (speaking) {
+                  stopSpeaking();
+                  setSpeaking(false);
+                  void listen();
+                }
+              }}
+            >
               <VoiceWave level={level} speak={speaking} calm={!rec && !speaking} height={44} />
-              <small>{rec ? "กำลังฟัง · หยุดพูดแล้วส่งให้เอง" : sending ? "กำลังส่ง…" : speaking ? "AI กำลังตอบ" : thinking ? "AI กำลังคิด…" : "กำลังเปิดไมค์…"}</small>
+              <small>{rec ? "กำลังฟัง · หยุดพูดแล้วส่งให้เอง" : sending ? "กำลังส่ง…" : speaking ? "AI กำลังตอบ · แตะเพื่อพูดแทรก" : thinking ? "AI กำลังคิด…" : "กำลังเปิดไมค์…"}</small>
             </span>
-            {speaking ? (
-              <button type="button" className="rc-stop" onClick={() => (stopSpeaking(), setSpeaking(false), void listen())} aria-label="พูดแทรก">
-                <Mic size={13} /> พูดแทรก
-              </button>
-            ) : null}
+
           </motion.div>
         ) : (
           <motion.div key="type" className="rc-bar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
