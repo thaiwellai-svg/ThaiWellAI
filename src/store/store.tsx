@@ -5,6 +5,7 @@ import { createSeed, DEFAULT_SETTINGS, SERVICES, THERAPISTS } from "../data/seed
 import { todayISO } from "../data/thaiDate";
 import { withBirthDate } from "../data/elements";
 import { defaultBiz, type Biz } from "../data/biz";
+import { beat, BRIDGE_KEY, sendToApp, takeNewAppEvents, type AppEvent } from "../features/appBridge";
 
 interface State {
   version: number;
@@ -53,6 +54,7 @@ type Action =
   | { type: "restoreBackup"; state: State }
   | { type: "setKeepData"; on: boolean }
   | { type: "biz"; update: (b: Biz) => Biz; log: string; cat?: AuditEntry["cat"]; patientId?: string }
+  | { type: "bridgeIn"; event: AppEvent }
   | { type: "reset" };
 
 const VERSION = 25;
@@ -106,6 +108,7 @@ function reducer(state: State, action: Action): State {
         painBefore: req.painScore,
         paid: false,
         intake: req.intake,
+        ...(req.id.startsWith("app-") ? { bridgeRef: req.id } : {}),
         ...action.patch,
       };
       const decision: RequestDecision = {
@@ -189,6 +192,20 @@ function reducer(state: State, action: Action): State {
       return { ...state, appointments: state.appointments.filter((a) => !action.ids.includes(a.id)) };
     case "addPatient":
       return { ...state, patients: [action.patient, ...state.patients] };
+    case "bridgeIn": {
+      // จากแอปผู้ป่วย: คำขอจอง (+ ลงทะเบียนผู้ป่วยถ้ายังไม่มี) · แจ้งเตือนทั่วไป
+      const e = action.event;
+      if (e.type === "booking") {
+        if (state.requests.some((r) => r.id === e.request.id)) return state;
+        const known = state.patients.some((p) => p.id === e.patient.id);
+        const patients = known ? state.patients.map((p) => (p.id === e.patient.id ? { ...p, complaint: e.patient.complaint } : p)) : [e.patient, ...state.patients];
+        const svc = state.services.find((x) => x.id === e.request.serviceId);
+        const n: Notification = { id: nextId("n"), kind: "request", title: "คำขอจองจากแอป", body: `${e.patient.name} ขอจอง${svc ? svc.name : ""} · ${e.request.date} ${e.request.start} น.`, at: e.at, read: false, link: "/requests", ref: e.request.id };
+        return { ...state, patients, requests: [e.request, ...state.requests], notifications: [n, ...state.notifications] };
+      }
+      const n: Notification = { id: nextId("n"), kind: "alert", title: e.title, body: e.body, at: e.at, read: false, link: e.patientId ? "/patients" : undefined, ref: e.patientId };
+      return { ...state, notifications: [n, ...state.notifications] };
+    }
     case "updatePatient":
       return { ...state, patients: state.patients.map((p) => (p.id === action.id ? { ...p, ...action.patch } : p)) };
     case "updateSettings":
@@ -299,6 +316,10 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
       return { cat: "นัดหมาย", text: `ลบนัด ${action.ids.length} รายการ`, patientId: appt(action.ids[0])?.patientId };
     case "addPatient":
       return { cat: "ผู้ป่วย", text: `ลงทะเบียนผู้ป่วยใหม่ ${action.patient.hn}`, patientId: action.patient.id };
+    case "bridgeIn":
+      return action.event.type === "booking"
+        ? { cat: "นัดหมาย", text: `รับคำขอจองจากแอป ${action.event.request.date} ${action.event.request.start}`, patientId: action.event.patient.id }
+        : { cat: "ระบบ", text: `แจ้งจากแอป: ${action.event.title}` };
     case "updatePatient": {
       const k = Object.keys(action.patch);
       const NAMES: Record<string, string> = { photo: "รูปโปรไฟล์", course: "คอร์ส", aiPlan: "แผนการรักษา AI", documents: "เอกสารแนบ", birthMonth: "เดือนเกิด", complaint: "อาการสำคัญ", conditions: "โรคประจำตัว", allergies: "การแพ้", phone: "เบอร์โทร" };
@@ -366,6 +387,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* ignore quota / private mode */
     }
   }, [state]);
+
+  /* ---------- สะพานไปแอปผู้ป่วย (ต้นแบบ · localStorage เบราว์เซอร์เดียวกัน) ---------- */
+  // รับ: คำขอจอง/แจ้งเตือนจากแอป — ตอนเปิด · เมื่อแท็บแอปเขียน (storage event) · สำรองทุก 2 วินาที
+  useEffect(() => {
+    const pull = () => takeNewAppEvents().forEach((event) => dispatch({ type: "bridgeIn", event }));
+    beat();
+    pull();
+    const onStorage = (e: StorageEvent) => e.key === BRIDGE_KEY && pull();
+    window.addEventListener("storage", onStorage);
+    const t = setInterval(() => {
+      beat();
+      pull();
+    }, 2000);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(t);
+    };
+  }, []);
+  // ส่ง: ผลการพิจารณาคำขอจากแอป · นวดเสร็จ (คะแนนหลังนวด) · ยกเลิก/ไม่มา
+  useEffect(() => {
+    for (const d of state.decisions) {
+      if (!d.request.id.startsWith("app-")) continue;
+      if (d.outcome === "approved" && d.slot) {
+        const t = state.therapists.find((x) => x.id === d.slot!.therapistId);
+        const svc = state.services.find((x) => x.id === d.request.serviceId);
+        sendToApp(`approved:${d.request.id}`, { type: "approved", ref: d.request.id, date: d.slot.date, start: d.slot.start, therapist: t?.name ?? "", service: svc?.id ?? d.request.serviceId });
+      } else if (d.outcome === "rejected") sendToApp(`rejected:${d.request.id}`, { type: "rejected", ref: d.request.id, reason: d.reason ?? "" });
+    }
+    for (const a of state.appointments) {
+      if (!a.bridgeRef) continue;
+      if (a.status === "done") sendToApp(`done:${a.bridgeRef}`, { type: "completed", ref: a.bridgeRef, painBefore: a.painBefore, painAfter: a.painAfter });
+      if (a.status === "cancelled" || a.status === "absent") sendToApp(`${a.status}:${a.bridgeRef}`, { type: a.status, ref: a.bridgeRef });
+    }
+  }, [state.decisions, state.appointments, state.therapists, state.services]);
 
   const patientMap = useMemo(() => new Map(state.patients.map((p) => [p.id, p])), [state.patients]);
   const patientById = useCallback((id: string) => patientMap.get(id) ?? state.patients[0], [patientMap, state.patients]);

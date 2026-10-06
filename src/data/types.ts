@@ -196,6 +196,8 @@ export interface Appointment {
   findings?: string;
   /** pre-visit self-assessment carried over from the booking request */
   intake?: Intake;
+  /** booked from the patient app (prototype bridge) — request id, used to send status back to the app */
+  bridgeRef?: string;
   /** วินิจฉัย — Thai traditional diagnosis (principal first) */
   diagnoses?: Diagnosis[];
   /** หัตถการ performed in this session */
