@@ -1037,6 +1037,3 @@ button.st-me[aria-pressed="true"] {
 .st-voice select {
   min-width: 180px;
 }
-.set-tour {
-  background: rgba(255, 255, 255, 0.92);
-}

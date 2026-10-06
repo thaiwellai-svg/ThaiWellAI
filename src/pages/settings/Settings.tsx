@@ -178,7 +178,7 @@ export default function Settings() {
       bell={false}
       actions={
         <>
-        <Button variant="outline" size="md" className="set-tour" leading={<GraduationCap size={16} />} onClick={() => setActive("guide")}>
+        <Button variant="white" size="md" className="set-tour" leading={<GraduationCap size={16} />} onClick={() => setActive("guide")}>
           คู่มือการใช้งาน
         </Button>
         <AnimatePresence>

@@ -612,10 +612,14 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   await check('N02', 'admin', 'ผู้บริหาร / งานวิจัย', 'แดชบอร์ดผลการรักษา + ส่งออกข้อมูลไม่ระบุตัวตน', async (p, ex) => {
     await go(p, '/insights', 1500);
-    const lead = await p.locator('.ins-hero__lead').innerText();
+    const lead = await p.locator('.in-hero').innerText();
     ex(/ลดลงเฉลี่ย/.test(lead), 'สรุปปวดก่อน → หลังนวด');
-    ex((await p.locator('.ins-finds li').count()) > 0, 'มีข้อค้นพบจากข้อมูล');
-    ex((await p.locator('.ins-heat__cell').count()) === 4 * (await state(p)).services.length, 'ตารางธาตุ × บริการครบ');
+    ex((await p.locator('.in-find').count()) > 0, 'มีข้อค้นพบจากข้อมูล');
+    await p.locator('.in-find').first().click(); await p.waitForTimeout(500);
+    ex((await p.locator('.in-reco').count()) === 1, 'กดข้อค้นพบ → เปิดมุมมองตามธาตุพร้อมคำแนะนำ');
+    ex((await p.locator('.in-heat__cell').count()) === 4 * (await state(p)).services.length, 'ตารางธาตุ × บริการครบ');
+    await p.locator('.appt__bar button', { hasText: 'ตามบริการ' }).click(); await p.waitForTimeout(400);
+    ex((await p.locator('.in-row').count()) === (await state(p)).services.length, 'มุมมองตามบริการแสดงครบ');
     const dl = p.waitForEvent('download', { timeout: 4000 }).catch(() => null);
     await p.getByRole('button', { name: 'ส่งออกข้อมูลวิจัย' }).click();
     const d = await dl;

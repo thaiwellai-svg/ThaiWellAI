@@ -320,6 +320,24 @@
 .work__actions {
   justify-content: flex-end;
 }
+/* every app-bar control shares one height (search, icon buttons, text buttons, segmented tabs) */
+.work__actions {
+  --bar-h: 44px;
+}
+.work__actions > .tw-btn {
+  height: var(--bar-h);
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+}
+.work__actions > .tw-segmented {
+  height: var(--bar-h);
+  padding: 4px;
+}
+.work__actions > .tw-segmented .tw-segmented__item {
+  height: calc(var(--bar-h) - 8px);
+  font-size: 13.5px;
+}
 /* ── AI button v2: living orb inside a rotating rainbow ring ── */
 .dock__ai {
   background: none;

@@ -84,14 +84,14 @@ export function groupRows<K extends string>(rows: OutcomeRow[], key: (r: Outcome
 /** mean pain before each visit by visit number (1st, 2nd, …) — how pain falls over a course */
 export function sessionCurve(rows: OutcomeRow[], max = 8) {
   const byP = groupRows(rows, (r) => r.p.id);
-  const pts: { n: number; mean: number; count: number }[] = [];
+  const pts: { n: number; mean: number; after: number; count: number }[] = [];
   for (let i = 0; i < max; i++) {
-    const vals: number[] = [];
+    const vals: OutcomeRow[] = [];
     for (const list of byP.values()) {
       const s = [...list].sort((x, y) => (x.a.date + x.a.start).localeCompare(y.a.date + y.a.start));
-      if (s[i]) vals.push(s[i].before);
+      if (s[i]) vals.push(s[i]);
     }
-    if (vals.length >= 3) pts.push({ n: i + 1, mean: vals.reduce((a, b) => a + b, 0) / vals.length, count: vals.length });
+    if (vals.length >= 3) pts.push({ n: i + 1, mean: vals.reduce((a, r) => a + r.before, 0) / vals.length, after: vals.reduce((a, r) => a + r.after, 0) / vals.length, count: vals.length });
   }
   return pts;
 }
@@ -99,7 +99,7 @@ export function sessionCurve(rows: OutcomeRow[], max = 8) {
 /** plain-language findings: element × service combinations that stand out from the clinic average */
 export function findings(rows: OutcomeRow[], services: Service[], minN = 6) {
   const all = summarize(rows);
-  const out: { tone: "good" | "bad"; text: string; diff: number; n: number }[] = [];
+  const out: { tone: "good" | "bad"; text: string; diff: number; n: number; element: Element; serviceId: string; mean: number }[] = [];
   const cells = groupRows(rows, (r) => `${r.element}|${r.a.serviceId}` as string);
   for (const [k, list] of cells) {
     if (list.length < minN) continue;
@@ -112,6 +112,9 @@ export function findings(rows: OutcomeRow[], services: Service[], minN = 6) {
       tone: diff > 0 ? "good" : "bad",
       diff,
       n: list.length,
+      element: el as Element,
+      serviceId: sid,
+      mean: s.mean,
       text:
         diff > 0
           ? `ผู้ป่วยธาตุ${el}ที่ได้รับ “${svc}” ปวดลดลงเฉลี่ย ${s.mean.toFixed(1)} คะแนน มากกว่าค่าเฉลี่ยคลินิก ${diff.toFixed(1)} คะแนน`
