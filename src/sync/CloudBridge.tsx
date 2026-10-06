@@ -5,6 +5,7 @@ import { queueNumber } from "../features/AppointmentDrawer";
 import { todayISO } from "../data/thaiDate";
 import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
+import { pushNotify } from "./notify";
 
 type Store = ReturnType<typeof useStore>;
 
@@ -136,28 +137,36 @@ export function CloudBridge() {
       };
       st.dispatch({ type: "cloudRequest", request: req });
       toast({ message: `คำขอจองใหม่จากแอป · ${p.name}` });
+      void pushNotify("คำขอจองใหม่จากแอป", `${p.name} · ${st.serviceById(req.serviceId).name} ${req.date} ${req.start} น.`, "/requests");
       return;
     }
     if (!local) {
       // cancelled in the app before the clinic answered → the pending request goes away
       const req = st.requests.find((r) => r.cloudId === row.id);
-      if (req && row.status === "cancelled") st.dispatch({ type: "reject", id: req.id, reason: row.note ?? "ผู้ป่วยยกเลิกจากแอป" });
+      if (req && row.status === "cancelled") {
+        st.dispatch({ type: "reject", id: req.id, reason: row.note ?? "ผู้ป่วยยกเลิกจากแอป" });
+        void pushNotify("ผู้ป่วยยกเลิกคำขอจอง", `${st.patientById(req.patientId).name} · ${req.date} ${req.start} น.`, "/requests");
+      }
       return;
     }
+    const who = st.patientById(local.patientId).name;
     if (row.status === "checked_in" && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
       const q = queueNumber(st.appointments, local);
       st.dispatch({ type: "updateAppointment", id: local.id, patch: {}, log: `เช็กอินจากแอป · คิว ${q}` });
       void updateAppt(row.id, { queue_no: q });
       void logEvent("clinic", "queue.issued", row, row.tw_patients?.name, `ออกเลขคิว ${q} ส่งไปแสดงในแอป`);
-      toast({ message: `${st.patientById(local.patientId).name} เช็กอินจากแอปแล้ว · คิว ${q}` });
+      toast({ message: `${who} เช็กอินจากแอปแล้ว · คิว ${q}` });
+      void pushNotify("เช็กอินจากแอป", `${who} มาถึงแล้ว · คิว ${q}`, "/visits");
     }
     if (row.bill?.status === "paid" && row.bill.via === "app" && local.payment?.status === "pending") {
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { payment: { ...local.payment, status: "paid", at: row.bill.paid_at ?? new Date().toISOString() }, paid: true, status: "done" }, log: "ชำระเงินผ่านแอปแล้ว" });
       known.current.set(row.id, "paid");
-      toast({ message: `${st.patientById(local.patientId).name} ชำระผ่านแอปแล้ว ${row.bill.amount} บาท` });
+      toast({ message: `${who} ชำระผ่านแอปแล้ว ${row.bill.amount} บาท` });
+      void pushNotify("ชำระผ่านแอปแล้ว", `${who} · ${row.bill.amount} บาท`, "/billing");
     }
     if (row.status === "cancelled" && local.status !== "cancelled" && !local.startedAt) {
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { status: "cancelled", cancel: { at: new Date().toISOString(), by: "patient", reason: row.note ?? "ยกเลิกจากแอป", staff: "แอป ThaiWell AI" } }, log: "ผู้ป่วยยกเลิกนัดจากแอป" });
+      void pushNotify("ผู้ป่วยยกเลิกนัดจากแอป", `${who} · ${local.date} ${local.start} น.`, "/appointments");
     }
   };
 
@@ -190,6 +199,7 @@ export function CloudBridge() {
         if (row.source !== "app" || !p.title) return;
         const local = p.patientId ? ref.current.patients.find((x) => x.cloudId === p.patientId) : undefined;
         ref.current.dispatch({ type: "bridgeIn", event: { id: `ev${row.id}`, at: row.at, type: "note", title: p.title, body: p.body ?? row.summary ?? "", patientId: local?.id } });
+        void pushNotify(p.title, p.body ?? row.summary ?? "", local ? "/patients" : undefined);
       })
       .subscribe();
     return () => {

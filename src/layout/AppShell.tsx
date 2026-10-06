@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { clsx } from "clsx";
 import bg from "../assets/backdrop/spa-room.jpg";
 import { Dock } from "./Dock";
 import { CloudBridge } from "../sync/CloudBridge";
+import { initPush, NAVIGATE } from "../sync/notify";
 import { Tour } from "../features/Tour";
 import { LiveBackdrop } from "./backdrop/LiveBackdrop";
 import { useStore } from "../store/store";
@@ -70,6 +71,14 @@ export function AppShell() {
   }, []);
   const [live, setLive] = useState(false);
   const toast = useToast();
+  const navigate = useNavigate();
+  // system notifications for what the patient app sends; tapping one opens its page
+  useEffect(() => {
+    void initPush();
+    const go = (e: Event) => navigate((e as CustomEvent<string>).detail);
+    window.addEventListener(NAVIGATE, go);
+    return () => window.removeEventListener(NAVIGATE, go);
+  }, [navigate]);
   useEffect(() => {
     startAutoUpdate(() => {
       toast({ message: "มีเวอร์ชันใหม่ กำลังรีเฟรช…" });

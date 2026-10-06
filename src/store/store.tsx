@@ -145,9 +145,14 @@ function reducer(state: State, action: Action): State {
       };
       return { ...state, requests: state.requests.filter((r) => r.id !== action.id), decisions: [decision, ...state.decisions] };
     }
-    case "cloudRequest":
+    case "cloudRequest": {
       if (state.requests.some((r) => r.cloudId === action.request.cloudId) || state.appointments.some((a) => a.cloudId === action.request.cloudId) || state.decisions.some((d) => d.request.cloudId === action.request.cloudId)) return state;
-      return { ...state, requests: [action.request, ...state.requests].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)) };
+      // the bell shows it too, like a request that came over the browser bridge
+      const p = state.patients.find((x) => x.id === action.request.patientId);
+      const svc = state.services.find((x) => x.id === action.request.serviceId);
+      const n: Notification = { id: nextId("n"), kind: "request", title: "คำขอจองจากแอป", body: `${p?.name ?? "ผู้ใช้แอป"} ขอจอง${svc?.name ?? ""} · ${action.request.date} ${action.request.start} น.`, at: action.request.submittedAt, read: false, link: "/requests", ref: action.request.id };
+      return { ...state, requests: [action.request, ...state.requests].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)), notifications: [n, ...state.notifications] };
+    }
     case "restoreRequest":
       // undo of a rejection: bring the request back and drop its decision
       return {
