@@ -148,6 +148,8 @@ export interface Patient {
   screening?: CounterScreening;
   /** clinic member — gets the member discount on packages */
   member?: boolean;
+  /** linked account in the patient app (shared cloud) */
+  cloudId?: string;
   /** last AI-drafted treatment plan (needs a Thai traditional doctor's review) */
   aiPlan?: AIPlan;
   /** referral letters / lab reports read by OCR */
@@ -194,6 +196,8 @@ export interface Appointment {
   advice?: string;
   /** อาการ / สิ่งที่ตรวจพบวันนี้ (from the treatment assistant) */
   findings?: string;
+  /** linked booking in the shared cloud (patient app) */
+  cloudId?: string;
   /** pre-visit self-assessment carried over from the booking request */
   intake?: Intake;
   /** booked from the patient app (prototype bridge) — request id, used to send status back to the app */
@@ -267,6 +271,8 @@ export interface BookingRequest {
   intake?: Intake;
   note?: string;
   submittedAt: string; // ISO datetime
+  /** id of the booking in the shared cloud (patient app) */
+  cloudId?: string;
 }
 
 /** Staff decision on a booking request — kept so the requests page can show history. */

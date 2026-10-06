@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarClock, CalendarCheck2, CalendarRange, Check, CircleCheck, CircleX, History, ListFilter, MessageSquareText, Phone, ShieldAlert, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
+import { Activity, CalendarClock, CalendarCheck2, CalendarRange, Check, CircleCheck, CircleX, History, ListFilter, MessageSquareText, Phone, ShieldAlert, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, SearchField, Segmented, spring } from "../../design-system";
@@ -94,6 +94,9 @@ export default function Requests() {
       bell={false}
       actions={
         <>
+          <Button variant="white" size="md" className="rq-flow" leading={<Activity size={15} />} onClick={() => navigate("/flow")}>
+            Flow แอป ↔ คลินิก
+          </Button>
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN เบอร์โทร" shortcut={false} />
           {tab === "pending" ? (
             <FilterMenu

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, GraduationCap, Lightbulb, MonitorPlay, PlayCircle, Search, Sparkles } from "lucide-react";
+import { Activity, ChevronDown, GraduationCap, Lightbulb, MonitorPlay, PlayCircle, Search, Sparkles } from "lucide-react";
 import { AppointmentsIcon, BillingIcon, HomeIcon, InsightsIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
 import { startTour } from "./Tour";
 import "./user-guide.css";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 const AiIcon: Icon = (p) => <Sparkles {...(p as object)} />;
+const FlowIcon: Icon = (p) => <Activity {...(p as object)} />;
 
 /** step-by-step manual, grouped by menu */
 const CHAPTERS: { id: string; title: string; color: string; Icon: Icon; intro: string; topics: { q: string; steps: string[]; tip?: string }[] }[] = [
@@ -117,6 +118,19 @@ const CHAPTERS: { id: string; title: string; color: string; Icon: Icon; intro: s
       { q: "เปิดคู่มือฉบับเต็ม", steps: ["ตั้งค่า → คู่มือการใช้งาน", "กด “ดูคู่มือฉบับเต็ม” เปิดเว็บคู่มือในแท็บใหม่ มีภาพเคลื่อนไหวสาธิตทุกขั้นตอน", "กด “แนะนำเมนู” เพื่อดูไฟส่องแนะนำเมนูอีกครั้ง"] },
       { q: "สำรอง / กู้คืนข้อมูล", steps: ["ตั้งค่า → ข้อมูลและการสำรอง", "กด “สำรองข้อมูล” เก็บไฟล์ไว้", "กด “กู้คืน” แล้วเลือกไฟล์สำรองเมื่อต้องการ"], tip: "ข้อมูลเก็บในเครื่องนี้เท่านั้น ควรสำรองเป็นประจำ" },
       { q: "ตั้งพร้อมเพย์ของคลินิก", steps: ["ตั้งค่า → การรับชำระเงิน", "ใส่เบอร์หรือเลขผู้เสียภาษี QR ที่ใบเสร็จจะใช้เลขนี้"] },
+    ],
+  },
+  {
+    id: "app",
+    title: "เชื่อมแอป ThaiWell AI",
+    color: "#077dd7",
+    Icon: FlowIcon,
+    intro: "ข้อมูลวิ่งระหว่างแอปผู้รับบริการกับคลินิกอัตโนมัติ ผ่าน cloud (ต้นแบบ)",
+    topics: [
+      { q: "รับคำขอจองจากแอป", steps: ["ผู้ป่วยประเมินอาการในแอปแล้วส่งคำขอจอง", "คำขอขึ้นที่ “คำขอจองคิว” ทันที พร้อมผลประเมินและคัดกรอง (ผู้ป่วยใหม่ลงทะเบียนให้อัตโนมัติ)", "กด “อนุมัติและจัดคิว” → แอปได้รับการยืนยันนัด ผู้บำบัด และเวลา", "ถ้าปฏิเสธ แอปจะเห็นเหตุผลที่ปฏิเสธ"] },
+      { q: "เช็กอินและคิว", steps: ["ผู้ป่วยกด “เช็กอิน” ในแอปเมื่อมาถึง", "ระบบออกเลขคิวและส่งกลับไปแสดงในแอป", "เมื่อกด “เรียกคิว” / “เริ่ม” ที่หน้ารับบริการ แอปจะเปลี่ยนสถานะตามทันที"] },
+      { q: "ส่งผลการรักษาและชำระเงิน", steps: ["บันทึกการรักษาเสร็จ → ผลการรักษา ปวดก่อน/หลัง และคำแนะนำส่งเข้าแอป", "ชำระที่คลินิก: รับชำระตามปกติ ใบเสร็จส่งเข้าแอป", "ชำระในแอป: ที่หน้าคิดเงินเลือก “ส่งบิลเข้าแอป” เมื่อผู้ป่วยจ่ายแล้ว บิลในระบบเปลี่ยนเป็นชำระแล้วเอง", "แผนการรักษาที่แพทย์อนุมัติ ส่งไปแสดงในแอปด้วย"] },
+      { q: "ดูข้อมูลที่วิ่งไปมา (Flow Monitor)", steps: ["หน้า “คำขอจองคิว” → กด “Flow แอป ↔ คลินิก”", "ซ้าย: แอปผู้รับบริการจำลอง ลองจอง เช็กอิน จ่ายเงินได้โดยไม่ต้องมีมือถือ", "กลาง: ข้อมูลทุกครั้งที่ส่งระหว่างแอปกับคลินิกแบบสด พร้อมแถบสถานะ", "ขวา: สถานะการจองทั้งหมดใน cloud"], tip: "ต้นแบบนี้ใช้ข้อมูลทดสอบเท่านั้น ห้ามใส่ข้อมูลผู้ป่วยจริง · กด “ล้างข้อมูลทดสอบ” เพื่อเริ่มใหม่" },
     ],
   },
   {

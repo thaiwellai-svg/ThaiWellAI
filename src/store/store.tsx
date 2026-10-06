@@ -32,6 +32,8 @@ type Action =
   | { type: "approve"; id: string; patch: Pick<Appointment, "date" | "start" | "therapistId" | "serviceId"> }
   | { type: "reject"; id: string; reason: string; note?: string }
   | { type: "restoreRequest"; request: BookingRequest }
+  /** a booking that arrived from the patient app (cloud); ignored if already here */
+  | { type: "cloudRequest"; request: BookingRequest }
   | { type: "setStatus"; id: string; status: AppointmentStatus; painAfter?: number }
   | { type: "togglePaid"; id: string }
   | { type: "updateAppointment"; id: string; patch: Partial<Appointment>; log?: string }
@@ -109,6 +111,7 @@ function reducer(state: State, action: Action): State {
         paid: false,
         intake: req.intake,
         ...(req.id.startsWith("app-") ? { bridgeRef: req.id } : {}),
+        cloudId: req.cloudId,
         ...action.patch,
       };
       const decision: RequestDecision = {
@@ -140,6 +143,9 @@ function reducer(state: State, action: Action): State {
       };
       return { ...state, requests: state.requests.filter((r) => r.id !== action.id), decisions: [decision, ...state.decisions] };
     }
+    case "cloudRequest":
+      if (state.requests.some((r) => r.cloudId === action.request.cloudId) || state.appointments.some((a) => a.cloudId === action.request.cloudId) || state.decisions.some((d) => d.request.cloudId === action.request.cloudId)) return state;
+      return { ...state, requests: [action.request, ...state.requests].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)) };
     case "restoreRequest":
       // undo of a rejection: bring the request back and drop its decision
       return {
@@ -287,6 +293,8 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
   const appt = (id: string) => prev.appointments.find((a) => a.id === id);
   const SETTING: Record<string, string> = { clinicName: "ชื่อคลินิก", promptpayId: "พร้อมเพย์", autoSendSlip: "ส่งสลิปอัตโนมัติ", rooms: "ห้องและเตียง", staffName: "ชื่อผู้ใช้", staffRole: "ตำแหน่ง", openTime: "เวลาเปิด", closeTime: "เวลาปิด", closedWeekdays: "วันเปิดทำการ", bedsPerSlot: "จำนวนเตียงต่อรอบ", requireApproval: "การอนุมัติคำขอ", callVoice: "เสียงเรียกคิว", bpThreshold: "เกณฑ์ความดัน" };
   switch (action.type) {
+    case "cloudRequest":
+      return { cat: "นัดหมาย", text: "รับคำขอจองจากแอป ThaiWell AI", patientId: action.request.patientId };
     case "approve": {
       const r = prev.requests.find((x) => x.id === action.id);
       return { cat: "นัดหมาย", text: `อนุมัติคำขอจอง ${action.patch.date} ${action.patch.start}`, patientId: r?.patientId };

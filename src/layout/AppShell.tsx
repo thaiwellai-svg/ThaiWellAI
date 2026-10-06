@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { clsx } from "clsx";
 import bg from "../assets/backdrop/spa-room.jpg";
 import { Dock } from "./Dock";
+import { CloudBridge } from "../sync/CloudBridge";
 import { Tour } from "../features/Tour";
 import { LiveBackdrop } from "./backdrop/LiveBackdrop";
 import { useStore } from "../store/store";
@@ -30,6 +31,7 @@ const Packages = lazy(() => import("../pages/biz/Packages"));
 const Commission = lazy(() => import("../pages/biz/Commission"));
 const DayClose = lazy(() => import("../pages/biz/DayClose"));
 const Insights = lazy(() => import("../pages/insights/Insights"));
+const Flow = lazy(() => import("../pages/flow/Flow"));
 const Requests = lazy(() => import("../pages/requests/Requests"));
 const Login = lazy(() => import("../pages/login/Login"));
 const RoomScene = lazy(() => import("./room3d/RoomScene"));
@@ -133,6 +135,7 @@ export function AppShell() {
             <Route path="/inventory" element={<Page><Inventory /></Page>} />
             <Route path="/packages" element={<Page><Packages /></Page>} />
             <Route path="/billing/:id" element={<Page><BillDetail /></Page>} />
+            <Route path="/flow" element={<Page><Flow /></Page>} />
             <Route path="/insights" element={<Page><Insights /></Page>} />
             <Route path="/requests" element={<Page><Requests /></Page>} />
             <Route path="/design-system" element={<Page><DesignSystem /></Page>} />
@@ -145,6 +148,7 @@ export function AppShell() {
       {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests|inventory|packages|appointments\/[^/]+|billing\/[^/]+)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
       <Tour />
+      <CloudBridge />
         </>
       )}
     </div>
