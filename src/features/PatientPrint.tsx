@@ -25,13 +25,13 @@ function Sheet({ p }: { p: Patient }) {
     </tr>
   );
   return (
-    <div className="pp">
-      <header className="pp__head">
+    <div className="pps">
+      <header className="pps__head">
         <div>
           <h1>{store.settings.clinicName || "ThaiWell"}</h1>
           <p>สรุปผลคัดกรองและแผนการรักษา</p>
         </div>
-        <div className="pp__date">พิมพ์เมื่อ {thaiDate(todayISO())}</div>
+        <div className="pps__date">พิมพ์เมื่อ {thaiDate(todayISO())}</div>
       </header>
 
       <section>
@@ -55,7 +55,7 @@ function Sheet({ p }: { p: Patient }) {
         <h2>ผลคัดกรองก่อนนวด{s ? ` · ${thaiDate(s.at.slice(0, 10))}` : ""}</h2>
         {s ? (
           <>
-            <p className={stop ? "pp__verdict is-stop" : flags.length ? "pp__verdict is-warn" : "pp__verdict"}>
+            <p className={stop ? "pps__verdict is-stop" : flags.length ? "pps__verdict is-warn" : "pps__verdict"}>
               {stop ? "พบข้อห้าม · ต้องให้แพทย์แผนไทยประเมินก่อนนวด" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}
               {flags.length > 0 && <span> — {flags.map((f) => f.label).join(" · ")}</span>}
             </p>
@@ -71,7 +71,7 @@ function Sheet({ p }: { p: Patient }) {
             </table>
           </>
         ) : (
-          <p className="pp__muted">ยังไม่ได้คัดกรอง</p>
+          <p className="pps__muted">ยังไม่ได้คัดกรอง</p>
         )}
       </section>
 
@@ -99,7 +99,7 @@ function Sheet({ p }: { p: Patient }) {
             </tbody>
           </table>
           {plan.phases.length > 0 && (
-            <ol className="pp__phases">
+            <ol className="pps__phases">
               {plan.phases.map((ph, i) => (
                 <li key={i}>
                   <b>
@@ -120,7 +120,7 @@ function Sheet({ p }: { p: Patient }) {
         </section>
       )}
 
-      <footer className="pp__sign">
+      <footer className="pps__sign">
         <div>
           <span />
           ผู้คัดกรอง

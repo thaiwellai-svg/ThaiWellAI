@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, FileSpreadsheet, Banknote, CheckCheck, ChevronRight, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
+import { BarChart3, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, ChevronRight, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
@@ -15,6 +15,7 @@ import type { Appointment, Payment, PaymentMethod } from "../../data/types";
 import "../appointments/appointments.css";
 import { ReportDialog, downloadCsv } from "../../features/ReportDialog";
 import "./billing.css";
+import "../biz/biz.css";
 
 type Tab = "due" | "history";
 type Range = "today" | "7" | "30";
@@ -182,6 +183,46 @@ export default function Billing() {
                 </span>
                 <b>{byMethod("credit").length} ครั้ง</b>
               </div>
+            </div>
+          </section>
+
+          {/* back-office tools */}
+          <section className="bl2-card">
+            <header>
+              <b>เมนูการเงิน</b>
+            </header>
+            <div className="bz-menu">
+              <button type="button" style={{ ["--mc" as string]: "#2f8a52" }} onClick={() => navigate("/billing/close")}>
+                <span>
+                  <Landmark size={16} />
+                </span>
+                <b>ปิดยอดวันนี้</b>
+                {store.biz.closings.some((c) => c.date === today) ? <small>ปิดแล้ว</small> : <em>ยังไม่ปิดยอด</em>}
+              </button>
+              <button type="button" style={{ ["--mc" as string]: "#7c5cc4" }} onClick={() => navigate("/billing/commission")}>
+                <span>
+                  <HandCoins size={16} />
+                </span>
+                <b>ค่ามือผู้บำบัด</b>
+                <small>สรุปรายเดือน</small>
+              </button>
+              <button type="button" style={{ ["--mc" as string]: "#d08a3c" }} onClick={() => navigate("/packages")}>
+                <span>
+                  <ShoppingBag size={16} />
+                </span>
+                <b>คอร์ส/แพ็กเกจ</b>
+                <small>{store.biz.packages.filter((x) => x.active).length} แพ็กเกจ</small>
+              </button>
+              <button type="button" style={{ ["--mc" as string]: "#0f766e" }} onClick={() => navigate("/inventory")}>
+                <span>
+                  <Boxes size={16} />
+                </span>
+                <b>คลังสินค้า</b>
+                {(() => {
+                  const low = store.biz.items.filter((i) => i.stock <= i.min).length;
+                  return low ? <em>ใกล้หมด {low} รายการ</em> : <small>สต็อกปกติ</small>;
+                })()}
+              </button>
             </div>
           </section>
 

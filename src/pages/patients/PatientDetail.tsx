@@ -4,10 +4,12 @@ import { CoursePlanDialog } from "../planner/PatientPlanner";
 import { ScreeningAlert } from "../../features/ScreeningAlert";
 import { MoreMenu } from "../../features/MoreMenu";
 import { CancelDialog } from "../../features/CancelDialog";
+import { DocDialog, type DocKind } from "../../features/MedDocs";
+import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, CalendarX2, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
@@ -72,6 +74,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const today = todayISO();
   const [print, printNode] = usePatientPrint(p ?? null);
   const [cancelPlan, setCancelPlan] = useState<Appointment | null>(null);
+  const [doc, setDoc] = useState<DocKind | null>(null);
+  const [selling, setSelling] = useState(false);
   const planNext = p?.course
     ? store.appointments
         .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && a.date >= today)
@@ -147,8 +151,13 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 ...(onEdit ? [{ label: "แก้ไขข้อมูล", icon: <PenLine size={16} />, onClick: onEdit }] : []),
                 ...(p.phone ? [{ label: "โทร", hint: p.phone, icon: <Phone size={16} />, onClick: () => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`) }] : []),
                 { label: "พิมพ์ / บันทึก PDF", icon: <Printer size={16} />, onClick: print },
+                { label: "ใบรับรองแพทย์", icon: <FileHeart size={16} />, onClick: () => setDoc("cert") },
+                { label: "ใบส่งตัว", icon: <Send size={16} />, onClick: () => setDoc("refer") },
+                { label: "ขายคอร์ส / แพ็กเกจ", icon: <ShoppingBag size={16} />, onClick: () => setSelling(true) },
               ]}
             />
+            <DocDialog patientId={doc ? p.id : null} kind={doc ?? "cert"} onClose={() => setDoc(null)} />
+            <SellPackageDialog patientId={selling ? p.id : null} onClose={() => setSelling(false)} />
             {printNode}
             <CancelDialog appt={cancelPlan} planFirst onClose={() => setCancelPlan(null)} />
             <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
@@ -287,6 +296,9 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             ) : (
               <p className="pd2__muted">ไม่มีคอร์ส — รับบริการแบบชำระรายครั้ง</p>
             )}
+            <button type="button" className="pd2__sell" onClick={() => setSelling(true)}>
+              <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส / ซื้อเพิ่ม" : "ขายคอร์ส / แพ็กเกจ"}
+            </button>
           </section>
 
           {/* ── element (full width) ── */}

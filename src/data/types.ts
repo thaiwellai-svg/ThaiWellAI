@@ -146,6 +146,8 @@ export interface Patient {
   emergency?: { name: string; phone: string; relation?: string };
   /** screening done at the counter on registration (optional) */
   screening?: CounterScreening;
+  /** clinic member — gets the member discount on packages */
+  member?: boolean;
   /** last AI-drafted treatment plan (needs a Thai traditional doctor's review) */
   aiPlan?: AIPlan;
   /** referral letters / lab reports read by OCR */
@@ -229,6 +231,8 @@ export interface Payment {
   received?: number;
   /** when the slip was sent to the patient's ThaiWell AI app */
   slipSentAt?: string;
+  /** full tax invoice issued for this receipt */
+  taxInvoice?: { no: string; at: string; buyer: string; taxId?: string; branch?: string; address?: string };
   /** "pending" = bill sent to the ThaiWell AI app, not paid yet · "void" = receipt cancelled */
   status: "paid" | "pending" | "void";
   at: string;
@@ -241,7 +245,7 @@ export interface AuditEntry {
   id: string;
   at: string;
   by: string;
-  cat: "เวชระเบียน" | "การเงิน" | "นัดหมาย" | "ผู้ป่วย" | "ตั้งค่า" | "ระบบ";
+  cat: "เวชระเบียน" | "การเงิน" | "นัดหมาย" | "ผู้ป่วย" | "ตั้งค่า" | "ระบบ" | "คลังสินค้า";
   text: string;
   patientId?: string;
 }
@@ -286,6 +290,8 @@ export interface ClinicSettings {
   autoSendSlip?: boolean;
   /** PromptPay ID (phone or tax ID) for counter QR payments */
   promptpayId?: string;
+  /** VAT registration — enables full tax invoices */
+  vat?: { registered: boolean; taxId: string; branch: string; address: string; rate: number };
   staffName: string;
   staffRole: string;
   /** signed-in user's profile */

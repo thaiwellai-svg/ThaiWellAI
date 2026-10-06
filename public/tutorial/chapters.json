@@ -1317,5 +1317,674 @@
     ]
    }
   ]
+ },
+ "docs": {
+  "id": "docs",
+  "poster": "media/docs-f4.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "เปิดผู้ป่วย แล้วกดปุ่ม ⋯",
+    "detail": "เมนูเพิ่มเติมมี “ใบรับรองแพทย์” และ “ใบส่งตัว”",
+    "start": "media/docs-f1.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 14.07,
+      "y": 27.87,
+      "w": 25.42,
+      "h": 10.12,
+      "frame": "media/docs-f2.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 89.83,
+      "y": 19.27,
+      "w": 3.73,
+      "h": 5.37,
+      "frame": "media/docs-f3.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "กรอกใบรับรองแพทย์",
+    "detail": "ระบบเติมการวินิจฉัยจากการรักษาล่าสุด ใส่ชื่อแพทย์ เลขใบอนุญาต ความเห็น และจำนวนวันพัก",
+    "start": "media/docs-f4.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 82.26,
+      "y": 42.28,
+      "w": 17.63,
+      "h": 5.37,
+      "frame": "media/docs-f5.webp"
+     },
+     {
+      "kind": "type",
+      "text": "พท.12345",
+      "x": 62.8,
+      "y": 30.67,
+      "w": 24.58,
+      "h": 5.37,
+      "frame": "media/docs-f6.webp"
+     },
+     {
+      "kind": "type",
+      "text": "ได้รับการรักษาด้วยการนวดไทย ควรหลีกเลี่ยงการยกของหนัก",
+      "x": 50,
+      "y": 57.5,
+      "w": 50.17,
+      "h": 10.73,
+      "frame": "media/docs-f7.webp"
+     },
+     {
+      "kind": "type",
+      "text": "2",
+      "x": 37.2,
+      "y": 69.57,
+      "w": 24.58,
+      "h": 5.37,
+      "frame": "media/docs-f8.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ออกเอกสารและพิมพ์",
+    "detail": "ได้เลขที่เอกสาร MC… บันทึกในประวัติ และเปิดหน้าพิมพ์ / บันทึก PDF",
+    "start": "media/docs-f9.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 38.59,
+      "y": 79.45,
+      "w": 14.07,
+      "h": 4.39,
+      "frame": "media/docs-f10.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ใบส่งตัว",
+    "detail": "เลือก “ใบส่งตัว” ใส่โรงพยาบาลปลายทาง เหตุผล และการรักษาที่ให้แล้ว · ฉบับเก่ากดพิมพ์ซ้ำได้จากรายการด้านล่าง",
+    "start": "media/docs-f11.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 89.83,
+      "y": 19.27,
+      "w": 3.73,
+      "h": 5.37,
+      "frame": "media/docs-f12.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 82.27,
+      "y": 47.66,
+      "w": 17.63,
+      "h": 5.37,
+      "frame": "media/docs-f13.webp"
+     },
+     {
+      "kind": "type",
+      "text": "โรงพยาบาลศิริราช แผนกออร์โธปิดิกส์",
+      "x": 50,
+      "y": 50.12,
+      "w": 50.17,
+      "h": 5.37,
+      "frame": "media/docs-f14.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "sellpkg": {
+  "id": "sellpkg",
+  "poster": "media/sellpkg-f4.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "ขายคอร์สจากหน้าผู้ป่วย",
+    "detail": "การ์ดคอร์สการรักษามีปุ่ม “ขายคอร์ส / แพ็กเกจ” (ผู้ที่มีคอร์สอยู่แล้วจะเป็น “ต่อคอร์ส / ซื้อเพิ่ม”)",
+    "start": "media/sellpkg-f1.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 14.07,
+      "y": 49.57,
+      "w": 25.42,
+      "h": 10.12,
+      "frame": "media/sellpkg-f2.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 71.08,
+      "y": 60.49,
+      "w": 12.16,
+      "h": 3.9,
+      "frame": "media/sellpkg-f3.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "เลือกแพ็กเกจและส่วนลด",
+    "detail": "เลือกแพ็กเกจ เปิด “สมาชิกคลินิก” เพื่อลดตามที่ตั้งไว้ ใส่ส่วนลดเพิ่มเป็นบาทได้",
+    "start": "media/sellpkg-f4.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 50,
+      "y": 31.46,
+      "w": 46.78,
+      "h": 6.83,
+      "frame": "media/sellpkg-f5.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 70.25,
+      "y": 47.5,
+      "w": 3.9,
+      "h": 3.41,
+      "frame": "media/sellpkg-f6.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ชำระเต็มหรือรับมัดจำ",
+    "detail": "เลือก “รับมัดจำ” ใส่ยอด แล้วเลือกช่องทางชำระ · ยอดคงค้างรับทีหลังได้",
+    "start": "media/sellpkg-f7.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 61.61,
+      "y": 79.7,
+      "w": 22.88,
+      "h": 4.63,
+      "frame": "media/sellpkg-f8.webp"
+     },
+     {
+      "kind": "type",
+      "text": "1000",
+      "x": 50,
+      "y": 84.94,
+      "w": 46.78,
+      "h": 5.37,
+      "frame": "media/sellpkg-f9.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 66.49,
+      "y": 91.95,
+      "w": 13.8,
+      "h": 4.39,
+      "frame": "media/sellpkg-f10.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "จัดการแพ็กเกจและยอดค้าง",
+    "detail": "คิดเงิน → เมนูการเงิน → “คอร์ส/แพ็กเกจ” ตั้งราคา ส่วนลดสมาชิก และกด “รับชำระ” ยอดค้างในแท็บยอดขาย",
+    "start": "media/sellpkg-f11.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 18.88,
+      "y": 14.76,
+      "w": 8.42,
+      "h": 4.15,
+      "frame": "media/sellpkg-f12.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "waitlist": {
+  "id": "waitlist",
+  "poster": "media/waitlist-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "การ์ดรายการรอคิว",
+    "detail": "อยู่ในแถบซ้ายของตารางนัด กด “เพิ่ม” เพื่อจดชื่อคนที่อยากได้คิว",
+    "start": "media/waitlist-f1.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 25.59,
+      "y": 78.23,
+      "w": 3.06,
+      "h": 1.59,
+      "frame": "media/waitlist-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "เลือกผู้ป่วยและช่วงเวลา",
+    "detail": "ค้นหาผู้ป่วย เลือกบริการ วัน และช่วงเวลาที่สะดวก แล้วเพิ่มเข้ารายการ",
+    "start": "media/waitlist-f3.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "สมพร",
+      "x": 50,
+      "y": 33.35,
+      "w": 43.39,
+      "h": 5.37,
+      "frame": "media/waitlist-f4.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 50,
+      "y": 36.77,
+      "w": 43.39,
+      "h": 4.88,
+      "frame": "media/waitlist-f5.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 39.72,
+      "y": 77.01,
+      "w": 9.54,
+      "h": 4.39,
+      "frame": "media/waitlist-f6.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "มีคนยกเลิก ระบบแจ้งให้อัตโนมัติ",
+    "detail": "เมื่อยกเลิกนัดในวันและช่วงเวลาเดียวกัน ระบบแจ้งคนที่รอผ่านแอป และขึ้นป้าย “แจ้งคิวว่างแล้ว”",
+    "start": "media/waitlist-f7.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 14.41,
+      "y": 85.37,
+      "w": 6,
+      "h": 6,
+      "frame": "media/waitlist-f8.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "จองให้ทันที",
+    "detail": "กดไอคอนปฏิทินที่ชื่อ เปิดหน้าจองพร้อมชื่อผู้ป่วยและบริการ",
+    "start": "media/waitlist-f9.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 22.29,
+      "y": 85.43,
+      "w": 2.54,
+      "h": 3.66,
+      "frame": "media/waitlist-f10.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "taxinv": {
+  "id": "taxinv",
+  "poster": "media/taxinv-f4.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "เปิดใช้ภาษีมูลค่าเพิ่ม",
+    "detail": "ตั้งค่า → การรับชำระเงิน → เปิด “จดทะเบียนภาษีมูลค่าเพิ่ม” ใส่เลขผู้เสียภาษี สาขา และที่อยู่ตาม ภ.พ.20",
+    "start": "media/taxinv-f1.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 14.07,
+      "y": 72.93,
+      "w": 24.75,
+      "h": 5.85,
+      "frame": "media/taxinv-f2.webp"
+     },
+     {
+      "kind": "scroll",
+      "x": 60,
+      "y": 60,
+      "frame": "media/taxinv-f3.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "เปิดใบเสร็จที่ชำระแล้ว",
+    "detail": "คิดเงิน → ประวัติการชำระ → แตะรายการ → “ใบเสร็จ” แล้วกด “ออกใบกำกับภาษี”",
+    "start": "media/taxinv-f4.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 46.01,
+      "y": 15.85,
+      "w": 9.91,
+      "h": 4.15,
+      "frame": "media/taxinv-f5.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 64.24,
+      "y": 54.57,
+      "w": 65.42,
+      "h": 6.71,
+      "frame": "media/taxinv-f6.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 92.93,
+      "y": 14.39,
+      "w": 8.04,
+      "h": 4.39,
+      "frame": "media/taxinv-f7.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 41.78,
+      "y": 92.74,
+      "w": 15.76,
+      "h": 5.85,
+      "frame": "media/taxinv-f8.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ข้อมูลผู้ซื้อ",
+    "detail": "ระบบเติมชื่อและที่อยู่จากบัตร เปลี่ยนเป็นชื่อบริษัทได้ ใส่เลขผู้เสียภาษีและสาขา",
+    "start": "media/taxinv-f9.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "บริษัท สุขภาพดี จำกัด",
+      "x": 50,
+      "y": 38.05,
+      "w": 43.39,
+      "h": 5.37,
+      "frame": "media/taxinv-f10.webp"
+     },
+     {
+      "kind": "type",
+      "text": "0105561234567",
+      "x": 38.9,
+      "y": 47.44,
+      "w": 21.19,
+      "h": 5.37,
+      "frame": "media/taxinv-f11.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ออกและพิมพ์",
+    "detail": "ได้เลขที่ TX… แยกมูลค่าก่อนภาษีและ VAT 7% ให้ · ออกได้ใบเดียวต่อใบเสร็จ กดอีกครั้งเพื่อพิมพ์ซ้ำ",
+    "start": "media/taxinv-f12.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 37.84,
+      "y": 72.07,
+      "w": 8.83,
+      "h": 4.39,
+      "frame": "media/taxinv-f13.webp"
+     },
+     {
+      "kind": "point",
+      "x": 59.32,
+      "y": 51.22,
+      "w": 6,
+      "h": 6,
+      "frame": "media/taxinv-f14.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "dayclose": {
+  "id": "dayclose",
+  "poster": "media/dayclose-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "เมนูการเงิน",
+    "detail": "แถบซ้ายของหน้าคิดเงินมีเมนู ปิดยอด ค่ามือ คอร์ส/แพ็กเกจ และคลังสินค้า",
+    "start": "media/dayclose-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 14.41,
+      "y": 68.29,
+      "w": 6,
+      "h": 6,
+      "frame": "media/dayclose-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "ยอดในระบบของวันนี้",
+    "detail": "กด “ปิดยอดวันนี้” ดูยอดแยกตามช่องทาง จำนวนใบเสร็จ และใบที่ยกเลิก",
+    "start": "media/dayclose-f3.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 8.64,
+      "y": 67.93,
+      "w": 11.86,
+      "h": 11.46,
+      "frame": "media/dayclose-f4.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "นับเงินในลิ้นชัก",
+    "detail": "ใส่จำนวนแบงก์และเหรียญที่นับได้ ระบบบอกทันทีว่าตรงยอด ขาด หรือเกิน",
+    "start": "media/dayclose-f5.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "10",
+      "x": 16.86,
+      "y": 56.95,
+      "w": 9.32,
+      "h": 5.37,
+      "frame": "media/dayclose-f6.webp"
+     },
+     {
+      "kind": "type",
+      "text": "0",
+      "x": 16.86,
+      "y": 93.54,
+      "w": 9.32,
+      "h": 5.37,
+      "frame": "media/dayclose-f7.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ฝากธนาคารและยืนยัน",
+    "detail": "ใส่ยอดนำฝากและเลขอ้างอิง ถ้าเงินไม่ตรงต้องใส่หมายเหตุ แล้วกด “ยืนยันปิดยอด” · พิมพ์ใบปิดยอดได้ ดูย้อนหลังในแท็บประวัติ",
+    "start": "media/dayclose-f8.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "KBANK-0001",
+      "x": 85.68,
+      "y": 74.51,
+      "w": 22.54,
+      "h": 5.37,
+      "frame": "media/dayclose-f9.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 73.9,
+      "y": 95.37,
+      "w": 46.1,
+      "h": 5.37,
+      "frame": "media/dayclose-f10.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "commission": {
+  "id": "commission",
+  "poster": "media/commission-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "สรุปค่ามือรายเดือน",
+    "detail": "ดูจำนวนเคส รายได้ และค่ามือของผู้บำบัดทุกคน แยกตามบริการ · เลื่อนเดือนด้วยลูกศร",
+    "start": "media/commission-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 59.32,
+      "y": 48.78,
+      "w": 6,
+      "h": 6,
+      "frame": "media/commission-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "ตั้งอัตราค่ามือ",
+    "detail": "แก้ “บาท/เคส” และ “% รายได้” ในตาราง ระบบคำนวณใหม่ทันทีและบันทึกในประวัติการแก้ไข",
+    "start": "media/commission-f3.webp",
+    "actions": [
+     {
+      "kind": "type",
+      "text": "180",
+      "x": 75.42,
+      "y": 49.39,
+      "w": 7.12,
+      "h": 5.37,
+      "frame": "media/commission-f4.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 59.32,
+      "y": 109.76,
+      "w": 4,
+      "h": 5,
+      "frame": "media/commission-f5.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ส่งออก Excel",
+    "detail": "กด “ส่งออก Excel” ได้ไฟล์ CSV สำหรับทำจ่าย",
+    "start": "media/commission-f6.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 100.68,
+      "y": 14.39,
+      "w": 6,
+      "h": 6,
+      "frame": "media/commission-f7.webp"
+     }
+    ]
+   }
+  ]
+ },
+ "inventory": {
+  "id": "inventory",
+  "poster": "media/inventory-f3.webp",
+  "steps": [
+   {
+    "n": 1,
+    "title": "ยอดคงเหลือ",
+    "detail": "ลูกประคบ น้ำมัน สมุนไพร และของใช้ · แถบสีบอกระดับ รายการใกล้หมดเป็นสีส้ม",
+    "start": "media/inventory-f1.webp",
+    "actions": [
+     {
+      "kind": "point",
+      "x": 67.8,
+      "y": 60.98,
+      "w": 6,
+      "h": 6,
+      "frame": "media/inventory-f2.webp"
+     }
+    ]
+   },
+   {
+    "n": 2,
+    "title": "รับสินค้าเข้า",
+    "detail": "กด “รับเข้า” ใส่จำนวนที่ได้รับ ระบบบันทึกประวัติเข้า–ออก",
+    "start": "media/inventory-f3.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 82.42,
+      "y": 60.55,
+      "w": 7.47,
+      "h": 4.39,
+      "frame": "media/inventory-f4.webp"
+     },
+     {
+      "kind": "type",
+      "text": "30",
+      "x": 38.9,
+      "y": 54.21,
+      "w": 21.19,
+      "h": 5.37,
+      "frame": "media/inventory-f5.webp"
+     },
+     {
+      "kind": "tap",
+      "x": 37.7,
+      "y": 64.09,
+      "w": 5.51,
+      "h": 4.39,
+      "frame": "media/inventory-f6.webp"
+     }
+    ]
+   },
+   {
+    "n": 3,
+    "title": "ตั้งการใช้ต่อบริการ",
+    "detail": "แท็บ “การใช้ต่อบริการ” กำหนดว่าแต่ละบริการใช้ของอะไรเท่าไร · บันทึกการรักษาเสร็จแล้ว ระบบตัดสต็อกให้อัตโนมัติ",
+    "start": "media/inventory-f7.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 13.56,
+      "y": 14.76,
+      "w": 9.62,
+      "h": 4.15,
+      "frame": "media/inventory-f8.webp"
+     }
+    ]
+   },
+   {
+    "n": 4,
+    "title": "ประวัติเข้า–ออก",
+    "detail": "ดูทุกการรับเข้า ใช้ไป และปรับยอด พร้อมผู้ทำรายการ",
+    "start": "media/inventory-f9.webp",
+    "actions": [
+     {
+      "kind": "tap",
+      "x": 23.51,
+      "y": 14.76,
+      "w": 9.62,
+      "h": 4.15,
+      "frame": "media/inventory-f10.webp"
+     }
+    ]
+   }
+  ]
  }
 }

@@ -271,12 +271,14 @@
 }
 .rcx__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   width: 100%;
   margin-top: 6px;
 }
 .rcx__btn {
-  flex: 1;
+  flex: 1 1 28%;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;

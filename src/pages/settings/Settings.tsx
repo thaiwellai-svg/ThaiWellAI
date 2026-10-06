@@ -48,6 +48,7 @@ import { signOut } from "../../features/session";
 import "../appointments/appointments.css";
 import "../../features/shift-editor.css";
 import "../../features/book-dialog.css";
+import { VatSetting } from "../../features/TaxInvoice";
 import { RoomsEditor } from "../../features/RoomsEditor";
 import { AuditLog, BackupPanel, PromptPaySetting } from "../../features/SettingsExtras";
 import { CALL_VOICES, DEFAULT_CALL_VOICE, announce, callText } from "../../features/tts";
@@ -61,7 +62,7 @@ const SECTIONS = [
   { id: "staff", label: "ผู้บำบัด", desc: "รายชื่อและตารางงาน", icon: Stethoscope, tint: "#3e9a8f" },
   { id: "safety", label: "กฎคัดกรองความปลอดภัย", desc: "ความดัน · ผ่าตัด · ข้อห้าม", icon: ShieldCheck, tint: "#c0614f" },
   { id: "notify", label: "การแจ้งเตือน", desc: "เจ้าหน้าที่ · ผู้ป่วย · ส่งประวัติไปแอป", icon: Bell, tint: "#d9a531" },
-  { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ของคลินิก", icon: QrCode, tint: "#2f8f9a" },
+  { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ · ภาษีมูลค่าเพิ่ม", icon: QrCode, tint: "#2f8f9a" },
   { id: "audit", label: "ประวัติการแก้ไข", desc: "ใครทำอะไร เมื่อไร", icon: History, tint: "#7c5cc4" },
   { id: "guide", label: "คู่มือการใช้งาน", desc: "วิธีใช้ทุกเมนูแบบทีละขั้น", icon: GraduationCap, tint: "#2f8f9a" },
   { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง · กู้คืน · รีเซ็ตข้อมูลตัวอย่าง", icon: Database, tint: "#7d8681" },
@@ -269,6 +270,11 @@ export default function Settings() {
                 {active === "payment" && (
                   <Group title="พร้อมเพย์ของคลินิก" desc="ใช้สร้าง QR ตอนรับชำระเงินที่เคาน์เตอร์ · ตรวจให้ตรงกับบัญชีจริงของคลินิก">
                     <PromptPaySetting />
+                  </Group>
+                )}
+                {active === "payment" && (
+                  <Group title="ภาษีมูลค่าเพิ่มและใบกำกับภาษี" desc="เปิดเมื่อคลินิกจดทะเบียน VAT · ใช้ออกใบกำกับภาษีเต็มรูปให้ผู้รับบริการ">
+                    <VatSetting />
                   </Group>
                 )}
 

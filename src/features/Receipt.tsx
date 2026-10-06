@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import QRCode from "qrcode";
-import { Check, CheckCheck, Printer, Send, X, Ban } from "lucide-react";
+import { Check, CheckCheck, FileText, Printer, Send, X, Ban } from "lucide-react";
 import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { baht, thaiDateLong } from "../data/thaiDate";
 import { METHOD_LABEL } from "./billing";
 import { useLatest } from "./useLatest";
+import { TaxInvoiceDialog } from "./TaxInvoice";
 import "./receipt.css";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -28,6 +29,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
   const [voiding, setVoiding] = useState(false);
   const [reason, setReason] = useState("");
   const [refund, setRefund] = useState(true);
+  const [taxFor, setTaxFor] = useState<string | null>(null);
   useEffect(() => {
     if (!no) return;
     QRCode.toDataURL(`thaiwell://receipt/${no}`, { margin: 0, width: 160, color: { dark: "#2a2620", light: "#00000000" } })
@@ -229,6 +231,11 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
               <button type="button" className="rcx__btn rcx__btn--primary" onClick={() => window.print()}>
                 <Printer size={16} /> พิมพ์สลิป
               </button>
+              {store.settings.vat?.registered && !vp && pay?.status === "paid" && pay.method !== "credit" && pay.amount > 0 && (
+                <button type="button" className="rcx__btn" onClick={() => setTaxFor(a.id)}>
+                  <FileText size={16} /> {pay.taxInvoice ? "ใบกำกับภาษี" : "ออกใบกำกับภาษี"}
+                </button>
+              )}
               {!isVoid && pay && pay.status !== "void" && (
                 <button type="button" className="rcx__btn rcx__btn--danger" onClick={() => setVoiding(true)}>
                   <Ban size={16} /> ยกเลิกใบเสร็จ
@@ -278,6 +285,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
           </div>
         </motion.div>
       )}
+      <TaxInvoiceDialog key="tax" apptId={taxFor} onClose={() => setTaxFor(null)} />
     </AnimatePresence>,
     document.body,
   );

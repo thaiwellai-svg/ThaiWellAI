@@ -18,12 +18,17 @@
   .pp-root {
     display: block;
   }
+  /* win over the receipt slip's print rules when a document sheet is printing */
+  .pp-root,
+  .pp-root * {
+    visibility: visible !important;
+  }
 }
-.pp {
+.pps {
   font: 400 11pt/1.5 var(--font-sans);
   color: #1f2a22;
 }
-.pp__head {
+.pps__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -31,24 +36,24 @@
   margin-bottom: 10pt;
   border-bottom: 2px solid #4c845a;
 }
-.pp h1 {
+.pps h1 {
   margin: 0;
   font: 700 17pt/1.2 var(--font-sans);
   color: #2f5f3f;
 }
-.pp__head p {
+.pps__head p {
   margin: 2pt 0 0;
   font-weight: 600;
 }
-.pp__date {
+.pps__date {
   font-size: 9.5pt;
   color: #667;
 }
-.pp section {
+.pps section {
   margin-bottom: 10pt;
   break-inside: avoid;
 }
-.pp h2 {
+.pps h2 {
   margin: 0 0 4pt;
   padding: 3pt 8pt;
   border-radius: 4pt;
@@ -56,58 +61,58 @@
   font: 700 11.5pt/1.3 var(--font-sans);
   color: #2f5f3f;
 }
-.pp table {
+.pps table {
   width: 100%;
   border-collapse: collapse;
 }
-.pp th,
-.pp td {
+.pps th,
+.pps td {
   padding: 3pt 8pt;
   border-bottom: 1px solid #e3e8e4;
   text-align: left;
   vertical-align: top;
 }
-.pp th {
+.pps th {
   width: 32%;
   font-weight: 600;
   color: #556;
 }
-.pp p {
+.pps p {
   margin: 4pt 0;
 }
-.pp__verdict {
+.pps__verdict {
   padding: 5pt 8pt;
   border-radius: 4pt;
   background: #eaf7ef;
   font-weight: 700;
   color: #2f8a52;
 }
-.pp__verdict.is-warn {
+.pps__verdict.is-warn {
   background: #fdf4e3;
   color: #b06a0c;
 }
-.pp__verdict.is-stop {
+.pps__verdict.is-stop {
   background: #fdecea;
   color: #c0392b;
 }
-.pp__verdict span {
+.pps__verdict span {
   font-weight: 500;
   color: #1f2a22;
 }
-.pp__muted {
+.pps__muted {
   color: #889;
 }
-.pp__phases {
+.pps__phases {
   margin: 4pt 0;
   padding-left: 18pt;
 }
-.pp__sign {
+.pps__sign {
   display: flex;
   justify-content: space-around;
   margin-top: 28pt;
   break-inside: avoid;
 }
-.pp__sign div {
+.pps__sign div {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -115,7 +120,7 @@
   font-size: 10pt;
   color: #556;
 }
-.pp__sign span {
+.pps__sign span {
   width: 160pt;
   border-bottom: 1px dotted #889;
   height: 24pt;

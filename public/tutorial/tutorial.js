@@ -9,12 +9,19 @@ const INFO = {
   aiplan: { group: "ผู้มารับบริการ", title: "แผนการรักษาโดย AI", short: "แผนการรักษาโดย AI", color: "#3b82c4", icon: "wand-sparkles", desc: "ให้ AI ร่างแผนนวด ประคบ สมุนไพร แล้วแพทย์แผนไทยตรวจ อนุมัติ และจองนัดตามแผน" },
   appointments: { group: "ตารางนัด", title: "ตารางนัด รายละเอียดนัด และเลื่อนนัด", short: "ดูนัด · รายละเอียด · เลื่อนนัด", color: "#d08a3c", icon: "calendar-plus", desc: "ดูนัดรายวันตามผู้บำบัด เปิดหน้ารายละเอียดนัด เลื่อนนัด และเพิ่มคิวนัดใหม่" },
   cancel: { group: "ตารางนัด", title: "ยกเลิกนัด รายครั้งหรือทั้งแผน", short: "ยกเลิกนัด", color: "#d08a3c", icon: "calendar-clock", desc: "ยกเลิกนัดพร้อมเหตุผล คืนเตียงและเครดิตคอร์สอัตโนมัติ และยกเลิกนัดตามแผนการรักษาได้ทั้งรายครั้งหรือทั้งหมด" },
+  docs: { group: "ผู้มารับบริการ", title: "ใบรับรองแพทย์และใบส่งตัว", short: "ใบรับรองแพทย์ · ใบส่งตัว", color: "#3b82c4", icon: "file-heart", desc: "ออกใบรับรองแพทย์ (พร้อมวันพัก) และใบส่งตัวไปโรงพยาบาล มีเลขที่เอกสาร พิมพ์ซ้ำได้" },
+  sellpkg: { group: "ผู้มารับบริการ", title: "ขายคอร์สและแพ็กเกจ", short: "ขายคอร์ส · มัดจำ", color: "#3b82c4", icon: "shopping-bag", desc: "ขายแพ็กเกจให้ผู้ป่วย ส่วนลดสมาชิก รับมัดจำและรับชำระคงค้าง ตั้งราคาแพ็กเกจเองได้" },
+  waitlist: { group: "ตารางนัด", title: "รายการรอคิว", short: "รายการรอคิว", color: "#d08a3c", icon: "hourglass", desc: "จดชื่อคนที่รอคิวว่าง เมื่อมีคนยกเลิกนัด ระบบแจ้งคนที่รอให้อัตโนมัติ แล้วจองให้ได้ทันที" },
   billing: { group: "คิดเงิน", title: "ใบเสร็จ คืนเงิน และรายงาน", short: "ใบเสร็จ · รายงาน", color: "#b0739a", icon: "receipt-text", desc: "ดูยอดรับชำระ เปิดใบเสร็จ ยกเลิก/คืนเงิน และส่งออกรายงานเป็น Excel" },
+  taxinv: { group: "คิดเงิน", title: "ใบกำกับภาษีเต็มรูป", short: "ใบกำกับภาษี", color: "#b0739a", icon: "file-text", desc: "สำหรับคลินิกที่จด VAT ออกใบกำกับภาษีเต็มรูปจากใบเสร็จ แยกมูลค่าก่อนภาษีและ VAT ให้" },
+  dayclose: { group: "คิดเงิน", title: "ปิดยอดประจำวัน", short: "ปิดยอดประจำวัน", color: "#b0739a", icon: "landmark", desc: "นับเงินสดเทียบยอดในระบบ ดูเงินขาด/เกิน บันทึกยอดนำฝากธนาคาร และพิมพ์ใบปิดยอด" },
+  commission: { group: "คิดเงิน", title: "ค่ามือผู้บำบัด", short: "ค่ามือ · คอมมิชชัน", color: "#b0739a", icon: "hand-coins", desc: "สรุปจำนวนเคส รายได้ และค่ามือของผู้บำบัดแต่ละคนรายเดือน แก้อัตราได้ ส่งออก Excel" },
+  inventory: { group: "คิดเงิน", title: "คลังสินค้า", short: "คลังสินค้า", color: "#b0739a", icon: "boxes", desc: "ลูกประคบ น้ำมัน สมุนไพร รับเข้า ปรับยอด และตัดสต็อกอัตโนมัติตามบริการที่บันทึก" },
   planner: { group: "จัดตารางงาน", title: "ตารางงานผู้บำบัด", short: "ตารางงานผู้บำบัด", color: "#7c5cc4", icon: "calendar-clock", desc: "ดูเส้นเวลางานของผู้บำบัดทุกคน ตารางรายคน และกำหนดวันเวลาทำงาน" },
   settings: { group: "ตั้งค่า", title: "ตั้งค่าและสำรองข้อมูล", short: "ตั้งค่า · สำรองข้อมูล", color: "#66756b", icon: "settings", desc: "ข้อมูลคลินิก กฎคัดกรองความปลอดภัย การสำรอง/กู้คืน และคู่มือการใช้งาน" },
   assistant: { group: "ผู้ช่วย AI", title: "ผู้ช่วย AI", short: "ถามผู้ช่วย AI", color: "#7a5af0", icon: "bot", desc: "เปิดผู้ช่วย AI ได้ทุกหน้า ถามเรื่องคิว เครดิต หรือสรุปอาการผู้ป่วย" },
 };
-const ORDER = ["home", "visit", "record", "payment", "register", "patient", "aiplan", "appointments", "cancel", "billing", "planner", "settings", "assistant"];
+const ORDER = ["home", "visit", "record", "payment", "register", "patient", "aiplan", "docs", "sellpkg", "appointments", "cancel", "waitlist", "billing", "taxinv", "dayclose", "commission", "inventory", "planner", "settings", "assistant"];
 const GROUPS = [...new Set(ORDER.map((id) => INFO[id].group))];
 
 const $ = (s, el = document) => el.querySelector(s);

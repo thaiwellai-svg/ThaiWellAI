@@ -471,11 +471,140 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex((await p.locator('.adp__status').innerText()).includes('รอชำระในแอป'), 'หน้ารายละเอียดบิลแสดงรอชำระในแอป');
   });
 
+
+  // ===== BACK-OFFICE (stock / packages / commission / day close / tax / documents / waitlist) =====
+  const noPrint = (p) => p.evaluate(() => { window.print = () => window.dispatchEvent(new Event('afterprint')); });
+  await check('B01', 'cashier', 'ผู้ป่วยไม่มีคอร์ส · ซื้อแพ็กเกจแบบมัดจำ', 'ขายคอร์ส + มัดจำ → รับชำระคงค้างทีหลัง', async (p, ex) => {
+    const s0 = await state(p);
+    const pt = s0.patients.find((x) => !x.course);
+    await go(p, '/patients?id=' + pt.id, 1300);
+    await p.click('.pd2__sell'); await p.waitForTimeout(600);
+    await p.locator('.sp__pkgs button').first().click();
+    await p.locator('.sp__seg button', { hasText: 'รับมัดจำ' }).click();
+    await p.locator('.sp input[inputmode="numeric"]').last().fill('1000');
+    await p.getByRole('button', { name: /รับมัดจำ 1,000 บาท/ }).click(); await p.waitForTimeout(1000);
+    const s1 = await state(p);
+    const pt1 = s1.patients.find((x) => x.id === pt.id);
+    const sale = s1.biz.sales[0];
+    ex(pt1.course && pt1.course.total > 0, `เปิดคอร์สให้ผู้ป่วย (${pt1.course?.total} ครั้ง)`);
+    ex(sale && sale.payments[0].kind === 'deposit' && sale.payments[0].amount === 1000, 'บันทึกมัดจำ 1,000 บาท');
+    ex(/^PK\d{4}-/.test(sale?.no ?? ''), 'ออกเลขที่การขาย ' + sale?.no);
+    await go(p, '/packages', 1000);
+    await p.locator('.bz-tabs button', { hasText: 'ยอดขาย' }).click(); await p.waitForTimeout(400);
+    await p.getByRole('button', { name: 'รับชำระ' }).first().click(); await p.waitForTimeout(500);
+    await p.locator('.tw-dialog').getByRole('button', { name: /^รับชำระ \d/ }).click(); await p.waitForTimeout(800);
+    const sale2 = (await state(p)).biz.sales[0];
+    ex(sale2.payments.reduce((n, x) => n + x.amount, 0) === sale2.net, 'รับชำระคงค้างครบยอด');
+  });
+
+  await check('B02', 'therapist', 'บันทึกการรักษาเสร็จ', 'ตัดสต็อกลูกประคบ/น้ำมันอัตโนมัติ (ครั้งเดียว)', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[{name:'ปวดหลัง',kind:'principal'}];a.procedures=[{name:'นวด'}];s.__id=a.id;s.__svc=a.serviceId;");
+    const s0 = await state(p);
+    const use = s0.biz.usage[s0.__svc] || [];
+    await openVisit(p, s0.__id);
+    await p.locator('.vs__panel button', { hasText: /^3$/ }).first().click(); await p.waitForTimeout(200);
+    await p.getByRole('button', { name: 'บันทึก', exact: true }).click(); await p.waitForTimeout(1000);
+    const s1 = await state(p);
+    const moves = s1.biz.moves.filter((m) => m.apptId === s0.__id);
+    ex(use.length > 0 && moves.length === use.length, `ตัดสต็อก ${moves.length} รายการตามบริการ`);
+    ex(use.every((u) => s1.biz.items.find((i) => i.id === u.itemId).stock === s0.biz.items.find((i) => i.id === u.itemId).stock - u.qty), 'ยอดคงเหลือลดลงตรงตามที่ตั้งไว้');
+    ex(s1.audit.some((x) => x.cat === 'คลังสินค้า'), 'ประวัติการแก้ไขมีหมวดคลังสินค้า');
+    await go(p, '/inventory', 1000);
+    ex((await p.locator('.bz-row').count()) >= 5, 'หน้าคลังสินค้าแสดงรายการ');
+  });
+
+  await check('B03', 'cashier', 'สิ้นวัน', 'ปิดยอด: นับเงินสด = ยอดในระบบ + ฝากธนาคาร', async (p, ex) => {
+    const s0 = await state(p);
+    const cash = s0.appointments.filter((a) => a.payment?.status === 'paid' && a.payment.method === 'cash' && a.payment.at.slice(0, 10) === today()).reduce((n, a) => n + a.payment.amount, 0);
+    await go(p, '/billing/close', 1000);
+    await noPrint(p);
+    await p.fill('input[aria-label="จำนวน 1"]', String(1000 + cash));
+    ex((await p.locator('.dc__diff.is-ok').count()) === 1, 'เงินสดตรงยอด');
+    await p.getByRole('button', { name: 'ยืนยันปิดยอด' }).click(); await p.waitForTimeout(800);
+    const c = (await state(p)).biz.closings[0];
+    ex(c && c.diff === 0 && c.deposit === cash, `บันทึกปิดยอด · ฝาก ${c?.deposit} บาท`);
+    await p.fill('input[aria-label="จำนวน 1"]', String(cash + 900));
+    ex((await p.locator('.dc__diff.is-short').count()) === 1, 'นับขาด 100 → แสดงเงินขาด');
+    ex(await p.getByRole('button', { name: 'ยืนยันปิดยอด' }).isDisabled(), 'เงินไม่ตรงต้องใส่หมายเหตุก่อน');
+  });
+
+  await check('B04', 'cashier', 'ลูกค้าบริษัทขอใบกำกับภาษี', 'คลินิกจด VAT → ออกใบกำกับภาษีเต็มรูป', async (p, ex) => {
+    await mutate(p, "s.settings.vat={registered:true,taxId:'0105560000001',branch:'สำนักงานใหญ่',address:'1 ถ.สุขุมวิท กรุงเทพฯ',rate:7};const a=s.appointments.find(x=>x.payment&&x.payment.status==='paid'&&x.payment.method!=='credit'&&x.payment.amount>0);s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await go(p, '/billing/' + id, 1200);
+    await noPrint(p);
+    await p.getByRole('button', { name: 'ใบเสร็จ', exact: true }).click(); await p.waitForTimeout(1800);
+    await p.getByRole('button', { name: 'ออกใบกำกับภาษี' }).click(); await p.waitForTimeout(600);
+    await p.locator('.tw-dialog input').first().fill('บริษัท ทดสอบ จำกัด');
+    await p.getByRole('button', { name: 'ออกและพิมพ์' }).click(); await p.waitForTimeout(800);
+    const a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(/^TX\d{4}-/.test(a.payment.taxInvoice?.no ?? ''), 'ออกเลขที่ใบกำกับภาษี ' + a.payment.taxInvoice?.no);
+    ex(a.payment.taxInvoice?.buyer === 'บริษัท ทดสอบ จำกัด', 'บันทึกชื่อผู้ซื้อ');
+  });
+
+  await check('B05', 'doctor', 'ผู้ป่วยขอใบรับรองแพทย์ / ต้องส่งต่อ รพ.', 'ออกใบรับรองแพทย์ + ใบส่งตัว', async (p, ex) => {
+    const pt = (await state(p)).patients[0];
+    await go(p, '/patients?id=' + pt.id, 1300);
+    await noPrint(p);
+    for (const [label, kind] of [['ใบรับรองแพทย์', 'cert'], ['ใบส่งตัว', 'refer']]) {
+      await p.click('[aria-label="เพิ่มเติม"]'); await p.waitForTimeout(300);
+      await p.locator('.more button', { hasText: label }).click(); await p.waitForTimeout(600);
+      const d = p.locator('.tw-dialog');
+      const tas = d.locator('textarea');
+      if (kind === 'cert') { await tas.nth(1).fill('ควรหลีกเลี่ยงการยกของหนัก'); await d.locator('input[inputmode="numeric"]').fill('2'); }
+      else { await d.locator('input').nth(2).fill('รพ.ทดสอบ'); await tas.nth(1).fill('ชาร้าวลงขา'); }
+      await p.getByRole('button', { name: 'ออกเอกสารและพิมพ์' }).click(); await p.waitForTimeout(800);
+    }
+    const docs = (await state(p)).biz.docs;
+    ex(docs.some((x) => x.kind === 'cert' && /^MC/.test(x.no) && x.restDays === 2), 'ออกใบรับรองแพทย์ (พัก 2 วัน)');
+    ex(docs.some((x) => x.kind === 'refer' && /^RF/.test(x.no) && x.referTo === 'รพ.ทดสอบ'), 'ออกใบส่งตัว');
+    ex(docs.every((x) => x.doctor === ROLES.doctor.staffName), 'ชื่อแพทย์ผู้ออกเอกสาร');
+  });
+
+  await check('B06', 'reception', 'มีคนยกเลิกนัด · มีคนรอคิวช่วงเวลานั้น', 'รายการรอคิว → แจ้งอัตโนมัติ → จองให้', async (p, ex) => {
+    await mutate(p, "const t=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);const a=s.appointments.find(x=>x.date>t&&x.status==='waiting'&&!x.calledAt&&!s.patients.find(q=>q.id===x.patientId).course);const w=s.patients.find(q=>q.id!==a.patientId);s.biz.waitlist=[{id:'wl1',at:new Date().toISOString(),patientId:w.id,serviceId:'s1',date:a.date,from:'08:00',to:'20:00',status:'waiting'}];s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await go(p, '/appointments', 1200);
+    ex((await p.locator('.wl__row').count()) === 1, 'แสดงคนรอคิวบนหน้าตารางนัด');
+    await go(p, '/appointments/' + id, 1200);
+    await p.getByRole('button', { name: 'ยกเลิกนัด' }).first().click(); await p.waitForTimeout(600);
+    await p.getByRole('button', { name: 'ยืนยันยกเลิกนัด' }).click(); await p.waitForTimeout(600);
+    const toast = await p.locator('body').innerText();
+    ex(toast.includes('แจ้งคนรอคิว 1 คน'), 'แจ้งเตือนว่าแจ้งคนรอคิวแล้ว');
+    ex((await state(p)).biz.waitlist[0].status === 'notified', 'สถานะคนรอคิว = แจ้งแล้ว');
+    await go(p, '/appointments', 1200);
+    await p.locator('.wl__book').first().click(); await p.waitForTimeout(900);
+    ex((await p.locator('.tw-dialog').count()) > 0, 'กด "จองให้" เปิดหน้าจองพร้อมชื่อผู้ป่วย');
+  });
+
+  await check('B08', 'reception', 'ผู้ป่วยโทรมาขอคิว แต่คิวเต็ม', 'เพิ่มชื่อเข้ารายการรอคิว', async (p, ex) => {
+    await go(p, '/appointments', 1200);
+    await p.click('.wl .rail-clear'); await p.waitForTimeout(600);
+    await p.locator('.tw-dialog input').first().fill('สมพร'); await p.waitForTimeout(300);
+    await p.locator('.wl__found button').first().click(); await p.waitForTimeout(300);
+    ex((await p.locator('.wl__picked').count()) === 1, 'เลือกผู้ป่วยจากผลค้นหาได้');
+    await p.getByRole('button', { name: 'เพิ่มเข้ารายการ' }).click(); await p.waitForTimeout(800);
+    ex((await state(p)).biz.waitlist.length === 1 && (await p.locator('.wl__row').count()) === 1, 'แสดงในรายการรอคิว');
+  });
+
+  await check('B07', 'admin', 'สรุปค่ามือประจำเดือน', 'ค่ามือ = เคส × บาท/เคส + % รายได้ · แก้อัตรา', async (p, ex) => {
+    await go(p, '/billing/commission', 1200);
+    const rows = await p.locator('.bz-table tbody tr').count();
+    ex(rows === (await state(p)).therapists.length, `แสดงผู้บำบัดครบ ${rows} คน`);
+    const inp = p.locator('.bz-table tbody tr').first().locator('input').first();
+    await inp.fill('200'); await inp.blur(); await p.waitForTimeout(500);
+    const s = await state(p);
+    ex(s.biz.rates[s.therapists[0].id].perCase === 200, 'แก้ค่ามือต่อเคสแล้วบันทึก');
+    const dl = p.waitForEvent('download', { timeout: 4000 }).catch(() => null);
+    await p.getByRole('button', { name: 'ส่งออก Excel' }).click();
+    ex(!!(await dl), 'ส่งออก CSV ได้');
+  });
+
   // ===== CROSS-CUTTING =====
   await check('X01', 'reception', 'ทุกหน้า', 'เปิดได้ไม่มี error (แนวนอน + แนวตั้ง)', async (p, ex) => {
     const s = await state(p);
     const a = s.appointments.find((x) => x.payment);
-    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/tutorial/'];
+    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/commission', '/tutorial/'];
     for (const vp of [{ width: 1366, height: 1024 }, { width: 820, height: 1180 }]) {
       await p.setViewportSize(vp);
       for (const r of routes) {

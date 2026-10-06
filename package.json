@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "qa": "node qa/study-cases.js"
+    "qa": "node qa/study-cases.cjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.1",

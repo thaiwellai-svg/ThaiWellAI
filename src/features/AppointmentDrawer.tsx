@@ -19,6 +19,7 @@ import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
 import { VisitScreening } from "./ScreeningAlert";
 import { CancelDialog } from "./CancelDialog";
+import { deductStock } from "./stock";
 import { screeningFlags } from "../data/counterScreening";
 
 export { stageOf, type Stage } from "../data/domain";
@@ -201,7 +202,10 @@ export function AppointmentDrawer({
     );
   else if (stage === "assess")
     footer = (
-      <Button size="lg" fill disabled={painAfter === undefined || !(appt.diagnoses?.length && appt.procedures?.length)} leading={<Check size={16} />} onClick={() => step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`)}>
+      <Button size="lg" fill disabled={painAfter === undefined || !(appt.diagnoses?.length && appt.procedures?.length)} leading={<Check size={16} />} onClick={() => {
+          step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
+          deductStock(store, appt.id, appt.serviceId, store.settings.staffName);
+        }}>
         บันทึก
       </Button>
     );

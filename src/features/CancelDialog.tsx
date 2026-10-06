@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarX2, Check, Info, Ticket } from "lucide-react";
 import { clsx } from "clsx";
 import { Avatar, Button, Chip, Dialog, Field, Switch, Textarea, useToast } from "../design-system";
+import { notifyWaitlist } from "./Waitlist";
 import { useStore } from "../store/store";
 import { patientPhoto } from "../data/avatars";
 import { thaiDateShort, todayISO } from "../data/thaiDate";
@@ -66,8 +67,9 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
         log: `ยกเลิกนัด ${thaiDateShort(a.date)} ${a.start} น. · ${by === "patient" ? "ผู้ป่วยแจ้ง" : "คลินิกยกเลิก"} · ${why}`,
       });
     }
+    const waiting = notifyWaitlist(store, targets.map((a) => ({ date: a.date, start: a.start, patientId: a.patientId })));
     toast({
-      message: targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว${p.course ? ` · คืนเครดิตให้ ${targets.length} ครั้ง` : ""}` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว${notify ? " · แจ้งผู้ป่วยผ่านแอปแล้ว" : ""}`,
+      message: (waiting ? `แจ้งคนรอคิว ${waiting} คนผ่านแอปแล้ว · ` : "") + (targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว${p.course ? ` · คืนเครดิตให้ ${targets.length} ครั้ง` : ""}` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว${notify ? " · แจ้งผู้ป่วยผ่านแอปแล้ว" : ""}`),
       action: { label: "เลิกทำ", onClick: () => before.forEach((a) => store.dispatch({ type: "restoreAppointment", appointment: a })) },
     });
     onClose();

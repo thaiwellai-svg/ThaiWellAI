@@ -4,6 +4,7 @@ import type { AuditEntry, Appointment, AppointmentStatus, BookingRequest, Clinic
 import { createSeed, DEFAULT_SETTINGS, SERVICES, THERAPISTS } from "../data/seed";
 import { todayISO } from "../data/thaiDate";
 import { withBirthDate } from "../data/elements";
+import { defaultBiz, type Biz } from "../data/biz";
 
 interface State {
   version: number;
@@ -20,6 +21,8 @@ interface State {
   services: Service[];
   /** audit trail (newest first) */
   audit: AuditEntry[];
+  /** stock, packages, commission, day close, waitlist, issued documents */
+  biz: Biz;
   /** true = real data: don't replace with fresh demo data when the day changes */
   keepData?: boolean;
 }
@@ -49,6 +52,7 @@ type Action =
   | { type: "voidPayment"; id: string; reason: string; refund: boolean }
   | { type: "restoreBackup"; state: State }
   | { type: "setKeepData"; on: boolean }
+  | { type: "biz"; update: (b: Biz) => Biz; log: string; cat?: AuditEntry["cat"]; patientId?: string }
   | { type: "reset" };
 
 const VERSION = 24;
@@ -56,7 +60,7 @@ const KEY = "thaiwell.backoffice";
 
 function fresh(): State {
   const seed = createSeed();
-  return { version: VERSION, seededOn: todayISO(), ...seed, patients: seed.patients.map(withBirthDate), settings: DEFAULT_SETTINGS, therapists: THERAPISTS, services: SERVICES, audit: [] };
+  return { version: VERSION, seededOn: todayISO(), ...seed, patients: seed.patients.map(withBirthDate), settings: DEFAULT_SETTINGS, therapists: THERAPISTS, services: SERVICES, audit: [], biz: defaultBiz() };
 }
 
 function load(): State {
@@ -71,11 +75,12 @@ function load(): State {
           services: s.services ?? SERVICES,
           settings: { ...DEFAULT_SETTINGS, ...s.settings },
           audit: s.audit ?? [],
+          biz: { ...defaultBiz(), ...(s.biz ?? {}) },
           patients: s.patients.map(withBirthDate),
           therapists: (s.therapists ?? THERAPISTS).map((t) => ({ ...t, shifts: t.shifts.map((x) => ({ ...x, services: x.services ?? t.services })) })),
         };
       // new demo data (new day or new version) — keep the clinic setup and the user's profile
-      if (s.settings) return { ...fresh(), settings: { ...DEFAULT_SETTINGS, ...s.settings }, audit: s.audit ?? [] };
+      if (s.settings) return { ...fresh(), settings: { ...DEFAULT_SETTINGS, ...s.settings }, audit: s.audit ?? [], biz: s.biz ? { ...defaultBiz(), ...s.biz, sales: [], moves: [], closings: [], waitlist: [], docs: [] } : defaultBiz() };
     }
   } catch {
     /* storage unavailable — fall through to seed */
@@ -252,6 +257,8 @@ function reducer(state: State, action: Action): State {
       return { ...action.state, keepData: true, audit: action.state.audit ?? [] };
     case "setKeepData":
       return { ...state, keepData: action.on };
+    case "biz":
+      return { ...state, biz: action.update(state.biz) };
     case "reset":
       // new demo data, but keep the clinic setup and the signed-in user's profile
       return { ...fresh(), settings: state.settings, audit: state.audit };
@@ -319,6 +326,8 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
       return { cat: "ระบบ", text: "กู้คืนข้อมูลจากไฟล์สำรอง" };
     case "setKeepData":
       return { cat: "ระบบ", text: action.on ? "เปิดใช้ข้อมูลจริง (ไม่รีเซ็ตรายวัน)" : "กลับไปใช้ข้อมูลตัวอย่างรายวัน" };
+    case "biz":
+      return { cat: action.cat ?? "การเงิน", text: action.log, patientId: action.patientId };
     case "reset":
       return { cat: "ระบบ", text: "รีเซ็ตข้อมูลตัวอย่าง" };
     default:

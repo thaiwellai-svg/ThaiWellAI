@@ -57,8 +57,8 @@ export function PromptPaySetting() {
 
 /* ───────────── audit trail ───────────── */
 
-const CATS: AuditEntry["cat"][] = ["เวชระเบียน", "การเงิน", "นัดหมาย", "ผู้ป่วย", "ตั้งค่า", "ระบบ"];
-const CAT_TONE: Record<AuditEntry["cat"], string> = { เวชระเบียน: "#7c5cc4", การเงิน: "#d97706", นัดหมาย: "#3b82c4", ผู้ป่วย: "#2f8a52", ตั้งค่า: "#6b7a71", ระบบ: "#c2482b" };
+const CATS: AuditEntry["cat"][] = ["เวชระเบียน", "การเงิน", "นัดหมาย", "ผู้ป่วย", "คลังสินค้า", "ตั้งค่า", "ระบบ"];
+const CAT_TONE: Record<AuditEntry["cat"], string> = { เวชระเบียน: "#7c5cc4", การเงิน: "#d97706", นัดหมาย: "#3b82c4", ผู้ป่วย: "#2f8a52", ตั้งค่า: "#6b7a71", ระบบ: "#c2482b", คลังสินค้า: "#0f766e" };
 
 /** who did what, when — newest first, filter by category / search */
 export function AuditLog() {

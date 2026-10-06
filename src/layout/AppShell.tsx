@@ -25,6 +25,10 @@ const AISpotlight = lazy(() => import("../pages/ai/Assistant").then((m) => ({ de
 const Visits = lazy(() => import("../pages/visits/Visits"));
 const Billing = lazy(() => import("../pages/billing/Billing"));
 const BillDetail = lazy(() => import("../pages/billing/BillDetail"));
+const Inventory = lazy(() => import("../pages/biz/Inventory"));
+const Packages = lazy(() => import("../pages/biz/Packages"));
+const Commission = lazy(() => import("../pages/biz/Commission"));
+const DayClose = lazy(() => import("../pages/biz/DayClose"));
 const Requests = lazy(() => import("../pages/requests/Requests"));
 const Login = lazy(() => import("../pages/login/Login"));
 const RoomScene = lazy(() => import("./room3d/RoomScene"));
@@ -123,6 +127,10 @@ export function AppShell() {
             <Route path="/settings" element={<Page><Settings /></Page>} />
             <Route path="/visits" element={<Page><Visits /></Page>} />
             <Route path="/billing" element={<Page><Billing /></Page>} />
+            <Route path="/billing/close" element={<Page><DayClose /></Page>} />
+            <Route path="/billing/commission" element={<Page><Commission /></Page>} />
+            <Route path="/inventory" element={<Page><Inventory /></Page>} />
+            <Route path="/packages" element={<Page><Packages /></Page>} />
             <Route path="/billing/:id" element={<Page><BillDetail /></Page>} />
             <Route path="/requests" element={<Page><Requests /></Page>} />
             <Route path="/design-system" element={<Page><DesignSystem /></Page>} />
@@ -132,7 +140,7 @@ export function AppShell() {
       </AnimatePresence>
 
       {/* sub-pages (register / edit / booking requests) are full-screen tasks: no dock, they have their own back button */}
-      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests|appointments\/[^/]+|billing\/[^/]+)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
+      {!/^\/(patients\/(new|[^/]+\/(edit|screen))|requests|inventory|packages|appointments\/[^/]+|billing\/[^/]+)$/.test(location.pathname) && <Dock onAssistant={() => setSpot(true)} />}
       <Suspense fallback={null}>{spotEver && <AISpotlight open={spot} onClose={() => setSpot(false)} />}</Suspense>
       <Tour />
         </>

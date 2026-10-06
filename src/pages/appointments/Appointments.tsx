@@ -10,6 +10,8 @@ import { AppointmentDrawer } from "../../features/AppointmentDrawer";
 import { PatientDrawer } from "../../features/PatientDrawer";
 import { FilterMenu } from "../../features/FilterMenu";
 import { BookDialog } from "../../features/BookDialog";
+import { WaitlistCard } from "../../features/Waitlist";
+import type { WaitEntry } from "../../data/biz";
 import type { BookPreset, BookSlot } from "../../features/BookDialog";
 import { Plus } from "lucide-react";
 import { STATUS_META, requestConflicts } from "../../data/domain";
@@ -124,6 +126,19 @@ export default function Appointments() {
   const [openPatient, setOpenPatient] = useState<string | null>(null);
   const [dir, setDir] = useState(0);
   const [booking, setBooking] = useState<BookPreset | null>(null);
+  // booking for someone on the waitlist: once the dialog closes, mark them booked if they got a new appointment
+  const waitFor = useRef<{ e: WaitEntry; n: number } | null>(null);
+  const bookWait = (e: WaitEntry) => {
+    waitFor.current = { e, n: store.appointments.filter((a) => a.patientId === e.patientId).length };
+    setBooking({ patientId: e.patientId, serviceId: e.serviceId, type: "booked" });
+  };
+  useEffect(() => {
+    const w = waitFor.current;
+    if (booking || !w) return;
+    waitFor.current = null;
+    if (store.appointments.filter((a) => a.patientId === w.e.patientId).length > w.n)
+      store.dispatch({ type: "biz", cat: "นัดหมาย", patientId: w.e.patientId, log: `จองคิวให้จากรายการรอคิว · ${store.patientById(w.e.patientId).name}`, update: (b) => ({ ...b, waitlist: b.waitlist.map((x) => (x.id === w.e.id ? { ...x, status: "booked" } : x)) }) });
+  }, [booking, store]);
   const [clashOpen, setClashOpen] = useState(false);
   const { settings } = store;
 
@@ -226,6 +241,8 @@ export default function Appointments() {
               })}
             </div>
           </div>
+
+          <WaitlistCard date={date} onBook={bookWait} />
 
           <div className="rail-card">
             <div className="rail-card__head">
@@ -406,7 +423,10 @@ export default function Appointments() {
         }}
       />
       <PatientDrawer id={openPatient} onClose={() => setOpenPatient(null)} />
-      <BookDialog preset={booking} onClose={() => setBooking(null)} />
+      <BookDialog
+        preset={booking}
+        onClose={() => setBooking(null)}
+      />
     </WorkPage>
   );
 }
