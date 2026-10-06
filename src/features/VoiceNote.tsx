@@ -7,6 +7,7 @@ import { THAI_MASSAGE_KNOWLEDGE, chatJSON, fileToWav, startMic, transcribe, type
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
 import { dxCode, procCode } from "../data/codes";
 import type { Appointment, Diagnosis, Procedure } from "../data/types";
+import { VoiceWave } from "./VoiceWave";
 import "./voice-note.css";
 
 type Extract = { diagnoses: string[]; procedures: { name: string; area?: string; minutes?: number | null }[]; painAfter: number | null; advice: string };
@@ -132,6 +133,12 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
       toast({ message: "เปิดไมโครโฟนไม่ได้ · อนุญาตการใช้ไมค์ใน Safari หรือกด “พิมพ์แทน”", tone: "danger" });
     }
   };
+  const cancelRec = () => {
+    mic.current?.cancel();
+    mic.current = null;
+    setLevel(0);
+    setPhase("idle");
+  };
   const stop = async () => {
     const m = mic.current;
     if (!m) return;
@@ -190,39 +197,44 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
 
       {phase !== "done" && (
         <div className="vn__stage">
-          {phase === "rec" ? (
-            <>
-              <button type="button" className="vn__mic is-rec" onClick={stop} aria-label="หยุดบันทึกเสียง">
-                <motion.i animate={{ scale: 1 + level * 0.7, opacity: 0.18 + level * 0.4 }} transition={{ duration: 0.08 }} />
-                <Square size={22} fill="currentColor" />
-              </button>
-              <span className="vn__wave" aria-hidden>
-                {Array.from({ length: 18 }, (_, i) => (
-                  <motion.i key={i} animate={{ scaleY: 0.15 + level * (0.35 + 0.65 * Math.abs(Math.sin(i * 1.7 + secs * 2))) }} transition={{ duration: 0.1 }} />
-                ))}
-              </span>
-              <b className="vn__status">กำลังฟัง · {mm}</b>
-              <small className="vn__hint">แตะปุ่มสี่เหลี่ยมเมื่อพูดจบ</small>
-            </>
-          ) : busy ? (
-            <>
-              <span className="vn__mic is-busy">
-                <Loader2 size={24} className="spin" />
-              </span>
-              <ol className="vn__steps">
-                <li className={phase === "asr" ? "is-now" : "is-done"}>
-                  {phase === "asr" ? <Loader2 size={13} className="spin" /> : <Check size={13} strokeWidth={3} />} ถอดเสียงภาษาไทย
-                </li>
-                <li className={phase === "ai" ? "is-now" : undefined}>
-                  {phase === "ai" ? <Loader2 size={13} className="spin" /> : <i />} AI แยกวินิจฉัย หัตถการ Pain คำแนะนำ
-                </li>
-              </ol>
-              {phase === "ai" && text && <p className="vn__heard">“{text}”</p>}
-            </>
+          {phase === "rec" || busy ? (
+            <div className={`vn__live${busy ? " is-busy" : ""}`}>
+              <VoiceWave level={level} calm={busy} />
+              {phase === "rec" ? (
+                <>
+                  <b className="vn__time">{mm}</b>
+                  <small className="vn__hint">
+                    <i className="vn__dot" /> กำลังฟัง · พูดสรุปการรักษาได้เลย
+                  </small>
+                  <div className="vn__ctl">
+                    <button type="button" className="vn__cancel" onClick={cancelRec} aria-label="ยกเลิกการอัด">
+                      <X size={18} />
+                    </button>
+                    <button type="button" className="vn__done" onClick={stop} aria-label="หยุดบันทึกเสียง">
+                      <Square size={13} fill="currentColor" /> หยุดและสรุป
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ol className="vn__steps">
+                    <li className={phase === "asr" ? "is-now" : "is-done"}>
+                      {phase === "asr" ? <Loader2 size={13} className="spin" /> : <Check size={13} strokeWidth={3} />} ถอดเสียงภาษาไทย
+                    </li>
+                    <li className={phase === "ai" ? "is-now" : undefined}>
+                      {phase === "ai" ? <Loader2 size={13} className="spin" /> : <i />} AI แยกวินิจฉัย หัตถการ Pain คำแนะนำ
+                    </li>
+                  </ol>
+                  {phase === "ai" && text && <p className="vn__heard">“{text}”</p>}
+                </>
+              )}
+            </div>
           ) : (
             <>
               <button type="button" className="vn__mic" onClick={start} aria-label="พูดเพื่อบันทึก" disabled={!canRecord}>
-                <Mic size={26} />
+                <i className="vn__halo" />
+                <i className="vn__halo is-2" />
+                <Mic size={28} strokeWidth={2.2} />
               </button>
               <b className="vn__status">{phase === "error" ? "ลองใหม่อีกครั้ง" : "แตะไมค์แล้วพูดสรุปการรักษา"}</b>
               {phase === "error" ? (

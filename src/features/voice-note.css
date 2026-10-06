@@ -8,8 +8,7 @@
   box-shadow: inset 0 0 0 1px rgba(76, 132, 90, 0.18);
 }
 .vn.is-rec {
-  background: linear-gradient(160deg, #fdeeee 0%, #fbf3ec 100%);
-  box-shadow: inset 0 0 0 1px rgba(210, 58, 42, 0.22);
+  background: linear-gradient(160deg, #eaf5ee 0%, #f1eefc 100%);
 }
 .vn__head {
   display: flex;
@@ -51,36 +50,122 @@
   isolation: isolate;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  height: 76px;
+  margin: 6px 0 4px;
   border-radius: 50%;
-  background: var(--color-brand);
+  background: radial-gradient(circle at 30% 25%, #6fae7d, #3f7a50 55%, #2f6f6a);
   color: var(--white);
-  box-shadow: 0 10px 24px rgba(76, 132, 90, 0.38), 0 0 0 8px rgba(76, 132, 90, 0.1);
+  box-shadow: 0 12px 28px rgba(47, 111, 80, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.35);
   transition: transform var(--dur-fast) var(--ease-out);
 }
 .vn__mic:active {
-  transform: scale(0.94);
+  transform: scale(0.93);
 }
 .vn__mic:disabled {
   background: #a9b8ad;
   box-shadow: none;
 }
-.vn__mic.is-rec {
-  background: #d23a2a;
-  box-shadow: 0 10px 24px rgba(210, 58, 42, 0.38);
+.vn__mic:disabled .vn__halo {
+  display: none;
 }
-.vn__mic.is-rec i {
+/* soft breathing rings behind the mic */
+.vn__halo {
   position: absolute;
-  inset: -10px;
+  inset: 0;
   z-index: -1;
   border-radius: 50%;
-  background: #d23a2a;
+  background: radial-gradient(circle, rgba(76, 132, 90, 0.28), rgba(47, 143, 154, 0) 70%);
+  animation: vn-breathe 2.6s ease-in-out infinite;
 }
-.vn__mic.is-busy {
+.vn__halo.is-2 {
+  animation-delay: 1.3s;
+}
+@keyframes vn-breathe {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+/* live recording / processing */
+.vn__live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.vw {
+  display: block;
+  width: 100%;
+  height: 96px;
+  overflow: visible;
+}
+.vw path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  mix-blend-mode: multiply;
+}
+.vn__live.is-busy .vw {
+  height: 64px;
+  opacity: 0.8;
+}
+.vn__time {
+  font: 700 34px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+  color: var(--color-text);
+}
+.vn__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #d23a2a;
+  vertical-align: 1px;
+  animation: vn-blink 1.2s ease-in-out infinite;
+}
+@keyframes vn-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.vn__ctl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.vn__cancel {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
   background: var(--white);
-  color: var(--color-brand);
-  box-shadow: 0 6px 16px rgba(20, 40, 30, 0.1);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  color: var(--color-text-muted);
+}
+.vn__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 99px;
+  background: var(--color-text);
+  color: var(--white);
+  font: 700 14px/1 var(--font-sans);
+  box-shadow: 0 8px 18px rgba(20, 30, 25, 0.22);
+}
+.vn__done svg {
+  color: #ff6b5a;
 }
 .vn .spin {
   animation: vn-spin 0.9s linear infinite;

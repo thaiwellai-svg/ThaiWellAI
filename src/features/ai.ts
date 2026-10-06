@@ -108,9 +108,11 @@ export async function startMic(onLevel?: (v: number) => void) {
     const d = e.inputBuffer.getChannelData(0);
     chunks.push(new Float32Array(d));
     if (onLevel) {
-      let peak = 0;
-      for (let i = 0; i < d.length; i += 16) peak = Math.max(peak, Math.abs(d[i]));
-      onLevel(Math.min(1, peak * 2.2));
+      // loudness (RMS) mapped so normal speech fills most of the range
+      let sum = 0;
+      for (let i = 0; i < d.length; i += 8) sum += d[i] * d[i];
+      const rms = Math.sqrt(sum / (d.length / 8));
+      onLevel(Math.min(1, Math.pow(rms * 9, 0.7)));
     }
   };
   // a muted sink keeps the processor running without echoing the mic to the speaker
