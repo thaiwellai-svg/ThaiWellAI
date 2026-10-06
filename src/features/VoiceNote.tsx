@@ -468,13 +468,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     advice: advice.trim() ? `${advice.trim().split("\n").length} ข้อ` : undefined,
   };
   const steps = SET.map((x) => ({ ...x, value: value[x.slot] }));
-  const doneCount = steps.filter((x) => x.value).length;
-  const askAgain = (slot: Slot) => {
-    if (thinking || rec) return;
-    stopSpeaking();
-    setPick([]);
-    void ask(slot);
-  };
+
 
   /** quick replies under the current question */
   const QUICK: Partial<Record<Slot, string[]>> = {
@@ -636,34 +630,6 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             <i /> คุยด้วยเสียง
           </span>
         )}
-      </div>
-
-      <div className="rc-steps" aria-label="ชุดคำถาม">
-        <div className="rc-steps__head">
-          <b>ชุดคำถาม</b>
-          <i>
-            <i style={{ width: `${(doneCount / steps.length) * 100}%` }} />
-          </i>
-          <small>
-            {doneCount}/{steps.length}
-          </small>
-        </div>
-        <ol>
-          {steps.map((x, i) => {
-            const now = pending === x.slot;
-            return (
-              <li key={x.slot}>
-                <button type="button" className={clsx(x.value && "is-done", now && "is-now")} onClick={() => askAgain(x.slot)} title={`ถามเรื่อง${x.label}อีกครั้ง`}>
-                  <i>{x.value ? <Check size={11} strokeWidth={3.2} /> : i + 1}</i>
-                  <span>
-                    <b>{x.label}</b>
-                    <small>{x.value ?? (now ? "กำลังถาม…" : "ยังไม่ได้ตอบ")}</small>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
       </div>
 
       <div className="rc-list scroll-y scroll-y--light" ref={list}>
