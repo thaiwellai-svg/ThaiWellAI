@@ -718,3 +718,16 @@
   background: #2f6f4a;
   opacity: 0.75;
 }
+.rc-msg.is-live.is-sending .rc-bub {
+  opacity: 1;
+}
+.rc-msg.is-live:not(.is-sending) .rc-bub p::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -2px;
+  background: rgba(255, 255, 255, 0.85);
+  animation: rc-blink 1s steps(2) infinite;
+}

@@ -94,6 +94,9 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const heardSpeech = useRef(false);
   const quietSince = useRef(0);
   const peeking = useRef(false);
+  // when the live transcript last changed (stable text = finished talking)
+  const liveAt = useRef(0);
+  const [sending, setSending] = useState(false);
   const secure = typeof window === "undefined" || window.isSecureContext;
   const canRecord = secure && !!navigator.mediaDevices?.getUserMedia;
   const dx = appt.diagnoses ?? [];
@@ -301,17 +304,29 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     quietSince.current = 0;
     try {
       const started = Date.now();
+      // learn the room's noise for ~0.6 s, then speech = clearly above it
+      let floorSum = 0;
+      let floorN = 0;
+      let thr = 0.3;
       mic.current = await startMic((v) => {
         setLevel(v);
-        // voice mode: stop by itself after ~1.5 s of quiet once something was said
-        if (v > 0.32) {
+        const now = Date.now();
+        if (now - started < 600) {
+          floorSum += v;
+          floorN++;
+          thr = Math.max(0.16, Math.min(0.5, (floorSum / floorN) * 2.2 + 0.06));
+          return;
+        }
+        if (v > thr) {
           heardSpeech.current = true;
           quietSince.current = 0;
-        } else if (vm.current && heardSpeech.current && Date.now() - started > 1500) {
-          quietSince.current ||= Date.now();
-          if (Date.now() - quietSince.current > 1500) void finish();
+        } else if (heardSpeech.current) {
+          quietSince.current ||= now;
+          // stopped talking → send by itself
+          if (now - quietSince.current > 1300) void finish();
         }
       });
+      liveAt.current = Date.now();
       setLive("");
       setRec(true);
     } catch {
@@ -330,14 +345,21 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         const { wav, seconds } = await m.peek(30);
         if (seconds > 0.8 && mic.current === m) {
           const txt = await transcribe(wav);
-          if (mic.current === m && txt) setLive(txt);
+          if (mic.current === m && txt) {
+            setLive((prev) => {
+              if (prev !== txt) liveAt.current = Date.now();
+              return txt;
+            });
+            // the words stopped changing for a while → treat as done (noisy rooms never go quiet)
+            if (Date.now() - liveAt.current > 2200 && seconds > 1.5) void finish();
+          }
         }
       } catch {
         /* keep the last text */
       } finally {
         peeking.current = false;
       }
-    }, 1600);
+    }, 1100);
     return () => window.clearInterval(t);
   }, [rec]);
 
@@ -350,18 +372,19 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     const { wav, seconds } = await m.stop();
     if (seconds < 0.8) {
       setLive("");
+      if (vm.current) void listen();
       return;
     }
-    setThinking(true);
+    setSending(true); // the live bubble stays with what was heard
     try {
       const heard = await transcribe(wav);
+      setSending(false);
       setLive("");
-      setThinking(false);
       if (heard) await onUser(heard);
       else if (vm.current) void listen();
     } catch {
+      setSending(false);
       setLive("");
-      setThinking(false);
       say("ai", "ถอดเสียงไม่สำเร็จค่ะ ลองพูดอีกครั้ง หรือพิมพ์ตอบแทน");
     }
   };
@@ -680,10 +703,10 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
           </motion.div>
         ))}
 
-        {rec && (
-          <div className="rc-msg is-me is-live">
+        {(rec || sending) && (
+          <div className={clsx("rc-msg is-me is-live", sending && "is-sending")}>
             <div className="rc-bub">
-              <p>{live || "…"}</p>
+              <p>{live || (sending ? "กำลังแปลงเสียงเป็นข้อความ…" : "…")}</p>
             </div>
           </div>
         )}
@@ -709,13 +732,9 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             </button>
             <span className="rc-live">
               <VoiceWave level={level} speak={speaking} calm={!rec && !speaking} height={44} />
-              <small>{rec ? "กำลังฟัง · พูดได้เลย" : speaking ? "AI กำลังตอบ" : thinking ? "AI กำลังคิด…" : "กำลังเปิดไมค์…"}</small>
+              <small>{rec ? "กำลังฟัง · หยุดพูดแล้วส่งให้เอง" : sending ? "กำลังส่ง…" : speaking ? "AI กำลังตอบ" : thinking ? "AI กำลังคิด…" : "กำลังเปิดไมค์…"}</small>
             </span>
-            {rec ? (
-              <button type="button" className="rc-stop" onClick={() => void finish()} aria-label="หยุดบันทึกเสียง">
-                <Send size={13} /> ส่งเลย
-              </button>
-            ) : speaking ? (
+            {speaking ? (
               <button type="button" className="rc-stop" onClick={() => (stopSpeaking(), setSpeaking(false), void listen())} aria-label="พูดแทรก">
                 <Mic size={13} /> พูดแทรก
               </button>
