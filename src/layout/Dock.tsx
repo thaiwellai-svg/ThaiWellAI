@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Check, Minimize2, PanelBottom, PanelLeft } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
@@ -50,10 +49,10 @@ const readMode = (): DockMode => {
     return "bar";
   }
 };
-const MODES: { id: DockMode; label: string; Icon: typeof PanelBottom }[] = [
-  { id: "bar", label: "ขยาย · แถบด้านล่าง", Icon: PanelBottom },
-  { id: "mini", label: "ย่อ · ซ่อนแถบเมนู", Icon: Minimize2 },
-  { id: "side", label: "แถบด้านข้าง", Icon: PanelLeft },
+const MODES: { id: DockMode; label: string }[] = [
+  { id: "bar", label: "ด้านล่าง" },
+  { id: "mini", label: "ย่อ" },
+  { id: "side", label: "ด้านข้าง" },
 ];
 
 export function Dock({ onAssistant }: { onAssistant: () => void }) {
@@ -115,13 +114,19 @@ export function Dock({ onAssistant }: { onAssistant: () => void }) {
         <AnimatePresence>
           {menu && (
             <motion.div className="dock__menu" role="menu" initial={{ opacity: 0, y: 6, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.97 }} transition={{ duration: 0.15 }}>
-              {MODES.map(({ id, label, Icon }) => (
-                <button key={id} type="button" role="menuitemradio" aria-checked={view === id} onClick={() => choose(id)}>
-                  <Icon size={16} />
-                  <span>{label}</span>
-                  {view === id && <Check size={14} strokeWidth={3} />}
-                </button>
-              ))}
+              <b className="dock__menu-t">รูปแบบแถบเมนู</b>
+              <div className="dock__seg" role="radiogroup" aria-label="รูปแบบแถบเมนู">
+                {MODES.map(({ id, label }) => (
+                  <button key={id} type="button" role="radio" aria-checked={view === id} onClick={() => choose(id)}>
+                    {view === id && <motion.span layoutId="dock-seg" className="dock__seg-pill" transition={spring.snappy} />}
+                    {/* a tiny screen showing where the menu sits */}
+                    <span className={`dock__mock is-${id}`} aria-hidden>
+                      <i />
+                    </span>
+                    <span className="dock__seg-l">{label}</span>
+                  </button>
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

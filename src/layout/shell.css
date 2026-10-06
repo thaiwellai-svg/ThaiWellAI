@@ -747,33 +747,91 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% + 8px);
-  min-width: 210px;
-  padding: 6px;
-  border-radius: 16px;
+  width: 252px;
+  padding: 10px;
+  border-radius: 18px;
   translate: -50% 0;
   background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 14px 34px rgba(20, 30, 25, 0.22);
 }
-.dock__menu button {
+.dock__menu-t {
+  display: block;
+  margin: 2px 4px 8px;
+  font: 700 12px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+/* sliding segmented choice */
+.dock__seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border-radius: 14px;
+  background: #eef2ef;
+}
+.dock__seg button {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 8px 4px 7px;
   border-radius: 11px;
-  font: 600 13px/1.2 var(--font-sans);
-  color: var(--color-text);
-  text-align: left;
 }
-.dock__menu button:hover {
-  background: var(--sage-50);
+.dock__seg-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  background: var(--white);
+  box-shadow: 0 3px 10px rgba(20, 40, 30, 0.14);
 }
-.dock__menu button[aria-checked="true"] {
-  background: #eaf4ed;
+.dock__seg-l {
+  position: relative;
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  transition: color 0.2s ease;
+}
+.dock__seg button[aria-checked="true"] .dock__seg-l {
   color: #23633d;
 }
-.dock__menu button span {
-  flex: 1;
+/* mini screen preview */
+.dock__mock {
+  position: relative;
+  width: 44px;
+  height: 30px;
+  border-radius: 6px;
+  background: #dde5df;
+  box-shadow: inset 0 0 0 1.5px #c9d4cc;
+  transition: background 0.2s ease;
+}
+.dock__seg button[aria-checked="true"] .dock__mock {
+  background: #e6f2ea;
+  box-shadow: inset 0 0 0 1.5px #8fbf9d;
+}
+.dock__mock i {
+  position: absolute;
+  border-radius: 3px;
+  background: #4c845a;
+}
+.dock__mock.is-bar i {
+  left: 9px;
+  right: 9px;
+  bottom: 4px;
+  height: 5px;
+}
+.dock__mock.is-mini i {
+  left: 18px;
+  right: 18px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+.dock__mock.is-side i {
+  left: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: 9px;
 }
 /* mini: only the ••• stays */
 .dock-strip.is-mini .dock {
@@ -851,7 +909,7 @@
 .dock-strip.is-side .dock__menu {
   top: calc(100% + 8px);
   bottom: auto;
-  left: -84px;
+  left: -82px;
   translate: 0 0;
 }
 html[data-dock="side"] .shell__page {
