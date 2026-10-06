@@ -308,7 +308,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
   if (embedded)
     return (
       <>
-        <RecSection n={2} title="การวินิจฉัย" done={dxDone} action={aiBtn}>
+        <RecSection n={2} title="การวินิจฉัย" done={dxDone}>
           {dxBlock}
         </RecSection>
         <RecSection n={3} title="หัตถการ" done={prDone}>

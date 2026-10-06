@@ -1022,3 +1022,51 @@
 .vs__assist.is-on svg {
   color: var(--white);
 }
+/* AI proposals above the other options */
+.rc-ai {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+.rc-ai > small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 11px/1.2 var(--font-sans);
+  color: #6a5ae0;
+}
+.rc-chips .rc-ai button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f3f1fd, #eef6f2);
+  box-shadow: inset 0 0 0 1px #ddd8f6;
+}
+.rc-chips .rc-ai button[aria-pressed="true"] {
+  background: linear-gradient(135deg, #ebe7fc, #e1f1e6);
+  box-shadow: inset 0 0 0 1.5px #6a5ae0;
+  color: #2c2470;
+}
+.rc-ai button span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.rc-ai button b {
+  font: 700 12.5px/1.3 var(--font-sans);
+}
+.rc-ai button small {
+  font: 500 11px/1.35 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.rc-chips .rc-other {
+  background: none !important;
+  box-shadow: none !important;
+  color: var(--color-text-muted) !important;
+  font-weight: 600;
+}
