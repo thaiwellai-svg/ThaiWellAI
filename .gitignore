@@ -25,3 +25,5 @@ dist-ssr
 
 # local preview server log
 .preview.log
+qa/shots/
+qa/results.json

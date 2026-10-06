@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Ban, CalendarX2, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ArrowRight, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
-import { Avatar, Badge, Button, Dialog, Drawer, IconButton, Textarea, useToast } from "../design-system";
+import { Avatar, Badge, Button, Dialog, Drawer, Field, IconButton, Input, Textarea, useToast } from "../design-system";
 import { bedName, bedsInUse, creditInfo, stageMeta, stageOf, type Stage } from "../data/domain";
 import { baht, timeAgo, thaiDateLong, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
@@ -19,6 +19,7 @@ import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
 import { VisitScreening } from "./ScreeningAlert";
 import { CancelDialog } from "./CancelDialog";
+import { screeningFlags } from "../data/counterScreening";
 
 export { stageOf, type Stage } from "../data/domain";
 
@@ -85,6 +86,9 @@ export function AppointmentDrawer({
 
   const stage = appt ? stageOf(appt) : "waiting";
   const [cancelling, setCancelling] = useState(false);
+  // a contraindication found at today's screening must be cleared by a Thai traditional doctor before the massage starts
+  const [override, setOverride] = useState(false);
+  const [overrideBy, setOverrideBy] = useState("");
   useEffect(() => {
     if (stage !== "treating") return;
     const t = window.setInterval(() => setNow(Date.now()), 1000);
@@ -147,6 +151,11 @@ export function AppointmentDrawer({
     }
   };
 
+  const scrToday = p.screening && p.screening.at.slice(0, 10) === todayISO() ? p.screening : undefined;
+  const stopFlags = scrToday ? screeningFlags(scrToday, store.settings.bpThreshold).filter((f) => f.level === "stop") : [];
+  const stopToday = stopFlags.length > 0;
+  const startNow = (note?: string) => step({ status: "active", startedAt: nowIso(), bedId: bed! }, `เริ่มรับบริการ · ${bedName(store.settings, bed!)} · ${t.name}${note ? ` · ${note}` : ""}`);
+
   let footer: React.ReactNode = null;
   if (stage === "waiting")
     footer = (
@@ -178,7 +187,7 @@ export function AppointmentDrawer({
           fill
           disabled={!bed}
           leading={<Play size={16} />}
-          onClick={() => step({ status: "active", startedAt: nowIso(), bedId: bed! }, `เริ่มรับบริการ · ${bedName(store.settings, bed!)} · ${t.name}`)}
+          onClick={() => (stopToday ? setOverride(true) : startNow())}
         >
           {bed ? `เริ่ม · ${bed}` : "เลือกเตียง"}
         </Button>
@@ -601,6 +610,42 @@ export function AppointmentDrawer({
       </Dialog>
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
       <CancelDialog appt={cancelling ? appt : null} onClose={() => setCancelling(false)} />
+      <Dialog
+        open={override}
+        onClose={() => setOverride(false)}
+        title="พบข้อห้ามจากการคัดกรองวันนี้"
+        subtitle={`${p.name} · ${stopFlags.map((f) => f.label).join(" · ")}`}
+        footer={
+          <>
+            <Button variant="outline" size="md" onClick={() => setOverride(false)}>
+              ยังไม่เริ่ม
+            </Button>
+            <Button
+              variant="danger"
+              size="md"
+              disabled={!overrideBy.trim()}
+              onClick={() => {
+                setOverride(false);
+                startNow(`เริ่มแม้พบข้อห้าม (${stopFlags.map((f) => f.label).join(", ")}) · ประเมินโดย ${overrideBy.trim()}`);
+                setOverrideBy("");
+              }}
+            >
+              แพทย์ประเมินแล้ว · เริ่มรับบริการ
+            </Button>
+          </>
+        }
+      >
+        <div className="alert alert--stop">
+          <ShieldAlert size={16} />
+          <div>
+            <b>ควรให้แพทย์แผนไทยประเมินก่อนนวด</b>
+            ถ้าแพทย์ประเมินแล้วและอนุญาตให้นวด ให้ระบุชื่อแพทย์ ระบบจะบันทึกไว้ในประวัติของนัด
+          </div>
+        </div>
+        <Field label="แพทย์แผนไทยผู้ประเมิน">
+          <Input value={overrideBy} onChange={(e) => setOverrideBy(e.target.value)} placeholder="ชื่อ-นามสกุล แพทย์ผู้ประเมิน" />
+        </Field>
+      </Dialog>
     </>
   );
 }
