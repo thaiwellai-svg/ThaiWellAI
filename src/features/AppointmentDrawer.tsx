@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, AudioLines, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, Field, IconButton, Input, Textarea, useToast } from "../design-system";
@@ -337,11 +337,7 @@ export function AppointmentDrawer({
                 <HeartPulse size={16} />
               </button>
             )}
-            {onVoice && stage === "assess" && (
-              <button type="button" className={clsx("vs__hbtn vs__vbtn", voiceOpen && "is-on")} aria-pressed={!!voiceOpen} onClick={() => onVoice()} aria-label="สรุปการรักษาด้วยเสียง" title="สรุปการรักษาด้วยเสียง">
-                <AudioLines size={16} />
-              </button>
-            )}
+
           </section>
           <div className="vs__facts">
             <span>
@@ -428,11 +424,18 @@ export function AppointmentDrawer({
               )}
               {stage === "assess" && (
                 <>
-                  <StepHead n={4} title="บันทึกการรักษา" todo={[
-                    { done: !!appt.diagnoses?.length, label: "วินิจฉัย" },
-                    { done: !!appt.procedures?.length, label: "หัตถการ" },
-                    { done: painAfter !== undefined, label: "Pain หลังนวด" },
-                  ]} />
+                  <StepHead
+                    n={4}
+                    title="บันทึกการรักษา"
+                    action={
+                      onVoice && (
+                        <button type="button" className={clsx("vs__assist", voiceOpen && "is-on")} aria-pressed={!!voiceOpen} onClick={() => onVoice()} title="คุยกับ AI แล้วบันทึกให้">
+                          <BotMessageSquare size={17} />
+                          ผู้ช่วยบันทึก
+                        </button>
+                      )
+                    }
+                  />
                   <div className="rs-stack">
                     <FindingsField appt={appt} n={1} />
                     <ClinicalRecord appt={appt} embedded />
@@ -790,14 +793,21 @@ function Frame(props: { inline?: boolean; open: boolean; onClose: () => void; le
 }
 
 /** "ขั้นที่ n/6" header with a short hint or a checklist of what this step needs */
-function StepHead({ n, title, hint, todo }: { n: number; title: string; hint?: string; todo?: { done: boolean; label: string }[] }) {
+function StepHead({ n, title, hint, todo, action }: { n: number; title: string; hint?: string; todo?: { done: boolean; label: string }[]; action?: React.ReactNode }) {
   return (
     <div className="vs__stephead">
       <span className="vs__stepno">
         ขั้นที่ {n}
         <small>/6</small>
       </span>
-      <h3>{title}</h3>
+      {action ? (
+        <div className="vs__stephead-row">
+          <h3>{title}</h3>
+          {action}
+        </div>
+      ) : (
+        <h3>{title}</h3>
+      )}
       {hint && <p>{hint}</p>}
       {todo && (
         <ul className="vs__todo">

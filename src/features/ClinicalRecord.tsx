@@ -87,6 +87,9 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
   const [adding, setAdding] = useState<"dx" | "proc" | null>(null);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [codeAt, setCodeAt] = useState<string | null>(null);
+  const [openProc, setOpenProc] = useState<string | null>(null);
+  const [more, setMore] = useState<"dx" | "proc" | null>(null);
   const dx = appt.diagnoses ?? [];
   const pr = appt.procedures ?? [];
   const s = store.serviceById(appt.serviceId);
@@ -174,13 +177,14 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
           {q && <button type="submit">เพิ่ม “{q}”</button>}
         </form>
         <div className="cr__chips">
-          {list.slice(0, adding === kind ? 12 : 5).map((n) => (
+          {list.slice(0, adding === kind ? 8 : 3).map((n) => (
             <button
               key={n}
               type="button"
               onClick={() => {
                 add(n);
                 setDraft("");
+                setMore(null);
               }}
             >
               {n}
@@ -190,6 +194,20 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
       </div>
     );
   };
+
+  // once something is chosen, the search + suggestions fold into a small link
+  const addMore = (kind: "dx" | "proc", label: string) => (
+    <button
+      type="button"
+      className="cr__more"
+      onClick={() => {
+        setMore(kind);
+        setAdding(kind);
+      }}
+    >
+      {label}
+    </button>
+  );
 
   const aiBtn = !locked && (
     <button type="button" className="cr__ai" disabled={busy} onClick={suggest} aria-label="ให้ AI ช่วยกรอกวินิจฉัยและหัตถการ" title="ให้ AI ช่วยกรอกวินิจฉัยและหัตถการ">
@@ -205,16 +223,15 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
             <button type="button" className="cr__star" disabled={locked} aria-label="ตั้งเป็นวินิจฉัยหลัก" title="ตั้งเป็นวินิจฉัยหลัก" onClick={() => setDx(i, { kind: "principal" })}>
               <Star size={15} fill={d.kind === "principal" ? "currentColor" : "none"} />
             </button>
-            <div className="cr__item-main">
+            <div className="cr__item-main is-compact">
               <b>{d.name}</b>
-              <div className="cr__meta">
-                <span className={clsx("cr__kind", d.kind === "principal" && "is-main")}>{d.kind === "principal" ? "วินิจฉัยหลัก" : "วินิจฉัยร่วม"}</span>
-                <label className="cr__code">
-                  <span>ICD-10</span>
-                  <input value={d.code ?? ""} disabled={locked} placeholder="—" onChange={(e) => setDx(i, { code: e.target.value.toUpperCase() })} />
-                </label>
-                {d.code && dxCode(d.name)?.code === d.code && <em className="cr__en">{dxCode(d.name)!.en}</em>}
-              </div>
+              {codeAt === `dx${i}` ? (
+                <input className="cr__codein" autoFocus value={d.code ?? ""} placeholder="ICD-10" onChange={(e) => setDx(i, { code: e.target.value.toUpperCase() })} onBlur={() => setCodeAt(null)} aria-label="รหัส ICD-10" />
+              ) : (
+                <button type="button" className="cr__tag" disabled={locked} onClick={() => setCodeAt(`dx${i}`)} title="แตะเพื่อแก้รหัส ICD-10">
+                  {d.code || "+ รหัส"}
+                </button>
+              )}
             </div>
             {!locked && (
               <button type="button" className="cr__del" aria-label="ลบ" onClick={() => save({ diagnoses: dx.filter((_, k) => k !== i).map((x, k) => (k === 0 ? { ...x, kind: "principal" } : x)) })}>
@@ -224,7 +241,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
           </motion.div>
         ))}
       </AnimatePresence>
-      {!locked && suggestBox("dx")}
+      {!locked && (dx.length && more !== "dx" ? addMore("dx", "+ เพิ่มวินิจฉัยร่วม") : suggestBox("dx"))}
       {locked && !dxDone && <p className="cr__empty">ไม่ได้ลงวินิจฉัย</p>}
     </>
   );
@@ -235,25 +252,28 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
         {pr.map((p, i) => {
           const areas = (p.area ?? "").split(/[,·]\s*/).map((x) => x.trim()).filter(Boolean);
           const toggleArea = (a: string) => setPr(i, { area: (areas.includes(a) ? areas.filter((x) => x !== a) : [...areas, a]).join(", ") });
+          // details stay folded once area + time are set
+          const open = !locked && (openProc === p.name || !areas.length || !p.minutes);
           return (
             <motion.div key={p.name} className="cr__proc" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }}>
               <div className="cr__proc-top">
-                <div className="cr__item-main">
+                <div className="cr__item-main is-compact">
                   <b>{p.name}</b>
-                  <div className="cr__meta">
-                    <label className="cr__code">
-                      <span>ICD-9-CM</span>
-                      <input value={p.code ?? ""} disabled={locked} placeholder="—" onChange={(e) => setPr(i, { code: e.target.value })} />
-                    </label>
-                    {p.code && procCode(p.name)?.code === p.code && <em className="cr__en">{procCode(p.name)!.en}</em>}
-                  </div>
+                  <small className="cr__sumline">{[areas.join(", "), p.minutes ? `${p.minutes} นาที` : ""].filter(Boolean).join(" · ") || "ยังไม่ระบุตำแหน่ง / เวลา"}</small>
                 </div>
+                {!locked && (
+                  <button type="button" className="cr__edit" onClick={() => setOpenProc(open ? null : p.name)}>
+                    {open ? "เสร็จ" : "แก้"}
+                  </button>
+                )}
                 {!locked && (
                   <button type="button" className="cr__del" aria-label="ลบ" onClick={() => save({ procedures: pr.filter((_, k) => k !== i) })}>
                     <X size={15} />
                   </button>
                 )}
               </div>
+              {open && (
+                <>
               <div className="cr__field">
                 <span>ตำแหน่ง</span>
                 <div className="cr__toggles">
@@ -274,11 +294,13 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
                   ))}
                 </div>
               </div>
+                </>
+              )}
             </motion.div>
           );
         })}
       </AnimatePresence>
-      {!locked && suggestBox("proc")}
+      {!locked && (pr.length && more !== "proc" ? addMore("proc", "+ เพิ่มหัตถการ") : suggestBox("proc"))}
       {locked && !prDone && <p className="cr__empty">ไม่ได้บันทึกหัตถการ</p>}
     </>
   );
@@ -286,10 +308,10 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
   if (embedded)
     return (
       <>
-        <RecSection n={2} title="การวินิจฉัย" hint="แตะดาวเพื่อตั้งเป็นวินิจฉัยหลัก" done={dxDone} action={aiBtn}>
+        <RecSection n={2} title="การวินิจฉัย" done={dxDone} action={aiBtn}>
           {dxBlock}
         </RecSection>
-        <RecSection n={3} title="หัตถการ" hint="เลือกตำแหน่งและเวลาที่ทำ" done={prDone}>
+        <RecSection n={3} title="หัตถการ" done={prDone}>
           {prBlock}
         </RecSection>
       </>
