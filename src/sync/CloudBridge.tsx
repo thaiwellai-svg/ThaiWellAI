@@ -60,7 +60,11 @@ export function CloudBridge() {
   ref.current = store;
   // last status each side knows about, so neither side moves a booking backwards or echoes its own change
   const known = useRef(new Map<string, string>());
-  const planSent = useRef(new Set<string>()); // cloud ids whose booking already carries the current plan
+  const planSent = useRef(new Set<string>());
+  /** วัน|เวลา|ผู้บำบัด ของนัดที่ยืนยันแล้ว ตามที่อยู่ใน cloud — เปลี่ยนในหลังบ้าน (เลื่อนนัด) → ส่งไปแอป · cloud เปลี่ยน → รับมา */
+  const slotSig = useRef(new Map<string, string>());
+  /** นัดจากแอปที่กำลังสร้างกลับในเครื่องนี้ (กันซ้ำระหว่าง realtime กับรอบตรวจซ้ำ) */
+  const adopting = useRef(new Set<string>()); // cloud ids whose booking already carries the current plan
   // nothing is pushed until the cloud's current state has been read
   const [ready, setReady] = useState(false);
 
@@ -145,6 +149,20 @@ export function CloudBridge() {
       return;
     }
     if (!local) {
+      // นัดจากแอปที่ยืนยันแล้วใน cloud แต่ไม่มีในเครื่องนี้ (ข้อมูลในเครื่องถูกรีเซ็ต / อนุมัติจากอีกเครื่อง)
+      // → สร้างกลับจาก cloud เพื่อให้เรียกคิว บันทึก ส่งบิล ไปถึงแอปได้ต่อ
+      if (["confirmed", "checked_in"].includes(row.status) && row.date && row.start && !st.requests.some((r) => r.cloudId === row.id) && !adopting.current.has(row.id)) {
+        adopting.current.add(row.id);
+        const p = patientFor(row);
+        const t = st.therapists.find((x) => x.name === row.therapist) ?? st.therapists[0];
+        st.dispatch({
+          type: "schedule",
+          items: [{ patientId: p.id, serviceId: serviceFor(row.service), therapistId: t.id, date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
+        });
+        known.current.set(row.id, row.status);
+        slotSig.current.set(row.id, `${row.date}|${row.start}|${row.therapist ?? ""}`);
+        return;
+      }
       // cancelled in the app before the clinic answered → the pending request goes away
       const req = st.requests.find((r) => r.cloudId === row.id);
       if (req && row.status === "cancelled") {
@@ -152,6 +170,16 @@ export function CloudBridge() {
         void pushNotify("ผู้ป่วยยกเลิกคำขอจอง", `${st.patientById(req.patientId).name} · ${req.date} ${req.start} น.`, "/requests");
       }
       return;
+    }
+    // นัดที่ยืนยันแล้วและยังไม่เริ่ม: วัน/เวลา/ผู้บำบัดใน cloud คือค่าที่ทั้งสองระบบใช้ร่วมกัน
+    if (row.status === "confirmed" && row.date && row.start) {
+      const sig = `${row.date}|${row.start}|${row.therapist ?? ""}`;
+      if (slotSig.current.get(row.id) !== sig) {
+        slotSig.current.set(row.id, sig);
+        const t = st.therapists.find((x) => x.name === row.therapist);
+        if (local.status === "waiting" && !local.calledAt && (local.date !== row.date || local.start !== row.start || (t && t.id !== local.therapistId)))
+          st.dispatch({ type: "updateAppointment", id: local.id, patch: { date: row.date, start: row.start, ...(t ? { therapistId: t.id } : {}) }, log: `ตรงกับนัดในแอป ${row.date} ${row.start} น.` });
+      }
     }
     const who = st.patientById(local.patientId).name;
     if (row.status === "checked_in" && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
@@ -198,7 +226,7 @@ export function CloudBridge() {
       } catch {
         /* storage unavailable */
       }
-    }, 5000);
+    }, 3000);
     const ch = cloud
       .channel("tw-clinic")
       .on("postgres_changes", { event: "*", schema: "public", table: "tw_appointments" }, async (ev) => {
@@ -242,6 +270,18 @@ export function CloudBridge() {
       const was = known.current.get(a.cloudId);
       if (!was) continue; // finished / unknown in the cloud — leave it
       const d = derive(store, a);
+      // เลื่อนนัดในหลังบ้าน (ยังไม่ถึงคิว) → แจ้งแอปวัน/เวลา/ผู้บำบัดใหม่
+      if (was === "confirmed" && d.status === "confirmed") {
+        const t = store.therapistById(a.therapistId).name;
+        const sig = `${a.date}|${a.start}|${t}`;
+        const prev = slotSig.current.get(a.cloudId);
+        if (prev && prev !== sig) {
+          slotSig.current.set(a.cloudId, sig);
+          const name = store.patientById(a.patientId).name;
+          void updateAppt(a.cloudId, { date: a.date, start: a.start, therapist: t }).then(() => logEvent("clinic", "booking.moved", { id: a.cloudId! }, name, `เลื่อนนัดเป็น ${a.date} ${a.start} น. · ${t}`));
+        }
+        continue;
+      }
       const back = d.status === "cancelled" || d.status === "no_show";
       if (was === d.status || (!back && rank(d.status) <= rank(was))) continue;
       known.current.set(a.cloudId, d.status);
