@@ -541,6 +541,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       at: new Date().toISOString(),
       clinicName: st.clinicName,
       clinic: { name: st.clinicName, address: st.clinicAddress, phone: st.clinicPhone, lat: st.clinicLat, lng: st.clinicLng },
+      queue: (() => {
+        const today = todayISO();
+        const checked = state.appointments.filter((a) => a.date === today && a.checkinQueue);
+        const serving = [...checked].filter((a) => a.calledAt).sort((a, b) => b.calledAt!.localeCompare(a.calledAt!))[0]?.checkinQueue;
+        const waiting = checked.filter((a) => !a.calledAt && a.status === "waiting").map((a) => a.checkinQueue!).sort();
+        return { date: today, serving, waiting };
+      })(),
       // avatar ที่เลือก (ไม่ส่งรูปถ่าย — ใหญ่เกินไป) → แอปแสดงภาพเดียวกัน
       therapists: state.therapists.map((t) => ({ id: t.id, name: t.name, role: t.role, photo: t.photo?.startsWith("avatar:") ? t.photo : undefined })),
       days,

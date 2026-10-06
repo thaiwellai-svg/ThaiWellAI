@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Workspace } from "../../features/Workspace";
-import { X, AudioLines, Maximize2, Minimize2, ClipboardList, Hourglass, ListFilter, Play, ReceiptText, UserX, CircleCheck } from "lucide-react";
+import { X, QrCode, AudioLines, Maximize2, Minimize2, ClipboardList, Hourglass, ListFilter, Play, ReceiptText, UserX, CircleCheck } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
-import { Avatar, EmptyState, IconButton, SearchField, spring } from "../../design-system";
+import { Avatar, Button, EmptyState, IconButton, SearchField, spring } from "../../design-system";
+import { CheckinQr } from "../../features/CheckinQr";
 import { WorkPage } from "../../layout/WorkPage";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import { FilterMenu } from "../../features/FilterMenu";
@@ -26,6 +27,7 @@ const GROUP: Record<Stage, F> = { waiting: "waiting", called: "progress", treati
 export default function Visits() {
   const store = useStore();
   const [params, setParams] = useSearchParams();
+  const [qrOpen, setQrOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [f, setF] = useState<F>("all");
   const [patient, setPatient] = useState<string | null>(null);
@@ -102,6 +104,9 @@ export default function Visits() {
       bell={false}
       actions={
         <>
+          <Button variant="white" size="md" leading={<QrCode size={16} />} onClick={() => setQrOpen(true)}>
+            QR เช็กอิน
+          </Button>
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN หรือเลขคิว" shortcut={false} />
           <FilterMenu
             label="สถานะ"
@@ -118,6 +123,7 @@ export default function Visits() {
         </>
       }
     >
+      <CheckinQr open={qrOpen} onClose={() => setQrOpen(false)} />
       <Workspace
         storageKey="thaiwell.visits.layout"
         className={clsx("vp", history && sel && !solo && "has-history")}

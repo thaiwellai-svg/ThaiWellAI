@@ -6,6 +6,7 @@ import { todayISO } from "../data/thaiDate";
 import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
 import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
+import { validCheckinCode } from "../features/checkinCode";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
@@ -65,7 +66,10 @@ export function CloudBridge() {
   /** วัน|เวลา|ผู้บำบัด ของนัดที่ยืนยันแล้ว ตามที่อยู่ใน cloud — เปลี่ยนในหลังบ้าน (เลื่อนนัด) → ส่งไปแอป · cloud เปลี่ยน → รับมา */
   const slotSig = useRef(new Map<string, string>());
   /** นัดจากแอปที่กำลังสร้างกลับในเครื่องนี้ (กันซ้ำระหว่าง realtime กับรอบตรวจซ้ำ) */
-  const adopting = useRef(new Set<string>()); // cloud ids whose booking already carries the current plan
+  const adopting = useRef(new Set<string>());
+  /** เลขคิวเช็กอินล่าสุดของแต่ละวัน (กันออกเลขซ้ำเมื่อเช็กอินพร้อมกันหลายคน) */
+  const lastQueue = useRef(new Map<string, number>());
+  const issuing = useRef(new Set<string>()); // cloud ids whose booking already carries the current plan
   // nothing is pushed until the cloud's current state has been read
   const [ready, setReady] = useState(false);
 
@@ -192,13 +196,44 @@ export function CloudBridge() {
       }
     }
     const who = st.patientById(local.patientId).name;
-    if (row.status === "checked_in" && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
-      const q = queueNumber(st.appointments, local);
-      st.dispatch({ type: "updateAppointment", id: local.id, patch: {}, log: `เช็กอินจากแอป · คิว ${q}` });
-      void updateAppt(row.id, { queue_no: q });
-      void logEvent("clinic", "queue.issued", row, row.tw_patients?.name, `ออกเลขคิว ${q} ส่งไปแสดงในแอป`);
-      toast({ message: `${who} เช็กอินจากแอปแล้ว · คิว ${q}` });
-      void pushNotify("เช็กอินจากแอป", `${who} มาถึงแล้ว · คิว ${q}`, "/visits");
+    // เช็กอินต้องสแกน QR ที่เคาน์เตอร์ (เปลี่ยนทุก 30 วินาที = มาถึงคลินิกจริง) · รหัสผิด/หมดอายุ/ไม่ใช่วันนัด → ส่งกลับให้สแกนใหม่
+    if (row.status === "checked_in" && !DEMO && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
+      const token = /^checkin:([A-Za-z0-9]+)/.exec(row.note ?? "")?.[1]?.toUpperCase();
+      const secret = st.settings.checkinSecret;
+      const reason = local.date !== todayISO() ? "นัดนี้ไม่ใช่วันนี้" : !token ? "ต้องสแกน QR เช็กอินที่เคาน์เตอร์" : !secret || !validCheckinCode(secret, token) ? "รหัส QR หมดอายุหรือไม่ถูกต้อง" : null;
+      if (reason) {
+        known.current.set(row.id, "confirmed");
+        void updateAppt(row.id, { status: "confirmed", note: `checkin-rejected: ${reason} · สแกน QR ที่เคาน์เตอร์อีกครั้ง` });
+        void logEvent("clinic", "checkin.rejected", row, row.tw_patients?.name, `เช็กอินไม่ผ่าน · ${reason}`);
+        return;
+      }
+    }
+    if (row.status === "checked_in" && !local.checkinQueue && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป")) && !issuing.current.has(row.id)) {
+      // เลขคิวรันตามลำดับคนมาเช็กอินของวันนี้ (Q001, Q002, …) · ถ้าเครื่องอื่นของคลินิกออกให้ไปแล้ว ใช้ของเดิม
+      issuing.current.add(row.id);
+      const day = todayISO();
+      const last = Math.max(lastQueue.current.get(day) ?? 0, ...st.appointments.filter((x) => x.date === day && x.checkinQueue).map((x) => Number(x.checkinQueue!.slice(1)) || 0));
+      const q = row.queue_no?.startsWith("Q") ? row.queue_no : `Q${String(last + 1).padStart(3, "0")}`;
+      lastQueue.current.set(day, Math.max(last, Number(q.slice(1)) || 0));
+      void (async () => {
+        let issued = q;
+        if (!row.queue_no) {
+          // ออกเลขได้ครั้งเดียว (กันสองเครื่องออกซ้ำ)
+          const { data } = await cloud.from("tw_appointments").update({ queue_no: q }).eq("id", row.id).is("queue_no", null).select("queue_no");
+          if (!data?.length) {
+            const { data: cur } = await cloud.from("tw_appointments").select("queue_no").eq("id", row.id).single();
+            issued = (cur?.queue_no as string) ?? q;
+          } else void logEvent("clinic", "queue.issued", row, row.tw_patients?.name, `เช็กอินแล้ว ออกเลขคิว ${q} ส่งไปแสดงในแอป`);
+        }
+        issuing.current.delete(row.id);
+        // เครื่องอื่นของคลินิกออกเลขให้แล้ว → ข้อมูลนัดตามมาเอง (ไม่บันทึกซ้ำ)
+        if (issued !== q && !row.queue_no) return;
+        ref.current.dispatch({ type: "updateAppointment", id: local.id, patch: { checkinQueue: issued, checkedInAt: new Date().toISOString() }, log: `เช็กอินจากแอป · คิว ${issued}` });
+        if (issued === q) {
+          toast({ message: `${who} เช็กอินแล้ว · คิว ${issued}` });
+          void pushNotify("เช็กอินจากแอป", `${who} มาถึงแล้ว · คิว ${issued}`, "/visits");
+        }
+      })();
     }
     if (row.bill?.status === "paid" && row.bill.via === "app" && local.payment?.status === "pending") {
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { payment: { ...local.payment, status: "paid", at: row.bill.paid_at ?? new Date().toISOString() }, paid: true, status: "done" }, log: "ชำระเงินผ่านแอปแล้ว" });

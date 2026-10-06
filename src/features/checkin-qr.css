@@ -1,0 +1,65 @@
+.cq-dialog {
+  width: min(560px, 94vw);
+}
+.cq {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.cq__clinic {
+  font-size: 20px;
+}
+.cq__qr {
+  width: min(360px, 70vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(31, 42, 34, 0.12);
+}
+.cq__qr img {
+  width: 100%;
+  height: 100%;
+}
+.cq__code {
+  display: flex;
+  gap: 8px;
+}
+.cq__code span {
+  width: 44px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--sage-100);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--sage-900);
+}
+.cq__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+.cq__date {
+  color: var(--color-text-muted);
+}
+.cq__timer {
+  width: min(360px, 70vw);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-muted);
+}
+.cq__timer i {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-brand) var(--p), var(--sage-100) var(--p));
+  transition: background 0.9s linear;
+}

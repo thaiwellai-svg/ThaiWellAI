@@ -38,6 +38,8 @@ export const clock = (iso?: string) => (iso ? new Date(iso).toLocaleTimeString("
 
 /** queue number: order of that day's visits */
 export function queueNumber(all: Appointment[], a: Appointment) {
+  // เช็กอินแล้ว → เลขคิวตามลำดับที่มาถึง
+  if (a.checkinQueue) return a.checkinQueue;
   const day = all.filter((x) => x.date === a.date).sort((x, y) => x.start.localeCompare(y.start) || x.id.localeCompare(y.id));
   return `A${String(day.findIndex((x) => x.id === a.id) + 1).padStart(3, "0")}`;
 }

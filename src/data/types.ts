@@ -186,6 +186,9 @@ export interface Appointment {
   painAfter?: number;
   paid: boolean;
   note?: string;
+  /** เลขคิวตามลำดับที่มาเช็กอิน (Q001…) — สแกน QR ที่เคาน์เตอร์ผ่านแอป */
+  checkinQueue?: string;
+  checkedInAt?: string;
   /** visit flow timestamps (ISO) — the queue is "called" while status is still waiting */
   calledAt?: string;
   /** treatment bed, chosen when the session starts */
@@ -297,6 +300,8 @@ export interface ClinicSettings {
   clinicPhone?: string;
   clinicLat?: number;
   clinicLng?: number;
+  /** รหัสลับสร้างรหัสเช็กอินประจำวัน (QR ที่เคาน์เตอร์) */
+  checkinSecret?: string;
   /** VoxCPM voice id used to announce queue calls */
   callVoice?: string;
   /** treatment rooms and their beds */

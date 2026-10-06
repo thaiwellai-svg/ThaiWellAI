@@ -118,6 +118,8 @@ export interface Availability {
   clinicName: string;
   /** ที่อยู่ เบอร์ พิกัด → หน้า "สถานที่" ในแอปผู้ใช้ */
   clinic?: { name: string; address?: string; phone?: string; lat?: number; lng?: number };
+  /** คิววันนี้ (เฉพาะเลขคิว ไม่มีชื่อ) → แอปบอก "อีกกี่คิว" */
+  queue?: { date: string; serving?: string; waiting: string[] };
   therapists: { id: string; name: string; role: string; photo?: string }[];
   days: Record<string, Record<string, Record<string, string[]>>>;
 }
