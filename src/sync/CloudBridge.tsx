@@ -409,7 +409,25 @@ export function CloudBridge() {
       if (!p.cloudId) continue;
       const c = p.course;
       const course = c ? { name: c.name, service: store.serviceById(c.serviceId).name, total: c.total, used: c.used, startedOn: c.startedOn, expiresOn: c.expiresOn } : null;
-      const sig = JSON.stringify(course);
+      // ประวัติการรักษาที่คลินิก (นวดเสร็จแล้ว ล่าสุดก่อน) → แอปของเจ้าของ
+      const visits = store.appointments
+        .filter((a) => a.patientId === p.id && (a.status === "done" || (a.endedAt && a.painAfter !== undefined)))
+        .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))
+        .slice(0, 30)
+        .map((a) => ({
+          id: a.id,
+          date: a.date,
+          start: a.start,
+          service: store.serviceById(a.serviceId).name,
+          therapist: store.therapistById(a.therapistId).name,
+          painBefore: a.painBefore,
+          painAfter: a.painAfter,
+          findings: a.findings,
+          diagnoses: a.diagnoses?.map((d) => d.name),
+          procedures: a.procedures?.map((x) => [x.name, x.area, x.minutes ? `${x.minutes} นาที` : ""].filter(Boolean).join(" · ")),
+          advice: a.advice,
+        }));
+      const sig = JSON.stringify(course) + JSON.stringify(visits);
       if (courseSig.current.get(p.cloudId) === `${p.hn}|${sig}`) continue;
       courseSig.current.set(p.cloudId, `${p.hn}|${sig}`);
       const cid = p.cloudId;
@@ -417,14 +435,14 @@ export function CloudBridge() {
       void (async () => {
         const { data } = await cloud.from("tw_patients").select("profile,clinic_hn").eq("id", cid).maybeSingle();
         if (!data) return;
-        const prof = (data.profile ?? {}) as { course?: unknown };
-        const sameCourse = JSON.stringify(prof.course ?? null) === sig;
+        const prof = (data.profile ?? {}) as { course?: unknown; visits?: unknown };
+        const sameCourse = JSON.stringify(prof.course ?? null) + JSON.stringify(prof.visits ?? []) === sig;
         // HN ของคลินิกไปแสดงในโปรไฟล์แอปด้วย
         if (sameCourse && data.clinic_hn === hn) return;
-        await cloud.from("tw_patients").update({ clinic_hn: hn, ...(sameCourse ? {} : { profile: { ...prof, course } }) }).eq("id", cid);
+        await cloud.from("tw_patients").update({ clinic_hn: hn, ...(sameCourse ? {} : { profile: { ...prof, course, visits } }) }).eq("id", cid);
       })();
     }
-  }, [ready, store.patients]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, store.patients, store.appointments]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // clinic → app: push every forward step of a linked booking
   useEffect(() => {
