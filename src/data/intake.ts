@@ -1,3 +1,4 @@
+import { LIVE } from "./mode";
 import type { Appointment, BookingRequest, Intake, Patient, Screening } from "./types";
 
 /** small deterministic hash so a patient's demo answers stay the same between renders */
@@ -93,7 +94,21 @@ export function intakeOfRequest(r: BookingRequest, p: Patient): Intake {
 
 /** the assessment for a visit — walk-ins never filled one in */
 export function intakeOfVisit(a: Appointment, p: Patient): Intake | null {
+  // ผลประเมินของนัดนี้ (รอบล่าสุดที่ผู้ป่วยส่งมาสำหรับวันนัดนี้)
+  const r = a.assessRounds?.[a.assessRounds.length - 1];
+  if (a.intake && (!r || r.at <= a.intake.at)) return a.intake;
+  if (r)
+    return {
+      ...(a.intake ?? { goal: "บรรเทาอาการ", duration: "-", conditions: p.conditions, medications: [], bloodThinner: false, skin: "ปกติ", numbness: false, fever: false, pregnant: null, pressure: "ปานกลาง" as const }),
+      at: r.at,
+      complaint: r.complaint || a.intake?.complaint || p.complaint,
+      pain: r.pain,
+      focusAreas: r.focusAreas.length ? r.focusAreas : (a.intake?.focusAreas ?? []),
+      avoidAreas: r.avoidAreas.length ? r.avoidAreas : (a.intake?.avoidAreas ?? []),
+    };
   if (a.intake) return a.intake;
+  // ใช้งานจริง: ยังไม่ได้ประเมินสำหรับนัดนี้ = ไม่มี (ไม่สร้างข้อมูลแทน)
+  if (LIVE) return null;
   if (a.type !== "booked") return null;
   const at = new Date(`${a.date}T${a.start}:00`);
   at.setDate(at.getDate() - 1);

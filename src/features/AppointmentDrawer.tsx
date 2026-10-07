@@ -7,7 +7,7 @@ import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
 import { bedName, bedsInUse, coursePrepaid, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
-import { baht, timeAgo, thaiDateLong, timeRange, todayISO } from "../data/thaiDate";
+import { baht, timeAgo, thaiDateLong, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
@@ -638,9 +638,13 @@ export function AppointmentDrawer({
                       <Stethoscope size={15} />
                     </span>
                     <b>อาการสำคัญ</b>
-                    {ik && <small>จากแอป · {timeAgo(ik.at)}</small>}
+                    {/* ผลประเมินของนัดวันนี้ (ไม่ใช่ข้อมูลรวมของผู้ป่วย) */}
+                    {ik ? <small>ประเมินสำหรับนัด {thaiDateShort(appt.date)} · {timeAgo(ik.at)}</small> : <small className="vcc__none">ยังไม่ได้ประเมินสำหรับนัดนี้</small>}
                   </div>
-                  <p className="vcc__text">{ik?.complaint ?? p.complaint}</p>
+                  <p className="vcc__text">
+                    {ik?.complaint ?? p.complaint}
+                    {!ik && p.complaint ? <small className="vcc__prev"> (จากครั้งก่อน)</small> : null}
+                  </p>
 
                   <div className="vcc__facts">
                     <div style={{ ["--tc" as string]: tc }}>
@@ -665,7 +669,7 @@ export function AppointmentDrawer({
                       <div>
                         <small>มาแบบ</small>
                         <b className="vcc__dur">{appt.type === "booked" ? "นัดล่วงหน้า" : "Walk-in"}</b>
-                        <span className="vcc__sub">ไม่มีแบบประเมินจากแอป</span>
+                        <span className="vcc__sub">{appt.cloudId ? "ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้" : "ไม่มีแบบประเมินจากแอป"}</span>
                       </div>
                     )}
                   </div>
