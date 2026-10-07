@@ -1,3 +1,4 @@
+import { AppGuideCard } from "../../features/AppGuideCard";
 import { AssessHistory } from "../../features/AssessHistory";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -373,6 +374,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
 
         <aside className="rq2__side">
           <AssessHistory rounds={r.assessRounds} />
+          <AppGuideCard guide={r.appGuide} compact />
           <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         </aside>
       </div>
@@ -441,6 +443,7 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
 
         <aside className="rq2__side">
           <AssessHistory rounds={r.assessRounds} />
+          <AppGuideCard guide={r.appGuide} compact />
           <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         </aside>
       </div>

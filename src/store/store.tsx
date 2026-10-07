@@ -155,6 +155,7 @@ function reducer(state: State, action: Action): State {
         intake: req.intake,
         screening: req.screening,
         assessRounds: req.assessRounds,
+        appGuide: req.appGuide,
         ...(req.id.startsWith("app-") ? { bridgeRef: req.id } : {}),
         cloudId: req.cloudId,
         ...action.patch,

@@ -1,3 +1,4 @@
+import { AppGuideCard } from "../../features/AppGuideCard";
 import { AssessHistory } from "../../features/AssessHistory";
 import { useEffect, useMemo, useState } from "react";
 import { extraTotal, visitTotal } from "../../features/billing";
@@ -287,6 +288,7 @@ export default function AppointmentDetail() {
                 <>
                   <VisitScreening p={p} app={a.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
                   <AssessHistory rounds={a.assessRounds} addenda={a.addenda} />
+                  <AppGuideCard guide={a.appGuide} compact />
                 </>
               ) : (
                 <section className={clsx("adp__scr", !p.screening && !appFlags ? "is-none" : stop ? "is-stop" : flags.length ? "is-warn" : "is-ok")}>

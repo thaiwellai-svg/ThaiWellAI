@@ -64,6 +64,8 @@ export interface CloudAssessment {
   /** รหัสบริการ / ผู้บำบัดที่ผู้ป่วยเลือกในแอป (รหัสเดียวกับคลินิก) */
   serviceId?: string;
   therapistId?: string;
+  /** แนวทางการรักษาที่แอปแนะนำ */
+  guide?: { condition?: string; methods: string[]; points: string[]; caution?: string; ref?: string };
   /** เวลาที่ประเมินรอบล่าสุด · rounds = รอบก่อนหน้า (เก่า → ใหม่) · addenda = แจ้งอาการเพิ่มหลังเช็กอิน */
   at?: string;
   rounds?: Omit<CloudAssessment, "rounds" | "addenda">[];

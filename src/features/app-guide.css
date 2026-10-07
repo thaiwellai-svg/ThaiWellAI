@@ -1,0 +1,98 @@
+/* แนวทางการรักษาที่แอปแนะนำ */
+.agc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f1f6ff 0%, #f6f2ff 100%);
+  box-shadow: inset 0 0 0 1px #dbe3f5;
+}
+.agc > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.agc__ico {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b7fd6, #8a62d0);
+  color: #fff;
+}
+.agc > header span:last-child {
+  display: grid;
+  gap: 2px;
+}
+.agc > header b {
+  font: 700 14px/1.3 var(--font-sans);
+  color: #2d3f73;
+}
+.agc > header small {
+  font: 500 11.5px/1.4 var(--font-sans);
+  color: #5d6a8f;
+}
+.agc__row {
+  display: grid;
+  gap: 4px;
+}
+.agc__row > small {
+  font: 600 11.5px/1.2 var(--font-sans);
+  color: #5d6a8f;
+}
+.agc__row > b {
+  font: 700 14px/1.4 var(--font-sans);
+  color: var(--color-text);
+}
+.agc__row ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 18px;
+  font: 500 13px/1.5 var(--font-sans);
+  color: var(--color-text);
+}
+.agc__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.agc__chips em {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #d4dcf0;
+  font: 600 12px/1.3 var(--font-sans);
+  font-style: normal;
+  color: #3d4f80;
+}
+.agc__warn {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff4e5;
+  font: 500 12.5px/1.45 var(--font-sans);
+  color: #8a5a05;
+  white-space: pre-line;
+}
+.agc__warn svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.agc__ref {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font: 500 11.5px/1.4 var(--font-sans);
+  color: #6a7493;
+}
+.agc.is-compact {
+  padding: 12px 14px;
+  gap: 8px;
+}

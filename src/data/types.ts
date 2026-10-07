@@ -210,6 +210,8 @@ export interface Appointment {
   /** ทุกรอบที่ผู้ป่วยประเมินในแอปก่อนเช็กอิน (เก่า → ใหม่) · addenda = แจ้งอาการเพิ่มหลังเช็กอิน */
   assessRounds?: AssessRound[];
   addenda?: Addendum[];
+  /** แนวทางการรักษาที่แอปแนะนำตอนประเมิน */
+  appGuide?: AppGuide;
   /** booked from the patient app (prototype bridge) — request id, used to send status back to the app */
   bridgeRef?: string;
   /** วินิจฉัย — Thai traditional diagnosis (principal first) */
@@ -286,6 +288,14 @@ export interface AssessRound {
   /** ข้อห้าม/ข้อควรระวังจากแบบคัดกรองในแอป */
   flags?: string[];
 }
+/** แนวทางการรักษาที่แอปแนะนำตอนประเมิน (ชุดเดียวกับที่ผู้ป่วยเห็น) — ผู้ให้บริการยืนยันก่อนเริ่ม */
+export interface AppGuide {
+  condition?: string;
+  methods: string[];
+  points: string[];
+  caution?: string;
+  ref?: string;
+}
 /** แจ้งอาการเพิ่มหลังเช็กอิน (ไม่แก้ผลประเมินที่ใช้) */
 export interface Addendum {
   at: string;
@@ -305,6 +315,8 @@ export interface BookingRequest {
   intake?: Intake;
   /** ทุกรอบที่ผู้ป่วยประเมินในแอป (เก่า → ใหม่) */
   assessRounds?: AssessRound[];
+  /** แนวทางการรักษาที่แอปแนะนำ */
+  appGuide?: AppGuide;
   note?: string;
   submittedAt: string; // ISO datetime
   /** id of the booking in the shared cloud (patient app) */

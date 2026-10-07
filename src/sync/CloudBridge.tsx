@@ -217,7 +217,7 @@ export function CloudBridge() {
         if (rounds.length > (open.assessRounds?.length ?? 1) || rounds[rounds.length - 1].at !== open.assessRounds?.[open.assessRounds.length - 1]?.at) {
           const as = row.assessment ?? {};
           const who = st.patientById(open.patientId).name;
-          st.dispatch({ type: "updateRequest", id: open.id, patch: { intake: intakeOf(row, open.intake?.complaint ?? ""), painScore: as.pain ?? open.painScore, screening: screeningOf(as.screening), assessRounds: rounds, note: as.summary ?? open.note }, log: `${who} ประเมินใหม่ในแอป (รอบที่ ${rounds.length})` });
+          st.dispatch({ type: "updateRequest", id: open.id, patch: { intake: intakeOf(row, open.intake?.complaint ?? ""), painScore: as.pain ?? open.painScore, screening: screeningOf(as.screening), assessRounds: rounds, note: as.summary ?? open.note, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `${who} ประเมินใหม่ในแอป (รอบที่ ${rounds.length})` });
           if (prevSig !== undefined) {
             toast({ message: `${who} ประเมินใหม่ในแอป · ปวด ${as.pain ?? "-"}/10` });
             void pushNotify("ผู้ป่วยประเมินใหม่", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/requests");
@@ -241,6 +241,7 @@ export function CloudBridge() {
         screening: screeningOf(as.screening),
         intake,
         assessRounds: roundsOf(row),
+        appGuide: as.guide,
         note: as.summary ?? as.complaint,
         submittedAt: row.created_at,
       };
@@ -258,7 +259,7 @@ export function CloudBridge() {
         const p = patientFor(row);
         st.dispatch({
           type: "schedule",
-          items: [{ patientId: p.id, serviceId: serviceFor(row.service, row.assessment?.serviceId), therapistId: therapistFor(row), date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
+          items: [{ patientId: p.id, serviceId: serviceFor(row.service, row.assessment?.serviceId), therapistId: therapistFor(row), date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, ...(row.assessment?.guide ? { appGuide: row.assessment.guide } : {}), note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
         });
         known.current.set(row.id, row.status);
         slotSig.current.set(row.id, `${row.date}|${row.start}|${row.therapist ?? ""}`);
@@ -291,12 +292,13 @@ export function CloudBridge() {
       const before = !local.checkinQueue && !local.calledAt && !local.startedAt && local.status === "waiting";
       if (row.assessment && before && (rounds.length > (local.assessRounds?.length ?? 1) || (local.assessRounds && lastAt !== local.assessRounds[local.assessRounds.length - 1]?.at))) {
         const as = row.assessment;
-        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length}) · ปวด ${as.pain ?? "-"}/10` });
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length}) · ปวด ${as.pain ?? "-"}/10` });
         if (prevSig !== undefined && rounds.length > 1) {
           toast({ message: `${who} ประเมินใหม่ก่อนนวด · ปวด ${as.pain ?? "-"}/10` });
           void pushNotify("ผู้ป่วยประเมินใหม่ก่อนนวด", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/visits");
         }
-      } else if (row.assessment && !local.assessRounds) st.dispatch({ type: "updateAppointment", id: local.id, patch: { assessRounds: rounds } });
+      } else if (row.assessment && (!local.assessRounds || (row.assessment.guide && !local.appGuide)))
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { assessRounds: local.assessRounds ?? rounds, ...(row.assessment.guide ? { appGuide: row.assessment.guide } : {}) } });
       // แจ้งอาการเพิ่มหลังเช็กอิน (ไม่แก้ผลประเมิน) → แสดงแยกให้เห็นชัด + เตือนเจ้าหน้าที่
       const add = row.assessment?.addenda ?? [];
       if (add.length > (local.addenda?.length ?? 0)) {
