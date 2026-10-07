@@ -30,7 +30,9 @@ const roundOf = (a: Omit<CloudAssessment, "rounds" | "addenda">, fallbackAt: str
 /** ทุกรอบ เก่า → ใหม่ (รอบสุดท้าย = ที่ผู้ให้บริการใช้) */
 const roundsOf = (row: CloudAppt): AssessRound[] => {
   const as = row.assessment ?? {};
-  return [...(as.rounds ?? []).map((r) => roundOf(r, row.created_at)), roundOf(as, row.created_at)];
+  // นัดที่คลินิกลงเอง: ข้อมูลตั้งต้นของคลินิก (ยังไม่มีคะแนนปวด) ไม่ใช่การประเมินของผู้ป่วย
+  const real = (a: Omit<CloudAssessment, "rounds" | "addenda">) => typeof a.pain === "number";
+  return [...(as.rounds ?? []).filter(real).map((r) => roundOf(r, row.created_at)), ...(real(as) ? [roundOf(as, row.created_at)] : [])];
 };
 const screeningOf = (sc?: CloudAssessment["screening"]): Screening => ({ fever: !!sc?.fever, highBP: !!sc?.highBP, bpSystolic: sc?.bpSystolic, menstruation: !!sc?.menstruation, pregnant: !!sc?.pregnant, recentSurgery: !!sc?.recentSurgery, contagious: !!sc?.contagious });
 const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
@@ -180,6 +182,21 @@ export function CloudBridge() {
   };
 
   /** บริการที่ผู้ป่วยเลือก: รหัสจากแอป → ชื่อตรงกัน → ชื่อที่ยาวที่สุดที่อยู่ในป้าย ("นวดไทยร่วมประคบสมุนไพร" ไม่ใช่ "ประคบสมุนไพร") */
+  /** ผลประเมินล่าสุดจากแอป → ข้อมูลสุขภาพของผู้ป่วย (อาการสำคัญ · ระดับปวดของวันนัด · โรคประจำตัว) */
+  const syncHealth = (patientId: string, row: CloudAppt, date: string) => {
+    const st = ref.current;
+    const p = st.patients.find((x) => x.id === patientId);
+    const as = row.assessment;
+    if (!p || !as) return;
+    const patch: Partial<Patient> = {};
+    if (as.complaint && as.complaint !== p.complaint) patch.complaint = as.complaint;
+    if (typeof as.pain === "number" && !p.painHistory.some((h) => h.date === date && h.score === as.pain))
+      patch.painHistory = [...p.painHistory.filter((h) => h.date !== date), { date, score: as.pain }];
+    const cond = (as.conditions ?? []).filter((c) => c && !p.conditions.includes(c));
+    if (cond.length) patch.conditions = [...p.conditions.filter((c) => !/^ไม่มี/.test(c)), ...cond];
+    if (Object.keys(patch).length) st.dispatch({ type: "updatePatient", id: p.id, patch });
+  };
+
   const serviceFor = (name?: string | null, id?: string) => {
     const st = ref.current;
     if (id && st.services.some((s) => s.id === id)) return id;
@@ -214,9 +231,10 @@ export function CloudBridge() {
       const open = st.requests.find((r) => r.cloudId === row.id);
       if (open) {
         const rounds = roundsOf(row);
-        if (rounds.length > (open.assessRounds?.length ?? 1) || rounds[rounds.length - 1].at !== open.assessRounds?.[open.assessRounds.length - 1]?.at) {
+        if (rounds.length && (rounds.length > (open.assessRounds?.length ?? 1) || rounds[rounds.length - 1].at !== open.assessRounds?.[open.assessRounds.length - 1]?.at)) {
           const as = row.assessment ?? {};
           const who = st.patientById(open.patientId).name;
+          syncHealth(open.patientId, row, open.date);
           st.dispatch({ type: "updateRequest", id: open.id, patch: { intake: intakeOf(row, open.intake?.complaint ?? ""), painScore: as.pain ?? open.painScore, screening: screeningOf(as.screening), assessRounds: rounds, note: as.summary ?? open.note, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `${who} ประเมินใหม่ในแอป (รอบที่ ${rounds.length})` });
           if (prevSig !== undefined) {
             toast({ message: `${who} ประเมินใหม่ในแอป · ปวด ${as.pain ?? "-"}/10` });
@@ -229,6 +247,7 @@ export function CloudBridge() {
       const p = patientFor(row);
       const as = row.assessment ?? {};
       const intake = intakeOf(row, p.complaint);
+      syncHealth(p.id, row, row.date ?? todayISO());
       const req: BookingRequest = {
         id: `rq-${row.id}`,
         cloudId: row.id,
@@ -288,12 +307,15 @@ export function CloudBridge() {
       const who = st.patientById(local.patientId).name;
       // ประเมินใหม่ก่อนเช็กอิน → ผู้ให้บริการใช้ผลรอบล่าสุด · เช็กอินแล้ว/เริ่มรับบริการ = ล็อก (ไม่รับรอบใหม่)
       const rounds = roundsOf(row);
-      const lastAt = rounds[rounds.length - 1].at;
+      const lastAt = rounds[rounds.length - 1]?.at;
       const before = !local.checkinQueue && !local.calledAt && !local.startedAt && local.status === "waiting";
-      if (row.assessment && before && (rounds.length > (local.assessRounds?.length ?? 1) || (local.assessRounds && lastAt !== local.assessRounds[local.assessRounds.length - 1]?.at))) {
+      // รอบล่าสุดที่รับไว้แล้ว (นัดจากคำขอจอง = รอบตอนจอง)
+      const seenAt = local.assessRounds?.length ? local.assessRounds[local.assessRounds.length - 1].at : local.intake?.at;
+      if (row.assessment && before && lastAt && lastAt !== seenAt) {
         const as = row.assessment;
+        syncHealth(local.patientId, row, local.date);
         st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length}) · ปวด ${as.pain ?? "-"}/10` });
-        if (prevSig !== undefined && rounds.length > 1) {
+        if (prevSig !== undefined) {
           toast({ message: `${who} ประเมินใหม่ก่อนนวด · ปวด ${as.pain ?? "-"}/10` });
           void pushNotify("ผู้ป่วยประเมินใหม่ก่อนนวด", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/visits");
         }
