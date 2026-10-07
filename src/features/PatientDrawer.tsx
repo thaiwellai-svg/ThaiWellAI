@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Button, Drawer } from "../design-system";
-import { creditInfo } from "../data/domain";
+import { creditInfo, evaluateScreening } from "../data/domain";
 import { diffDays, fromISODate, thaiDate, thaiDateShort, todayISO } from "../data/thaiDate";
 import { ELEMENT_INFO, elementProfile } from "../data/elements";
 import "./patient-health.css";
@@ -58,8 +58,9 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
 }
 
 /** the patient's health summary (อาการ · Pain trend · แผน · นัด · ประวัติ) — drawer and the รับบริการ side box */
-export function PatientHealth({ id }: { id: string }) {
+export function PatientHealth({ id, apptId }: { id: string; /** นัดที่กำลังรักษา → ข้อมูลสุขภาพโฟกัสที่ครั้งนี้ (แบบคัดกรองของนัดนี้) */ apptId?: string }) {
   const store = useStore();
+  const appt = apptId ? store.appointments.find((a) => a.id === apptId) : undefined;
   const navigate = useNavigate();
   const [selling, setSelling] = useState(false);
   const [planFor, setPlanFor] = useState<string | null>(null);
@@ -80,6 +81,8 @@ export function PatientHealth({ id }: { id: string }) {
   const ei = ELEMENT_INFO[el.birth];
   // latest pre-visit assessment: a pending request first, then the nearest booked visit, then the last one
   const intake = (() => {
+    // นัดที่กำลังรักษา: ใช้แบบประเมินของนัดนี้เท่านั้น (ไม่เอาของครั้งอื่นมาแทน)
+    if (appt) return intakeOfVisit(appt, p);
     const req = store.requests.filter((r) => r.patientId === p.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
     if (req) return intakeOfRequest(req, p);
     for (const v of [...upcoming, ...past]) {
@@ -89,7 +92,17 @@ export function PatientHealth({ id }: { id: string }) {
     return null;
   })();
 
-  const latest = trend[trend.length - 1]?.value;
+  // นัดนี้: รอบประเมินล่าสุดจากแอป · ครั้งที่ของคอร์ส · ข้อห้ามจากแบบคัดกรอง
+  const round = appt?.assessRounds?.[appt.assessRounds.length - 1];
+  const courseNo = (() => {
+    const c = p.course;
+    if (!appt || !c || appt.serviceId !== c.serviceId) return null;
+    const list = visits.filter((v) => v.serviceId === c.serviceId && v.date >= c.startedOn && v.status !== "cancelled" && v.status !== "absent").sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    const i = list.findIndex((v) => v.id === appt.id);
+    return i < 0 ? null : { no: i + 1, total: c.total };
+  })();
+  const apptFlags = appt?.screening ? evaluateScreening(appt.screening, store.settings) : [];
+  const latest = appt ? (round?.pain ?? (intake ? intake.pain : undefined)) : trend[trend.length - 1]?.value;
   // areas treated before (from procedure records), most frequent first
   const treatedCount: Record<string, number> = {};
   for (const v of past) for (const pr of v.procedures ?? []) for (const a of (pr.area ?? "").split(/[,·]\s*/)) {
@@ -112,10 +125,65 @@ export function PatientHealth({ id }: { id: string }) {
 
   return (
     <div className="ph hx" style={{ ["--c" as string]: ei.color, ["--t" as string]: ei.tint }}>
+      {/* แบบคัดกรองของนัดนี้ — โฟกัสข้อมูลที่ต้องรักษาครั้งนี้ */}
+      {appt && (
+        <section className={clsx("hx-visit", !intake && "is-missing", (round?.previsit?.red || apptFlags.some((f) => f.level === "stop")) && "is-stop")}>
+          <div className="hx-visit__head">
+            <b>แบบคัดกรองของนัดนี้</b>
+            <small>
+              {thaiDateShort(appt.date)} {appt.start} น.{courseNo ? ` · คอร์สครั้งที่ ${courseNo.no}/${courseNo.total}` : ""}
+            </small>
+          </div>
+          {intake ? (
+            <>
+              <div className="hx-visit__pain">
+                <span>
+                  <small>ปวดก่อนนวดครั้งนี้</small>
+                  <b style={{ color: painTone(intake.pain)[1] }}>
+                    {round?.pain ?? intake.pain}
+                    <i>/10</i>
+                  </b>
+                </span>
+                <em>
+                  <Smartphone size={12} /> ประเมินในแอป {new Date(round?.at ?? intake.at).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} น.
+                </em>
+              </div>
+              <ul className="hx-visit__qa">
+                {round?.previsit?.adverse && (
+                  <li>
+                    <small>หลังนวดครั้งก่อน</small>
+                    <b className={round.previsit.adverse !== "ไม่มี" ? "is-warn" : undefined}>{round.previsit.adverse}</b>
+                  </li>
+                )}
+                {round?.previsit?.risk && (
+                  <li>
+                    <small>ข้อห้ามใหม่</small>
+                    <b className={round.previsit.risk !== "ไม่มี" ? "is-warn" : undefined}>{round.previsit.risk}</b>
+                  </li>
+                )}
+                <li>
+                  <small>ผลคัดกรอง</small>
+                  <b className={apptFlags.length || round?.previsit?.red ? "is-warn" : "is-ok"}>
+                    {round?.previsit?.red ? "ควรพบแพทย์ก่อนนวด" : apptFlags.length ? apptFlags.map((f) => f.label).join(" · ") : "ผ่าน · ไม่มีข้อห้าม"}
+                  </b>
+                </li>
+                {appt.addenda?.length ? (
+                  <li>
+                    <small>แจ้งเพิ่มหลังเช็กอิน</small>
+                    <b className="is-warn">{appt.addenda[appt.addenda.length - 1].text}</b>
+                  </li>
+                ) : null}
+              </ul>
+            </>
+          ) : (
+            <p className="hx-visit__none">ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้ · สอบถามอาการและคัดกรองที่เคาน์เตอร์ก่อนนวด</p>
+          )}
+        </section>
+      )}
       {/* body overview first: where to treat */}
       <p className="hx-label hx-label--first">
         <PersonStanding size={13} /> ตำแหน่งที่ควรดูแล
-        <small>{intake ? "จากแบบประเมินล่าสุด" : treated.length ? "จากหัตถการที่เคยทำ" : ""}</small>
+        <small>{intake ? (appt ? "จากแบบประเมินของนัดนี้" : "จากแบบประเมินล่าสุด") : treated.length ? "จากหัตถการที่เคยทำ" : ""}</small>
       </p>
       <section className="hx-card hx-body">
         <Body3D compact sex={p.gender} heatmap={bodyHeat} avoid={bodyAvoid} />
@@ -165,7 +233,7 @@ export function PatientHealth({ id }: { id: string }) {
       <section className="hx-hero">
         <div className="hx-hero__top">
           <div className="hx-hero__text">
-            <small>Pain Score ล่าสุด</small>
+            <small>{appt ? "Pain ก่อนนวดครั้งนี้" : "Pain Score ล่าสุด"}</small>
             <b style={latest !== undefined ? { color: painTone(latest)[1] } : undefined}>
               {latest ?? "—"}
               <i>/10</i>
@@ -199,7 +267,10 @@ export function PatientHealth({ id }: { id: string }) {
         <Stethoscope size={13} /> อาการสำคัญ
       </p>
       <section className="hx-card hx-complaint">
-        <p>{p.complaint}</p>
+        <p>
+          {(appt && intake?.complaint) || p.complaint}
+          {appt && !intake && p.complaint ? <small className="hx-prev"> (จากครั้งก่อน)</small> : null}
+        </p>
         <div className="hx-tags">
           {p.conditions.length ? (
             p.conditions.map((c) => (
@@ -217,7 +288,7 @@ export function PatientHealth({ id }: { id: string }) {
       {intake && (
         <>
           <p className="hx-label">
-            <Smartphone size={13} /> แบบประเมินล่าสุด
+            <Smartphone size={13} /> {appt ? "แบบประเมินของนัดนี้" : "แบบประเมินล่าสุด"}
           </p>
           <IntakeCard intake={intake} compact sex={p.gender} body={false} />
         </>

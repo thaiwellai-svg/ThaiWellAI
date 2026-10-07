@@ -246,7 +246,7 @@ export default function Visits() {
                   </IconButton>
                 </div>
                 <div className="vp__hist-body scroll-y scroll-y--light">
-                  <PatientHealth id={sel.patientId} />
+                  <PatientHealth id={sel.patientId} apptId={sel.id} />
                 </div>
               </div>
             </div>

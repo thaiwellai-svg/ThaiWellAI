@@ -18,7 +18,7 @@ import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
-import { intakeAlerts, intakeOfVisit } from "../data/intake";
+import { intakeAlerts, intakeOfVisit, visitAssessment } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
 import { VisitScreening } from "./ScreeningAlert";
@@ -230,7 +230,9 @@ export function AppointmentDrawer({
 
   const scrToday = p.screening && p.screening.at.slice(0, 10) === todayISO() ? p.screening : undefined;
   // เหมือน VisitScreening: คัดกรองที่คลินิกวันนี้ก่อน ถ้ายังไม่ได้วัดใช้แบบคัดกรองตนเองจากแอป
-  const stopFlags = (scrToday ? screeningFlags(scrToday, store.settings.bpThreshold) : appt.screening ? evaluateScreening(appt.screening, store.settings) : []).filter((f) => f.level === "stop");
+  // แบบคัดกรองของนัดนี้ (ประเมินสำหรับนัดนี้เท่านั้น)
+  const va = visitAssessment(appt);
+  const stopFlags = (scrToday ? screeningFlags(scrToday, store.settings.bpThreshold) : va?.screening ? evaluateScreening(va.screening, store.settings) : []).filter((f) => f.level === "stop");
   const stopFromApp = !scrToday && stopFlags.length > 0;
   const stopToday = stopFlags.length > 0;
   const startNow = (note?: string) => step({ status: "active", startedAt: nowIso(), bedId: bed! }, `เริ่มรับบริการ · ${bedName(store.settings, bed!)} · ${t.name}${note ? ` · ${note}` : ""}`);
@@ -475,13 +477,9 @@ export function AppointmentDrawer({
           <AnimatePresence mode="wait" initial={false}>
             <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
               {/* คัดกรองก่อนนวด อยู่ในขั้นที่กำลังทำ (ไม่ดันแถบขั้นตอนลงล่างในหน้ารับบริการ) */}
-              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={appt.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
+              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={va?.screening} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
               {/* แจ้งอาการเพิ่มหลังเช็กอิน + ประวัติการประเมินในแอปหลายรอบ */}
               {view !== "done" && <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />}
-              {/* นัดตามคอร์สที่คลินิกลงให้ แต่ผู้ป่วยยังไม่ได้ประเมินก่อนนวดในแอป → ให้รู้ว่าข้อมูลยังไม่อัปเดต */}
-              {(view === "checkin" || view === "waiting" || view === "called") && appt.cloudId?.startsWith("cl-") && !appt.assessRounds?.length && (
-                <p className="vs__noassess">ผู้ป่วยยังไม่ได้ประเมินก่อนนวดในแอปสำหรับนัดนี้ · ข้อมูลสุขภาพเป็นของครั้งก่อน · สอบถามอาการ/คัดกรองที่เคาน์เตอร์</p>
-              )}
               {/* แนวทางที่แอปแนะนำ: ดูก่อนเริ่ม / ระหว่างรักษา / ตอนบันทึก */}
               {(view === "waiting" || view === "called" || view === "treating" || view === "assess") && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
               {view === "checkin" && (

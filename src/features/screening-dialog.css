@@ -265,3 +265,8 @@
   border-radius: var(--radius-pill);
   font: 700 12px/1 var(--font-sans);
 }
+
+.vscr.is-pending {
+  background: #fff4dc;
+  box-shadow: inset 0 0 0 1.5px #f0c96a;
+}

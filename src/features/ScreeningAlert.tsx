@@ -42,10 +42,29 @@ export function ScreeningAlert({ p, onAgain }: { p: Patient; /** shows a "คั
 }
 
 /** Visit page: has the patient been screened today? Prompts a re-screen before every massage. */
-export function VisitScreening({ p, onScreen, app }: { p: Patient; onScreen: () => void; /** แบบคัดกรองตนเองจากแอป (ตอบตอนจอง) */ app?: Screening }) {
+export function VisitScreening({
+  p,
+  onScreen,
+  app,
+  assessedAt,
+  pending,
+  date,
+}: {
+  p: Patient;
+  onScreen: () => void;
+  /** แบบคัดกรองจากแอปของนัดนี้ */
+  app?: Screening;
+  /** เวลาที่ผู้ป่วยประเมินสำหรับนัดนี้ */
+  assessedAt?: string;
+  /** นัดจากแอป/ตามคอร์ส แต่ผู้ป่วยยังไม่ได้ประเมินสำหรับนัดนี้ */
+  pending?: boolean;
+  /** วันนัด (คัดกรองที่เคาน์เตอร์ต้องเป็นของวันนั้น) */
+  date?: string;
+}) {
   const { settings } = useStore();
   const s = p.screening;
-  const today = !!s && s.at.slice(0, 10) === todayISO();
+  const today = !!s && s.at.slice(0, 10) === (date ?? todayISO());
+  const when = assessedAt ? new Date(assessedAt).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
   // ยังไม่ได้วัดที่คลินิกวันนี้ แต่ผู้ป่วยตอบแบบคัดกรองในแอปแล้ว → บอกผลจากแอป + เหลือวัดความดัน/ชีพจร
   if (!today && app) {
     const flags = evaluateScreening(app, settings);
@@ -55,10 +74,10 @@ export function VisitScreening({ p, onScreen, app }: { p: Patient; onScreen: () 
       <div className={clsx("vscr", stop.length ? "is-stop" : "is-app")}>
         {stop.length ? <ShieldAlert size={18} /> : <ClipboardCheck size={18} />}
         <div>
-          <b>{stop.length ? `แบบคัดกรองจากแอป: ${stop.map((f) => f.label).join(" · ")}` : "คัดกรองตนเองจากแอปแล้ว · ผ่าน"}</b>
+          <b>{stop.length ? `แบบคัดกรองของนัดนี้: ${stop.map((f) => f.label).join(" · ")}` : "ผู้ป่วยประเมิน/คัดกรองสำหรับนัดนี้แล้ว · ผ่าน"}</b>
           <small>
             {stop.length ? `${stop[0].advice} · ` : warn.length ? `ระวัง: ${warn.map((f) => f.label).join(" · ")} · ` : ""}
-            เหลือวัดความดัน ชีพจร ก่อนเริ่มนวด
+            {when ? `ประเมินในแอป ${when} น. · ` : ""}เหลือวัดความดัน ชีพจร ก่อนเริ่มนวด
           </small>
         </div>
         <button type="button" onClick={onScreen}>
@@ -69,10 +88,10 @@ export function VisitScreening({ p, onScreen, app }: { p: Patient; onScreen: () 
   }
   if (!today)
     return (
-      <div className="vscr">
+      <div className={clsx("vscr", pending && "is-pending")}>
         <ClipboardCheck size={18} />
         <div>
-          <b>ยังไม่ได้คัดกรองวันนี้</b>
+          <b>{pending ? "ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้" : "ยังไม่ได้คัดกรองวันนี้"}</b>
           <small>วัดความดัน ชีพจร และถามอาการก่อนเริ่มนวด</small>
         </div>
         <button type="button" onClick={onScreen}>

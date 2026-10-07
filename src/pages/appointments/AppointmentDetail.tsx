@@ -1,4 +1,5 @@
 import { AppGuideCard } from "../../features/AppGuideCard";
+import { visitAssessment } from "../../data/intake";
 import { AssessHistory } from "../../features/AssessHistory";
 import { useEffect, useMemo, useState } from "react";
 import { extraTotal, visitTotal } from "../../features/billing";
@@ -52,7 +53,7 @@ export default function AppointmentDetail() {
   const notStarted = a.status === "waiting";
   const d = new Date(a.date + "T00:00:00");
   // คัดกรองที่คลินิก (ล่าสุด) · ถ้ายังไม่เคย ใช้แบบคัดกรองตนเองจากแอปของนัดนี้
-  const appFlags = !p.screening && a.screening ? evaluateScreening(a.screening, store.settings) : null;
+  const appFlags = !p.screening && visitAssessment(a)?.screening ? evaluateScreening(visitAssessment(a)!.screening!, store.settings) : null;
   const flags = p.screening ? screeningFlags(p.screening, store.settings.bpThreshold) : (appFlags ?? []);
   const stop = flags.some((f) => f.level === "stop");
 
@@ -286,7 +287,7 @@ export default function AppointmentDetail() {
               {a.date === todayISO() && notStarted ? (
                 // วันนัด: แถบคัดกรองเดียวกับหน้ารับบริการ (รวมแบบคัดกรองตนเองจากแอป)
                 <>
-                  <VisitScreening p={p} app={a.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
+                  <VisitScreening p={p} app={visitAssessment(a)?.screening} assessedAt={visitAssessment(a)?.at} pending={!visitAssessment(a) && !!a.cloudId} date={a.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
                   <AssessHistory rounds={a.assessRounds} addenda={a.addenda} />
                   <AppGuideCard guide={a.appGuide} areas={a.intake?.focusAreas} compact />
                 </>

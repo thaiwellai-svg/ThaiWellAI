@@ -26,6 +26,7 @@ const roundOf = (a: Omit<CloudAssessment, "rounds" | "addenda">, fallbackAt: str
   avoidAreas: a.avoid ?? [],
   summary: a.summary,
   flags: flagsOf(a.screening),
+  ...(a.previsit ? { previsit: a.previsit } : {}),
 });
 /** ทุกรอบ เก่า → ใหม่ (รอบสุดท้าย = ที่ผู้ให้บริการใช้) */
 const roundsOf = (row: CloudAppt): AssessRound[] => {

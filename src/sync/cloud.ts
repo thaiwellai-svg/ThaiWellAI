@@ -64,6 +64,8 @@ export interface CloudAssessment {
   /** รหัสบริการ / ผู้บำบัดที่ผู้ป่วยเลือกในแอป (รหัสเดียวกับคลินิก) */
   serviceId?: string;
   therapistId?: string;
+  /** แบบคัดกรองก่อนนวดของครั้งนี้ (นัดตามคอร์ส) */
+  previsit?: { adverse?: string; risk?: string; red?: boolean };
   /** แนวทางการรักษาที่แอปแนะนำ */
   guide?: { condition?: string; methods: string[]; points: string[]; caution?: string; ref?: string };
   /** เวลาที่ประเมินรอบล่าสุด · rounds = รอบก่อนหน้า (เก่า → ใหม่) · addenda = แจ้งอาการเพิ่มหลังเช็กอิน */

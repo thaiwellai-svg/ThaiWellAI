@@ -108,7 +108,7 @@ export function intakeOfVisit(a: Appointment, p: Patient): Intake | null {
     };
   if (a.intake) return a.intake;
   // ใช้งานจริง: ยังไม่ได้ประเมินสำหรับนัดนี้ = ไม่มี (ไม่สร้างข้อมูลแทน)
-  if (LIVE) return null;
+  if (LIVE || a.cloudId?.startsWith("cl-")) return null;
   if (a.type !== "booked") return null;
   const at = new Date(`${a.date}T${a.start}:00`);
   at.setDate(at.getDate() - 1);
@@ -126,4 +126,15 @@ export function intakeAlerts(i: Intake, bpThreshold = 160): { label: string; lev
   if (i.surgery) out.push({ label: i.surgery, level: "warn" });
   if (i.allergy) out.push({ label: i.allergy, level: "warn" });
   return out;
+}
+
+/**
+ * ผลประเมิน/แบบคัดกรองจากแอปของนัดนี้ (ไม่ใช่ของครั้งอื่น)
+ * มีรอบประเมินของนัดนี้ → ใช้รอบล่าสุด · นัดจากคำขอจอง → ผลตอนจอง · นัดที่คลินิกลงเอง (cl-) ยังไม่ประเมิน = null
+ */
+export function visitAssessment(a: Appointment): { screening?: Screening; at: string } | null {
+  const r = a.assessRounds?.[a.assessRounds.length - 1];
+  if (r) return { screening: a.screening, at: r.at };
+  if (a.intake && !a.cloudId?.startsWith("cl-")) return { screening: a.screening, at: a.intake.at };
+  return null;
 }
