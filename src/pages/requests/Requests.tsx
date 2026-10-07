@@ -1,3 +1,4 @@
+import { AssessHistory } from "../../features/AssessHistory";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -371,6 +372,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
         </div>
 
         <aside className="rq2__side">
+          <AssessHistory rounds={r.assessRounds} />
           <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         </aside>
       </div>
@@ -438,6 +440,7 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
         </div>
 
         <aside className="rq2__side">
+          <AssessHistory rounds={r.assessRounds} />
           <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         </aside>
       </div>

@@ -3,17 +3,58 @@ import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { queueNumber } from "../features/AppointmentDrawer";
 import { todayISO } from "../data/thaiDate";
-import type { Appointment, BookingRequest, Intake, Patient } from "../data/types";
+import type { Appointment, AssessRound, BookingRequest, Intake, Patient, Screening } from "../data/types";
 import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
 import { defaultAppAvatar } from "../data/avatars";
 import { validCheckinCode } from "../features/checkinCode";
 import { coursePrepaid } from "../data/domain";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
-import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
+import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudAssessment, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
 
 type Store = ReturnType<typeof useStore>;
+
+/* ---------- ประเมินหลายรอบจากแอป (ประเมินซ้ำก่อนเช็กอิน) + แจ้งอาการเพิ่มหลังเช็กอิน ---------- */
+const flagsOf = (sc?: CloudAssessment["screening"]) =>
+  [sc?.fever && "มีไข้", sc?.highBP && "ความดันสูง", sc?.pregnant && "ตั้งครรภ์", sc?.recentSurgery && "ผ่าตัดไม่นาน", sc?.contagious && "โรคติดต่อ", sc?.menstruation && "มีประจำเดือน"].filter(Boolean) as string[];
+const roundOf = (a: Omit<CloudAssessment, "rounds" | "addenda">, fallbackAt: string): AssessRound => ({
+  at: a.at ?? fallbackAt,
+  pain: a.pain ?? 5,
+  complaint: a.complaint ?? "",
+  focusAreas: a.areas ?? [],
+  avoidAreas: a.avoid ?? [],
+  summary: a.summary,
+  flags: flagsOf(a.screening),
+});
+/** ทุกรอบ เก่า → ใหม่ (รอบสุดท้าย = ที่ผู้ให้บริการใช้) */
+const roundsOf = (row: CloudAppt): AssessRound[] => {
+  const as = row.assessment ?? {};
+  return [...(as.rounds ?? []).map((r) => roundOf(r, row.created_at)), roundOf(as, row.created_at)];
+};
+const screeningOf = (sc?: CloudAssessment["screening"]): Screening => ({ fever: !!sc?.fever, highBP: !!sc?.highBP, bpSystolic: sc?.bpSystolic, menstruation: !!sc?.menstruation, pregnant: !!sc?.pregnant, recentSurgery: !!sc?.recentSurgery, contagious: !!sc?.contagious });
+const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
+  const as = row.assessment ?? {};
+  return {
+    at: as.at ?? row.created_at,
+    goal: "บรรเทาอาการ",
+    complaint: as.complaint ?? fallbackComplaint,
+    pain: as.pain ?? 5,
+    duration: "-",
+    focusAreas: as.areas ?? [],
+    avoidAreas: as.avoid ?? [],
+    conditions: as.conditions ?? [],
+    medications: [],
+    bloodThinner: false,
+    skin: "ปกติ",
+    numbness: false,
+    fever: !!as.screening?.fever,
+    pregnant: as.screening?.pregnant ?? null,
+    pressure: (["เบา", "ปานกลาง", "หนัก"].includes(as.pressure ?? "") ? as.pressure : "ปานกลาง") as Intake["pressure"],
+  };
+};
+/** ลายเซ็นของการประเมิน (เปลี่ยน = มีรอบใหม่ / แจ้งเพิ่ม) */
+const assessSig = (row: CloudAppt) => `${row.assessment?.rounds?.length ?? 0}|${row.assessment?.at ?? ""}|${row.assessment?.addenda?.length ?? 0}`;
 
 /** what the clinic has done with a linked booking, as the shared status + the data the app needs */
 function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Partial<CloudAppt>; kind: string; summary: string } {
@@ -80,6 +121,8 @@ export function CloudBridge() {
   const issuing = useRef(new Set<string>());
   /** ยอด/เลขใบเสร็จของบิลที่ส่งไปแอปแล้ว (แก้บิลระหว่างรอชำระ → ส่งใหม่) */
   const billSig = useRef(new Map<string, string>());
+  /** ลายเซ็นการประเมิน/แจ้งเพิ่มล่าสุดที่เห็น (รอบตรวจซ้ำ: เปลี่ยน → รับใหม่) */
+  const asSig = useRef(new Map<string, string>());
   /** นัดที่คลินิกลงเองให้ผู้ป่วยที่ใช้แอป (กำลังสร้างแถวใน cloud) · คอร์สที่ส่งไปแอปล่าสุด */
   const creating = useRef(new Set<string>());
   const courseSig = useRef(new Map<string, string>());
@@ -164,27 +207,28 @@ export function CloudBridge() {
     if (row.plan?.summary) planSent.current.add(`${row.id}|${row.plan.summary}|${row.plan.course ? `${row.plan.course.used}/${row.plan.course.total}` : ""}`);
     if (row.status === "billed" && row.bill) billSig.current.set(row.id, JSON.stringify(row.bill));
     const local = st.appointments.find((a) => a.cloudId === row.id);
+    const prevSig = asSig.current.get(row.id);
+    asSig.current.set(row.id, assessSig(row));
     if (row.status === "requested") {
-      if (st.requests.some((r) => r.cloudId === row.id) || local) return;
+      // ผู้ป่วยประเมินใหม่ระหว่างรออนุมัติ → คำขอใช้ผลรอบล่าสุด (เก็บทุกรอบไว้ดูย้อนหลัง)
+      const open = st.requests.find((r) => r.cloudId === row.id);
+      if (open) {
+        const rounds = roundsOf(row);
+        if (rounds.length > (open.assessRounds?.length ?? 1) || rounds[rounds.length - 1].at !== open.assessRounds?.[open.assessRounds.length - 1]?.at) {
+          const as = row.assessment ?? {};
+          const who = st.patientById(open.patientId).name;
+          st.dispatch({ type: "updateRequest", id: open.id, patch: { intake: intakeOf(row, open.intake?.complaint ?? ""), painScore: as.pain ?? open.painScore, screening: screeningOf(as.screening), assessRounds: rounds, note: as.summary ?? open.note }, log: `${who} ประเมินใหม่ในแอป (รอบที่ ${rounds.length})` });
+          if (prevSig !== undefined) {
+            toast({ message: `${who} ประเมินใหม่ในแอป · ปวด ${as.pain ?? "-"}/10` });
+            void pushNotify("ผู้ป่วยประเมินใหม่", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/requests");
+          }
+        }
+        return;
+      }
+      if (local) return;
       const p = patientFor(row);
       const as = row.assessment ?? {};
-      const intake: Intake = {
-        at: row.created_at,
-        goal: "บรรเทาอาการ",
-        complaint: as.complaint ?? p.complaint,
-        pain: as.pain ?? 5,
-        duration: "-",
-        focusAreas: as.areas ?? [],
-        avoidAreas: as.avoid ?? [],
-        conditions: as.conditions ?? [],
-        medications: [],
-        bloodThinner: false,
-        skin: "ปกติ",
-        numbness: false,
-        fever: !!as.screening?.fever,
-        pregnant: as.screening?.pregnant ?? null,
-        pressure: (["เบา", "ปานกลาง", "หนัก"].includes(as.pressure ?? "") ? as.pressure : "ปานกลาง") as Intake["pressure"],
-      };
+      const intake = intakeOf(row, p.complaint);
       const req: BookingRequest = {
         id: `rq-${row.id}`,
         cloudId: row.id,
@@ -194,8 +238,9 @@ export function CloudBridge() {
         date: row.date ?? todayISO(),
         start: row.start ?? "10:00",
         painScore: as.pain ?? 5,
-        screening: { fever: !!as.screening?.fever, highBP: !!as.screening?.highBP, bpSystolic: as.screening?.bpSystolic, menstruation: !!as.screening?.menstruation, pregnant: !!as.screening?.pregnant, recentSurgery: !!as.screening?.recentSurgery, contagious: !!as.screening?.contagious },
+        screening: screeningOf(as.screening),
         intake,
+        assessRounds: roundsOf(row),
         note: as.summary ?? as.complaint,
         submittedAt: row.created_at,
       };
@@ -238,6 +283,32 @@ export function CloudBridge() {
       }
     }
     syncPhoto(st.patientById(local.patientId), row.tw_patients);
+    {
+      const who = st.patientById(local.patientId).name;
+      // ประเมินใหม่ก่อนเช็กอิน → ผู้ให้บริการใช้ผลรอบล่าสุด · เช็กอินแล้ว/เริ่มรับบริการ = ล็อก (ไม่รับรอบใหม่)
+      const rounds = roundsOf(row);
+      const lastAt = rounds[rounds.length - 1].at;
+      const before = !local.checkinQueue && !local.calledAt && !local.startedAt && local.status === "waiting";
+      if (row.assessment && before && (rounds.length > (local.assessRounds?.length ?? 1) || (local.assessRounds && lastAt !== local.assessRounds[local.assessRounds.length - 1]?.at))) {
+        const as = row.assessment;
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length}) · ปวด ${as.pain ?? "-"}/10` });
+        if (prevSig !== undefined && rounds.length > 1) {
+          toast({ message: `${who} ประเมินใหม่ก่อนนวด · ปวด ${as.pain ?? "-"}/10` });
+          void pushNotify("ผู้ป่วยประเมินใหม่ก่อนนวด", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/visits");
+        }
+      } else if (row.assessment && !local.assessRounds) st.dispatch({ type: "updateAppointment", id: local.id, patch: { assessRounds: rounds } });
+      // แจ้งอาการเพิ่มหลังเช็กอิน (ไม่แก้ผลประเมิน) → แสดงแยกให้เห็นชัด + เตือนเจ้าหน้าที่
+      const add = row.assessment?.addenda ?? [];
+      if (add.length > (local.addenda?.length ?? 0)) {
+        const fresh = add.slice(local.addenda?.length ?? 0);
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { addenda: add }, log: `แจ้งอาการเพิ่มหลังเช็กอิน: ${fresh.map((x) => x.text).join(" · ")}` });
+        if (prevSig !== undefined) {
+          toast({ message: `${who} แจ้งอาการเพิ่ม: ${fresh[fresh.length - 1].text}` });
+          void pushNotify("แจ้งอาการเพิ่มหลังเช็กอิน", `${who} · ${fresh[fresh.length - 1].text}`, "/visits");
+          st.dispatch({ type: "bridgeIn", event: { id: `add-${row.id}-${add.length}`, at: fresh[fresh.length - 1].at, type: "note", title: "แจ้งอาการเพิ่มหลังเช็กอิน", body: `${who} · ${fresh.map((x) => x.text).join(" · ")}`, patientId: local.patientId } });
+        }
+      }
+    }
     // นัดที่อนุมัติก่อนมีการเก็บแบบคัดกรอง → เติมจากที่ผู้ป่วยตอบในแอป
     const sc = row.assessment?.screening;
     if (!local.screening && sc)
@@ -350,7 +421,7 @@ export function CloudBridge() {
       if (!open.length) return;
       const { data } = await cloud.from("tw_appointments").select(join).in("id", open);
       (data as CloudAppt[] | null)?.forEach((r) => {
-        if (r.status !== known.current.get(r.id) || r.status === "checked_in") inbound(r);
+        if (r.status !== known.current.get(r.id) || r.status === "checked_in" || assessSig(r) !== asSig.current.get(r.id)) inbound(r);
       });
     }, 5000);
     return () => {

@@ -12,6 +12,7 @@ import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
+import { AssessHistory } from "./AssessHistory";
 import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "./billing";
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
@@ -474,6 +475,8 @@ export function AppointmentDrawer({
             <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
               {/* คัดกรองก่อนนวด อยู่ในขั้นที่กำลังทำ (ไม่ดันแถบขั้นตอนลงล่างในหน้ารับบริการ) */}
               {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={appt.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
+              {/* แจ้งอาการเพิ่มหลังเช็กอิน + ประวัติการประเมินในแอปหลายรอบ */}
+              {view !== "done" && <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />}
               {view === "checkin" && (
                 <>
                   <StepHead n={1} title="รอเช็กอินเข้ารับบริการ" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR เช็กอินที่เคาน์เตอร์ในแอป หรือกด “เช็กอินที่เคาน์เตอร์” · เช็กอินแล้วได้เลขคิวตามลำดับที่มาถึง" : "เช็กอินได้ในวันนัด"} />

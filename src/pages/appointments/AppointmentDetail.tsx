@@ -1,3 +1,4 @@
+import { AssessHistory } from "../../features/AssessHistory";
 import { useEffect, useMemo, useState } from "react";
 import { extraTotal, visitTotal } from "../../features/billing";
 import { useNavigate, useParams } from "react-router-dom";
@@ -283,7 +284,10 @@ export default function AppointmentDetail() {
             <div className="adp__col">
               {a.date === todayISO() && notStarted ? (
                 // วันนัด: แถบคัดกรองเดียวกับหน้ารับบริการ (รวมแบบคัดกรองตนเองจากแอป)
-                <VisitScreening p={p} app={a.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
+                <>
+                  <VisitScreening p={p} app={a.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
+                  <AssessHistory rounds={a.assessRounds} addenda={a.addenda} />
+                </>
               ) : (
                 <section className={clsx("adp__scr", !p.screening && !appFlags ? "is-none" : stop ? "is-stop" : flags.length ? "is-warn" : "is-ok")}>
                   <span className="adp__scr-i">{stop || flags.length ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}</span>
