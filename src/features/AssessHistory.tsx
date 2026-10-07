@@ -33,7 +33,8 @@ function diffOf(cur: AssessRound, prev?: AssessRound): string[] {
  */
 export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRound[]; addenda?: Addendum[] }) {
   const [open, setOpen] = useState(false);
-  if (!rounds.length && !addenda.length) return null;
+  // ประเมินรอบเดียว = อยู่ในการ์ดอาการสำคัญแล้ว (ไม่ต้องแสดงซ้ำ) · แสดงเมื่อประเมินหลายรอบ หรือมีแจ้งเพิ่ม
+  if (rounds.length < 2 && !addenda.length) return null;
   const latest = rounds[rounds.length - 1];
   const list = [...rounds].reverse();
   return (
@@ -54,12 +55,12 @@ export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRo
           </div>
         </div>
       )}
-      {rounds.length > 0 && latest && (
+      {rounds.length > 1 && latest && (
         <div className="ah-rounds">
           <button type="button" className="ah-rounds__head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
             <History size={15} />
             <span>
-              <b>{rounds.length > 1 ? `ประเมินในแอป ${rounds.length} รอบ` : `ผู้ป่วยประเมินในแอป · ปวด ${latest.pain}/10`}</b>
+              <b>ประเมินในแอป {rounds.length} รอบ</b>
               <small>ใช้รอบล่าสุด {when(latest.at)}{diffOf(latest, rounds[rounds.length - 2]).length ? ` · ${diffOf(latest, rounds[rounds.length - 2]).join(" · ")}` : ""}</small>
             </span>
             <ChevronDown size={16} className={clsx("ah-chev", open && "is-open")} />
