@@ -8,6 +8,7 @@ import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
 import { defaultAppAvatar } from "../data/avatars";
 import { validCheckinCode } from "../features/checkinCode";
+import { coursePrepaid } from "../data/domain";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
@@ -410,7 +411,7 @@ export function CloudBridge() {
     for (const p of store.patients) {
       if (!p.cloudId) continue;
       const c = p.course;
-      const course = c ? { name: c.name, service: store.serviceById(c.serviceId).name, total: c.total, used: c.used, startedOn: c.startedOn, expiresOn: c.expiresOn } : null;
+      const course = c ? { name: c.name, service: store.serviceById(c.serviceId).name, total: c.total, used: c.used, startedOn: c.startedOn, expiresOn: c.expiresOn, billing: coursePrepaid(p, store.biz.sales) ? "prepaid" : "perVisit" } : null;
       // ประวัติการรักษาที่คลินิก (นวดเสร็จแล้ว ล่าสุดก่อน) → แอปของเจ้าของ
       const visits = store.appointments
         .filter((a) => a.patientId === p.id && (a.status === "done" || (a.endedAt && a.painAfter !== undefined)))

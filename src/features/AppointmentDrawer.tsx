@@ -6,7 +6,7 @@ import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
-import { bedName, bedsInUse, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
+import { bedName, bedsInUse, coursePrepaid, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
 import { baht, timeAgo, thaiDateLong, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
@@ -173,7 +173,10 @@ export function AppointmentDrawer({
   const t = store.therapistById(appt.therapistId);
   const credits = creditInfo(p, store.appointments);
   // a course only pays for its own service
-  const coveredByCourse = !!p.course && p.course.serviceId === appt.serviceId && !!credits && credits.total - credits.used > 0;
+  // คอร์สชำระรายครั้ง → จ่ายทุกครั้ง (ไม่มีหักเครดิต) · คอร์สจ่ายล่วงหน้า → หักเครดิตได้
+  const prepaid = coursePrepaid(p, store.biz.sales);
+  const coveredByCourse = prepaid && !!p.course && p.course.serviceId === appt.serviceId && !!credits && credits.total - credits.used > 0;
+  const perVisitCourse = !prepaid && !!p.course && p.course.serviceId === appt.serviceId;
   const payByCredit = coveredByCourse && useCredit;
   // ค่าบริการ + หัตถการที่ทำเพิ่ม · หักเครดิตคอร์ส = หักเฉพาะค่าบริการ (หัตถการเพิ่มยังต้องจ่าย)
   const extras = extraLines(appt);
@@ -551,7 +554,13 @@ export function AppointmentDrawer({
                   received={received}
                   setReceived={setReceived}
                   patientName={p.name}
-                  courseNote={p.course && !coveredByCourse && credits && credits.total - credits.used > 0 ? `คอร์ส${p.course.name}ใช้กับบริการนี้ไม่ได้ · ชำระรายครั้ง` : undefined}
+                  courseNote={
+                    perVisitCourse && credits
+                      ? `คอร์ส${p.course!.name} · ชำระรายครั้ง · ครั้งที่ ${Math.min(credits.total, credits.used + 1)}/${credits.total}`
+                      : p.course && !coveredByCourse && prepaid && credits && credits.total - credits.used > 0
+                        ? `คอร์ส${p.course.name}ใช้กับบริการนี้ไม่ได้ · ชำระรายครั้ง`
+                        : undefined
+                  }
                 />
                 </>
               )}

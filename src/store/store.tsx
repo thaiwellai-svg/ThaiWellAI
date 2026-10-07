@@ -8,7 +8,7 @@ import { defaultBiz, type Biz } from "../data/biz";
 import { DEMO } from "../data/mode";
 import { beat, BRIDGE_KEY, publishAvailability, sendToApp, takeNewAppEvents, type AppEvent } from "../features/appBridge";
 import { slotLoad } from "../features/slotLoad";
-import { staffState } from "../data/domain";
+import { staffState, coursePrepaid } from "../data/domain";
 
 export interface State {
   version: number;
@@ -221,8 +221,11 @@ function reducer(state: State, action: Action): State {
             ? { ...a, ...action.patch, log: action.log ? [...(a.log ?? []), { at: new Date().toISOString(), label: action.log }] : a.log }
             : action.appointment;
         // a course credit is used only when the visit is paid *with* the credit; cancelling that receipt (or undo) gives it back
-        const wasCredit = byCredit(a);
-        const isCredit = byCredit(next);
+        const owner = state.patients.find((x) => x.id === a.patientId);
+        const perVisit = !!owner?.course && !coursePrepaid(owner, state.biz.sales) && owner.course.serviceId === next.serviceId;
+        // คอร์สชำระรายครั้ง: นับ 1 ครั้งเมื่อรักษาเสร็จ (ไม่ใช่ตอนหักเครดิต)
+        const wasCredit = perVisit ? a.status === "done" : byCredit(a);
+        const isCredit = perVisit ? next.status === "done" : byCredit(next);
         if (wasCredit !== isCredit)
           patients = patients.map((p) =>
             p.id === a.patientId && p.course ? { ...p, course: { ...p.course, used: Math.max(0, p.course.used + (isCredit ? 1 : -1)) } } : p,

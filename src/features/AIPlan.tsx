@@ -194,6 +194,8 @@ ${THAI_MASSAGE_KNOWLEDGE}
         used: 0,
         startedOn: todayISO(),
         expiresOn: addISODays(todayISO(), 90),
+        // คอร์สตามแผนการรักษา = ชำระรายครั้ง (ซื้อแพ็กเกจล่วงหน้าได้ที่ "ขายคอร์ส / แพ็กเกจ")
+        billing: "perVisit",
       };
     store.dispatch({ type: "updatePatient", id: p.id, patch });
     // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)

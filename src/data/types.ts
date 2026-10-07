@@ -116,6 +116,8 @@ export interface Course {
   /** ISO date the treatment plan was opened by the Thai traditional doctor */
   startedOn: string;
   expiresOn: string;
+  /** prepaid = ซื้อแพ็กเกจจ่ายล่วงหน้า (มาแต่ละครั้งหักเครดิต) · perVisit = คอร์สการรักษา ชำระรายครั้ง (ทุกครั้งจ่ายค่าบริการ + หัตถการที่ทำเพิ่ม · คอร์สนับจำนวนครั้ง) */
+  billing?: "prepaid" | "perVisit";
 }
 
 export interface Patient {

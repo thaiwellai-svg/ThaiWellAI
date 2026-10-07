@@ -108,6 +108,17 @@ export interface CreditInfo {
 }
 
 /** Remaining = plan total − sessions used − future sessions already booked (pain point §3.1). */
+/**
+ * คอร์สนี้จ่ายล่วงหน้าแล้วหรือไม่ (มาแต่ละครั้ง = หักเครดิต)
+ * คอร์สเก่าที่ยังไม่ระบุ: มีการขายแพ็กเกจให้ผู้ป่วยคนนี้ = จ่ายล่วงหน้า · ไม่มี (เปิดจากแผนการรักษา) = ชำระรายครั้ง · ข้อมูลสาธิต = จ่ายล่วงหน้า
+ */
+export function coursePrepaid(patient: Pick<Patient, "id" | "course">, sales: { patientId: string }[]): boolean {
+  const c = patient.course;
+  if (!c) return false;
+  if (c.billing) return c.billing === "prepaid";
+  return !LIVE || sales.some((s) => s.patientId === patient.id);
+}
+
 export function creditInfo(patient: Patient, appointments: Appointment[]): CreditInfo | null {
   if (!patient.course) return null;
   const today = todayISO();

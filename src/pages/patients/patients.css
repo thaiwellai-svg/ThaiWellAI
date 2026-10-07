@@ -2722,3 +2722,35 @@
   color: #fff;
   box-shadow: none;
 }
+
+/* วิธีชำระของคอร์ส */
+.pd2__bill {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 6px 0 4px;
+}
+.pd2__bill button {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--sage-100);
+  text-align: left;
+}
+.pd2__bill b {
+  font: 700 12.5px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.pd2__bill small {
+  font: 400 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pd2__bill button[aria-checked="true"] {
+  background: var(--color-brand-tint, #eef5ee);
+  box-shadow: inset 0 0 0 2px var(--color-brand);
+}
+.pd2__bill button[aria-checked="true"] b {
+  color: var(--color-brand);
+}

@@ -12,7 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
-import { stageMeta, creditInfo } from "../../data/domain";
+import { stageMeta, creditInfo, coursePrepaid } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
@@ -97,6 +97,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     );
 
   const credits = creditInfo(p, store.appointments);
+
+  const prepaid = coursePrepaid(p, store.biz.sales);
   // นัดเกินจำนวนครั้งของคอร์ส (เช่น จองตามแผนก่อนเปิดคอร์ส แล้วคอร์สเปิดจำนวนน้อยกว่า)
   const over = credits ? Math.max(0, credits.used + credits.booked - credits.total) : 0;
   const growCourse = () => {
@@ -285,6 +287,29 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             {credits && p.course ? (
               <>
                 <b className="pd2__course">{p.course.name}</b>
+                {/* วิธีชำระของคอร์ส: จ่ายล่วงหน้า (หักเครดิตทุกครั้ง) หรือ ชำระรายครั้ง (จ่ายทุกครั้งที่มา + หัตถการที่ทำเพิ่ม) */}
+                <div className="pd2__bill" role="radiogroup" aria-label="วิธีชำระคอร์ส">
+                  {(
+                    [
+                      ["perVisit", "ชำระรายครั้ง", "จ่ายทุกครั้งที่มารักษา"],
+                      ["prepaid", "จ่ายล่วงหน้าแล้ว", "มาแต่ละครั้งหักเครดิต"],
+                    ] as const
+                  ).map(([k, label, sub]) => {
+                    const on = (prepaid ? "prepaid" : "perVisit") === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => !on && store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course!, billing: k } }, })}
+                      >
+                        <b>{label}</b>
+                        <small>{sub}</small>
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="hx-tix" style={{ gridTemplateColumns: `repeat(${Math.min(credits.total, 10)}, minmax(0, 1fr))` }}>
                   {Array.from({ length: credits.total }, (_, k) => {
                     const st = k < credits.used ? "used" : k < credits.used + credits.booked ? "booked" : "free";

@@ -51,8 +51,8 @@ export function SellPackageDialog({ patientId, onClose }: { patientId: string | 
     const sale: PackageSale = { id: `ps${Date.now().toString(36)}`, no: runNo("PK", n), at, patientId: p.id, packageId: pkg.id, name: pkg.name, price: pkg.price, discount, net, payments, member, by: store.settings.staffName };
     store.dispatch({ type: "biz", log: `ขายแพ็กเกจ ${pkg.name} ${baht(net)} บาท · ชำระ ${baht(pay)}${pay < net ? ` · ค้าง ${baht(net - pay)}` : ""}`, patientId: p.id, update: (b) => ({ ...b, sales: [sale, ...b.sales], seq: { ...b.seq, sale: n } }) });
     const course = same
-      ? { ...p.course!, total: p.course!.total + pkg.sessions, expiresOn: addISODays(todayISO(), pkg.validDays) }
-      : { name: pkg.name, serviceId: pkg.serviceId, total: pkg.sessions, used: 0, startedOn: todayISO(), expiresOn: addISODays(todayISO(), pkg.validDays) };
+      ? { ...p.course!, total: p.course!.total + pkg.sessions, expiresOn: addISODays(todayISO(), pkg.validDays), billing: "prepaid" as const }
+      : { name: pkg.name, serviceId: pkg.serviceId, total: pkg.sessions, used: 0, startedOn: todayISO(), expiresOn: addISODays(todayISO(), pkg.validDays), billing: "prepaid" as const };
     store.dispatch({ type: "updatePatient", id: p.id, patch: { course, ...(member !== !!p.member ? { member } : {}) } });
     toast({ message: `ขาย ${pkg.name} ให้ ${p.name} แล้ว${pay < net ? ` · ค้างชำระ ${baht(net - pay)} บาท` : ""}` });
     onClose();
