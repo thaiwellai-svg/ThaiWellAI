@@ -13,7 +13,7 @@ import { bestForElement, outcomeRows } from "../data/outcomes";
 import { DEFAULT_CALL_VOICE, speak, stopSpeaking, unlockAudio } from "./tts";
 import { VoiceWave } from "./VoiceWave";
 import { Body3D } from "./Body3D";
-import { BODY_AREAS, toArea, type BodyArea } from "./BodyMap";
+import { BODY_AREAS, toArea, toAreas, type BodyArea } from "./BodyMap";
 import { elementProfile } from "../data/elements";
 import type { Appointment } from "../data/types";
 import "./voice-note.css";
@@ -297,7 +297,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   };
   const short = (n: string) => n.replace(/\s*\(.*\)/, "");
   /** areas the patient asked not to be massaged */
-  const avoidAreas = () => [...new Set((intakeOfVisit(appt, p)?.avoidAreas ?? []).map((a) => toArea(a)).filter(Boolean) as BodyArea[])];
+  const avoidAreas = () => [...new Set((intakeOfVisit(appt, p)?.avoidAreas ?? []).flatMap((a) => toAreas(a)))];
   /** a spoken warning when a proposal touches a no-massage area */
   const avoidWarn = (items: Sug[]) => {
     const hit = items.flatMap((x) => areasIn(x.area ?? "")).filter((a) => avoidAreas().includes(a));

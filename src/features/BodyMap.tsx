@@ -21,6 +21,25 @@ export function toArea(s: string): BodyArea | null {
   return null;
 }
 
+/** ข้อความรวมหลายบริเวณจากแอป ("ปวดคอ-บ่า", "ศีรษะ/ใบหน้า", "หลังและเอว") → ทุกบริเวณที่พูดถึง */
+export function toAreas(s: string): BodyArea[] {
+  const one = toArea(s.trim());
+  if (one) return [one];
+  const out = new Set<BodyArea>();
+  for (const part of s.split(/[-/,·|]|และ|\s+/)) {
+    const r = toArea(part.replace(/^(ปวด|เจ็บ|ตึง|เมื่อย|ชา)/, "").trim());
+    if (r) out.add(r);
+  }
+  // คำที่อยู่ในประโยค (ไม่ได้คั่นด้วยเครื่องหมาย)
+  for (const a of BODY_AREAS) if (s.includes(a)) out.add(a);
+  if (/ใบหน้า|หน้าผาก|ขมับ|หัว/.test(s)) out.add("ศีรษะ");
+  if (/เอว|หลังล่าง/.test(s)) out.add("หลังส่วนล่าง");
+  if (/สะบัก/.test(s)) out.add("หลังส่วนบน");
+  // "หลัง" ลอย ๆ = หลังส่วนบน (ถ้ายังไม่ได้ระบุส่วนไหน)
+  if (/หลัง/.test(s) && !out.has("หลังส่วนบน") && !out.has("หลังส่วนล่าง")) out.add("หลังส่วนบน");
+  return [...out];
+}
+
 type E = [cx: number, cy: number, rx: number, ry: number];
 // regions on a 120×262 figure; paired limbs listed twice
 const FRONT: Partial<Record<BodyArea, E[]>> = {

@@ -9,6 +9,9 @@ import { CreditPips, PainMeter, ScreeningAlert, ScreeningGrid } from "./widgets"
 import { slotLoad } from "./slotLoad";
 import { patientPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
+import { IntakeCard } from "./IntakeCard";
+import { intakeOfRequest } from "../data/intake";
+import { elementProfile } from "../data/elements";
 
 export function ApproveDialog({ request: incoming, onClose }: { request: BookingRequest | null; onClose: () => void }) {
   const request = useLatest(incoming);
@@ -67,9 +70,11 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <h3 className="sec__title">อาการและระดับความปวดที่ผู้ป่วยประเมิน</h3>
         </div>
         <p className="tw-meta" style={{ color: "var(--color-text)" }}>
-          {s.name} ({s.minutes} นาที) · อาการสำคัญ: {p.complaint}
+          {s.name} ({s.minutes} นาที) · อาการสำคัญ: {request.intake?.complaint || p.complaint}
         </p>
         <PainMeter score={request.painScore} />
+        {/* บริเวณที่ปวด (heatmap) และบริเวณห้ามนวด ตามที่ผู้ป่วยประเมินในแอป */}
+        <IntakeCard intake={intakeOfRequest(request, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         {request.note && (
           <div className="alert alert--info">
             <CircleAlert size={16} />

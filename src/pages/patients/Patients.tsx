@@ -27,11 +27,11 @@ import { Body3D } from "../../features/Body3D";
 import { MultiSelect } from "../../features/MultiSelect";
 import { ElementIcon } from "../../features/ElementIcon";
 import { ELEMENT_INFO, TH_MONTH, birthElement, type Element } from "../../data/elements";
-import { toArea, type BodyArea } from "../../features/BodyMap";
+import { toAreas, type BodyArea } from "../../features/BodyMap";
 import idFace from "../../assets/cardreader/id_face.png";
 import "./patients.css";
 
-const areasOf = (xs: string[]) => [...new Set(xs.map((x) => toArea(x.trim())).filter((x): x is BodyArea => !!x))];
+const areasOf = (xs: string[]) => [...new Set(xs.flatMap((x) => toAreas(x)))];
 const splitList = (s: string) => s.split(/\s*,\s*/).map((x) => x.trim()).filter(Boolean);
 const COMPLAINTS = ["ปวดคอ", "ปวดบ่า", "ปวดไหล่", "ปวดหลัง", "ปวดเอว", "ปวดเข่า", "ปวดศีรษะ", "ชามือ/เท้า", "นอนไม่หลับ", "ต้องการผ่อนคลาย"];
 const CONDITIONS = ["ความดันโลหิตสูง", "เบาหวาน", "ไขมันในเลือดสูง", "โรคหัวใจ", "โรคหลอดเลือดสมอง", "หอบหืด", "ภูมิแพ้", "ไทรอยด์", "โรคไต", "โรคตับ", "กระดูกพรุน", "ข้อเข่าเสื่อม", "หมอนรองกระดูกทับเส้นประสาท", "ไมเกรน", "เส้นเลือดขอด", "ลมชัก", "มะเร็ง"];

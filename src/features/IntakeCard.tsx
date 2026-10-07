@@ -6,7 +6,7 @@ import { useStore } from "../store/store";
 import { timeAgo } from "../data/thaiDate";
 import { intakeAlerts } from "../data/intake";
 import type { Intake } from "../data/types";
-import { toArea, type BodyArea } from "./BodyMap";
+import { toAreas, type BodyArea } from "./BodyMap";
 import { Body3D } from "./Body3D";
 import type { Element } from "../data/elements";
 import "./intake.css";
@@ -18,10 +18,9 @@ export function intakeBody(i: Intake) {
   const level = Math.max(0.35, i.pain / 10);
   const heatmap: Partial<Record<BodyArea, number>> = {};
   i.focusAreas.forEach((a, k) => {
-    const r = toArea(a);
-    if (r) heatmap[r] = Math.max(heatmap[r] ?? 0, level * (1 - k * 0.08));
+    for (const r of toAreas(a)) heatmap[r] = Math.max(heatmap[r] ?? 0, level * (1 - k * 0.08));
   });
-  const avoid = i.avoidAreas.map(toArea).filter((x): x is BodyArea => !!x);
+  const avoid = [...new Set(i.avoidAreas.flatMap(toAreas))];
   return { heatmap, avoid };
 }
 
