@@ -46,7 +46,17 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
   const capacity = slotTimes(store.settings.openTime, store.settings.closeTime, store.settings.slotMinutes).length * store.settings.bedsPerSlot;
   // credits used up → staff can open a new course, or book as pay-per-visit
   const [payPerVisit, setPayPerVisit] = useState(false);
-  const remaining = credits && !payPerVisit ? credits.remaining : Infinity;
+  // ยังไม่มีคอร์ส แต่มีแผนการรักษา (จองก่อนอนุมัติแผน) → นับตามแผน: หักครั้งแรกที่รักษาไปแล้ว + นัดที่ลงไว้แล้ว
+  const planLeft = (() => {
+    const pl = patient.aiPlan;
+    if (credits || !pl || payPerVisit) return undefined;
+    const svc = pl.phases[0]?.serviceId ?? serviceId;
+    const since = toISODate(addDays(new Date(), -14));
+    const first = Math.min(1, store.appointments.filter((a) => a.patientId === patient.id && a.serviceId === svc && a.date >= since && a.date <= today && (a.status === "done" || !!a.endedAt)).length);
+    const booked = store.appointments.filter((a) => a.patientId === patient.id && a.serviceId === svc && a.date >= today && (a.status === "waiting" || a.status === "active") && !a.endedAt).length;
+    return { total: pl.sessions, first, booked, left: Math.max(0, pl.sessions - first - booked) };
+  })();
+  const remaining = credits && !payPerVisit ? credits.remaining : planLeft ? planLeft.left : Infinity;
   const renewSessions = patient.aiPlan?.sessions ?? patient.course?.total ?? 6;
   const renew = () => {
     if (!patient.course || !credits) return;
@@ -218,7 +228,23 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                   </div>
                 </div>
               ) : (
-                <Badge tone="info">ชำระรายครั้ง</Badge>
+                planLeft ? (
+                  <div className="pp__credit">
+                    <div className="pp__credit-top">
+                      <small>ตามแผนการรักษา {planLeft.total} ครั้ง</small>
+                      <b>
+                        {Math.max(0, planLeft.left - drafts.length)}
+                        <span>/{planLeft.total} คงเหลือ</span>
+                      </b>
+                    </div>
+                    <small className="pp__credit-note">
+                      {planLeft.first ? "รวมการรักษาครั้งแรกแล้ว · " : ""}
+                      {planLeft.booked ? `นัดไว้แล้ว ${planLeft.booked} · ` : ""}จัดนัดต่ออีก {Math.max(0, planLeft.left - drafts.length)} ครั้ง
+                    </small>
+                  </div>
+                ) : (
+                  <Badge tone="info">ชำระรายครั้ง</Badge>
+                )
               )}
             </header>
 
