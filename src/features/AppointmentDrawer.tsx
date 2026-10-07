@@ -12,7 +12,7 @@ import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
-import { PayPanel, METHOD_LABEL, makePayment } from "./billing";
+import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "./billing";
 import { ReceiptDialog } from "./Receipt";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
@@ -175,7 +175,11 @@ export function AppointmentDrawer({
   // a course only pays for its own service
   const coveredByCourse = !!p.course && p.course.serviceId === appt.serviceId && !!credits && credits.total - credits.used > 0;
   const payByCredit = coveredByCourse && useCredit;
-  const amount = payByCredit ? 0 : s.price;
+  // ค่าบริการ + หัตถการที่ทำเพิ่ม · หักเครดิตคอร์ส = หักเฉพาะค่าบริการ (หัตถการเพิ่มยังต้องจ่าย)
+  const extras = extraLines(appt);
+  const extraSum = extras.reduce((n, l) => n + l.amount, 0);
+  const amount = (payByCredit ? 0 : s.price) + extraSum;
+  const unpriced = unpricedProcs(appt).length;
   const cash = Number(received) || 0;
 
   const nowIso = () => new Date().toISOString();
@@ -206,12 +210,15 @@ export function AppointmentDrawer({
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
 
   const pay = () => {
-    const m: PaymentMethod = payByCredit ? "credit" : method;
+    // เครดิตคอร์สจ่ายค่าบริการ · มีหัตถการเพิ่ม → จ่ายส่วนนั้นด้วยวิธีที่เลือก
+    const m: PaymentMethod = payByCredit && !extraSum ? "credit" : method;
     const payment = makePayment(store.appointments, m, amount, m === "cash" ? cash : undefined);
+    payment.items = [{ name: s.name, amount: s.price }, ...extras.map((l) => ({ name: l.name, amount: l.amount }))];
+    if (payByCredit && extraSum) payment.credit = true;
     if (m !== "app" && store.settings.autoSendSlip) payment.slipSentAt = new Date().toISOString();
-    if (m === "app") step({ status: "done", paid: false, payment }, `ส่งบิล ${baht(amount)} บาท ไปแอป ThaiWell AI`, `ส่งบิลให้ ${p.name} ในแอปแล้ว`);
+    if (m === "app") step({ status: "done", paid: false, payment }, `ส่งบิล ${baht(amount)} บาท ไปแอป ThaiWell AI${payment.credit ? " (หักเครดิตค่าบริการ · เก็บเฉพาะหัตถการเพิ่ม)" : ""}`, `ส่งบิลให้ ${p.name} ในแอปแล้ว`);
     else {
-      step({ status: "done", paid: true, payment }, m === "credit" ? "หักเครดิตคอร์ส 1 ครั้ง" : `รับชำระ ${METHOD_LABEL[m]} ${baht(amount)} บาท`, store.settings.autoSendSlip ? "ชำระเงินเรียบร้อย · ส่งสลิปเข้าแอป ThaiWell AI แล้ว" : "ชำระเงินเรียบร้อย · เสร็จการรักษา");
+      step({ status: "done", paid: true, payment }, m === "credit" ? "หักเครดิตคอร์ส 1 ครั้ง" : `${payment.credit ? "หักเครดิตคอร์ส 1 ครั้ง · " : ""}รับชำระ ${METHOD_LABEL[m]} ${baht(amount)} บาท${extraSum ? ` (รวมหัตถการเพิ่ม ${baht(extraSum)})` : ""}`, store.settings.autoSendSlip ? "ชำระเงินเรียบร้อย · ส่งสลิปเข้าแอป ThaiWell AI แล้ว" : "ชำระเงินเรียบร้อย · เสร็จการรักษา");
       setReceipt(appt.id);
     }
   };
@@ -230,7 +237,7 @@ export function AppointmentDrawer({
   };
 
   const view: Stage = stage === "done" && payNow && !appt.paid && appt.payment?.status !== "pending" ? "billing" : stage;
-  const payLabel = payByCredit ? "หักเครดิต" : method === "app" ? "ส่งบิลเข้าแอป" : "รับชำระ";
+  const payLabel = payByCredit && !extraSum ? "หักเครดิต" : method === "app" ? "ส่งบิลเข้าแอป" : "รับชำระ";
   let footer: React.ReactNode = null;
   if (view === "checkin")
     footer = (
@@ -319,7 +326,7 @@ export function AppointmentDrawer({
             ไว้ทีหลัง
           </Button>
         )}
-        <Button size="lg" fill disabled={!payByCredit && method === "cash" && cash < amount} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
+        <Button size="lg" fill disabled={unpriced > 0 || (amount > 0 && method === "cash" && cash < amount)} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
           {payLabel}
         </Button>
       </>
@@ -534,6 +541,8 @@ export function AppointmentDrawer({
                 <PayPanel
                   serviceName={s.name}
                   price={s.price}
+                  extras={extras}
+                  unpriced={unpriced}
                   course={coveredByCourse ? { name: p.course!.name, left: credits!.total - credits!.used, total: credits!.total } : null}
                   useCredit={useCredit}
                   setUseCredit={setUseCredit}
@@ -570,7 +579,7 @@ export function AppointmentDrawer({
                     </span>
                     <span>
                       <small>ยอด</small>
-                      <b>{baht(appt.payment?.amount ?? s.price)} ฿</b>
+                      <b>{baht(appt.payment?.amount ?? s.price + extraSum)} ฿</b>
                     </span>
                   </div>
                   {appt.findings && <p className="vs__advice">ตรวจพบ: {appt.findings}</p>}

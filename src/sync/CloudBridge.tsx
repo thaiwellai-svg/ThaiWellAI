@@ -19,16 +19,18 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
   const s = store.serviceById(a.serviceId);
   const t = store.therapistById(a.therapistId);
   const pay = a.payment;
+  // รายการในบิล: ค่าบริการ + หัตถการเพิ่ม (หักเครดิตคอร์ส = ค่าบริการ 0)
+  const lines = (pay?.items ?? [{ name: s.name, amount: s.price }]).map((l, i) => (i === 0 && pay && (pay.method === "credit" || pay.credit) ? { name: `${l.name} (หักเครดิตคอร์ส)`, amount: 0 } : l));
   if (a.status === "cancelled") return { status: "cancelled", patch: { note: a.cancel?.reason }, kind: "booking.cancelled", summary: `คลินิกยกเลิกนัด · ${a.cancel?.reason ?? ""}` };
   if (a.status === "absent") return { status: "no_show", patch: {}, kind: "booking.no_show", summary: "บันทึกว่าไม่มาตามนัด" };
   if (pay?.status === "paid")
     return {
       status: "paid",
-      patch: { bill: { amount: pay.amount, items: [s.name], status: "paid", method: pay.method, receipt_no: pay.no, paid_at: pay.at, via: pay.method === "app" ? "app" : "clinic" } },
+      patch: { bill: { amount: pay.amount, items: lines.map((l) => l.name), lines, status: "paid", method: pay.method, receipt_no: pay.no, paid_at: pay.at, via: pay.method === "app" ? "app" : "clinic" } },
       kind: "bill.paid",
       summary: `ชำระที่คลินิก ${pay.amount} บาท · ส่งใบเสร็จ ${pay.no ?? ""} เข้าแอป`,
     };
-  if (pay?.status === "pending") return { status: "billed", patch: { bill: { amount: pay.amount, items: [s.name], status: "pending", via: "app", receipt_no: pay.no } }, kind: "bill.sent", summary: `ส่งบิล ${pay.amount} บาท ไปเรียกเก็บในแอป` };
+  if (pay?.status === "pending") return { status: "billed", patch: { bill: { amount: pay.amount, items: lines.map((l) => l.name), lines, status: "pending", via: "app", receipt_no: pay.no } }, kind: "bill.sent", summary: `ส่งบิล ${pay.amount} บาท ไปเรียกเก็บในแอป` };
   if (a.painAfter !== undefined && a.endedAt)
     return {
       status: "recorded",

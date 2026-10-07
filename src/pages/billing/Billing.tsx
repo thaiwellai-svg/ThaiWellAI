@@ -8,7 +8,7 @@ import { Avatar, Button, EmptyState, IconButton, SearchField, Segmented } from "
 import { WorkPage } from "../../layout/WorkPage";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
 import { ReceiptDialog } from "../../features/Receipt";
-import { METHOD_LABEL } from "../../features/billing";
+import { METHOD_LABEL, visitTotal } from "../../features/billing";
 import { patientPhoto } from "../../data/avatars";
 import { addISODays, baht, thaiDate, thaiDateLong, todayISO } from "../../data/thaiDate";
 import type { Appointment, Payment, PaymentMethod } from "../../data/types";
@@ -328,7 +328,7 @@ export default function Billing() {
                           <em>{pending ? "ส่งบิลเข้าแอปแล้ว · รอผู้ป่วยชำระ" : stageOf(a) === "billing" ? "รักษาเสร็จแล้ว · รอคิดเงิน" : "ค้างชำระ"}</em>
                         </span>
                         <span className="bl2-bill__amt">
-                          <b>{baht(a.payment?.amount ?? s.price)}</b>
+                          <b>{baht(a.payment?.amount ?? visitTotal(s, a))}</b>
                           <small>บาท</small>
                         </span>
                         <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={(e) => (e.stopPropagation(), setOpen(a.id))}>

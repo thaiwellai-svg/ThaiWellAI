@@ -232,6 +232,9 @@ export interface Procedure {
   /** body area / เส้นประธาน */
   area?: string;
   minutes?: number;
+  /** ค่าบริการของหัตถการ: included = รวมในค่าบริการที่จอง (ไม่คิดเพิ่ม) · ไม่ใช่ = คิดเพิ่มตาม price (ยังไม่ระบุ = ต้องใส่ราคาก่อนคิดเงิน) */
+  included?: boolean;
+  price?: number;
 }
 
 export type PaymentMethod = "cash" | "promptpay" | "app" | "credit";
@@ -240,6 +243,10 @@ export interface Payment {
   no?: string;
   method: PaymentMethod;
   amount: number;
+  /** รายการที่คิดเงิน (บริการ + หัตถการเพิ่ม) ตอนออกใบเสร็จ */
+  items?: { name: string; amount: number }[];
+  /** ค่าบริการหักเครดิตคอร์ส แต่จ่ายค่าหัตถการเพิ่มด้วยวิธีอื่น (method) */
+  credit?: boolean;
   /** cash handed over (for change) */
   received?: number;
   /** when the slip was sent to the patient's ThaiWell AI app */
@@ -297,6 +304,8 @@ export type ShareTopic = "visits" | "pain" | "advice" | "credits" | "screening" 
 
 export interface ClinicSettings {
   clinicName: string;
+  /** ราคาหัตถการที่เคยคิด (จำไว้ใช้ครั้งต่อไป) */
+  procedurePrices?: Record<string, number>;
   /** ที่อยู่ เบอร์โทร และพิกัดของคลินิก — แสดงในหน้า "สถานที่" ของแอปผู้ใช้ (นำทาง โทร) */
   clinicAddress?: string;
   clinicPhone?: string;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { visitTotal } from "../../features/billing";
 import { Link } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { QrCode, CalendarCheck2, ChevronLeft, ChevronRight, Maximize2, Minimize2, Minus, Plus, SearchX, X } from "lucide-react";
@@ -81,8 +82,9 @@ export default function Dashboard() {
     const booked = todays.filter((a) => a.type === "booked");
     const bookedDone = booked.filter((a) => a.status === "done").length;
     const billable = todays.filter((a) => a.status !== "absent");
-    const revenue = billable.reduce((s, a) => s + store.serviceById(a.serviceId).price, 0);
-    const paid = billable.filter((a) => a.paid).reduce((s, a) => s + store.serviceById(a.serviceId).price, 0);
+    // ค่าบริการ + หัตถการที่ทำเพิ่ม
+    const revenue = billable.reduce((s, a) => s + visitTotal(store.serviceById(a.serviceId), a), 0);
+    const paid = billable.filter((a) => a.paid).reduce((s, a) => s + visitTotal(store.serviceById(a.serviceId), a), 0);
     const credits = store.patients.reduce((s, p) => s + (p.course ? Math.max(0, p.course.total - p.course.used) : 0), 0);
     const coursed = store.patients.filter((p) => p.course);
     const lowCredit = coursed.filter((p) => p.course!.total - p.course!.used <= 1).length;

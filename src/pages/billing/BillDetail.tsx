@@ -8,7 +8,7 @@ import { WorkPage } from "../../layout/WorkPage";
 import { BackLead } from "../../layout/BackLead";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
 import { ReceiptDialog } from "../../features/Receipt";
-import { METHOD_LABEL } from "../../features/billing";
+import { METHOD_LABEL, extraLines, usesCredit } from "../../features/billing";
 import { creditInfo } from "../../data/domain";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
 import { baht, thaiDateLong, thaiDateShort } from "../../data/thaiDate";
@@ -57,9 +57,11 @@ export default function BillDetail() {
               : { label: "ยังไม่ถึงขั้นชำระเงิน", color: "#8a948d" };
   const canPay = !pay || pay.status !== "paid";
   const Ic = pay ? ICON[pay.method] : Wallet;
-  const credit = pay?.method === "credit";
-  const discount = credit ? s.price : Math.max(0, s.price - (pay?.amount ?? s.price));
-  const total = pay?.amount ?? s.price;
+  const credit = usesCredit(pay);
+  const extras = pay?.items ? pay.items.slice(1) : extraLines(a);
+  const full = s.price + extras.reduce((n, l) => n + l.amount, 0);
+  const discount = credit ? s.price : Math.max(0, full - (pay?.amount ?? full));
+  const total = pay?.amount ?? full;
   const receipts = [...(pay ? [{ pay, key: a.id }] : []), ...(a.voidedPayments ?? []).map((x) => ({ pay: x, key: `${a.id}|${x.no}` }))];
   const money = (a.log ?? []).filter((l) => /ชำระ|ใบเสร็จ|เครดิต|บิล|สลิป|เงิน/.test(l.label));
 
@@ -148,6 +150,15 @@ export default function BillDetail() {
                     </span>
                     <b>{baht(s.price)}</b>
                   </div>
+                  {extras.map((l, i) => (
+                    <div key={`${l.name}${i}`}>
+                      <span>
+                        <b>{l.name}</b>
+                        <small>หัตถการเพิ่ม</small>
+                      </span>
+                      <b>{baht(l.amount)}</b>
+                    </div>
+                  ))}
                   {discount > 0 && (
                     <div className="is-minus">
                       <span>
@@ -161,7 +172,7 @@ export default function BillDetail() {
                     <span>
                       <b>ยอดสุทธิ</b>
                     </span>
-                    <b>{baht(credit ? 0 : total)} บาท</b>
+                    <b>{baht(pay?.method === "credit" ? 0 : total)} บาท</b>
                   </div>
                   {pay?.received != null && pay.method === "cash" && (
                     <div className="is-sub">

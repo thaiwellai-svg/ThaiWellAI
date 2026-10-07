@@ -88,7 +88,7 @@ export interface CloudAppt {
     advice?: string;
     therapist?: string;
   } | null;
-  bill?: { amount: number; items?: string[]; status: "pending" | "paid" | "void"; method?: string; receipt_no?: string; paid_at?: string; via?: "app" | "clinic" } | null;
+  bill?: { amount: number; items?: string[]; lines?: { name: string; amount: number }[]; status: "pending" | "paid" | "void"; method?: string; receipt_no?: string; paid_at?: string; via?: "app" | "clinic" } | null;
   plan?: { summary: string; sessions: number; frequency: string; phases: { title: string; weeks: string; focus: string }[]; homeCare: string[]; course?: { name: string; total: number; used: number } } | null;
   note?: string | null;
   created_at: string;

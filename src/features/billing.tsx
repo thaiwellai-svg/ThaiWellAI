@@ -6,7 +6,7 @@ import { useStore } from "../store/store";
 import { baht } from "../data/thaiDate";
 import { promptpayPayload } from "../data/promptpay";
 import { DEMO } from "../data/mode";
-import type { Appointment, Payment, PaymentMethod } from "../data/types";
+import type { Appointment, Payment, PaymentMethod, Service } from "../data/types";
 
 export const METHOD_LABEL: Record<PaymentMethod, string> = {
   cash: "เงินสด",
@@ -20,6 +20,26 @@ const METHODS: { key: PaymentMethod; label: string; desc: string; icon: typeof B
   { key: "promptpay", label: "QR พร้อมเพย์", desc: "สแกนจ่ายที่เคาน์เตอร์", icon: QrCode },
   { key: "app", label: "ส่งบิลเข้าแอป", desc: "จ่ายผ่าน ThaiWell AI", icon: Smartphone },
 ];
+
+/** หนึ่งบรรทัดในบิล */
+export interface ChargeLine {
+  name: string;
+  amount: number;
+  note?: string;
+}
+/** หัตถการที่คิดเงินเพิ่ม (ไม่รวมในค่าบริการ) · บันทึกเก่าที่ไม่ได้ระบุ = รวมในค่าบริการ */
+export const extraLines = (a: Pick<Appointment, "procedures">): ChargeLine[] =>
+  (a.procedures ?? []).filter((p) => p.included === false && (p.price ?? 0) > 0).map((p) => ({ name: p.name, amount: p.price!, note: p.area || undefined }));
+export const extraTotal = (a: Pick<Appointment, "procedures">) => extraLines(a).reduce((n, l) => n + l.amount, 0);
+/** หัตถการที่คิดเพิ่มแต่ยังไม่ได้ใส่ราคา */
+export const unpricedProcs = (a: Pick<Appointment, "procedures">) => (a.procedures ?? []).filter((p) => p.included === false && p.price === undefined);
+/** ยอดเต็มของครั้งนี้ ก่อนหักเครดิต = ค่าบริการ + หัตถการเพิ่ม */
+export const visitTotal = (s: Pick<Service, "price">, a: Pick<Appointment, "procedures">) => s.price + extraTotal(a);
+/** ใช้เครดิตคอร์สจ่ายค่าบริการ (ทั้งใบ หรือเฉพาะค่าบริการ + จ่ายหัตถการเพิ่มแยก) */
+export const usesCredit = (pay?: Payment) => pay?.method === "credit" || !!pay?.credit;
+/** ราคาตั้งต้นของหัตถการ: ราคาที่เคยคิด → ราคาบริการชื่อเดียวกัน → ยังไม่มี */
+export const defaultProcPrice = (name: string, services: Service[], remembered?: Record<string, number>) =>
+  remembered?.[name] ?? services.find((s) => s.name === name || name.includes(s.name) || s.name.includes(name))?.price;
 
 /** next running receipt number for this Buddhist year */
 export function makePayment(all: Appointment[], method: PaymentMethod, amount: number, received?: number): Payment {
@@ -64,12 +84,17 @@ export function PayPanel(props: {
   received: string;
   setReceived: (v: string) => void;
   patientName: string;
+  /** หัตถการที่ทำเพิ่ม (คิดเงินเพิ่ม) · unpriced = ยังไม่ใส่ราคา */
+  extras?: ChargeLine[];
+  unpriced?: number;
   /** why the patient's course can't be used for this service */
   courseNote?: string;
 }) {
   const { settings } = useStore();
   const byCredit = !!props.course && props.useCredit;
-  const amount = byCredit ? 0 : props.price;
+  const extras = props.extras ?? [];
+  const extraSum = extras.reduce((n, l) => n + l.amount, 0);
+  const amount = (byCredit ? 0 : props.price) + extraSum;
   const cash = Number(props.received) || 0;
   const pick = (k: PaymentMethod) => {
     if (k === "credit") props.setUseCredit(true);
@@ -79,6 +104,8 @@ export function PayPanel(props: {
     }
   };
   const current: PaymentMethod = byCredit ? "credit" : props.method;
+  // หักเครดิตแล้วยังมีหัตถการเพิ่ม → เลือกวิธีจ่ายส่วนนั้นอีกชั้น
+  const payRest = byCredit && amount > 0;
   const options = [
     ...(props.course ? [{ key: "credit" as PaymentMethod, label: "หักเครดิตคอร์ส", desc: `เหลือ ${props.course.left}/${props.course.total} ครั้ง`, icon: Ticket }] : []),
     ...METHODS,
@@ -90,6 +117,15 @@ export function PayPanel(props: {
           <span>{props.serviceName}</span>
           <b>{baht(props.price)} ฿</b>
         </div>
+        {extras.map((l, i) => (
+          <div key={`${l.name}${i}`} className="vs__extra-line">
+            <span>
+              {l.name}
+              <small>หัตถการเพิ่ม{l.note ? ` · ${l.note}` : ""}</small>
+            </span>
+            <b>+{baht(l.amount)} ฿</b>
+          </div>
+        ))}
         {byCredit && (
           <div className="vs__credit-line">
             <span>
@@ -105,6 +141,7 @@ export function PayPanel(props: {
         </div>
       </div>
       {props.courseNote && <p className="vs__course-note">{props.courseNote}</p>}
+      {!!props.unpriced && <p className="vs__course-note is-warn">มีหัตถการที่คิดเพิ่มแต่ยังไม่ใส่ราคา {props.unpriced} รายการ · ใส่ราคาในบันทึกหัตถการก่อนรับชำระ</p>}
       <div className={clsx("vs__methods", options.length === 4 && "is-4")} role="radiogroup" aria-label="วิธีชำระเงิน">
         {options.map((m) => (
           <button key={m.key} type="button" role="radio" aria-checked={current === m.key} onClick={() => pick(m.key)}>
@@ -114,7 +151,18 @@ export function PayPanel(props: {
           </button>
         ))}
       </div>
-      {!byCredit && (
+      {payRest && (
+        <div className="vs__methods" role="radiogroup" aria-label={`ชำระค่าหัตถการเพิ่ม ${baht(amount)} บาท`}>
+          {METHODS.map((m) => (
+            <button key={m.key} type="button" role="radio" aria-checked={props.method === m.key} onClick={() => props.setMethod(m.key)}>
+              <m.icon size={18} strokeWidth={1.9} />
+              <b>{m.label}</b>
+              <small>ค่าหัตถการเพิ่ม {baht(amount)} ฿</small>
+            </button>
+          ))}
+        </div>
+      )}
+      {amount > 0 && (
         <>
           {props.method === "cash" && (
             <div className="vs__cash">

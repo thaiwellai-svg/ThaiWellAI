@@ -8,6 +8,8 @@ import { elementProfile } from "../data/elements";
 import type { Appointment, Diagnosis, Procedure } from "../data/types";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON } from "./ai";
 import { dxCode, procCode } from "../data/codes";
+import { baht } from "../data/thaiDate";
+import { defaultProcPrice, extraTotal, unpricedProcs } from "./billing";
 import "./clinical.css";
 
 /** common Thai-traditional-medicine findings for quick picking (code is filled by the clinic's coder) */
@@ -95,13 +97,30 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
   const s = store.serviceById(appt.serviceId);
 
   const save = (patch: Partial<Appointment>, log?: string) => store.dispatch({ type: "updateAppointment", id: appt.id, patch, log });
+  /** หัตถการแรก = ตามบริการที่จอง (รวมในค่าบริการ) · ที่ทำเพิ่ม = คิดเงินเพิ่ม (ราคาที่เคยคิด / ราคาบริการชื่อเดียวกัน) */
+  const newProc = (name: string, index: number, area?: string): Procedure => ({
+    name,
+    code: procCode(name)?.code,
+    area,
+    minutes: index ? undefined : s.minutes,
+    included: index === 0,
+    price: index === 0 ? undefined : defaultProcPrice(name, store.services, store.settings.procedurePrices),
+  });
+  /** ตั้งราคาหัตถการ → จำไว้ใช้ครั้งต่อไป */
+  const setPrice = (i: number, price: number | undefined, included = false) => {
+    setPr(i, { included, price });
+    if (!included && price !== undefined && store.settings.procedurePrices?.[pr[i].name] !== price)
+      store.dispatch({ type: "updateSettings", patch: { procedurePrices: { ...(store.settings.procedurePrices ?? {}), [pr[i].name]: price } } });
+  };
+  const extra = extraTotal(appt);
+  const unpriced = unpricedProcs(appt).length;
   const addDx = (name: string) => {
     if (!name.trim() || dx.some((d) => d.name === name)) return;
     save({ diagnoses: [...dx, { name: name.trim(), code: dxCode(name.trim())?.code, kind: dx.length ? "secondary" : "principal" }] }, `ลงวินิจฉัย: ${name.trim()}`);
   };
   const addProc = (name: string) => {
     if (!name.trim() || pr.some((p) => p.name === name)) return;
-    save({ procedures: [...pr, { name: name.trim(), code: procCode(name.trim())?.code, minutes: pr.length ? undefined : s.minutes }] }, `บันทึกหัตถการ: ${name.trim()}`);
+    save({ procedures: [...pr, newProc(name.trim(), pr.length)] }, `บันทึกหัตถการ: ${name.trim()}`);
   };
   const setDx = (i: number, patch: Partial<Diagnosis>) => save({ diagnoses: dx.map((d, k) => (k === i ? { ...d, ...patch } : patch.kind === "principal" ? { ...d, kind: "secondary" } : d)) });
   const setPr = (i: number, patch: Partial<Procedure>) => save({ procedures: pr.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
@@ -134,7 +153,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
       const ndx = [...dx];
       for (const n of res.diagnoses ?? []) if (!ndx.some((d) => d.name === n)) ndx.push({ name: n, code: dxCode(n)?.code, kind: ndx.length ? "secondary" : "principal" });
       const npr = [...pr];
-      for (const x of res.procedures ?? []) if (!npr.some((q) => q.name === x.name)) npr.push({ name: x.name, code: procCode(x.name)?.code, area: x.area, minutes: npr.length ? undefined : s.minutes });
+      for (const x of res.procedures ?? []) if (!npr.some((q) => q.name === x.name)) npr.push(newProc(x.name, npr.length, x.area));
       save({ diagnoses: ndx, procedures: npr }, "AI แนะนำวินิจฉัยและหัตถการ");
       toast({ message: "AI เติมคำแนะนำแล้ว · ตรวจสอบก่อนยืนยัน" });
     } catch {
@@ -253,7 +272,8 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
           const areas = (p.area ?? "").split(/[,·]\s*/).map((x) => x.trim()).filter(Boolean);
           const toggleArea = (a: string) => setPr(i, { area: (areas.includes(a) ? areas.filter((x) => x !== a) : [...areas, a]).join(", ") });
           // details stay folded once area + time are set
-          const open = !locked && (openProc === p.name || !areas.length || !p.minutes);
+          const open = !locked && (openProc === p.name || !areas.length || !p.minutes || (p.included === false && p.price === undefined));
+          const fee = p.included !== false ? <em className="cr__fee is-in">รวมในค่าบริการ</em> : p.price === undefined ? <em className="cr__fee is-need">ระบุค่าบริการ</em> : <em className="cr__fee">+{baht(p.price)} ฿</em>;
           return (
             <motion.div key={p.name} className="cr__proc" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }}>
               <div className="cr__proc-top">
@@ -261,6 +281,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
                   <b>{p.name}</b>
                   <small className="cr__sumline">{[areas.join(", "), p.minutes ? `${p.minutes} นาที` : ""].filter(Boolean).join(" · ") || "ยังไม่ระบุตำแหน่ง / เวลา"}</small>
                 </div>
+                {fee}
                 {!locked && (
                   <button type="button" className="cr__edit" onClick={() => setOpenProc(open ? null : p.name)}>
                     {open ? "เสร็จ" : "แก้"}
@@ -294,6 +315,33 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
                   ))}
                 </div>
               </div>
+              {/* ค่าบริการ: รวมในบริการที่จอง หรือคิดเพิ่ม (จำราคาไว้ใช้ครั้งต่อไป) */}
+              <div className="cr__field">
+                <span>ค่าบริการ</span>
+                <div className="cr__toggles">
+                  <button type="button" aria-pressed={p.included !== false} onClick={() => setPrice(i, undefined, true)}>
+                    รวมในค่าบริการ
+                  </button>
+                  {[...new Set([100, 200, 300, 500, ...(p.price !== undefined ? [p.price] : [])])].sort((a, b) => a - b).map((v) => (
+                    <button key={v} type="button" aria-pressed={p.included === false && p.price === v} onClick={() => setPrice(i, v)}>
+                      +{baht(v)} ฿
+                    </button>
+                  ))}
+                  <label className="cr__pricein">
+                    <input
+                      inputMode="numeric"
+                      aria-label={`ราคา${p.name}`}
+                      placeholder="ราคาอื่น"
+                      value={p.included === false && p.price !== undefined && ![100, 200, 300, 500].includes(p.price) ? String(p.price) : ""}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "");
+                        setPrice(i, v ? Number(v) : undefined);
+                      }}
+                    />
+                    ฿
+                  </label>
+                </div>
+              </div>
                 </>
               )}
             </motion.div>
@@ -302,6 +350,23 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
       </AnimatePresence>
       {!locked && (pr.length && more !== "proc" ? addMore("proc", "+ เพิ่มหัตถการ") : suggestBox("proc"))}
       {locked && !prDone && <p className="cr__empty">ไม่ได้บันทึกหัตถการ</p>}
+      {/* ยอดของครั้งนี้: ค่าบริการ + หัตถการเพิ่ม → ไปที่บิล */}
+      {pr.length > 0 && (
+        <div className={clsx("cr__charge", unpriced > 0 && "is-need")}>
+          <span>
+            {s.name} <b>{baht(s.price)} ฿</b>
+          </span>
+          {extra > 0 && (
+            <span>
+              หัตถการเพิ่ม <b>+{baht(extra)} ฿</b>
+            </span>
+          )}
+          <span className="cr__charge-total">
+            รวมค่าบริการ <b>{baht(s.price + extra)} ฿</b>
+          </span>
+          {unpriced > 0 && <small>มีหัตถการที่คิดเพิ่มแต่ยังไม่ใส่ราคา {unpriced} รายการ</small>}
+        </div>
+      )}
     </>
   );
 

@@ -24,8 +24,8 @@ function dayTotals(store: ReturnType<typeof useStore>, date: string) {
     const p = a.payment;
     if (p?.status === "paid" && p.at.slice(0, 10) === date) {
       receipts++;
-      if (p.method === "credit") credits++;
-      else totals[p.method] += p.amount;
+      if (p.method === "credit" || p.credit) credits++;
+      if (p.method !== "credit") totals[p.method] += p.amount;
     }
     for (const v of a.voidedPayments ?? []) if (v.voided?.at.slice(0, 10) === date) voids++;
   }

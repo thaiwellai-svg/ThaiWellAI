@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { extraTotal, visitTotal } from "../../features/billing";
 import { useNavigate, useParams } from "react-router-dom";
 import { CalendarClock, CalendarX2, ClipboardList, History, MessageSquareText, Phone, Play, ReceiptText, ShieldAlert, ShieldCheck, Stethoscope, Ticket, Undo2, UserRound } from "lucide-react";
 import { clsx } from "clsx";
@@ -186,7 +187,7 @@ export default function AppointmentDetail() {
                   </div>
                   <div>
                     <small>ค่าบริการ</small>
-                    <b>{a.payment ? `${baht(a.payment.amount)} บาท` : credits ? "หักเครดิตคอร์ส" : `${baht(s.price)} บาท`}</b>
+                    <b>{a.payment ? `${baht(a.payment.amount)} บาท` : credits ? `หักเครดิตคอร์ส${extraTotal(a) ? ` + หัตถการเพิ่ม ${baht(extraTotal(a))} บาท` : ""}` : `${baht(visitTotal(s, a))} บาท`}</b>
                     {a.payment && <em>{a.payment.method === "credit" ? "หักเครดิตแล้ว" : "ชำระแล้ว"}</em>}
                   </div>
                   <div>

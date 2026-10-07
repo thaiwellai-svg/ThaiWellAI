@@ -6,7 +6,7 @@ import { Check, CheckCheck, FileText, Printer, Send, X, Ban } from "lucide-react
 import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { baht, thaiDateLong } from "../data/thaiDate";
-import { METHOD_LABEL } from "./billing";
+import { METHOD_LABEL, extraLines, usesCredit, visitTotal } from "./billing";
 import { useLatest } from "./useLatest";
 import { TaxInvoiceDialog } from "./TaxInvoice";
 import "./receipt.css";
@@ -51,8 +51,10 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
   const pay = vp ?? a.payment;
   const isVoid = pay?.status === "void";
   const at = new Date(pay?.at ?? `${a.date}T${a.start}`);
-  const credit = pay?.method === "credit";
-  const total = pay?.amount ?? s.price;
+  const credit = usesCredit(pay);
+  const total = pay?.amount ?? visitTotal(s, a);
+  // รายการ: ค่าบริการ + หัตถการเพิ่ม (ตามที่คิดเงินจริงตอนออกใบเสร็จ)
+  const extras = pay?.items ? pay.items.slice(1) : extraLines(a);
   const paid = pay ? pay.status === "paid" : a.paid;
 
   const send = () => {
@@ -153,6 +155,15 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                     </span>
                     <b>{baht(s.price)}</b>
                   </div>
+                  {extras.map((l, i) => (
+                    <div key={`${l.name}${i}`}>
+                      <span>
+                        {l.name}
+                        <small>หัตถการเพิ่ม</small>
+                      </span>
+                      <b>{baht(l.amount)}</b>
+                    </div>
+                  ))}
                   {credit && (
                     <div className="is-credit">
                       <span>

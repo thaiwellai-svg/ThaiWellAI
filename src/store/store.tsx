@@ -123,7 +123,7 @@ function load(): State {
   return fresh();
 }
 
-const byCredit = (a: Appointment) => a.payment?.method === "credit" && a.payment.status === "paid";
+const byCredit = (a: Appointment) => (a.payment?.method === "credit" || !!a.payment?.credit) && a.payment.status === "paid";
 
 let uid = Date.now();
 const nextId = (p: string) => `${p}${(uid++).toString(36)}`;

@@ -20,7 +20,7 @@ export default function Commission() {
       store.therapists.map((t) => {
         const done = store.appointments.filter((a) => a.therapistId === t.id && a.status === "done" && a.date.slice(0, 7) === key);
         // a session paid by course credit is valued at the service price
-        const revenue = done.reduce((n, a) => n + (a.payment?.status === "paid" ? (a.payment.method === "credit" ? store.serviceById(a.serviceId).price : a.payment.amount) : 0), 0);
+        const revenue = done.reduce((n, a) => n + (a.payment?.status === "paid" ? (a.payment.method === "credit" ? store.serviceById(a.serviceId).price : a.payment.amount + (a.payment.credit ? store.serviceById(a.serviceId).price : 0)) : 0), 0);
         const r = store.biz.rates[t.id] ?? { perCase: 0, percent: 0 };
         const pay = done.length * r.perCase + Math.round((revenue * r.percent) / 100);
         const bySvc = store.services.map((s) => ({ s, n: done.filter((a) => a.serviceId === s.id).length })).filter((x) => x.n);
