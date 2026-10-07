@@ -8,7 +8,7 @@ import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
 import { defaultAppAvatar } from "../data/avatars";
 import { validCheckinCode } from "../features/checkinCode";
-import { coursePrepaid } from "../data/domain";
+import { coursePrepaid, isRecorded } from "../data/domain";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudAssessment, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
@@ -58,8 +58,8 @@ const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
 };
 /** ลายเซ็นบิล (ไม่ขึ้นกับลำดับคีย์ของ jsonb) */
 const billKey = (b?: CloudAppt["bill"] | null) => (b ? `${b.status}|${b.amount}|${b.receipt_no ?? ""}|${(b.lines ?? []).map((l) => `${l.name}:${l.amount}`).join(",")}` : "");
-/** ลายเซ็นของการประเมิน (เปลี่ยน = มีรอบใหม่ / แจ้งเพิ่ม) */
-const assessSig = (row: CloudAppt) => `${row.assessment?.rounds?.length ?? 0}|${row.assessment?.at ?? ""}|${row.assessment?.addenda?.length ?? 0}`;
+/** ลายเซ็นของการประเมิน (เปลี่ยน = มีรอบใหม่ / แจ้งเพิ่ม / ประเมินหลังนวด) */
+const assessSig = (row: CloudAppt) => `${row.assessment?.rounds?.length ?? 0}|${row.assessment?.at ?? ""}|${row.assessment?.addenda?.length ?? 0}|${row.assessment?.after?.at ?? ""}`;
 
 /** what the clinic has done with a linked booking, as the shared status + the data the app needs */
 function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Partial<CloudAppt>; kind: string; summary: string } {
@@ -78,7 +78,7 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
       summary: `ชำระที่คลินิก ${pay.amount} บาท · ส่งใบเสร็จ ${pay.no ?? ""} เข้าแอป`,
     };
   if (pay?.status === "pending") return { status: "billed", patch: { bill: { amount: pay.amount, items: lines.map((l) => l.name), lines, status: "pending", via: "app", receipt_no: pay.no } }, kind: "bill.sent", summary: `ส่งบิล ${pay.amount} บาท ไปเรียกเก็บในแอป` };
-  if (a.painAfter !== undefined && a.endedAt)
+  if (isRecorded(a) && a.endedAt)
     return {
       status: "recorded",
       patch: {
@@ -93,7 +93,7 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
         },
       },
       kind: "record.sent",
-      summary: `ส่งผลการรักษา · ปวด ${a.painBefore} → ${a.painAfter}${a.advice ? " · พร้อมคำแนะนำ" : ""}`,
+      summary: `ส่งผลการรักษา · ${a.painAfter !== undefined ? `ปวด ${a.painBefore} → ${a.painAfter}` : "ไม่ได้ประเมินความปวดหลังนวด"}${a.advice ? " · พร้อมคำแนะนำ" : ""}`,
     };
   if (a.startedAt) return { status: "in_service", patch: {}, kind: "service.started", summary: `เริ่มรับบริการ · ${t.name}` };
   if (!a.calledAt && a.checkinQueue) return { status: "checked_in", patch: { queue_no: a.checkinQueue }, kind: "queue.issued", summary: `เช็กอินที่คลินิก · คิว ${a.checkinQueue}` };
@@ -192,6 +192,15 @@ export function CloudBridge() {
   const attachNoteAssessment = (patientId: string, at: string, text: string) => {
     const st = ref.current;
     const today = todayISO();
+    // ประเมินหลังนวด (แอปรุ่นเก่าส่งเป็นข้อความ "ปวด X → Y") → ครั้งล่าสุดที่บันทึกโดยข้ามคะแนนหลังนวด
+    if (/หลังนวด/.test(text)) {
+      const y = /→\s*(\d{1,2})/.exec(text);
+      const v = st.appointments
+        .filter((a) => a.patientId === patientId && a.painAfter === undefined && (a.recordedAt || a.endedAt))
+        .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0];
+      if (y && v) st.dispatch({ type: "updateAppointment", id: v.id, patch: { painAfter: Math.min(10, Number(y[1])) }, log: `ผู้ป่วยประเมินความปวดหลังนวดในแอป · ${v.painBefore} → ${y[1]}` });
+      return;
+    }
     const appt = st.appointments
       .filter((a) => a.patientId === patientId && a.date >= today && a.status !== "cancelled" && a.status !== "absent" && a.status !== "done" && !a.endedAt)
       .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))[0];
@@ -361,6 +370,12 @@ export function CloudBridge() {
       }
     }
     syncPhoto(st.patientById(local.patientId), row.tw_patients);
+    // คลินิกข้ามคะแนนหลังนวด → ผู้ป่วยประเมินเองในแอปทีหลัง → ใส่ให้นัดนี้
+    const after = row.assessment?.after;
+    if (after && typeof after.pain === "number" && local.painAfter === undefined && (local.recordedAt || local.endedAt)) {
+      st.dispatch({ type: "updateAppointment", id: local.id, patch: { painAfter: after.pain }, log: `ผู้ป่วยประเมินความปวดหลังนวดในแอป · ปวด ${local.painBefore} → ${after.pain}` });
+      toast({ message: `${st.patientById(local.patientId).name} ประเมินหลังนวดในแอป · ปวด ${after.pain}/10` });
+    }
     {
       const who = st.patientById(local.patientId).name;
       // ประเมินใหม่ก่อนเช็กอิน → ผู้ให้บริการใช้ผลรอบล่าสุด · เช็กอินแล้ว/เริ่มรับบริการ = ล็อก (ไม่รับรอบใหม่)
@@ -509,6 +524,9 @@ export function CloudBridge() {
     // สำรอง: realtime หลุดได้ (iPad พักหน้าจอ / Wi-Fi) → ตรวจการจองที่ยังไม่จบทุก 5 วินาที
     const poll = window.setInterval(async () => {
       const open = [...known.current].filter(([, st]) => !["paid", "closed", "rejected", "cancelled", "no_show"].includes(st)).map(([id]) => id);
+      // บันทึกโดยข้ามคะแนนหลังนวด (14 วันล่าสุด) → รอผู้ป่วยประเมินหลังนวดในแอป
+      const since = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
+      for (const a of ref.current.appointments) if (a.cloudId && a.recordedAt && a.painAfter === undefined && a.date >= since && !open.includes(a.cloudId)) open.push(a.cloudId);
       if (!open.length) return;
       const { data } = await cloud.from("tw_appointments").select(join).in("id", open);
       (data as CloudAppt[] | null)?.forEach((r) => {
@@ -576,7 +594,7 @@ export function CloudBridge() {
       const course = c ? { name: c.name, service: store.serviceById(c.serviceId).name, total: c.total, used: c.used, startedOn: c.startedOn, expiresOn: c.expiresOn, billing: coursePrepaid(p, store.biz.sales) ? "prepaid" : "perVisit" } : null;
       // ประวัติการรักษาที่คลินิก (นวดเสร็จแล้ว ล่าสุดก่อน) → แอปของเจ้าของ
       const visits = store.appointments
-        .filter((a) => a.patientId === p.id && (a.status === "done" || (a.endedAt && a.painAfter !== undefined)))
+        .filter((a) => a.patientId === p.id && (a.status === "done" || (a.endedAt && isRecorded(a))))
         .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))
         .slice(0, 30)
         .map((a) => ({

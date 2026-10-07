@@ -184,6 +184,8 @@ export interface Appointment {
   start: string; // HH:mm
   status: AppointmentStatus;
   type: VisitType;
+  /** บันทึกการรักษาแล้ว (ใช้แทน painAfter เมื่อข้ามการประเมินความปวดหลังนวด) */
+  recordedAt?: string;
   painBefore: number;
   painAfter?: number;
   paid: boolean;

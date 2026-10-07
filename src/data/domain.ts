@@ -20,8 +20,11 @@ export function stageOf(a: Appointment): Stage {
   // ใช้งานจริง: ยังไม่เช็กอิน (สแกน QR / เช็กอินที่เคาน์เตอร์) → ยังไม่มีคิว
   if (a.status === "waiting") return a.calledAt ? "called" : LIVE && !a.checkinQueue ? "checkin" : "waiting";
   if (!a.endedAt) return "treating";
-  return a.painAfter === undefined ? "assess" : "billing";
+  return isRecorded(a) ? "billing" : "assess";
 }
+
+/** บันทึกการรักษาแล้ว: มีคะแนนหลังนวด หรือบันทึกโดยข้ามคะแนนหลังนวด */
+export const isRecorded = (a: Pick<Appointment, "painAfter" | "recordedAt">) => a.painAfter !== undefined || !!a.recordedAt;
 
 export const STAGE_META: Record<Stage, { label: string; tone: BadgeTone; color: string; next?: string }> = {
   checkin: { label: "รอเช็กอินเข้ารับบริการ", tone: "neutral", color: "var(--neutral-400)", next: "เช็กอิน" },

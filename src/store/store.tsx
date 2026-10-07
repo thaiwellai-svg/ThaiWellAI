@@ -638,7 +638,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (a.calledAt) sendToApp(`called:${a.id}`, { type: "status", ...base, state: "called", queue: queueOf(a) });
       if (a.startedAt) sendToApp(`started:${a.id}`, { type: "status", ...base, state: "in_service" });
       // บันทึกการรักษา (คะแนนหลังนวดที่ผู้ป่วยเลือก + วินิจฉัย หัตถการ คำแนะนำ) — ตั้งแต่ขั้นบันทึก ไม่ต้องรอชำระเงิน
-      const finished = a.painAfter !== undefined || a.status === "done";
+      const finished = a.painAfter !== undefined || !!a.recordedAt || a.status === "done";
       const rec = {
         findings: a.findings,
         diagnoses: a.diagnoses?.map((d) => d.name),
@@ -666,7 +666,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const today = todayISO();
     for (const p of state.patients.filter((x) => x.id.startsWith("app-p-"))) {
       const up = state.appointments
-        .filter((a) => a.patientId === p.id && a.status === "waiting" && a.painAfter === undefined && a.date >= today && !a.bridgeRef)
+        .filter((a) => a.patientId === p.id && a.status === "waiting" && a.painAfter === undefined && !a.recordedAt && a.date >= today && !a.bridgeRef)
         .sort((x, y) => (x.date + x.start).localeCompare(y.date + y.start));
       const first = up[0];
       const next = first ? { apptId: first.id, date: first.date, start: first.start, therapist: tName(first.therapistId) } : null;

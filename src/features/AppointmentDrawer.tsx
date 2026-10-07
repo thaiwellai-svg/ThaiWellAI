@@ -89,6 +89,8 @@ export function AppointmentDrawer({
   const appt = store.appointments.find((a) => a.id === shownId);
 
   const [painAfter, setPainAfter] = useState<number | undefined>();
+  /** ข้ามการประเมินความปวดหลังนวด (ไม่บังคับ) */
+  const [skipPain, setSkipPain] = useState(false);
   const [advice, setAdvice] = useState("");
   // the voice summary (side panel or inline) fills these drafts
   useEffect(() => {
@@ -100,7 +102,14 @@ export function AppointmentDrawer({
         setAdvice("");
         return;
       }
-      if (d.painAfter !== undefined) setPainAfter(d.painAfter);
+      if (d.painAfter !== undefined) {
+        setPainAfter(d.painAfter);
+        setSkipPain(false);
+      }
+      if (d.skipPain) {
+        setPainAfter(undefined);
+        setSkipPain(true);
+      }
       if (d.advice) setAdvice(d.advice);
     };
     window.addEventListener(VOICE_FILL, on);
@@ -310,16 +319,18 @@ export function AppointmentDrawer({
         จบการรักษา
       </Button>
     );
-  if (view === "assess" && painAfter !== undefined && appt.diagnoses?.length && appt.procedures?.length)
+  const painDone = painAfter !== undefined || skipPain;
+  const recordLabel = painAfter !== undefined ? `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}` : "บันทึกการรักษา · ไม่ได้ประเมินความปวดหลังนวด";
+  if (view === "assess" && painDone && appt.diagnoses?.length && appt.procedures?.length)
     saveRecord.current = () => {
-      step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
+      step({ painAfter, recordedAt: new Date().toISOString(), advice: advice.trim() || undefined }, recordLabel);
       deductStock(store, appt.id, appt.serviceId, store.settings.staffName);
     };
   else saveRecord.current = null;
   if (view === "assess")
     footer = (
-      <Button size="lg" fill disabled={painAfter === undefined || !(appt.diagnoses?.length && appt.procedures?.length)} leading={<Check size={16} />} onClick={() => {
-          step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
+      <Button size="lg" fill disabled={!painDone || !(appt.diagnoses?.length && appt.procedures?.length)} leading={<Check size={16} />} onClick={() => {
+          step({ painAfter, recordedAt: new Date().toISOString(), advice: advice.trim() || undefined }, recordLabel);
           deductStock(store, appt.id, appt.serviceId, store.settings.staffName);
         }}>
         บันทึก
@@ -373,7 +384,7 @@ export function AppointmentDrawer({
     called: appt.calledAt,
     treating: appt.startedAt,
     assess: appt.endedAt,
-    billing: appt.painAfter !== undefined ? appt.log?.find((l) => (l.label.startsWith("บันทึกการรักษา") || l.label.startsWith("ประเมินผล")))?.at : undefined,
+    billing: appt.painAfter !== undefined || appt.recordedAt ? appt.log?.find((l) => (l.label.startsWith("บันทึกการรักษา") || l.label.startsWith("ประเมินผล")))?.at : undefined,
     done: appt.payment?.at,
   };
 
@@ -528,8 +539,25 @@ export function AppointmentDrawer({
                   <div className="rs-stack">
                     <FindingsField appt={appt} n={1} />
                     <ClinicalRecord appt={appt} embedded />
-                    <RecSection n={4} title="ความปวดหลังนวด" hint="ให้ผู้ป่วยเลือกระดับหลังนวด" done={painAfter !== undefined}>
-                      <PainScale value={painAfter} onChange={setPainAfter} />
+                    <RecSection n={4} title="ความปวดหลังนวด" hint="ไม่บังคับ · ให้ผู้ป่วยเลือกระดับหลังนวด หรือข้ามได้" done={painDone}>
+                      <PainScale
+                        value={painAfter}
+                        onChange={(v) => {
+                          setPainAfter(v);
+                          setSkipPain(false);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={clsx("vs__skip", skipPain && "is-on")}
+                        aria-pressed={skipPain}
+                        onClick={() => {
+                          setSkipPain(!skipPain);
+                          setPainAfter(undefined);
+                        }}
+                      >
+                        {skipPain ? "✓ ข้ามแล้ว · ไม่ได้ประเมินความปวดหลังนวด" : "ข้าม (ผู้ป่วยไม่ประเมิน)"}
+                      </button>
                       {painAfter !== undefined && (
                         <p className={clsx("vs__delta", painAfter < appt.painBefore && "is-good")}>
                           {painAfter < appt.painBefore
@@ -645,11 +673,11 @@ export function AppointmentDrawer({
                     </span>
                     <b>อาการสำคัญ</b>
                     {/* ผลประเมินของนัดวันนี้ (ไม่ใช่ข้อมูลรวมของผู้ป่วย) */}
-                    {ik ? <small>ประเมินสำหรับนัด {thaiDateShort(appt.date)} · {timeAgo(ik.at)}</small> : <small className="vcc__none">ยังไม่ได้ประเมินสำหรับนัดนี้</small>}
+                    {ik ? <small>ประเมินสำหรับนัด {thaiDateShort(appt.date)} · {timeAgo(ik.at)}</small> : appt.cloudId ? <small className="vcc__none">ยังไม่ได้ประเมินสำหรับนัดนี้</small> : null}
                   </div>
                   <p className="vcc__text">
                     {ik?.complaint ?? p.complaint}
-                    {!ik && p.complaint ? <small className="vcc__prev"> (จากครั้งก่อน)</small> : null}
+                    {!ik && appt.cloudId && p.complaint ? <small className="vcc__prev"> (จากครั้งก่อน)</small> : null}
                   </p>
 
                   <div className="vcc__facts">

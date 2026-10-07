@@ -64,6 +64,8 @@ export interface CloudAssessment {
   /** รหัสบริการ / ผู้บำบัดที่ผู้ป่วยเลือกในแอป (รหัสเดียวกับคลินิก) */
   serviceId?: string;
   therapistId?: string;
+  /** ผู้ป่วยประเมินความปวดหลังนวดเองในแอป (คลินิกข้ามไว้) */
+  after?: { pain: number; at: string; note?: string };
   /** แบบคัดกรองก่อนนวดของครั้งนี้ (นัดตามคอร์ส) */
   previsit?: { adverse?: string; risk?: string; red?: boolean };
   /** แนวทางการรักษาที่แอปแนะนำ */

@@ -24,7 +24,7 @@ type Msg = { id: number; role: "ai" | "me"; text: string; kind?: Slot | "intro";
 
 /** the treatment-record form listens for this to fill Pain-after and advice (they are local drafts there) */
 export const VOICE_FILL = "thaiwell:voice-fill";
-export type VoiceFill = { apptId: string; painAfter?: number; advice?: string; /** start over: clear the drafts */ clear?: boolean };
+export type VoiceFill = { apptId: string; painAfter?: number; advice?: string; /** start over: clear the drafts */ clear?: boolean; /** ข้ามคะแนนปวดหลังนวด */ skipPain?: boolean };
 /** …and announces its own drafts so the chat knows what is already filled */
 export const RECORD_DRAFT = "thaiwell:record-draft";
 /** asks the treatment-record form to save (same as its “บันทึก” button) */
@@ -920,13 +920,27 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     if (m.id !== lastAiId || thinking) return null;
     if (m.kind === "pain")
       return (
-        <PainRow
-          onPick={(n) => {
-            savePain(n);
-            say("me", `ปวดหลังนวด ${n}`);
-            void askNext();
-          }}
-        />
+        <>
+          <PainRow
+            onPick={(n) => {
+              savePain(n);
+              say("me", `ปวดหลังนวด ${n}`);
+              void askNext();
+            }}
+          />
+          {/* ไม่บังคับ: ผู้ป่วยไม่ประเมิน → ข้ามไปข้อถัดไป */}
+          <button
+            type="button"
+            className="rc-skip"
+            onClick={() => {
+              fill({ skipPain: true });
+              say("me", "ข้าม · ไม่ได้ประเมินความปวดหลังนวด");
+              void askNext();
+            }}
+          >
+            ข้าม (ผู้ป่วยไม่ประเมิน)
+          </button>
+        </>
       );
     if (m.kind === "dx" || m.kind === "proc") {
       const ai = sug?.slot === m.kind ? sug.items : [];
