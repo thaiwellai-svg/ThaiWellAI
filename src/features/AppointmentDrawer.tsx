@@ -119,6 +119,8 @@ export function AppointmentDrawer({
   const [useCredit, setUseCredit] = useState(true);
   // ending far earlier than the service time needs a reason
   const [earlyEnd, setEarlyEnd] = useState<string | null>(null);
+  /** จบก่อนเวลา: done = รักษาครบตามแผนแล้ว (เสร็จเร็ว) · stop = หยุดกลางคัน (ต้องมีเหตุผล) */
+  const [earlyMode, setEarlyMode] = useState<"done" | "stop">("done");
   const [received, setReceived] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const [receipt, setReceipt] = useState<string | null>(null);
@@ -192,11 +194,15 @@ export function AppointmentDrawer({
   };
 
   const elapsed = appt.startedAt ? Math.max(0, Math.floor((now - Date.parse(appt.startedAt)) / 1000)) : 0;
-  const endTreatment = (reason?: string) => {
-    step({ endedAt: nowIso() }, `จบการรักษา · ${Math.max(1, Math.round(elapsed / 60))} นาที${reason ? ` (ก่อนเวลา: ${reason})` : ""}`);
+  const endTreatment = (reason?: string, mode?: "done" | "stop") => {
+    const mins = `${Math.max(1, Math.round(elapsed / 60))} นาที`;
+    const label =
+      mode === "done" ? `เสร็จการรักษาก่อนเวลา · ${mins}${reason ? ` (${reason})` : ""}` : mode === "stop" ? `หยุดการรักษาก่อนเวลา · ${mins} (${reason})` : `จบการรักษา · ${mins}`;
+    step({ endedAt: nowIso() }, label);
     setEarlyEnd(null);
   };
   const pct = Math.min(1, elapsed / (s.minutes * 60));
+  const usedMin = Math.max(1, Math.round(elapsed / 60));
   const mmss = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}:${String(elapsed % 60).padStart(2, "0")}`;
 
   const pay = () => {
@@ -280,7 +286,13 @@ export function AppointmentDrawer({
     );
   else if (view === "treating")
     footer = (
-      <Button size="lg" fill leading={<ClipboardCheck size={16} />} onClick={() => (elapsed < s.minutes * 30 ? setEarlyEnd("") : endTreatment())}>
+      <Button size="lg" fill leading={<ClipboardCheck size={16} />} onClick={() => {
+          // ยังไม่ครบเวลาบริการ (ขาดเกิน 5 นาที) → ถามว่าเสร็จก่อนเวลา หรือหยุดกลางคัน
+          if (elapsed < s.minutes * 60 - 300) {
+            setEarlyMode("done");
+            setEarlyEnd("");
+          } else endTreatment();
+        }}>
         จบการรักษา
       </Button>
     );
@@ -706,28 +718,92 @@ export function AppointmentDrawer({
       <Dialog
         open={earlyEnd !== null}
         onClose={() => setEarlyEnd(null)}
-        title="จบการรักษาก่อนเวลา?"
-        subtitle={`รับบริการไปแล้ว ${Math.max(1, Math.round(elapsed / 60))} จาก ${s.minutes} นาที`}
+        className="early-dialog"
+        leading={
+          <span className="st-head__icon">
+            <Hourglass size={20} strokeWidth={1.9} />
+          </span>
+        }
+        title="จบการรักษาก่อนเวลา"
+        subtitle={`${p.name} · ${s.name}`}
         footer={
           <>
-            <Button variant="outline" onClick={() => setEarlyEnd(null)}>
+            <Button variant="outline" size="lg" fill onClick={() => setEarlyEnd(null)}>
               ทำต่อ
             </Button>
-            <Button variant="danger" disabled={!earlyEnd?.trim()} onClick={() => endTreatment(earlyEnd!.trim())}>
-              ยืนยันจบการรักษา
+            <Button
+              size="lg"
+              fill
+              variant={earlyMode === "stop" ? "danger" : "primary"}
+              leading={earlyMode === "stop" ? <Ban size={16} /> : <CircleCheck size={16} />}
+              disabled={earlyMode === "stop" && !earlyEnd?.trim()}
+              onClick={() => endTreatment(earlyEnd?.trim() || undefined, earlyMode)}
+            >
+              {earlyMode === "stop" ? "ยืนยันหยุดการรักษา" : "ยืนยันเสร็จการรักษา"}
             </Button>
           </>
         }
       >
-        <p className="early__hint">เวลาที่ใช้น้อยกว่าครึ่งของบริการ ระบุเหตุผลเพื่อบันทึกไว้ในประวัติการรับบริการ</p>
-        <div className="early__chips">
-          {["ผู้ป่วยขอหยุด", "มีอาการผิดปกติ", "ผู้ป่วยมีธุระด่วน", "กดเริ่มผิดเวลา"].map((r) => (
-            <button key={r} type="button" aria-pressed={earlyEnd === r} onClick={() => setEarlyEnd(r)}>
-              {r}
+        <div className="early">
+          {/* เวลาที่ใช้ไปเทียบกับเวลาบริการ */}
+          <div className="early__time">
+            <div>
+              <b>{usedMin}</b>
+              <small>/ {s.minutes} นาที</small>
+            </div>
+            <span className="early__bar" style={{ ["--p" as string]: `${Math.round(pct * 100)}%` }}>
+              <i />
+            </span>
+            <small>เร็วกว่าเวลาบริการ {Math.max(0, s.minutes - usedMin)} นาที</small>
+          </div>
+          <div className="early__modes" role="radiogroup" aria-label="ผลการรักษา">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={earlyMode === "done"}
+              aria-pressed={earlyMode === "done"}
+              className={clsx("early__mode is-done", earlyMode === "done" && "is-on")}
+              onClick={() => {
+                setEarlyMode("done");
+                setEarlyEnd("");
+              }}
+            >
+              <CircleCheck size={22} />
+              <span>
+                <b>เสร็จการรักษาก่อนเวลา</b>
+                <small>รักษาครบตามแผนแล้ว อาการดีขึ้น · นับเป็นการรับบริการปกติ</small>
+              </span>
             </button>
-          ))}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={earlyMode === "stop"}
+              aria-pressed={earlyMode === "stop"}
+              className={clsx("early__mode is-stop", earlyMode === "stop" && "is-on")}
+              onClick={() => {
+                setEarlyMode("stop");
+                setEarlyEnd("");
+              }}
+            >
+              <Ban size={22} />
+              <span>
+                <b>หยุดการรักษากลางคัน</b>
+                <small>ยังไม่ครบตามแผน · ต้องระบุเหตุผลเพื่อบันทึกในประวัติ</small>
+              </span>
+            </button>
+          </div>
+          <div className="early__reason">
+            <small>{earlyMode === "stop" ? "เหตุผลที่หยุด (จำเป็น)" : "หมายเหตุ (ไม่บังคับ)"}</small>
+            <div className="early__chips">
+              {(earlyMode === "stop" ? ["ผู้ป่วยขอหยุด", "มีอาการผิดปกติ", "ผู้ป่วยมีธุระด่วน", "กดเริ่มผิดเวลา"] : ["อาการดีขึ้นแล้ว", "นวดครบทุกจุดแล้ว", "ผู้ป่วยพอใจ"]).map((r) => (
+                <button key={r} type="button" aria-pressed={earlyEnd === r} onClick={() => setEarlyEnd(earlyEnd === r ? "" : r)}>
+                  {r}
+                </button>
+              ))}
+            </div>
+            <Textarea value={earlyEnd ?? ""} onChange={(e) => setEarlyEnd(e.target.value)} placeholder={earlyMode === "stop" ? "หรือพิมพ์เหตุผล…" : "หรือพิมพ์หมายเหตุ…"} rows={2} />
+          </div>
         </div>
-        <Textarea value={earlyEnd ?? ""} onChange={(e) => setEarlyEnd(e.target.value)} placeholder="หรือพิมพ์เหตุผล…" />
       </Dialog>
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
       <CancelDialog appt={cancelling ? appt : null} onClose={() => setCancelling(false)} />
