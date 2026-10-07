@@ -207,6 +207,9 @@ export interface Appointment {
   cloudId?: string;
   /** pre-visit self-assessment carried over from the booking request */
   intake?: Intake;
+  /** ทุกรอบที่ผู้ป่วยประเมินในแอปก่อนเช็กอิน (เก่า → ใหม่) · addenda = แจ้งอาการเพิ่มหลังเช็กอิน */
+  assessRounds?: AssessRound[];
+  addenda?: Addendum[];
   /** booked from the patient app (prototype bridge) — request id, used to send status back to the app */
   bridgeRef?: string;
   /** วินิจฉัย — Thai traditional diagnosis (principal first) */
@@ -272,6 +275,23 @@ export interface AuditEntry {
   patientId?: string;
 }
 
+/** การประเมินหนึ่งรอบจากแอป — ประเมินซ้ำก่อนเช็กอิน = รอบใหม่ (ไม่ทับของเดิม) · รอบล่าสุดคือที่ผู้ให้บริการใช้ */
+export interface AssessRound {
+  at: string;
+  pain: number;
+  complaint: string;
+  focusAreas: string[];
+  avoidAreas: string[];
+  summary?: string;
+  /** ข้อห้าม/ข้อควรระวังจากแบบคัดกรองในแอป */
+  flags?: string[];
+}
+/** แจ้งอาการเพิ่มหลังเช็กอิน (ไม่แก้ผลประเมินที่ใช้) */
+export interface Addendum {
+  at: string;
+  text: string;
+}
+
 export interface BookingRequest {
   id: string;
   patientId: string;
@@ -283,6 +303,8 @@ export interface BookingRequest {
   screening: Screening;
   /** pre-visit self-assessment from the app (demo data is derived when missing — see data/intake.ts) */
   intake?: Intake;
+  /** ทุกรอบที่ผู้ป่วยประเมินในแอป (เก่า → ใหม่) */
+  assessRounds?: AssessRound[];
   note?: string;
   submittedAt: string; // ISO datetime
   /** id of the booking in the shared cloud (patient app) */

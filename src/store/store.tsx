@@ -37,6 +37,8 @@ type Action =
   | { type: "restoreRequest"; request: BookingRequest }
   /** a booking that arrived from the patient app (cloud); ignored if already here */
   | { type: "cloudRequest"; request: BookingRequest }
+  /** ผู้ป่วยประเมินใหม่ในแอป (คำขอยังรออนุมัติ) */
+  | { type: "updateRequest"; id: string; patch: Partial<BookingRequest>; log?: string }
   | { type: "setStatus"; id: string; status: AppointmentStatus; painAfter?: number }
   | { type: "togglePaid"; id: string }
   | { type: "updateAppointment"; id: string; patch: Partial<Appointment>; log?: string }
@@ -152,6 +154,7 @@ function reducer(state: State, action: Action): State {
         paid: false,
         intake: req.intake,
         screening: req.screening,
+        assessRounds: req.assessRounds,
         ...(req.id.startsWith("app-") ? { bridgeRef: req.id } : {}),
         cloudId: req.cloudId,
         ...action.patch,
@@ -185,6 +188,8 @@ function reducer(state: State, action: Action): State {
       };
       return { ...state, requests: state.requests.filter((r) => r.id !== action.id), decisions: [decision, ...state.decisions] };
     }
+    case "updateRequest":
+      return { ...state, requests: state.requests.map((r) => (r.id === action.id ? { ...r, ...action.patch } : r)) };
     case "cloudRequest": {
       if (state.requests.some((r) => r.cloudId === action.request.cloudId) || state.appointments.some((a) => a.cloudId === action.request.cloudId) || state.decisions.some((d) => d.request.cloudId === action.request.cloudId)) return state;
       // the bell shows it too, like a request that came over the browser bridge
@@ -439,6 +444,8 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
   switch (action.type) {
     case "cloudRequest":
       return { cat: "นัดหมาย", text: "รับคำขอจองจากแอป ThaiWell AI", patientId: action.request.patientId };
+    case "updateRequest":
+      return action.log ? { cat: "นัดหมาย", text: action.log, patientId: prev.requests.find((r) => r.id === action.id)?.patientId } : null;
     case "approve": {
       const r = prev.requests.find((x) => x.id === action.id);
       return { cat: "นัดหมาย", text: `อนุมัติคำขอจอง ${action.patch.date} ${action.patch.start}`, patientId: r?.patientId };

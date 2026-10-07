@@ -64,6 +64,10 @@ export interface CloudAssessment {
   /** รหัสบริการ / ผู้บำบัดที่ผู้ป่วยเลือกในแอป (รหัสเดียวกับคลินิก) */
   serviceId?: string;
   therapistId?: string;
+  /** เวลาที่ประเมินรอบล่าสุด · rounds = รอบก่อนหน้า (เก่า → ใหม่) · addenda = แจ้งอาการเพิ่มหลังเช็กอิน */
+  at?: string;
+  rounds?: Omit<CloudAssessment, "rounds" | "addenda">[];
+  addenda?: { at: string; text: string }[];
   /** clinic = คลินิกลงนัดเอง (ไม่ใช่คำขอจองจากแอป) · course = ครั้งที่เท่าไหร่ของคอร์ส */
   source?: "app" | "clinic";
   course?: { name: string; no: number; total: number };

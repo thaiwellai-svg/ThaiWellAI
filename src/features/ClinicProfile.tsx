@@ -36,8 +36,6 @@ import { TH_WEEKDAYS_SHORT } from "../data/thaiDate";
 import type { ClinicSettings } from "../data/types";
 import { fileToPortrait } from "./photo";
 import { LocationPicker } from "./LocationPicker";
-import { WipeDataDialog } from "./WipeDataDialog";
-import "./reset-patient.css";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import "./clinic-profile.css";
 
@@ -128,7 +126,6 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
   const toast = useToast();
   const [now, setNow] = useState(() => new Date());
   const [edit, setEdit] = useState<EditKind | null>(null);
-  const [wiping, setWiping] = useState(false);
   useEffect(() => {
     const t = window.setInterval(() => setNow(new Date()), 60_000);
     return () => window.clearInterval(t);
@@ -323,17 +320,6 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
         </div>
       </div>
 
-      {/* ลบข้อมูลทดสอบทั้งหมด (ก่อนใช้งานจริง / ทดสอบรอบใหม่) */}
-      <section className="cp-danger">
-        <span>
-          <b>ลบข้อมูลทดสอบทั้งหมด</b>
-          <small>ล้างผู้รับบริการ นัด ใบเสร็จ คำขอจอง แจ้งเตือน และประวัติ ทั้งในคลินิกและแอปผู้ใช้ · ข้อมูลคลินิก ผู้บำบัด บริการ ยังอยู่</small>
-        </span>
-        <Button variant="danger" size="md" leading={<Trash2 size={15} />} onClick={() => setWiping(true)}>
-          ลบข้อมูลทั้งหมด
-        </Button>
-      </section>
-      <WipeDataDialog open={wiping} onClose={() => setWiping(false)} />
       <ClinicEditDialog kind={edit} onClose={() => setEdit(null)} />
     </div>
   );

@@ -48,6 +48,7 @@ import { AVATAR_CHOICES, avatarUrl, avatarValue, resolvePhoto, therapistPhoto } 
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { UserGuide } from "../../features/UserGuide";
 import { ClinicProfile } from "../../features/ClinicProfile";
+import { WipeDataDialog } from "../../features/WipeDataDialog";
 import { signOut } from "../../features/session";
 import "../appointments/appointments.css";
 import "../../features/shift-editor.css";
@@ -69,7 +70,7 @@ const SECTIONS = [
   { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ · ภาษีมูลค่าเพิ่ม", icon: QrCode, tint: "#2f8f9a" },
   { id: "audit", label: "ประวัติการแก้ไข", desc: "ใครทำอะไร เมื่อไร", icon: History, tint: "#7c5cc4" },
   { id: "guide", label: "คู่มือการใช้งาน", desc: "วิธีใช้ทุกเมนูแบบทีละขั้น", icon: GraduationCap, tint: "#2f8f9a" },
-  { id: "data", label: "ข้อมูลและการสำรอง", desc: DEMO ? "สำรอง · กู้คืน · รีเซ็ตข้อมูลตัวอย่าง" : "สำรอง · กู้คืน", icon: Database, tint: "#7d8681" },
+  { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง · กู้คืน · รีเซ็ตทั้งระบบ", icon: Database, tint: "#7d8681" },
 ] as const;
 /** menu groups (account lives in the profile card on top) */
 const GROUPS: { label: string; ids: string[] }[] = [
@@ -158,6 +159,7 @@ export default function Settings() {
   const store = useStore();
   const { settings } = store;
   const [active, setActive] = useState<SectionId>("account");
+  const [wiping, setWiping] = useState(false);
   const [saved, setSaved] = useState(0);
   const [editSvc, setEditSvc] = useState<string | null>(null);
   const [editStaff, setEditStaff] = useState<string | null>(null);
@@ -289,6 +291,15 @@ export default function Settings() {
                     <Group title="สำรองและกู้คืนข้อมูล">
                       <BackupPanel />
                     </Group>
+                    {/* รีเซ็ตทั้งระบบ: ระบบคลินิก + แอปผู้ใช้ทุกคน (ใช้ก่อนเริ่มใช้งานจริง / ทดสอบรอบใหม่) */}
+                    <Group title="รีเซ็ตข้อมูลทั้งระบบ" desc="ล้างข้อมูลทดสอบทั้งหมดของระบบคลินิกและแอป ThaiWell AI ของผู้ใช้ทุกคน · ข้อมูลคลินิก ผู้บำบัด บริการ ราคา และการตั้งค่า ยังอยู่">
+                      <Row title="ล้างข้อมูลทั้งหมดในระบบ" desc="ผู้รับบริการ นัด ใบเสร็จ คำขอจอง แจ้งเตือน ประวัติ — ในคลินิกและในแอปของผู้ใช้ · สำรองข้อมูลด้านบนก่อนถ้าอยากเก็บไว้">
+                        <Button variant="danger" size="md" leading={<Trash2 size={14} />} onClick={() => setWiping(true)}>
+                          รีเซ็ตทั้งระบบ
+                        </Button>
+                      </Row>
+                    </Group>
+                    <WipeDataDialog open={wiping} onClose={() => setWiping(false)} />
                     {DEMO && <Group title="รีเซ็ตข้อมูลจำลอง" desc="ข้อมูลทั้งหมดในแอปเป็นข้อมูลสมมติ ไม่มีข้อมูลสุขภาพของบุคคลจริง บันทึกไว้ในเครื่องนี้เท่านั้น">
                       <Row title="สร้างข้อมูลตัวอย่างใหม่" desc="ผู้ป่วย คิวนัด คำขอจอง การชำระเงิน แจ้งเตือน และตารางงาน จะกลับเป็นชุดเริ่มต้นของวันนี้ · การตั้งค่าคลินิกและบัญชีผู้ใช้ยังอยู่">
                         <Button variant="outline" size="md" className="acc-logout" leading={<RotateCcw size={14} />} onClick={() => setConfirmReset(true)}>
