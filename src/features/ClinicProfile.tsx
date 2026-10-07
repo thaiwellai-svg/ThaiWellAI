@@ -200,7 +200,12 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
           </header>
           <div className="cp-map">
             {hasLoc ? (
-              <iframe title="แผนที่คลินิก" src={osm(s.clinicLat!, s.clinicLng!)} loading="lazy" />
+              <>
+                <iframe title="แผนที่คลินิก" src={osm(s.clinicLat!, s.clinicLng!)} loading="lazy" />
+                <button type="button" className="cp-map__edit" onClick={() => setEdit("location")}>
+                  <MapPin size={14} /> ปรับตำแหน่ง
+                </button>
+              </>
             ) : (
               <button type="button" className="cp-map__empty" onClick={() => setEdit("location")}>
                 <MapPin size={22} />
