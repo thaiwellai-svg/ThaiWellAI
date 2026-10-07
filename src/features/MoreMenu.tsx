@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Ellipsis } from "lucide-react";
 import "./more-menu.css";
 
-export type MoreItem = { label: string; icon: ReactNode; onClick: () => void; hint?: string };
+export type MoreItem = { label: string; icon: ReactNode; onClick: () => void; hint?: string; danger?: boolean };
 
 /** ⋯ button with a small popover of secondary actions */
 export function MoreMenu({ items, className = "pd__ib" }: { items: MoreItem[]; className?: string }) {
@@ -42,6 +42,7 @@ export function MoreMenu({ items, className = "pd__ib" }: { items: MoreItem[]; c
                   key={it.label}
                   type="button"
                   role="menuitem"
+                  className={it.danger ? "is-danger" : undefined}
                   onClick={() => {
                     setOpen(false);
                     it.onClick();

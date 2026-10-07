@@ -61,6 +61,12 @@ type Action =
   | { type: "biz"; update: (b: Biz) => Biz; log: string; cat?: AuditEntry["cat"]; patientId?: string }
   | { type: "bridgeIn"; event: AppEvent }
   | { type: "reset" }
+  /** ลบข้อมูลการรักษาทั้งหมดของผู้ป่วยหนึ่งคน (ใช้ทดสอบ) · ข้อมูลส่วนตัว (ชื่อ HN เลขบัตร ติดต่อ) ยังอยู่ */
+  | { type: "resetPatientData"; id: string }
+  /** ลบผู้รับบริการทั้งคน (ข้อมูลส่วนตัว + ข้อมูลการรักษา) */
+  | { type: "removePatient"; id: string }
+  /** ล้างข้อมูลทดสอบทั้งหมดของคลินิก · เก็บการตั้งค่าคลินิก ผู้บำบัด บริการ แพ็กเกจ สินค้าในคลัง */
+  | { type: "wipeTestData" }
   /** ข้อมูลจากฐานข้อมูล (ตอนเข้าสู่ระบบ) */
   | { type: "hydrate"; state: State }
   /** อีกเครื่องแก้ข้อมูล (realtime) */
@@ -384,6 +390,42 @@ function reducer(state: State, action: Action): State {
       return { ...state, keepData: action.on };
     case "biz":
       return { ...state, biz: action.update(state.biz) };
+    case "resetPatientData": {
+      const id = action.id;
+      const apptIds = new Set(state.appointments.filter((a) => a.patientId === id).map((a) => a.id));
+      const reqIds = new Set(state.requests.filter((r) => r.patientId === id).map((r) => r.id));
+      return {
+        ...state,
+        appointments: state.appointments.filter((a) => a.patientId !== id),
+        requests: state.requests.filter((r) => r.patientId !== id),
+        decisions: state.decisions.filter((d) => d.request.patientId !== id),
+        notifications: state.notifications.filter((n) => !n.ref || (n.ref !== id && !apptIds.has(n.ref) && !reqIds.has(n.ref))),
+        patients: state.patients.map((p) =>
+          p.id === id ? { ...p, course: undefined, aiPlan: undefined, painHistory: [], screening: undefined, documents: undefined } : p,
+        ),
+        biz: {
+          ...state.biz,
+          sales: state.biz.sales.filter((x) => x.patientId !== id),
+          waitlist: state.biz.waitlist.filter((x) => x.patientId !== id),
+          docs: state.biz.docs.filter((x) => x.patientId !== id),
+        },
+      };
+    }
+    case "removePatient": {
+      const cleared = reducer(state, { type: "resetPatientData", id: action.id });
+      return { ...cleared, patients: cleared.patients.filter((p) => p.id !== action.id), notifications: cleared.notifications.filter((n) => n.ref !== action.id) };
+    }
+    case "wipeTestData":
+      return {
+        ...state,
+        patients: [],
+        appointments: [],
+        requests: [],
+        decisions: [],
+        notifications: [],
+        audit: [],
+        biz: { ...state.biz, moves: [], sales: [], closings: [], waitlist: [], docs: [], seq: { sale: 0, cert: 0, refer: 0, tax: 0 } },
+      };
     case "reset":
       // new demo data, but keep the clinic setup and the signed-in user's profile
       return { ...fresh(), settings: state.settings, audit: state.audit };
@@ -464,6 +506,12 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
       return { cat: action.cat ?? "การเงิน", text: action.log, patientId: action.patientId };
     case "reset":
       return { cat: "ระบบ", text: "รีเซ็ตข้อมูลตัวอย่าง" };
+    case "removePatient":
+      return { cat: "ผู้ป่วย", text: `ลบผู้รับบริการ ${prev.patients.find((p) => p.id === action.id)?.name ?? ""} (${prev.patients.find((p) => p.id === action.id)?.hn ?? ""}) พร้อมข้อมูลการรักษา` };
+    case "wipeTestData":
+      return { cat: "ระบบ", text: `ล้างข้อมูลทดสอบทั้งหมด · ผู้รับบริการ ${prev.patients.length} คน · นัด ${prev.appointments.length} รายการ` };
+    case "resetPatientData":
+      return { cat: "ผู้ป่วย", text: `รีเซ็ตข้อมูลการรักษา (ทดสอบ) ${prev.patients.find((p) => p.id === action.id)?.name ?? ""}`, patientId: action.id };
     default:
       return null;
   }

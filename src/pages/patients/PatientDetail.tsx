@@ -5,11 +5,12 @@ import { ScreeningAlert } from "../../features/ScreeningAlert";
 import { MoreMenu } from "../../features/MoreMenu";
 import { CancelDialog } from "../../features/CancelDialog";
 import { DocDialog, type DocKind } from "../../features/MedDocs";
+import { ResetPatientDialog } from "../../features/ResetPatientDialog";
 import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp, RotateCcw, UserX } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, coursePrepaid } from "../../data/domain";
@@ -78,6 +79,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const [cancelExtra, setCancelExtra] = useState(false);
   const [doc, setDoc] = useState<DocKind | null>(null);
   const [selling, setSelling] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const planNext = p?.course
     ? store.appointments
         .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && a.date >= today)
@@ -173,8 +176,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 { label: "ใบรับรองแพทย์", icon: <FileHeart size={16} />, onClick: () => setDoc("cert") },
                 { label: "ใบส่งตัว", icon: <Send size={16} />, onClick: () => setDoc("refer") },
                 { label: "ขายคอร์ส / แพ็กเกจ", icon: <ShoppingBag size={16} />, onClick: () => setSelling(true) },
+                { label: "รีเซ็ตข้อมูลการรักษา", hint: "ใช้ทดสอบ", icon: <RotateCcw size={16} />, onClick: () => setResetting(true), danger: true },
+                { label: "ลบผู้รับบริการ", hint: "ลบทั้งคน", icon: <UserX size={16} />, onClick: () => setRemoving(true), danger: true },
               ]}
             />
+            <ResetPatientDialog patientId={resetting ? p.id : null} onClose={() => setResetting(false)} />
+            <ResetPatientDialog mode="remove" patientId={removing ? p.id : null} onClose={() => setRemoving(false)} onDone={() => navigate("/patients")} />
             <DocDialog patientId={doc ? p.id : null} kind={doc ?? "cert"} onClose={() => setDoc(null)} />
             <SellPackageDialog patientId={selling ? p.id : null} onClose={() => setSelling(false)} />
             {printNode}

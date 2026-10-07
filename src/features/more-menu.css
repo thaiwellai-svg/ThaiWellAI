@@ -34,3 +34,8 @@
   font: 500 11.5px/1 var(--font-sans);
   color: var(--color-text-muted);
 }
+
+.more button.is-danger,
+.more button.is-danger b {
+  color: var(--color-danger);
+}
