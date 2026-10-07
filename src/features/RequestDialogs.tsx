@@ -10,6 +10,7 @@ import { slotLoad } from "./slotLoad";
 import { patientPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
 import { IntakeCard } from "./IntakeCard";
+import { AppGuideCard } from "./AppGuideCard";
 import { intakeOfRequest } from "../data/intake";
 import { elementProfile } from "../data/elements";
 
@@ -65,6 +66,15 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
         </>
       }
     >
+      {/* แผน/แนวทางการรักษาที่ผู้ป่วยได้รับในแอป → ดูก่อนอนุมัติ (เลือกบริการ/ผู้บำบัดให้ตรง) */}
+      {request.appGuide && (
+        <section className="sec">
+          <div className="sec__head">
+            <h3 className="sec__title">แผนการรักษาที่ผู้ป่วยได้รับในแอป</h3>
+          </div>
+          <AppGuideCard guide={request.appGuide} compact />
+        </section>
+      )}
       <section className="sec">
         <div className="sec__head">
           <h3 className="sec__title">อาการที่ผู้ป่วยประเมินในแอป</h3>
