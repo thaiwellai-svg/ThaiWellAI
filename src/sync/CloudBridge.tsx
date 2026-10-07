@@ -366,7 +366,9 @@ export function CloudBridge() {
       // ประเมินใหม่ก่อนเช็กอิน → ผู้ให้บริการใช้ผลรอบล่าสุด · เช็กอินแล้ว/เริ่มรับบริการ = ล็อก (ไม่รับรอบใหม่)
       const rounds = roundsOf(row);
       const lastAt = rounds[rounds.length - 1]?.at;
-      const before = !local.checkinQueue && !local.calledAt && !local.startedAt && local.status === "waiting";
+      // รับผลประเมินของนัดนี้ได้จนกว่าจะเริ่มนวด (เช็กอิน/เรียกคิวแล้วยังรับ · บอกไว้ในประวัติ)
+      const before = !local.startedAt && !local.endedAt && local.status === "waiting";
+      const late = !!local.checkinQueue || !!local.calledAt;
       // รอบปลอมจากข้อมูลตั้งต้นของนัดที่คลินิกลงเอง (บันทึกไว้ก่อนมีตัวกรอง) → ลบออก ไม่ให้แสดงเป็นผลประเมิน
       const isStub = (r: AssessRound) => /^นัด(ตามคอร์ส|จากคลินิก)/.test(r.summary ?? "");
       const keep = (local.assessRounds ?? []).filter((r) => !isStub(r));
@@ -376,7 +378,7 @@ export function CloudBridge() {
       if (row.assessment && before && lastAt && lastAt !== seenAt) {
         const as = row.assessment;
         syncHealth(local.patientId, row, local.date);
-        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length}) · ปวด ${as.pain ?? "-"}/10` });
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length})${late ? " · หลังเช็กอิน" : ""} · ปวด ${as.pain ?? "-"}/10` });
         if (prevSig !== undefined) {
           toast({ message: `${who} ประเมินใหม่ก่อนนวด · ปวด ${as.pain ?? "-"}/10` });
           void pushNotify("ผู้ป่วยประเมินใหม่ก่อนนวด", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/visits");
