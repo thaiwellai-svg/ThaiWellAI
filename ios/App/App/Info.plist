@@ -22,6 +22,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ใช้ตำแหน่งปัจจุบันเพื่อปักตำแหน่งคลินิก ให้ผู้ใช้แอปเห็นระยะทางและนำทางมาคลินิกได้</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>ใช้ไมโครโฟนเพื่อบันทึกเสียงสรุปการรักษา แล้วให้ AI เติมบันทึกการรักษาให้</string>
 	<key>NSCameraUsageDescription</key>

@@ -21,6 +21,7 @@ import {
   PenLine,
   Phone,
   QrCode,
+  Search,
   Sparkles,
   Sprout,
   Stethoscope,
@@ -34,6 +35,8 @@ import { Button, Dialog, Field, Input, useToast } from "../design-system";
 import { TH_WEEKDAYS_SHORT } from "../data/thaiDate";
 import type { ClinicSettings } from "../data/types";
 import { fileToPortrait } from "./photo";
+import { LocationPicker } from "./LocationPicker";
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import "./clinic-profile.css";
 
 /* ---------- โลโก้คลินิก: ไอคอนที่เกี่ยวกับคลินิกแพทย์แผนไทย หรือรูปถ่ายคลินิก ---------- */
@@ -84,6 +87,22 @@ function parseLatLng(text: string): [number, number] | null {
   const lat = Number(m[1]);
   const lng = Number(m[2]);
   return Math.abs(lat) <= 90 && Math.abs(lng) <= 180 ? [lat, lng] : null;
+}
+/** ลิงก์ย่อจากปุ่มแชร์ของ Google Maps (maps.app.goo.gl / goo.gl/maps) */
+const isShortLink = (t: string) => /(maps\.app\.goo\.gl|goo\.gl\/maps)\//i.test(t);
+/** ลิงก์ย่อ → ลิงก์เต็ม (มีพิกัด) · ทำได้ในแอป iPad (เบราว์เซอร์ถูกบล็อกข้ามโดเมน) */
+async function expandShortLink(url: string): Promise<[number, number] | null> {
+  if (!Capacitor.isNativePlatform()) return null;
+  const r = await CapacitorHttp.get({ url: url.trim() });
+  const body = typeof r.data === "string" ? r.data : "";
+  return parseLatLng(r.url ?? "") ?? parseLatLng(body.match(/https:\/\/www\.google\.[^"']*@-?\d[^"']*/)?.[0] ?? "") ?? parseLatLng(body.match(/!3d-?\d+(\.\d+)?!4d-?\d+(\.\d+)?/)?.[0] ?? "");
+}
+type Place = { name: string; lat: number; lng: number };
+/** ค้นหาสถานที่/ที่อยู่ (OpenStreetMap) */
+async function searchPlaces(q: string): Promise<Place[]> {
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=th&accept-language=th&q=${encodeURIComponent(q)}`);
+  const list = (await r.json()) as { display_name: string; lat: string; lon: string }[];
+  return list.map((x) => ({ name: x.display_name, lat: Number(x.lat), lng: Number(x.lon) }));
 }
 const osm = (lat: number, lng: number) =>
   `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.004},${lat - 0.0025},${lng + 0.004},${lat + 0.0025}&layer=mapnik&marker=${lat},${lng}`;
@@ -319,6 +338,10 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
   const [logo, setLogo] = useState<string | undefined>(undefined);
   const [locating, setLocating] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [pos, setPos] = useState<[number, number] | null>(null);
+  const [q, setQ] = useState("");
+  const [found, setFound] = useState<Place[] | null>(null);
+  const [searching, setSearching] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   // เปิดหัวข้อใหม่ → ตั้งค่าเริ่มจากข้อมูลปัจจุบัน
   if (kind && kind !== shown) {
@@ -327,14 +350,48 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
       kind === "name" ? s.clinicName : kind === "address" ? (s.clinicAddress ?? "") : kind === "phone" ? (s.clinicPhone ?? "") : kind === "location" && s.clinicLat !== undefined && s.clinicLng !== undefined ? `${s.clinicLat}, ${s.clinicLng}` : "",
     );
     setLogo(s.clinicLogo);
+    setPos(s.clinicLat !== undefined && s.clinicLng !== undefined ? [s.clinicLat, s.clinicLng] : null);
+    setQ(s.clinicAddress ?? "");
+    setFound(null);
+    if (kind === "location") setText("");
   }
   if (!kind && shown) setShown(null);
   const k = kind ?? shown;
   if (!k) return null;
   const meta = TITLES[k];
-  const ll = k === "location" ? parseLatLng(text) : null;
+  const ll = k === "location" ? pos : null;
   const phoneOk = !text.trim() || /^[0-9+\-\s]{9,15}$/.test(text.trim());
-  const valid = k === "name" ? !!text.trim() : k === "location" ? !text.trim() || !!ll : k === "phone" ? phoneOk : true;
+  const valid = k === "name" ? !!text.trim() : k === "phone" ? phoneOk : true;
+  /** วางลิงก์ / พิมพ์พิกัด → ปักหมุด (ลิงก์ย่อจากปุ่มแชร์ → อ่านลิงก์เต็มก่อน) */
+  const usePasted = async (t: string) => {
+    setText(t);
+    const direct = parseLatLng(t);
+    if (direct) return setPos(direct);
+    if (!isShortLink(t)) return;
+    setBusy(true);
+    try {
+      const v = await expandShortLink(t);
+      if (v) setPos(v);
+      else toast({ message: "อ่านพิกัดจากลิงก์นี้ไม่ได้ · ค้นหาจากที่อยู่ หรือแตะบนแผนที่แทน" });
+    } catch {
+      toast({ message: "เปิดลิงก์ไม่ได้ · ตรวจอินเทอร์เน็ต หรือแตะบนแผนที่แทน" });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const search = async () => {
+    if (!q.trim()) return;
+    setSearching(true);
+    try {
+      const r = await searchPlaces(q.trim());
+      setFound(r);
+      if (r[0]) setPos([r[0].lat, r[0].lng]);
+    } catch {
+      toast({ message: "ค้นหาไม่ได้ · ตรวจอินเทอร์เน็ต" });
+    } finally {
+      setSearching(false);
+    }
+  };
   const cur = parseLogo(logo);
 
   const save = () => {
@@ -393,45 +450,67 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
       )}
       {k === "location" && (
         <div className="cp-edit__loc">
-          <Field label="ลิงก์ Google Maps หรือพิกัด" hint={text.trim() && !ll ? "อ่านพิกัดไม่ได้ — วางลิงก์ Google Maps หรือพิมพ์ เช่น 13.7337, 100.5717" : "อยู่ที่คลินิก → กด “ใช้ตำแหน่งปัจจุบัน” · หรือคัดลอกลิงก์จาก Google Maps มาวาง"}>
-            <div className="clinic-form__loc">
-              <Input value={text} onChange={(e) => setText(e.target.value)} placeholder="ลิงก์ Google Maps หรือ ละติจูด, ลองจิจูด" />
-              <Button
-                variant="outline"
-                size="md"
-                leading={<MapPin size={15} />}
-                disabled={locating}
-                onClick={() => {
-                  if (!navigator.geolocation) return toast({ message: "อุปกรณ์นี้หาตำแหน่งไม่ได้" });
-                  setLocating(true);
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                      setLocating(false);
-                      setText(`${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`);
-                    },
-                    () => {
-                      setLocating(false);
-                      toast({ message: "หาตำแหน่งไม่ได้ — อนุญาตการเข้าถึงตำแหน่ง หรือวางลิงก์ Google Maps แทน" });
-                    },
-                    { enableHighAccuracy: true, timeout: 15000 },
-                  );
-                }}
-              >
-                {locating ? "กำลังหา…" : "ใช้ตำแหน่งปัจจุบัน"}
-              </Button>
-            </div>
-          </Field>
-          {/* ดูตำแหน่งก่อนบันทึก */}
-          <div className="cp-map cp-map--sm">
-            {ll ? (
-              <iframe title="ตำแหน่งที่เลือก" src={osm(ll[0], ll[1])} />
-            ) : (
-              <div className="cp-map__empty">
-                <MapPin size={20} />
-                <small>ใส่พิกัดแล้วจะเห็นตำแหน่งบนแผนที่ที่นี่</small>
-              </div>
-            )}
+          {/* 1) ค้นหาจากชื่อสถานที่ / ที่อยู่ */}
+          <div className="cp-loc__search">
+            <Input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && void search()} placeholder="ค้นหาชื่อสถานที่หรือที่อยู่ เช่น ซอยสุขุมวิท 39" aria-label="ค้นหาสถานที่" />
+            <Button variant="outline" size="md" leading={<Search size={15} />} disabled={searching || !q.trim()} onClick={() => void search()}>
+              {searching ? "กำลังค้นหา…" : "ค้นหา"}
+            </Button>
           </div>
+          {found && (
+            <div className="cp-loc__found">
+              {found.length ? (
+                found.map((f) => (
+                  <button key={`${f.lat},${f.lng}`} type="button" aria-pressed={!!pos && pos[0] === f.lat && pos[1] === f.lng} onClick={() => setPos([f.lat, f.lng])}>
+                    <MapPin size={14} />
+                    <span>{f.name}</span>
+                  </button>
+                ))
+              ) : (
+                <small>ไม่พบสถานที่นี้ · ลองพิมพ์ชื่อถนน/ซอย/เขต หรือแตะบนแผนที่</small>
+              )}
+            </div>
+          )}
+          {/* 2) แตะบนแผนที่ / ลากหมุด */}
+          <LocationPicker value={pos} onChange={setPos} />
+          <p className="cp-loc__hint">
+            {pos ? `หมุดอยู่ที่ ${pos[0].toFixed(5)}, ${pos[1].toFixed(5)} · แตะบนแผนที่หรือลากหมุดเพื่อปรับ` : "แตะบนแผนที่ตรงตำแหน่งคลินิกเพื่อปักหมุด"}
+          </p>
+          {/* 3) ตำแหน่งปัจจุบัน / วางลิงก์ Google Maps */}
+          <div className="clinic-form__loc">
+            <Input value={text} onChange={(e) => void usePasted(e.target.value)} placeholder="หรือวางลิงก์ Google Maps / พิกัด 13.7337, 100.5717" aria-label="ลิงก์ Google Maps หรือพิกัด" />
+            <Button
+              variant="outline"
+              size="md"
+              leading={<Navigation size={15} />}
+              disabled={locating}
+              onClick={() => {
+                if (!navigator.geolocation) return toast({ message: "อุปกรณ์นี้หาตำแหน่งไม่ได้" });
+                setLocating(true);
+                navigator.geolocation.getCurrentPosition(
+                  (p) => {
+                    setLocating(false);
+                    setPos([p.coords.latitude, p.coords.longitude]);
+                  },
+                  (err) => {
+                    setLocating(false);
+                    toast({ message: err.code === 1 ? "ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง · เปิดที่ การตั้งค่า › ThaiWell › ตำแหน่ง หรือแตะบนแผนที่แทน" : "หาตำแหน่งไม่ได้ · ลองค้นหาจากที่อยู่ หรือแตะบนแผนที่แทน" });
+                  },
+                  { enableHighAccuracy: true, timeout: 15000 },
+                );
+              }}
+            >
+              {locating ? "กำลังหา…" : "ใช้ตำแหน่งปัจจุบัน"}
+            </Button>
+          </div>
+          {text.trim() && !parseLatLng(text) && !busy && (
+            <small className="cp-loc__warn">{isShortLink(text) ? (Capacitor.isNativePlatform() ? "อ่านพิกัดจากลิงก์นี้ไม่ได้" : "ลิงก์ย่อเปิดได้ในแอป iPad เท่านั้น · บนเว็บให้แตะบนแผนที่หรือค้นหาแทน") : "อ่านพิกัดไม่ได้ · วางลิงก์ Google Maps หรือพิมพ์ เช่น 13.7337, 100.5717"}</small>
+          )}
+          {pos && (
+            <button type="button" className="cp-loc__clear" onClick={() => setPos(null)}>
+              ลบตำแหน่ง
+            </button>
+          )}
         </div>
       )}
       {k === "logo" && (

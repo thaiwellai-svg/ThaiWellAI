@@ -487,3 +487,80 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ปักตำแหน่งคลินิก */
+.cp-loc__search {
+  display: flex;
+  gap: 8px;
+}
+.cp-loc__search > :first-child {
+  flex: 1;
+}
+.cp-loc__found {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.cp-loc__found button {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--sage-50);
+  text-align: left;
+  font: 500 12.5px/1.4 var(--font-sans);
+  color: var(--color-text);
+}
+.cp-loc__found button svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-brand);
+}
+.cp-loc__found button[aria-pressed="true"] {
+  background: var(--color-brand-tint, #eef5ee);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+.cp-loc__found small,
+.cp-loc__hint {
+  margin: 0;
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.cp-loc__warn {
+  font: 600 12px/1.4 var(--font-sans);
+  color: var(--color-danger);
+}
+.cp-loc__clear {
+  width: fit-content;
+  padding: 0;
+  background: none;
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-danger);
+}
+.lp-map {
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--sage-50);
+  z-index: 0;
+}
+.lp-pin i {
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--color-brand, #4c845a);
+  transform: rotate(-45deg);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+.lp-pin i::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: #fff;
+}
