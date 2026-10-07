@@ -48,6 +48,7 @@ import type { ClinicSettings, Service, ShareTopic, Therapist } from "../../data/
 import { AVATAR_CHOICES, avatarUrl, avatarValue, resolvePhoto, therapistPhoto } from "../../data/avatars";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { UserGuide } from "../../features/UserGuide";
+import { ClinicProfile } from "../../features/ClinicProfile";
 import { signOut } from "../../features/session";
 import "../appointments/appointments.css";
 import "../../features/shift-editor.css";
@@ -303,40 +304,17 @@ export default function Settings() {
 
                 {active === "clinic" && (
                   <>
-                    <Group title="ข้อมูลคลินิก" desc="ชื่อ ที่อยู่ เบอร์โทร และตำแหน่ง แสดงในหน้า “สถานที่” ของแอป ThaiWell AI ให้ผู้ใช้โทร/นำทางมาได้">
-                      <div className="st-row">
-                        <div className="st-row__text">
-                          <small>ชื่อหน่วยบริการ</small>
-                          <b>{settings.clinicName}</b>
-                          <small>{settings.clinicAddress || "ยังไม่ได้ระบุที่อยู่"}</small>
-                          <small>
-                            {settings.clinicPhone ? `โทร ${settings.clinicPhone}` : "ยังไม่ได้ระบุเบอร์โทร"} ·{" "}
-                            {settings.clinicLat !== undefined && settings.clinicLng !== undefined ? (
-                              <a href={`https://www.google.com/maps?q=${settings.clinicLat},${settings.clinicLng}`} target="_blank" rel="noreferrer">
-                                ดูตำแหน่งบนแผนที่
-                              </a>
-                            ) : (
-                              "ยังไม่ได้ปักตำแหน่ง"
-                            )}
-                          </small>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="md"
-                          leading={<PenLine size={15} />}
-                          onClick={() =>
-                            setClinicEdit({
-                              name: settings.clinicName,
-                              address: settings.clinicAddress ?? "",
-                              phone: settings.clinicPhone ?? "",
-                              where: settings.clinicLat !== undefined && settings.clinicLng !== undefined ? `${settings.clinicLat}, ${settings.clinicLng}` : "",
-                            })
-                          }
-                        >
-                          แก้ไข
-                        </Button>
-                      </div>
-                    </Group>
+                    <ClinicProfile
+                      onGo={(id) => setActive(id)}
+                      onEdit={() =>
+                        setClinicEdit({
+                          name: settings.clinicName,
+                          address: settings.clinicAddress ?? "",
+                          phone: settings.clinicPhone ?? "",
+                          where: settings.clinicLat !== undefined && settings.clinicLng !== undefined ? `${settings.clinicLat}, ${settings.clinicLng}` : "",
+                        })
+                      }
+                    />
                     <Group title="พื้นหลังแอป" desc="ฉาก 3D สร้างด้วยโค้ดทั้งหมด · ภาพถ่ายเคลื่อนไหวใช้ภาพจาก Figma">
                       <div className="st-backdrops">
                         {BACKDROPS.map((b) => (
@@ -688,7 +666,7 @@ export default function Settings() {
         footer={
           <>
             <Button variant="outline" size="lg" onClick={() => setClinicEdit(null)}>
-              ยกเลิก
+              ปิด
             </Button>
             <Button
               size="lg"
