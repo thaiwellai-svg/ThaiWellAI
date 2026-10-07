@@ -33,7 +33,7 @@ function diffOf(cur: AssessRound, prev?: AssessRound): string[] {
  */
 export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRound[]; addenda?: Addendum[] }) {
   const [open, setOpen] = useState(false);
-  if (rounds.length < 2 && !addenda.length) return null;
+  if (!rounds.length && !addenda.length) return null;
   const latest = rounds[rounds.length - 1];
   const list = [...rounds].reverse();
   return (
@@ -54,12 +54,12 @@ export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRo
           </div>
         </div>
       )}
-      {rounds.length > 1 && latest && (
+      {rounds.length > 0 && latest && (
         <div className="ah-rounds">
           <button type="button" className="ah-rounds__head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
             <History size={15} />
             <span>
-              <b>ประเมินในแอป {rounds.length} รอบ</b>
+              <b>{rounds.length > 1 ? `ประเมินในแอป ${rounds.length} รอบ` : `ผู้ป่วยประเมินในแอป · ปวด ${latest.pain}/10`}</b>
               <small>ใช้รอบล่าสุด {when(latest.at)}{diffOf(latest, rounds[rounds.length - 2]).length ? ` · ${diffOf(latest, rounds[rounds.length - 2]).join(" · ")}` : ""}</small>
             </span>
             <ChevronDown size={16} className={clsx("ah-chev", open && "is-open")} />

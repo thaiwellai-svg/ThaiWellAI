@@ -5,12 +5,13 @@ import { ScreeningAlert } from "../../features/ScreeningAlert";
 import { MoreMenu } from "../../features/MoreMenu";
 import { CancelDialog } from "../../features/CancelDialog";
 import { DocDialog, type DocKind } from "../../features/MedDocs";
+import { VisitAssessments } from "../../features/VisitAssessments";
 import { ResetPatientDialog } from "../../features/ResetPatientDialog";
 import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp, RotateCcw, UserX } from "lucide-react";
+import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, coursePrepaid } from "../../data/domain";
@@ -390,6 +391,17 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               )}
             </h3>
             {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีข้อมูลการประเมิน — จะเริ่มบันทึกหลังรับบริการครั้งแรก</p>}
+          </section>
+
+          {/* ── การประเมินรายครั้ง: แต่ละวันที่มารักษา ผู้ป่วยประเมินอะไรมา ── */}
+          <section className="pd__card pd__card--wide pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#5b7fd6" }}>
+                <ClipboardList size={15} />
+              </span>
+              การประเมินรายครั้ง
+            </h3>
+            <VisitAssessments p={p} onOpen={openAppt} />
           </section>
 
           {/* ── row: upcoming | history ── */}

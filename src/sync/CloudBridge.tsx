@@ -184,6 +184,32 @@ export function CloudBridge() {
   };
 
   /** บริการที่ผู้ป่วยเลือก: รหัสจากแอป → ชื่อตรงกัน → ชื่อที่ยาวที่สุดที่อยู่ในป้าย ("นวดไทยร่วมประคบสมุนไพร" ไม่ใช่ "ประคบสมุนไพร") */
+  /**
+   * ข้อความผลประเมินจากแอป → นัดของผู้ป่วยวันนี้ (หรือนัดถัดไปที่ใกล้ที่สุด)
+   * ก่อนเช็กอิน = รอบประเมินของนัดนั้น (คะแนนปวดจากข้อความ) · เช็กอินแล้ว = แจ้งเพิ่มของนัดนั้น
+   */
+  const attachNoteAssessment = (patientId: string, at: string, text: string) => {
+    const st = ref.current;
+    const today = todayISO();
+    const appt = st.appointments
+      .filter((a) => a.patientId === patientId && a.date >= today && a.status !== "cancelled" && a.status !== "absent" && a.status !== "done" && !a.endedAt)
+      .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`))[0];
+    if (!appt) return;
+    const m = /ปวด\s*(?:\d+\s*→\s*)?(\d{1,2})\s*\/\s*10/.exec(text);
+    const pain = m ? Math.min(10, Number(m[1])) : undefined;
+    const started = !!appt.checkinQueue || !!appt.calledAt || !!appt.startedAt || appt.status === "active";
+    if (started || pain === undefined) {
+      if (appt.addenda?.some((x) => x.at === at)) return;
+      st.dispatch({ type: "updateAppointment", id: appt.id, patch: { addenda: [...(appt.addenda ?? []), { at, text }] }, log: `แจ้งจากแอป: ${text}` });
+      return;
+    }
+    if (appt.assessRounds?.some((r) => r.at === at)) return;
+    const round: AssessRound = { at, pain, complaint: appt.intake?.complaint ?? st.patientById(patientId).complaint, focusAreas: appt.intake?.focusAreas ?? [], avoidAreas: appt.intake?.avoidAreas ?? [], summary: text };
+    st.dispatch({ type: "updateAppointment", id: appt.id, patch: { painBefore: pain, assessRounds: [...(appt.assessRounds ?? []), round] }, log: `ผู้ป่วยประเมินก่อนนวดในแอป · ปวด ${pain}/10` });
+    const p = st.patients.find((x) => x.id === patientId);
+    if (p) st.dispatch({ type: "updatePatient", id: p.id, patch: { painHistory: [...p.painHistory.filter((h) => h.date !== appt.date), { date: appt.date, score: pain }] } });
+  };
+
   /** ผลประเมินล่าสุดจากแอป → ข้อมูลสุขภาพของผู้ป่วย (อาการสำคัญ · ระดับปวดของวันนัด · โรคประจำตัว) */
   const syncHealth = (patientId: string, row: CloudAppt, date: string) => {
     const st = ref.current;
@@ -440,6 +466,8 @@ export function CloudBridge() {
         const local = p.patientId ? ref.current.patients.find((x) => x.cloudId === p.patientId) : undefined;
         ref.current.dispatch({ type: "bridgeIn", event: { id: `ev${row.id}`, at: row.at, type: "note", title: p.title, body: p.body ?? row.summary ?? "", patientId: local?.id } });
         void pushNotify(p.title, p.body ?? row.summary ?? "", local ? "/patients" : undefined);
+        // ผลประเมินที่มาเป็นข้อความ (แอปรุ่นเก่า / ไม่พบนัด) → ผูกกับนัดของวันนั้น ให้แสดงตามวันที่มารักษา
+        if (local && /ประเมิน/.test(p.title)) attachNoteAssessment(local.id, row.at, `${p.title} · ${p.body ?? ""}`);
       })
       .subscribe();
     // สำรอง: realtime หลุดได้ (iPad พักหน้าจอ / Wi-Fi) → ตรวจการจองที่ยังไม่จบทุก 5 วินาที
