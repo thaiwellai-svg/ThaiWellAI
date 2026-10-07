@@ -207,6 +207,10 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                     <i className="b" style={{ width: `${bookedPct}%` }} />
                     <i className="n" style={{ width: `${addPct}%` }} />
                   </i>
+                  {/* ครั้งแรก (ประเมิน + รักษา) รวมในคอร์สแล้ว → จัดนัดต่อเฉพาะครั้งที่เหลือ */}
+                  <small className="pp__credit-note">
+                    {credits.used > 0 ? `รวมการรักษาครั้งแรกแล้ว · ` : ""}จัดนัดต่ออีก {Math.max(0, credits.remaining - drafts.length)} ครั้งตามคอร์ส
+                  </small>
                   <div className="pp__legend">
                     <span className="u">ใช้แล้ว {credits.used}</span>
                     <span className="b">จองไว้ {credits.booked}</span>

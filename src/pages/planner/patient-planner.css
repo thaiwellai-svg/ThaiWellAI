@@ -596,3 +596,9 @@
 .pp__day:disabled:not(.is-booked):not(.is-done) {
   opacity: 0.45;
 }
+.pp__credit-note {
+  display: block;
+  margin: 2px 0;
+  font: 600 11.5px/1.35 var(--font-sans);
+  color: var(--color-brand);
+}

@@ -186,8 +186,10 @@ ${THAI_MASSAGE_KNOWLEDGE}
     if (!plan) return;
     const svc = plan.phases[0]?.serviceId ?? "s1";
     const patch: Partial<Patient> = { aiPlan: { ...plan, approved: true } };
-    // ครั้งแรกที่มารักษาวันนี้ (บริการเดียวกัน · รักษาเสร็จแล้ว) = ครั้งที่ 1 ของคอร์ส
-    const firstToday = store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && a.date === todayISO() && (a.status === "done" || !!a.endedAt)).length;
+    // ครั้งแรกที่มารักษา (ประเมินอาการ + รักษา แล้วแพทย์วางแผน) = ครั้งที่ 1 ของคอร์ส → นัดต่อเฉพาะครั้งที่เหลือ
+    //   คอร์สแรก: ครั้งล่าสุดที่รักษาเสร็จ (บริการเดียวกัน · ภายใน 14 วัน) · มีคอร์สเดิมแล้ว: เฉพาะครั้งที่รักษาวันนี้
+    const since = p.course ? todayISO() : addISODays(todayISO(), -14);
+    const firstToday = Math.min(1, store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && a.date >= since && a.date <= todayISO() && (a.status === "done" || !!a.endedAt)).length);
     if (!p.course || p.course.used >= p.course.total)
       patch.course = {
         name: `${store.serviceById(svc).name} ${plan.sessions} ครั้ง`,
@@ -203,7 +205,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
     // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
     const booked = store.appointments.filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.date >= todayISO()).length;
     const over = patch.course ? booked - (plan.sessions - patch.course.used) : 0;
-    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว${patch.course.used ? ` · นับครั้งวันนี้เป็นครั้งที่ 1` : ""}${over > 0 ? ` · มีนัดล่วงหน้าเกินคอร์ส ${over} นัด ตรวจที่การ์ดคอร์ส` : ""}` : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
+    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว${patch.course.used ? ` · รวมการรักษาครั้งแรกเป็นครั้งที่ 1 · นัดต่ออีก ${plan.sessions - patch.course.used} ครั้ง` : ""}${over > 0 ? ` · มีนัดล่วงหน้าเกินคอร์ส ${over} นัด ตรวจที่การ์ดคอร์ส` : ""}` : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
   };
 
   return (
