@@ -337,8 +337,12 @@ export function CloudBridge() {
       const rounds = roundsOf(row);
       const lastAt = rounds[rounds.length - 1]?.at;
       const before = !local.checkinQueue && !local.calledAt && !local.startedAt && local.status === "waiting";
+      // รอบปลอมจากข้อมูลตั้งต้นของนัดที่คลินิกลงเอง (บันทึกไว้ก่อนมีตัวกรอง) → ลบออก ไม่ให้แสดงเป็นผลประเมิน
+      const isStub = (r: AssessRound) => /^นัด(ตามคอร์ส|จากคลินิก)/.test(r.summary ?? "");
+      const keep = (local.assessRounds ?? []).filter((r) => !isStub(r));
+      if (local.assessRounds && keep.length !== local.assessRounds.length) st.dispatch({ type: "updateAppointment", id: local.id, patch: { assessRounds: keep } });
       // รอบล่าสุดที่รับไว้แล้ว (นัดจากคำขอจอง = รอบตอนจอง)
-      const seenAt = local.assessRounds?.length ? local.assessRounds[local.assessRounds.length - 1].at : local.intake?.at;
+      const seenAt = keep.length ? keep[keep.length - 1].at : local.intake?.at;
       if (row.assessment && before && lastAt && lastAt !== seenAt) {
         const as = row.assessment;
         syncHealth(local.patientId, row, local.date);
@@ -348,7 +352,7 @@ export function CloudBridge() {
           void pushNotify("ผู้ป่วยประเมินใหม่ก่อนนวด", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/visits");
         }
       } else if (row.assessment && (!local.assessRounds || (row.assessment.guide && !local.appGuide)))
-        st.dispatch({ type: "updateAppointment", id: local.id, patch: { assessRounds: local.assessRounds ?? rounds, ...(row.assessment.guide ? { appGuide: row.assessment.guide } : {}) } });
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { assessRounds: local.assessRounds ? keep : rounds, ...(row.assessment.guide ? { appGuide: row.assessment.guide } : {}) } });
       // แจ้งอาการเพิ่มหลังเช็กอิน (ไม่แก้ผลประเมิน) → แสดงแยกให้เห็นชัด + เตือนเจ้าหน้าที่
       const add = row.assessment?.addenda ?? [];
       if (add.length > (local.addenda?.length ?? 0)) {

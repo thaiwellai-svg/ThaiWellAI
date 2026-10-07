@@ -629,7 +629,9 @@ export function AppointmentDrawer({
             {(() => {
               const ik = intakeOfVisit(appt, p);
               const al = ik ? intakeAlerts(ik, store.settings.bpThreshold) : [];
+              // ปวดก่อนนวดของนัดนี้: จากผลประเมิน (แอป) / คัดกรองวันนี้ · ยังไม่มี = ค่าเริ่มต้นตอนลงนัด (ไม่แสดงเป็นคะแนนจริง)
               const pb = appt.painBefore;
+              const pbKnown = !!ik || (p.screening?.at?.slice(0, 10) === appt.date && p.screening.pain != null) || !!appt.startedAt;
               const tc = pb >= 7 ? "#d8392a" : pb >= 4 ? "#e08a1e" : "#2f9a5b";
               return (
                 <div className="vcc">
@@ -650,14 +652,15 @@ export function AppointmentDrawer({
                     <div style={{ ["--tc" as string]: tc }}>
                       <small>Pain ก่อนนวด</small>
                       <b>
-                        {pb}
+                        {pbKnown ? pb : "—"}
                         <i>/10</i>
                       </b>
                       <span className="vcc__bar">
                         {Array.from({ length: 10 }, (_, k) => (
-                          <em key={k} className={k < pb ? "on" : undefined} />
+                          <em key={k} className={pbKnown && k < pb ? "on" : undefined} />
                         ))}
                       </span>
+                      {!pbKnown && <span className="vcc__sub">รอผู้ป่วยประเมิน / คัดกรองที่เคาน์เตอร์</span>}
                     </div>
                     {ik ? (
                       <div>
