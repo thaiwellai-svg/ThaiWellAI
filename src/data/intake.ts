@@ -134,7 +134,13 @@ export function intakeAlerts(i: Intake, bpThreshold = 160): { label: string; lev
  */
 export function visitAssessment(a: Appointment): { screening?: Screening; at: string } | null {
   const r = a.assessRounds?.[a.assessRounds.length - 1];
-  if (r) return { screening: a.screening, at: r.at };
+  if (r) {
+    // คำตอบแบบคัดกรองของรอบนี้: จากแอป (ถ้ามี) · ไม่มี = ไม่พบข้อห้าม · คำตอบก่อนนวด (ข้อห้ามใหม่) ปรับตาม
+    const risk = r.previsit?.risk ?? "";
+    const base: Screening = a.screening ?? { fever: false, highBP: false, menstruation: false, pregnant: false, recentSurgery: false, contagious: false };
+    const screening: Screening = { ...base, fever: base.fever || /ไข้/.test(risk), recentSurgery: base.recentSurgery || /บาดเจ็บ|ผ่าตัด/.test(risk) };
+    return { screening, at: r.at };
+  }
   if (a.intake && !a.cloudId?.startsWith("cl-")) return { screening: a.screening, at: a.intake.at };
   return null;
 }
