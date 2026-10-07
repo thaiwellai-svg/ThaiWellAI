@@ -77,6 +77,9 @@ export function CloudBridge() {
   const issuing = useRef(new Set<string>());
   /** ยอด/เลขใบเสร็จของบิลที่ส่งไปแอปแล้ว (แก้บิลระหว่างรอชำระ → ส่งใหม่) */
   const billSig = useRef(new Map<string, string>());
+  /** นัดที่คลินิกลงเองให้ผู้ป่วยที่ใช้แอป (กำลังสร้างแถวใน cloud) · คอร์สที่ส่งไปแอปล่าสุด */
+  const creating = useRef(new Set<string>());
+  const courseSig = useRef(new Map<string, string>());
   // nothing is pushed until the cloud's current state has been read
   const [ready, setReady] = useState(false);
 
@@ -201,7 +204,8 @@ export function CloudBridge() {
     if (!local) {
       // นัดจากแอปที่ยืนยันแล้วใน cloud แต่ไม่มีในเครื่องนี้ (ข้อมูลในเครื่องถูกรีเซ็ต / อนุมัติจากอีกเครื่อง)
       // → สร้างกลับจาก cloud เพื่อให้เรียกคิว บันทึก ส่งบิล ไปถึงแอปได้ต่อ
-      if (["confirmed", "checked_in"].includes(row.status) && row.date && row.start && !st.requests.some((r) => r.cloudId === row.id) && !adopting.current.has(row.id)) {
+      // (นัดที่คลินิกลงเองมีอยู่ในเครื่องแล้ว — แถว cloud สร้างตามหลัง ไม่ดึงซ้ำ)
+      if (["confirmed", "checked_in"].includes(row.status) && row.date && row.start && row.assessment?.source !== "clinic" && !st.requests.some((r) => r.cloudId === row.id) && !adopting.current.has(row.id)) {
         adopting.current.add(row.id);
         const p = patientFor(row);
         st.dispatch({
@@ -353,6 +357,71 @@ export function CloudBridge() {
       void cloud.removeChannel(ch);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // นัดที่คลินิกลงเอง (นัดตามคอร์ส / จัดตารางนัด / นัดหน้าร้าน) ของผู้ป่วยที่ใช้แอป → ส่งไปแสดงในแอปของเจ้าของ
+  // เป็นแถวใน cloud แบบเดียวกับนัดจากแอป → เช็กอิน เรียกคิว ผลการรักษา บิล ไปถึงแอปทางเดิมทั้งหมด
+  useEffect(() => {
+    if (!ready || DEMO) return;
+    const today = todayISO();
+    for (const a of store.appointments) {
+      if (a.cloudId || a.status !== "waiting" || a.startedAt || a.date < today) continue;
+      const p = store.patientById(a.patientId);
+      if (!p.cloudId) continue;
+      const id = `cl-${a.id}`;
+      if (creating.current.has(id)) continue;
+      creating.current.add(id);
+      const s = store.serviceById(a.serviceId);
+      const t = store.therapistById(a.therapistId);
+      // ครั้งที่เท่าไหร่ของคอร์ส (นัดของบริการตามคอร์ส ตั้งแต่เปิดคอร์ส เรียงตามวัน)
+      const c = p.course && p.course.serviceId === a.serviceId ? p.course : undefined;
+      const no = c
+        ? store.appointments.filter((x) => x.patientId === p.id && x.serviceId === c.serviceId && x.status !== "cancelled" && x.status !== "absent" && x.date >= c.startedOn && `${x.date}${x.start}` <= `${a.date}${a.start}`).length
+        : 0;
+      const course = c ? { name: c.name, no, total: c.total } : undefined;
+      void Promise.resolve(
+        cloud.from("tw_appointments").upsert(
+          {
+            id,
+            patient_id: p.cloudId,
+            status: "confirmed",
+            service: s.name,
+            date: a.date,
+            start: a.start,
+            therapist: t.name,
+            assessment: { source: "clinic", serviceId: s.id, therapistId: t.id, ...(course ? { course } : {}), summary: course ? `นัดตามคอร์ส ${course.name} ครั้งที่ ${no}/${course.total}` : "นัดจากคลินิก" },
+          },
+          { onConflict: "id", ignoreDuplicates: true },
+        ),
+      ).then(({ error }) => {
+        if (error) return void creating.current.delete(id);
+        known.current.set(id, "confirmed");
+        slotSig.current.set(id, `${a.date}|${a.start}|${t.name}`);
+        ref.current.dispatch({ type: "updateAppointment", id: a.id, patch: { cloudId: id }, log: "ส่งนัดไปแสดงในแอป ThaiWell AI ของผู้ป่วย" });
+        void logEvent("clinic", "booking.clinic", { id }, p.name, `คลินิกลงนัด ${a.date} ${a.start} น. · ${s.name}${course ? ` · คอร์ส ครั้งที่ ${no}/${course.total}` : ""}`);
+      });
+    }
+  }, [ready, store.appointments]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // คอร์สของผู้ป่วยที่ใช้แอป (ชื่อ จำนวนครั้ง ใช้ไป หมดอายุ) → แสดงในแอปของเจ้าของ
+  useEffect(() => {
+    if (!ready || DEMO) return;
+    for (const p of store.patients) {
+      if (!p.cloudId) continue;
+      const c = p.course;
+      const course = c ? { name: c.name, service: store.serviceById(c.serviceId).name, total: c.total, used: c.used, startedOn: c.startedOn, expiresOn: c.expiresOn } : null;
+      const sig = JSON.stringify(course);
+      if (courseSig.current.get(p.cloudId) === sig) continue;
+      courseSig.current.set(p.cloudId, sig);
+      const cid = p.cloudId;
+      void (async () => {
+        const { data } = await cloud.from("tw_patients").select("profile").eq("id", cid).maybeSingle();
+        if (!data) return;
+        const prof = (data.profile ?? {}) as { course?: unknown };
+        if (JSON.stringify(prof.course ?? null) === sig) return;
+        await cloud.from("tw_patients").update({ profile: { ...prof, course } }).eq("id", cid);
+      })();
+    }
+  }, [ready, store.patients]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // clinic → app: push every forward step of a linked booking
   useEffect(() => {

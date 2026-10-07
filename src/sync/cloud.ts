@@ -48,7 +48,7 @@ export interface CloudPatient {
   address?: string | null;
   email?: string | null;
   /** ข้อมูลโปรไฟล์จากแอป (avatar ที่ผู้ใช้เลือก) */
-  profile?: { avatar?: string } | null;
+  profile?: { avatar?: string; course?: unknown } | null;
 }
 
 /** what the patient told the app before booking */
@@ -64,6 +64,9 @@ export interface CloudAssessment {
   /** รหัสบริการ / ผู้บำบัดที่ผู้ป่วยเลือกในแอป (รหัสเดียวกับคลินิก) */
   serviceId?: string;
   therapistId?: string;
+  /** clinic = คลินิกลงนัดเอง (ไม่ใช่คำขอจองจากแอป) · course = ครั้งที่เท่าไหร่ของคอร์ส */
+  source?: "app" | "clinic";
+  course?: { name: string; no: number; total: number };
 }
 
 export interface CloudAppt {
