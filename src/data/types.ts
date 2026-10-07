@@ -186,6 +186,8 @@ export interface Appointment {
   painAfter?: number;
   paid: boolean;
   note?: string;
+  /** แบบคัดกรองตนเองที่ผู้ป่วยตอบในแอปตอนจอง (มีไข้ ตั้งครรภ์ ผ่าตัด …) */
+  screening?: Screening;
   /** เลขคิวตามลำดับที่มาเช็กอิน (Q001…) — สแกน QR ที่เคาน์เตอร์ผ่านแอป */
   checkinQueue?: string;
   checkedInAt?: string;

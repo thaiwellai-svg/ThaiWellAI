@@ -212,6 +212,16 @@
   background: #eaf7ef;
   color: #2f8a52;
 }
+/* คัดกรองตนเองจากแอปผ่านแล้ว (ยังต้องวัดความดัน) */
+.vscr.is-app {
+  background: #eef4fb;
+  color: #2f6fb0;
+}
+/* แบบคัดกรองจากแอปมีข้อห้าม */
+.vscr.is-stop {
+  background: #fdecec;
+  color: #c0392b;
+}
 .vscr > div {
   flex: 1;
   display: flex;

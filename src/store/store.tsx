@@ -145,6 +145,7 @@ function reducer(state: State, action: Action): State {
         painBefore: req.painScore,
         paid: false,
         intake: req.intake,
+        screening: req.screening,
         ...(req.id.startsWith("app-") ? { bridgeRef: req.id } : {}),
         cloudId: req.cloudId,
         ...action.patch,

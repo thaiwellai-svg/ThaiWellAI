@@ -208,6 +208,10 @@ export function CloudBridge() {
       }
     }
     syncPhoto(st.patientById(local.patientId), row.tw_patients);
+    // นัดที่อนุมัติก่อนมีการเก็บแบบคัดกรอง → เติมจากที่ผู้ป่วยตอบในแอป
+    const sc = row.assessment?.screening;
+    if (!local.screening && sc)
+      st.dispatch({ type: "updateAppointment", id: local.id, patch: { screening: { fever: !!sc.fever, highBP: !!sc.highBP, bpSystolic: sc.bpSystolic, menstruation: !!sc.menstruation, pregnant: !!sc.pregnant, recentSurgery: !!sc.recentSurgery, contagious: !!sc.contagious } } });
     const who = st.patientById(local.patientId).name;
     // เช็กอินต้องสแกน QR ที่เคาน์เตอร์ (เปลี่ยนทุก 30 วินาที = มาถึงคลินิกจริง) · รหัสผิด/หมดอายุ/ไม่ใช่วันนัด → ส่งกลับให้สแกนใหม่
     if (row.status === "checked_in" && !DEMO && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {

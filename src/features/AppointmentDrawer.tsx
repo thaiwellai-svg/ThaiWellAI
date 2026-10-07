@@ -389,7 +389,7 @@ export function AppointmentDrawer({
             </span>
           </div>
 
-          {(stage === "waiting" || stage === "called" || stage === "treating") && <VisitScreening p={p} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
+          {(stage === "waiting" || stage === "called" || stage === "treating") && <VisitScreening p={p} app={appt.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
 
           {stepIdx >= 0 ? (
             <ol className="vs__steps">

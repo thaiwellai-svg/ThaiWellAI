@@ -2,7 +2,9 @@ import { ShieldAlert, ShieldCheck, ClipboardCheck } from "lucide-react";
 import { useStore } from "../store/store";
 import { screeningFlags } from "../data/counterScreening";
 import { diffDays, thaiDateShort, todayISO } from "../data/thaiDate";
-import type { Patient } from "../data/types";
+import type { Patient, Screening } from "../data/types";
+import { evaluateScreening } from "../data/domain";
+import { clsx } from "clsx";
 import "./screening-alert.css";
 import "./screening-dialog.css";
 
@@ -40,10 +42,31 @@ export function ScreeningAlert({ p, onAgain }: { p: Patient; /** shows a "คั
 }
 
 /** Visit page: has the patient been screened today? Prompts a re-screen before every massage. */
-export function VisitScreening({ p, onScreen }: { p: Patient; onScreen: () => void }) {
+export function VisitScreening({ p, onScreen, app }: { p: Patient; onScreen: () => void; /** แบบคัดกรองตนเองจากแอป (ตอบตอนจอง) */ app?: Screening }) {
   const { settings } = useStore();
   const s = p.screening;
   const today = !!s && s.at.slice(0, 10) === todayISO();
+  // ยังไม่ได้วัดที่คลินิกวันนี้ แต่ผู้ป่วยตอบแบบคัดกรองในแอปแล้ว → บอกผลจากแอป + เหลือวัดความดัน/ชีพจร
+  if (!today && app) {
+    const flags = evaluateScreening(app, settings);
+    const stop = flags.filter((f) => f.level === "stop");
+    const warn = flags.filter((f) => f.level !== "stop");
+    return (
+      <div className={clsx("vscr", stop.length ? "is-stop" : "is-app")}>
+        {stop.length ? <ShieldAlert size={18} /> : <ClipboardCheck size={18} />}
+        <div>
+          <b>{stop.length ? `แบบคัดกรองจากแอป: ${stop.map((f) => f.label).join(" · ")}` : "คัดกรองตนเองจากแอปแล้ว · ผ่าน"}</b>
+          <small>
+            {stop.length ? `${stop[0].advice} · ` : warn.length ? `ระวัง: ${warn.map((f) => f.label).join(" · ")} · ` : ""}
+            เหลือวัดความดัน ชีพจร ก่อนเริ่มนวด
+          </small>
+        </div>
+        <button type="button" onClick={onScreen}>
+          <span>วัดความดัน ชีพจร</span>
+        </button>
+      </div>
+    );
+  }
   if (!today)
     return (
       <div className="vscr">
