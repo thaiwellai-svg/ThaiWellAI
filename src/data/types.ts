@@ -306,6 +306,8 @@ export type ShareTopic = "visits" | "pain" | "advice" | "credits" | "screening" 
 
 export interface ClinicSettings {
   clinicName: string;
+  /** โลโก้คลินิก: "icon:<ไอคอน>:<สี>" หรือรูปถ่าย (data URL) */
+  clinicLogo?: string;
   /** ราคาหัตถการที่เคยคิด (จำไว้ใช้ครั้งต่อไป) */
   procedurePrices?: Record<string, number>;
   /** ที่อยู่ เบอร์โทร และพิกัดของคลินิก — แสดงในหน้า "สถานที่" ของแอปผู้ใช้ (นำทาง โทร) */
