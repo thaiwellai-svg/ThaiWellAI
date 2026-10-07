@@ -306,6 +306,8 @@ export interface Addendum {
 
 export interface BookingRequest {
   id: string;
+  /** คำขอนี้ซ้ำกับนัดตามคอร์สที่คลินิกลงไว้วันเดียวกัน (แอปรุ่นเก่าจองใหม่แทนการประเมินก่อนนวด) → ผลประเมินใส่ให้นัดนั้นแล้ว */
+  courseVisitId?: string;
   patientId: string;
   serviceId: string;
   therapistId: string;

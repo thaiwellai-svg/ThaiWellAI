@@ -14,7 +14,7 @@ import { FilterMenu } from "../../features/FilterMenu";
 import { creditInfo, evaluateScreening, requestConflicts, staffState } from "../../data/domain";
 import { ELEMENT_INFO, elementProfile } from "../../data/elements";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
-import { fromMinutes, thaiDateLong, thaiDateShort, timeAgo, toMinutes } from "../../data/thaiDate";
+import { fromMinutes, thaiDate, thaiDateLong, thaiDateShort, timeAgo, toMinutes } from "../../data/thaiDate";
 import type { BookingRequest, RequestDecision } from "../../data/types";
 import { IntakeCard } from "../../features/IntakeCard";
 import { intakeOfRequest } from "../../data/intake";
@@ -307,6 +307,28 @@ function RequestDetail({ r }: { r: BookingRequest }) {
     <div className="rq__body scroll-y scroll-y--light">
       <PatientHead pid={r.patientId} sub={<span className="rq__src">ส่งผ่านแอป ThaiWell AI · {timeAgo(r.submittedAt)}</span>} />
 
+      {/* ซ้ำกับนัดตามคอร์สวันเดียวกัน (แอปรุ่นเก่าจองใหม่แทนการประเมินก่อนนวด) */}
+      {(() => {
+        const cv = r.courseVisitId ? store.appointments.find((a) => a.id === r.courseVisitId) : undefined;
+        if (!cv) return null;
+        const c = p.course;
+        const list = c ? store.appointments.filter((a) => a.patientId === p.id && a.serviceId === c.serviceId && a.date >= c.startedOn && a.status !== "cancelled" && a.status !== "absent").sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)) : [];
+        const no = list.findIndex((a) => a.id === cv.id) + 1;
+        return (
+          <div className="rq2__verdict is-warn rq2__dup">
+            <span className="rq2__vi">
+              <ShieldAlert size={20} />
+            </span>
+            <div>
+              <b>ซ้ำกับนัดตามคอร์ส{no > 0 && c ? ` ครั้งที่ ${no}/${c.total}` : ""} · {thaiDate(cv.date)} {cv.start} น.</b>
+              <span>ผลประเมินของคำขอนี้ใส่ให้นัดตามคอร์สแล้ว · ถ้าผู้ป่วยไม่ได้ตั้งใจจองเพิ่ม ให้ปฏิเสธคำขอนี้</span>
+            </div>
+            <Button size="md" variant="outline" onClick={() => store.dispatch({ type: "reject", id: r.id, reason: `ซ้ำกับนัดตามคอร์ส ${thaiDate(cv.date)} ${cv.start} น. · ใช้นัดตามคอร์สแทน` })}>
+              ปฏิเสธ (ซ้ำ)
+            </Button>
+          </div>
+        );
+      })()}
       <div className={clsx("rq2__verdict", tone)}>
         <span className="rq2__vi">{stop || flags.length || clash.length ? <ShieldAlert size={20} /> : <ShieldCheck size={20} />}</span>
         <div>

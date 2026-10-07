@@ -675,3 +675,10 @@
 .rq__foot {
   padding-bottom: 16px;
 }
+.rq2__dup {
+  margin-bottom: 10px;
+  align-items: center;
+}
+.rq2__dup > div {
+  flex: 1;
+}

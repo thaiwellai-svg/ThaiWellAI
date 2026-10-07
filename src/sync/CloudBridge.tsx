@@ -211,6 +211,27 @@ export function CloudBridge() {
     if (p) st.dispatch({ type: "updatePatient", id: p.id, patch: { painHistory: [...p.painHistory.filter((h) => h.date !== appt.date), { date: appt.date, score: pain }] } });
   };
 
+  /**
+   * คำขอจองจากแอปที่ซ้ำกับนัดตามคอร์สวันเดียวกัน (บริการเดียวกัน) → ผลประเมินของคำขอใส่ให้นัดตามคอร์สนั้น
+   * (แอปรุ่นเก่าไม่รู้จักนัดตามคอร์ส ผู้ป่วยจึงจองใหม่ทุกครั้งที่ประเมิน) · คืน id นัดที่ผูก
+   */
+  const linkCourseVisit = (row: CloudAppt, patientId: string, serviceId: string, date: string): string | undefined => {
+    const st = ref.current;
+    const v = st.appointments.find((a) => a.patientId === patientId && a.date === date && a.serviceId === serviceId && a.cloudId?.startsWith("cl-") && a.status === "waiting" && !a.endedAt);
+    if (!v || !row.assessment || typeof row.assessment.pain !== "number") return v?.id;
+    const as = row.assessment;
+    const round: AssessRound = { ...roundOf(as, row.created_at), at: as.at ?? row.created_at };
+    if (v.assessRounds?.some((r) => r.at === round.at)) return v.id;
+    const started = !!v.checkinQueue || !!v.calledAt || !!v.startedAt;
+    if (started) {
+      st.dispatch({ type: "updateAppointment", id: v.id, patch: { addenda: [...(v.addenda ?? []), { at: round.at, text: `ประเมินในแอป (ส่งมาเป็นคำขอจอง) · ${as.summary ?? `ปวด ${as.pain}/10`}` }] }, log: "ผลประเมินจากคำขอจองที่ซ้ำกับนัดตามคอร์ส (หลังเช็กอิน)" });
+    } else {
+      st.dispatch({ type: "updateAppointment", id: v.id, patch: { intake: intakeOf(row, v.intake?.complaint ?? ""), painBefore: as.pain, screening: screeningOf(as.screening), assessRounds: [...(v.assessRounds ?? []).filter((r) => !/^นัด(ตามคอร์ส|จากคลินิก)/.test(r.summary ?? "")), round], ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผลประเมินจากแอปของนัดตามคอร์สนี้ · ปวด ${as.pain}/10` });
+      syncHealth(patientId, row, date);
+    }
+    return v.id;
+  };
+
   /** ผลประเมินล่าสุดจากแอป → ข้อมูลสุขภาพของผู้ป่วย (อาการสำคัญ · ระดับปวดของวันนัด · โรคประจำตัว) */
   const syncHealth = (patientId: string, row: CloudAppt, date: string) => {
     const st = ref.current;
@@ -258,6 +279,11 @@ export function CloudBridge() {
     if (row.status === "requested") {
       // ผู้ป่วยประเมินใหม่ระหว่างรออนุมัติ → คำขอใช้ผลรอบล่าสุด (เก็บทุกรอบไว้ดูย้อนหลัง)
       const open = st.requests.find((r) => r.cloudId === row.id);
+      // คำขอที่ค้างอยู่แล้ว (มาก่อนมีการผูก) → ผูกกับนัดตามคอร์สวันเดียวกัน
+      if (open && !open.courseVisitId) {
+        const vid = linkCourseVisit(row, open.patientId, open.serviceId, open.date);
+        if (vid) st.dispatch({ type: "updateRequest", id: open.id, patch: { courseVisitId: vid } });
+      }
       if (open) {
         const rounds = roundsOf(row);
         if (rounds.length && (rounds.length > (open.assessRounds?.length ?? 1) || rounds[rounds.length - 1].at !== open.assessRounds?.[open.assessRounds.length - 1]?.at)) {
@@ -293,6 +319,9 @@ export function CloudBridge() {
         note: as.summary ?? as.complaint,
         submittedAt: row.created_at,
       };
+      // ซ้ำกับนัดตามคอร์สวันเดียวกัน → ผลประเมินไปที่นัดตามคอร์ส + บอกในคำขอ
+      const vid = linkCourseVisit(row, p.id, req.serviceId, req.date);
+      if (vid) req.courseVisitId = vid;
       st.dispatch({ type: "cloudRequest", request: req });
       toast({ message: `คำขอจองใหม่จากแอป · ${p.name}` });
       void pushNotify("คำขอจองใหม่จากแอป", `${p.name} · ${st.serviceById(req.serviceId).name} ${req.date} ${req.start} น.`, "/requests");
