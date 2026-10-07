@@ -186,12 +186,14 @@ ${THAI_MASSAGE_KNOWLEDGE}
     if (!plan) return;
     const svc = plan.phases[0]?.serviceId ?? "s1";
     const patch: Partial<Patient> = { aiPlan: { ...plan, approved: true } };
+    // ครั้งแรกที่มารักษาวันนี้ (บริการเดียวกัน · รักษาเสร็จแล้ว) = ครั้งที่ 1 ของคอร์ส
+    const firstToday = store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && a.date === todayISO() && (a.status === "done" || !!a.endedAt)).length;
     if (!p.course || p.course.used >= p.course.total)
       patch.course = {
         name: `${store.serviceById(svc).name} ${plan.sessions} ครั้ง`,
         serviceId: svc,
         total: plan.sessions,
-        used: 0,
+        used: Math.min(plan.sessions, firstToday),
         startedOn: todayISO(),
         expiresOn: addISODays(todayISO(), 90),
         // คอร์สตามแผนการรักษา = ชำระรายครั้ง (ซื้อแพ็กเกจล่วงหน้าได้ที่ "ขายคอร์ส / แพ็กเกจ")
@@ -200,8 +202,8 @@ ${THAI_MASSAGE_KNOWLEDGE}
     store.dispatch({ type: "updatePatient", id: p.id, patch });
     // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
     const booked = store.appointments.filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.date >= todayISO()).length;
-    const over = patch.course ? booked - plan.sessions : 0;
-    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว${over > 0 ? ` · มีนัดล่วงหน้าเกินคอร์ส ${over} นัด ตรวจที่การ์ดคอร์ส` : ""}` : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
+    const over = patch.course ? booked - (plan.sessions - patch.course.used) : 0;
+    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว${patch.course.used ? ` · นับครั้งวันนี้เป็นครั้งที่ 1` : ""}${over > 0 ? ` · มีนัดล่วงหน้าเกินคอร์ส ${over} นัด ตรวจที่การ์ดคอร์ส` : ""}` : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
   };
 
   return (
