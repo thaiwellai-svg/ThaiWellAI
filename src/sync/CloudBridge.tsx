@@ -402,7 +402,7 @@ export function CloudBridge() {
     }
   }, [ready, store.appointments]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // คอร์สของผู้ป่วยที่ใช้แอป (ชื่อ จำนวนครั้ง ใช้ไป หมดอายุ) → แสดงในแอปของเจ้าของ
+  // HN + คอร์สของผู้ป่วยที่ใช้แอป (ชื่อ จำนวนครั้ง ใช้ไป หมดอายุ) → แสดงในแอปของเจ้าของ
   useEffect(() => {
     if (!ready || DEMO) return;
     for (const p of store.patients) {
@@ -410,15 +410,18 @@ export function CloudBridge() {
       const c = p.course;
       const course = c ? { name: c.name, service: store.serviceById(c.serviceId).name, total: c.total, used: c.used, startedOn: c.startedOn, expiresOn: c.expiresOn } : null;
       const sig = JSON.stringify(course);
-      if (courseSig.current.get(p.cloudId) === sig) continue;
-      courseSig.current.set(p.cloudId, sig);
+      if (courseSig.current.get(p.cloudId) === `${p.hn}|${sig}`) continue;
+      courseSig.current.set(p.cloudId, `${p.hn}|${sig}`);
       const cid = p.cloudId;
+      const hn = p.hn;
       void (async () => {
-        const { data } = await cloud.from("tw_patients").select("profile").eq("id", cid).maybeSingle();
+        const { data } = await cloud.from("tw_patients").select("profile,clinic_hn").eq("id", cid).maybeSingle();
         if (!data) return;
         const prof = (data.profile ?? {}) as { course?: unknown };
-        if (JSON.stringify(prof.course ?? null) === sig) return;
-        await cloud.from("tw_patients").update({ profile: { ...prof, course } }).eq("id", cid);
+        const sameCourse = JSON.stringify(prof.course ?? null) === sig;
+        // HN ของคลินิกไปแสดงในโปรไฟล์แอปด้วย
+        if (sameCourse && data.clinic_hn === hn) return;
+        await cloud.from("tw_patients").update({ clinic_hn: hn, ...(sameCourse ? {} : { profile: { ...prof, course } }) }).eq("id", cid);
       })();
     }
   }, [ready, store.patients]); // eslint-disable-line react-hooks/exhaustive-deps
