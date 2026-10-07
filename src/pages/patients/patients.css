@@ -2685,3 +2685,40 @@
 .pd2__sell:hover {
   background: #fdf4e3;
 }
+/* นัดเกินจำนวนครั้งในคอร์ส */
+.pd2__over {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fdecec;
+  color: #c0392b;
+}
+.pd2__over b {
+  font-size: 13.5px;
+}
+.pd2__over small {
+  color: var(--color-text-muted);
+}
+.pd2__over > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.pd2__over button {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font: 600 12.5px/1 var(--font-sans);
+  background: #fff;
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.pd2__over button.is-danger {
+  background: #c0392b;
+  color: #fff;
+  box-shadow: none;
+}

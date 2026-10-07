@@ -11,7 +11,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp } from "lucide-react";
 import { useStore } from "../../store/store";
-import { Badge, Button, EmptyState, ease } from "../../design-system";
+import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
@@ -63,6 +63,7 @@ function PainChart({ points }: { points: { date: string; score: number }[] }) {
 
 export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, healthOpen }: { id: string | null; onAdd: () => void; onEdit?: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean; /** opens the health side panel, like on รับบริการ */ onHealth?: () => void; healthOpen?: boolean }) {
   const store = useStore();
+  const toast = useToast();
   const navigate = useNavigate();
   // remember the open patient so "back" from the appointment page lands on them again
   const openAppt = (aid: string) => {
@@ -95,6 +96,25 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     );
 
   const credits = creditInfo(p, store.appointments);
+  // นัดเกินจำนวนครั้งของคอร์ส (เช่น จองตามแผนก่อนเปิดคอร์ส แล้วคอร์สเปิดจำนวนน้อยกว่า)
+  const over = credits ? Math.max(0, credits.used + credits.booked - credits.total) : 0;
+  const growCourse = () => {
+    if (!p?.course || !credits) return;
+    const total = credits.used + credits.booked;
+    store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course, total, name: p.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) } } });
+    toast({ message: `เพิ่มคอร์สเป็น ${total} ครั้งแล้ว · อย่าลืมเก็บเงินส่วนเพิ่ม` });
+  };
+  const cancelExtra = () => {
+    if (!p || !over) return;
+    const extra = store.appointments
+      .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && !a.checkinQueue && a.date >= today)
+      .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
+      .slice(0, over);
+    const at = new Date().toISOString();
+    for (const a of extra)
+      store.dispatch({ type: "updateAppointment", id: a.id, patch: { status: "cancelled", cancel: { at, by: "clinic", reason: "เกินจำนวนครั้งในคอร์ส", staff: store.settings.staffName } }, log: `ยกเลิกนัด ${thaiDate(a.date)} ${a.start} น. · เกินจำนวนครั้งในคอร์ส` });
+    toast({ message: `ยกเลิกนัดส่วนเกิน ${extra.length} นัด (นัดท้ายสุด) แล้ว` });
+  };
   const upcoming = visits.filter((v) => v.date >= today && (v.status === "waiting" || v.status === "active")).reverse();
   const past = visits.filter((v) => !upcoming.includes(v)).slice(0, 10);
   const doneCount = visits.filter((v) => v.status === "done").length;
@@ -287,6 +307,23 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <small className="pd2__muted">
                   {thaiDate(p.course.startedOn)} – {thaiDate(p.course.expiresOn)}
                 </small>
+                {over > 0 && (
+                  // ใช้แล้ว + จองไว้ ต้องไม่เกินจำนวนครั้งของคอร์ส → ให้เลือกว่าจะเพิ่มครั้งในคอร์ส หรือยกเลิกนัดส่วนเกิน
+                  <div className="pd2__over" role="alert">
+                    <b>นัดเกินคอร์ส {over} นัด</b>
+                    <small>
+                      คอร์ส {credits.total} ครั้ง แต่ใช้แล้ว {credits.used} + จองไว้ {credits.booked} = {credits.used + credits.booked} ครั้ง
+                    </small>
+                    <div>
+                      <button type="button" onClick={growCourse}>
+                        เพิ่มคอร์สเป็น {credits.used + credits.booked} ครั้ง
+                      </button>
+                      <button type="button" className="is-danger" onClick={cancelExtra}>
+                        ยกเลิกนัดส่วนเกิน {over} นัด
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {planNext && (
                   <button type="button" className="pd2__cancel" onClick={() => setCancelPlan(planNext)}>
                     <CalendarX2 size={14} /> ยกเลิกนัดตามแผน

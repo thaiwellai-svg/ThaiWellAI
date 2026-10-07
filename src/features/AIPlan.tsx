@@ -196,7 +196,10 @@ ${THAI_MASSAGE_KNOWLEDGE}
         expiresOn: addISODays(todayISO(), 90),
       };
     store.dispatch({ type: "updatePatient", id: p.id, patch });
-    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว` : "อนุมัติแผนแล้ว" });
+    // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
+    const booked = store.appointments.filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.date >= todayISO()).length;
+    const over = patch.course ? booked - plan.sessions : 0;
+    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว${over > 0 ? ` · มีนัดล่วงหน้าเกินคอร์ส ${over} นัด ตรวจที่การ์ดคอร์ส` : ""}` : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
   };
 
   return (
