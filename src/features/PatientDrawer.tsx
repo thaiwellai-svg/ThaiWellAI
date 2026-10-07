@@ -176,7 +176,13 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
               </ul>
             </>
           ) : (
-            <p className="hx-visit__none">ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้ · สอบถามอาการและคัดกรองที่เคาน์เตอร์ก่อนนวด</p>
+            <p className="hx-visit__none">
+              ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้ · สอบถามอาการและคัดกรองที่เคาน์เตอร์ก่อนนวด
+              {(() => {
+                const prev = visits.find((v) => v.id !== appt.id && v.painAfter !== undefined && `${v.date}${v.start}` < `${appt.date}${appt.start}`);
+                return prev ? <small className="hx-prev"> · ล่าสุด: หลังนวดครั้งก่อน {prev.painAfter}/10 ({thaiDateShort(prev.date)})</small> : null;
+              })()}
+            </p>
           )}
         </section>
       )}

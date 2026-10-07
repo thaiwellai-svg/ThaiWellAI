@@ -630,6 +630,12 @@ export function AppointmentDrawer({
               // ปวดก่อนนวดของนัดนี้: จากผลประเมิน (แอป) / คัดกรองวันนี้ · ยังไม่มี = ค่าเริ่มต้นตอนลงนัด (ไม่แสดงเป็นคะแนนจริง)
               const pb = appt.painBefore;
               const pbKnown = !!ik || (p.screening?.at?.slice(0, 10) === appt.date && p.screening.pain != null) || !!appt.startedAt;
+              // ยังไม่มีคะแนนของนัดนี้ → อ้างอิงคะแนนล่าสุดที่รู้ (หลังนวดครั้งก่อน)
+              const prevDone = !pbKnown
+                ? store.appointments
+                    .filter((x) => x.patientId === p.id && x.id !== appt.id && x.painAfter !== undefined && `${x.date}${x.start}` < `${appt.date}${appt.start}`)
+                    .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0]
+                : undefined;
               const tc = pb >= 7 ? "#d8392a" : pb >= 4 ? "#e08a1e" : "#2f9a5b";
               return (
                 <div className="vcc">
@@ -658,7 +664,11 @@ export function AppointmentDrawer({
                           <em key={k} className={pbKnown && k < pb ? "on" : undefined} />
                         ))}
                       </span>
-                      {!pbKnown && <span className="vcc__sub">รอผู้ป่วยประเมิน / คัดกรองที่เคาน์เตอร์</span>}
+                      {!pbKnown && (
+                        <span className="vcc__sub">
+                          {prevDone ? `ล่าสุด: หลังนวดครั้งก่อน ${prevDone.painAfter}/10 (${thaiDateShort(prevDone.date)}) · ` : ""}คัดกรองที่เคาน์เตอร์เพื่อได้คะแนนวันนี้
+                        </span>
+                      )}
                     </div>
                     {ik ? (
                       <div>
