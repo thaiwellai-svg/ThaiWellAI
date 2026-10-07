@@ -9,7 +9,8 @@ import { BackLead } from "../../layout/BackLead";
 import { CancelDialog } from "../../features/CancelDialog";
 import { ReceiptDialog } from "../../features/Receipt";
 import { slotLoad } from "../../features/slotLoad";
-import { bedName, creditInfo, stageMeta, staffState } from "../../data/domain";
+import { bedName, creditInfo, evaluateScreening, stageMeta, staffState } from "../../data/domain";
+import { VisitScreening } from "../../features/ScreeningAlert";
 import { screeningFlags } from "../../data/counterScreening";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
 import { baht, fromMinutes, thaiDateShort, todayISO, toMinutes } from "../../data/thaiDate";
@@ -26,6 +27,7 @@ export default function AppointmentDetail() {
   const [cancelling, setCancelling] = useState(false);
   const [moving, setMoving] = useState(false);
   const [receipt, setReceipt] = useState<string | null>(null);
+  const toast = useToast();
   const a = store.appointments.find((x) => x.id === id);
   const back = () => (window.history.length > 1 ? navigate(-1) : navigate("/appointments"));
 
@@ -46,7 +48,9 @@ export default function AppointmentDetail() {
   // can still be moved / cancelled until the massage starts (even after the queue was called)
   const notStarted = a.status === "waiting";
   const d = new Date(a.date + "T00:00:00");
-  const flags = p.screening ? screeningFlags(p.screening, store.settings.bpThreshold) : [];
+  // คัดกรองที่คลินิก (ล่าสุด) · ถ้ายังไม่เคย ใช้แบบคัดกรองตนเองจากแอปของนัดนี้
+  const appFlags = !p.screening && a.screening ? evaluateScreening(a.screening, store.settings) : null;
+  const flags = p.screening ? screeningFlags(p.screening, store.settings.bpThreshold) : (appFlags ?? []);
   const stop = flags.some((f) => f.level === "stop");
 
   // booked sessions of the current treatment plan: each upcoming appointment holds one course credit (see creditInfo)
@@ -80,7 +84,7 @@ export default function AppointmentDetail() {
             )}
             {notStarted && (
               <>
-                <Button variant="outline" size="md" className="adp__danger" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
+                <Button variant="outline" size="md" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
                   ยกเลิกนัด
                 </Button>
                 <Button variant="outline" size="md" leading={<CalendarClock size={16} />} onClick={() => setMoving(true)}>
@@ -93,9 +97,14 @@ export default function AppointmentDetail() {
                 variant="outline"
                 size="md"
                 leading={<Undo2 size={16} />}
-                onClick={() => store.dispatch({ type: "updateAppointment", id: a.id, patch: { status: "waiting", calledAt: undefined, cancel: undefined }, log: "เลิกยกเลิกนัด" })}
+                onClick={() => {
+                  // เหมือนปุ่ม "ย้อนกลับ" ในหน้ารับบริการ: บันทึกในประวัติ + เลิกทำได้จาก toast
+                  const prev = a;
+                  store.dispatch({ type: "updateAppointment", id: a.id, patch: { status: "waiting", calledAt: undefined, cancel: undefined }, log: "เลิกยกเลิกนัด" });
+                  toast({ message: `${p.name} กลับเป็นรอรับบริการแล้ว`, action: { label: "เลิกทำ", onClick: () => store.dispatch({ type: "restoreAppointment", appointment: prev }) } });
+                }}
               >
-                เลิกยกเลิกนัด
+                ย้อนกลับ
               </Button>
             )}
             {a.date === todayISO() && a.status !== "cancelled" && (
@@ -271,23 +280,25 @@ export default function AppointmentDetail() {
             </div>
 
             <div className="adp__col">
-              <section className={clsx("adp__scr", !p.screening ? "is-none" : stop ? "is-stop" : flags.length ? "is-warn" : "is-ok")}>
-                <span className="adp__scr-i">{stop || flags.length ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}</span>
-                <div>
-                  <small>ผลคัดกรองล่าสุด</small>
-                  <b>{!p.screening ? "ยังไม่ได้คัดกรอง" : stop ? "พบข้อห้าม · ต้องให้แพทย์ประเมิน" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}</b>
-                  <span>
-                    {p.screening
-                      ? `${thaiDateShort(p.screening.at.slice(0, 10))}${p.screening.bpSys ? ` · ความดัน ${p.screening.bpSys}/${p.screening.bpDia ?? "—"}` : ""}${p.screening.pain != null ? ` · ปวด ${p.screening.pain}/10` : ""}${flags.length ? ` · ${flags.map((f) => f.label).join(" · ")}` : ""}`
-                      : "คัดกรองได้ตอนผู้ป่วยมารับบริการ"}
-                  </span>
-                  {a.date === todayISO() && notStarted && (
-                    <button type="button" onClick={() => navigate(`/patients/${p.id}/screen`)}>
-                      คัดกรองก่อนนวด
-                    </button>
-                  )}
-                </div>
-              </section>
+              {a.date === todayISO() && notStarted ? (
+                // วันนัด: แถบคัดกรองเดียวกับหน้ารับบริการ (รวมแบบคัดกรองตนเองจากแอป)
+                <VisitScreening p={p} app={a.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
+              ) : (
+                <section className={clsx("adp__scr", !p.screening && !appFlags ? "is-none" : stop ? "is-stop" : flags.length ? "is-warn" : "is-ok")}>
+                  <span className="adp__scr-i">{stop || flags.length ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}</span>
+                  <div>
+                    <small>{p.screening || !appFlags ? "ผลคัดกรองล่าสุด" : "แบบคัดกรองจากแอป"}</small>
+                    <b>{!p.screening && !appFlags ? "ยังไม่ได้คัดกรอง" : stop ? "พบข้อห้าม · ต้องให้แพทย์ประเมิน" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}</b>
+                    <span>
+                      {p.screening
+                        ? `${thaiDateShort(p.screening.at.slice(0, 10))}${p.screening.bpSys ? ` · ความดัน ${p.screening.bpSys}/${p.screening.bpDia ?? "—"}` : ""}${p.screening.pain != null ? ` · ปวด ${p.screening.pain}/10` : ""}${flags.length ? ` · ${flags.map((f) => f.label).join(" · ")}` : ""}`
+                        : appFlags
+                          ? `ผู้ป่วยตอบตอนจอง${flags.length ? ` · ${flags.map((f) => f.label).join(" · ")}` : ""} · วัดความดัน ชีพจร ในวันนัด`
+                          : "คัดกรองได้ตอนผู้ป่วยมารับบริการ"}
+                    </span>
+                  </div>
+                </section>
+              )}
 
               <section className="adp__card">
                 <header>

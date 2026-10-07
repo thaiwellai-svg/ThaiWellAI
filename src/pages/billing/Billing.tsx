@@ -387,7 +387,7 @@ export default function Billing() {
         </div>
       </div>
 
-      <AppointmentDrawer id={open} onClose={() => setOpen(null)} />
+      <AppointmentDrawer id={open} startPay onClose={() => setOpen(null)} />
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
       <ReportDialog open={report} onClose={() => setReport(false)} />
     </WorkPage>

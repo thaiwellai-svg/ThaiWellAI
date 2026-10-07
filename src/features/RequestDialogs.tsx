@@ -5,7 +5,7 @@ import { useStore } from "../store/store";
 import { Avatar, Button, Chip, Dialog, Field, Input, Select, Textarea, useToast } from "../design-system";
 import { creditInfo, evaluateScreening } from "../data/domain";
 import { thaiDate, thaiDateLong, timeAgo, todayISO } from "../data/thaiDate";
-import { CreditPips, PainMeter, ScreeningAlert, ScreeningGrid } from "./widgets";
+import { CreditPips, ScreeningAlert, ScreeningGrid } from "./widgets";
 import { slotLoad } from "./slotLoad";
 import { patientPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
@@ -57,7 +57,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
       footer={
         <>
           <Button variant="outline" size="lg" fill onClick={onClose}>
-            ยกเลิก
+            ปิด
           </Button>
           <Button variant="primary" size="lg" fill disabled={!canApprove} onClick={approve} leading={<CalendarCheck2 size={16} />}>
             อนุมัติและจัดคิว
@@ -67,13 +67,9 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
     >
       <section className="sec">
         <div className="sec__head">
-          <h3 className="sec__title">อาการและระดับความปวดที่ผู้ป่วยประเมิน</h3>
+          <h3 className="sec__title">อาการที่ผู้ป่วยประเมินในแอป</h3>
         </div>
-        <p className="tw-meta" style={{ color: "var(--color-text)" }}>
-          {s.name} ({s.minutes} นาที) · อาการสำคัญ: {request.intake?.complaint || p.complaint}
-        </p>
-        <PainMeter score={request.painScore} />
-        {/* บริเวณที่ปวด (heatmap) และบริเวณห้ามนวด ตามที่ผู้ป่วยประเมินในแอป */}
+        {/* อาการสำคัญ ระดับความปวด บริเวณที่ปวด (heatmap) และบริเวณห้ามนวด — แสดงในแบบประเมินจากแอปที่เดียว */}
         <IntakeCard intake={intakeOfRequest(request, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         {request.note && (
           <div className="alert alert--info">
@@ -125,8 +121,8 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
 
       <section className="sec">
         <div className="sec__head">
-          <h3 className="sec__title">จัดคิว</h3>
-          <span className="tw-caption">เตียงว่างต่อรอบ จากทั้งหมด {store.settings.bedsPerSlot} เตียง</span>
+          <h3 className="sec__title">จัดคิว · {s.name} ({s.minutes} นาที)</h3>
+          <span className="tw-caption">เปลี่ยนวัน เวลา หรือผู้บำบัดได้ · เตียงว่างต่อรอบ จากทั้งหมด {store.settings.bedsPerSlot} เตียง</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="วันที่" hint={date ? thaiDateLong(date) : undefined}>
@@ -194,7 +190,7 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
       footer={
         <>
           <Button variant="outline" size="lg" fill onClick={onClose}>
-            กลับ
+            ปิด
           </Button>
           <Button variant="danger" size="lg" fill onClick={reject}>
             ยืนยันการปฏิเสธ

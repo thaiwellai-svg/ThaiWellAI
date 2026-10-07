@@ -266,7 +266,7 @@ export default function BillDetail() {
       </div>
 
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
-      <AppointmentDrawer id={paying ? a.id : null} onClose={() => setPaying(false)} />
+      <AppointmentDrawer id={paying ? a.id : null} startPay onClose={() => setPaying(false)} />
     </WorkPage>
   );
 }

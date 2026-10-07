@@ -75,6 +75,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const today = todayISO();
   const [print, printNode] = usePatientPrint(p ?? null);
   const [cancelPlan, setCancelPlan] = useState<Appointment | null>(null);
+  const [cancelExtra, setCancelExtra] = useState(false);
   const [doc, setDoc] = useState<DocKind | null>(null);
   const [selling, setSelling] = useState(false);
   const planNext = p?.course
@@ -104,17 +105,13 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course, total, name: p.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) } } });
     toast({ message: `เพิ่มคอร์สเป็น ${total} ครั้งแล้ว · อย่าลืมเก็บเงินส่วนเพิ่ม` });
   };
-  const cancelExtra = () => {
-    if (!p || !over) return;
-    const extra = store.appointments
-      .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && !a.checkinQueue && a.date >= today)
-      .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
-      .slice(0, over);
-    const at = new Date().toISOString();
-    for (const a of extra)
-      store.dispatch({ type: "updateAppointment", id: a.id, patch: { status: "cancelled", cancel: { at, by: "clinic", reason: "เกินจำนวนครั้งในคอร์ส", staff: store.settings.staffName } }, log: `ยกเลิกนัด ${thaiDate(a.date)} ${a.start} น. · เกินจำนวนครั้งในคอร์ส` });
-    toast({ message: `ยกเลิกนัดส่วนเกิน ${extra.length} นัด (นัดท้ายสุด) แล้ว` });
-  };
+  // นัดส่วนเกิน = นัดท้ายสุดที่ยังไม่เริ่ม → เปิดหน้าต่างยกเลิกนัดแบบเดียวกับทุกที่ (เลือกไว้ให้ ตรวจ/แก้ได้ก่อนยืนยัน)
+  const extraAppts = over
+    ? store.appointments
+        .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && !a.checkinQueue && a.date >= today)
+        .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start))
+        .slice(0, over)
+    : [];
   const upcoming = visits.filter((v) => v.date >= today && (v.status === "waiting" || v.status === "active")).reverse();
   const past = visits.filter((v) => !upcoming.includes(v)).slice(0, 10);
   const doneCount = visits.filter((v) => v.status === "done").length;
@@ -180,6 +177,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             <SellPackageDialog patientId={selling ? p.id : null} onClose={() => setSelling(false)} />
             {printNode}
             <CancelDialog appt={cancelPlan} planFirst onClose={() => setCancelPlan(null)} />
+            <CancelDialog
+              appt={cancelExtra ? (extraAppts[0] ?? null) : null}
+              preset={{ ids: extraAppts.map((a) => a.id), by: "clinic", reason: "เกินจำนวนครั้งในคอร์ส" }}
+              onClose={() => setCancelExtra(false)}
+            />
             <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
               <CalendarPlus size={18} />
             </button>
@@ -318,7 +320,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                       <button type="button" onClick={growCourse}>
                         เพิ่มคอร์สเป็น {credits.used + credits.booked} ครั้ง
                       </button>
-                      <button type="button" className="is-danger" onClick={cancelExtra}>
+                      <button type="button" className="is-danger" disabled={!extraAppts.length} onClick={() => setCancelExtra(true)}>
                         ยกเลิกนัดส่วนเกิน {over} นัด
                       </button>
                     </div>

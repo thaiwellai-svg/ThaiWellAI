@@ -69,7 +69,7 @@ const SECTIONS = [
   { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ · ภาษีมูลค่าเพิ่ม", icon: QrCode, tint: "#2f8f9a" },
   { id: "audit", label: "ประวัติการแก้ไข", desc: "ใครทำอะไร เมื่อไร", icon: History, tint: "#7c5cc4" },
   { id: "guide", label: "คู่มือการใช้งาน", desc: "วิธีใช้ทุกเมนูแบบทีละขั้น", icon: GraduationCap, tint: "#2f8f9a" },
-  { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง · กู้คืน · รีเซ็ตข้อมูลตัวอย่าง", icon: Database, tint: "#7d8681" },
+  { id: "data", label: "ข้อมูลและการสำรอง", desc: DEMO ? "สำรอง · กู้คืน · รีเซ็ตข้อมูลตัวอย่าง" : "สำรอง · กู้คืน", icon: Database, tint: "#7d8681" },
 ] as const;
 /** menu groups (account lives in the profile card on top) */
 const GROUPS: { label: string; ids: string[] }[] = [

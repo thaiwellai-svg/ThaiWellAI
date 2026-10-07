@@ -6,6 +6,7 @@ import { Button, Dialog, Switch, useToast } from "../design-system";
 import { thaiDateLong, todayISO } from "../data/thaiDate";
 import type { AuditEntry } from "../data/types";
 import { PromptPayQR } from "./billing";
+import { DEMO, LIVE } from "../data/mode";
 import "./settings-extras.css";
 
 /* ───────────── PromptPay ───────────── */
@@ -19,7 +20,8 @@ export function PromptPaySetting() {
   const store = useStore();
   const toast = useToast();
   const cur = store.settings.promptpayId ?? DEMO_PP;
-  const [v, setV] = useState(cur);
+  // ใช้งานจริง: ยังไม่ได้ตั้ง → ช่องว่าง ไม่เติมเบอร์ตัวอย่างให้
+  const [v, setV] = useState(LIVE && cur === DEMO_PP ? "" : cur);
   const d = v.replace(/\D/g, "");
   const kind = ppKind(d);
   const dirty = d !== cur.replace(/\D/g, "");
@@ -28,7 +30,7 @@ export function PromptPaySetting() {
       <div className="pp__form">
         {cur.replace(/\D/g, "") === DEMO_PP && (
           <p className="pp__warn">
-            <AlertTriangle size={14} /> ยังใช้เบอร์ตัวอย่างอยู่ · เงินที่ผู้ป่วยสแกนจ่ายจะไม่เข้าบัญชีคลินิก
+            <AlertTriangle size={14} /> ยังไม่ได้ตั้งเลขพร้อมเพย์ · เงินที่ผู้ป่วยสแกนจ่ายจะไม่เข้าบัญชีคลินิก
           </p>
         )}
         <label>
@@ -205,19 +207,24 @@ export function BackupPanel() {
         </Button>
         <input ref={file} type="file" accept="application/json,.json" hidden onChange={(e) => (e.target.files?.[0] && pick(e.target.files[0]), (e.target.value = ""))} />
       </div>
-      <div className="bk__row">
-        <span className="bk__icon is-keep">
-          <CalendarClock size={18} />
-        </span>
-        <div>
-          <b>ใช้ข้อมูลจริง ไม่รีเซ็ตทุกวัน</b>
-          <small>ปิด = ข้อมูลตัวอย่างจะสร้างใหม่ทุกวัน · เปิด = เก็บข้อมูลไว้ต่อเนื่อง (เปิดให้อัตโนมัติเมื่อกู้คืนไฟล์)</small>
-        </div>
-        <Switch checked={!!store.keepData} label="ใช้ข้อมูลจริง" onChange={(on) => store.dispatch({ type: "setKeepData", on })} />
-      </div>
-      <p className="bk__note">
-        <ShieldCheck size={13} /> ข้อมูลเก็บในเบราว์เซอร์ของเครื่องนี้เท่านั้น ควรดาวน์โหลดไฟล์สำรองทุกวันจนกว่าจะมีเซิร์ฟเวอร์
-      </p>
+      {/* โหมดสาธิตเท่านั้น: ข้อมูลตัวอย่างสร้างใหม่ทุกวัน · ใช้งานจริงข้อมูลอยู่ในฐานข้อมูลคลินิก */}
+      {DEMO && (
+        <>
+          <div className="bk__row">
+            <span className="bk__icon is-keep">
+              <CalendarClock size={18} />
+            </span>
+            <div>
+              <b>ใช้ข้อมูลจริง ไม่รีเซ็ตทุกวัน</b>
+              <small>ปิด = ข้อมูลตัวอย่างจะสร้างใหม่ทุกวัน · เปิด = เก็บข้อมูลไว้ต่อเนื่อง (เปิดให้อัตโนมัติเมื่อกู้คืนไฟล์)</small>
+            </div>
+            <Switch checked={!!store.keepData} label="ใช้ข้อมูลจริง" onChange={(on) => store.dispatch({ type: "setKeepData", on })} />
+          </div>
+          <p className="bk__note">
+            <ShieldCheck size={13} /> ข้อมูลเก็บในเบราว์เซอร์ของเครื่องนี้เท่านั้น ควรดาวน์โหลดไฟล์สำรองทุกวันจนกว่าจะมีเซิร์ฟเวอร์
+          </p>
+        </>
+      )}
 
       <Dialog
         open={!!pending}

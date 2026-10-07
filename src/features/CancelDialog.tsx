@@ -11,11 +11,25 @@ import "./cancel-dialog.css";
 
 const REASONS = {
   patient: ["ไม่สบาย", "ติดธุระ", "เดินทางไม่สะดวก", "อาการดีขึ้นแล้ว", "ขอเลื่อนไปก่อน", "อื่น ๆ"],
-  clinic: ["ผลคัดกรองไม่ผ่าน", "ผู้บำบัดลา / ไม่ว่าง", "เตียงหรือห้องไม่พร้อม", "คลินิกปิดทำการ", "อื่น ๆ"],
+  clinic: ["ผลคัดกรองไม่ผ่าน", "ผู้บำบัดลา / ไม่ว่าง", "เตียงหรือห้องไม่พร้อม", "คลินิกปิดทำการ", "เกินจำนวนครั้งในคอร์ส", "อื่น ๆ"],
 };
 
-/** Cancel one appointment — or, when it belongs to a treatment plan, every remaining appointment of that plan. */
-export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: Appointment | null; onClose: () => void; onRebook?: (a: Appointment) => void; /** open with "cancel the whole plan" selected */ planFirst?: boolean }) {
+/** ทุกการยกเลิกนัดผ่านหน้าต่างนี้ — Cancel one appointment — or, when it belongs to a treatment plan, any/every remaining appointment of that plan. */
+export function CancelDialog({
+  appt,
+  onClose,
+  onRebook,
+  planFirst,
+  preset,
+}: {
+  appt: Appointment | null;
+  onClose: () => void;
+  onRebook?: (a: Appointment) => void;
+  /** open with "cancel the whole plan" selected */
+  planFirst?: boolean;
+  /** เลือกนัดและเหตุผลไว้ให้ก่อน (เช่น ยกเลิกนัดส่วนเกินคอร์ส) — ยังแก้ได้ก่อนยืนยัน */
+  preset?: { ids: string[]; by: "patient" | "clinic"; reason: string };
+}) {
   const store = useStore();
   const toast = useToast();
   const [by, setBy] = useState<"patient" | "clinic">("patient");
@@ -26,8 +40,8 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
   const [notify, setNotify] = useState(true);
   useEffect(() => {
     if (!appt) return;
-    setBy("patient");
-    setReason(REASONS.patient[0]);
+    setBy(preset?.by ?? "patient");
+    setReason(preset?.reason ?? REASONS[preset?.by ?? "patient"][0]);
     setNote("");
     setPicked([]);
     setNotify(true);
@@ -44,7 +58,7 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
   }, [appt, p, store.appointments]);
   useEffect(() => {
     if (!appt) return;
-    setPicked(planFirst ? plan.map((a) => a.id) : [appt.id]);
+    setPicked(preset ? preset.ids : planFirst ? plan.map((a) => a.id) : [appt.id]);
   }, [appt?.id, plan.length]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!appt || !p) return null;
   const s = store.serviceById(appt.serviceId);
@@ -87,7 +101,7 @@ export function CancelDialog({ appt, onClose, onRebook, planFirst }: { appt: App
       footer={
         <>
           <Button variant="outline" size="md" onClick={onClose}>
-            กลับ
+            ปิด
           </Button>
           <Button variant="danger" size="md" leading={<CalendarX2 size={16} />} disabled={targets.length === 0} onClick={confirm}>
             {targets.length === 0 ? "เลือกวันที่จะยกเลิก" : targets.length > 1 ? `ยกเลิก ${targets.length} นัด` : "ยืนยันยกเลิกนัด"}

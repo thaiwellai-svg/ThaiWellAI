@@ -1,17 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, CalendarClock, CalendarCheck2, CalendarRange, Check, CircleCheck, CircleX, History, ListFilter, MessageSquareText, Phone, ShieldAlert, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
+import { Activity, CalendarCheck2, CalendarRange, Check, CircleCheck, CircleX, History, ListFilter, MessageSquareText, Phone, ShieldAlert, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, SearchField, Segmented, spring } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
 import { BackLead } from "../../layout/BackLead";
-import { PainMini } from "../../features/RecordCards";
 import { ApproveDialog, RejectDialog } from "../../features/RequestDialogs";
-import { BookDialog, type BookPreset } from "../../features/BookDialog";
 import { FilterMenu } from "../../features/FilterMenu";
-import { ScreeningGrid } from "../../features/widgets";
 import { creditInfo, evaluateScreening, requestConflicts, staffState } from "../../data/domain";
 import { ELEMENT_INFO, elementProfile } from "../../data/elements";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
@@ -20,6 +17,7 @@ import type { BookingRequest, RequestDecision } from "../../data/types";
 import { IntakeCard } from "../../features/IntakeCard";
 import { intakeOfRequest } from "../../data/intake";
 import "../appointments/appointments.css";
+import { DEMO } from "../../data/mode";
 import "./requests.css";
 
 type Tab = "pending" | "history";
@@ -39,7 +37,6 @@ export default function Requests() {
   const [selected, setSelected] = useState<string | null>(null);
   const [approving, setApproving] = useState<BookingRequest | null>(null);
   const [rejecting, setRejecting] = useState<BookingRequest | null>(null);
-  const [booking, setBooking] = useState<BookPreset | null>(null);
 
   const matches = (pid: string) => {
     const q = query.trim().toLowerCase();
@@ -94,9 +91,11 @@ export default function Requests() {
       bell={false}
       actions={
         <>
-          <Button variant="white" size="md" className="rq-flow" leading={<Activity size={15} />} onClick={() => navigate("/flow")}>
-            Flow แอป ↔ คลินิก
-          </Button>
+          {DEMO && (
+            <Button variant="white" size="md" className="rq-flow" leading={<Activity size={15} />} onClick={() => navigate("/flow")}>
+              Flow แอป ↔ คลินิก
+            </Button>
+          )}
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN เบอร์โทร" shortcut={false} />
           {tab === "pending" ? (
             <FilterMenu
@@ -228,10 +227,8 @@ export default function Requests() {
                     <Button variant="outline" size="lg" leading={<X size={16} />} onClick={() => setRejecting(req)}>
                       ปฏิเสธ
                     </Button>
-                    <Button variant="outline" size="lg" leading={<CalendarClock size={16} />} onClick={() => setBooking({ requestId: req.id, patientId: req.patientId, serviceId: req.serviceId, therapistId: req.therapistId })}>
-                      เลื่อน / จัดคิวใหม่
-                    </Button>
-                    <Button size="lg" leading={<Check size={16} />} onClick={() => setApproving(req)}>
+                    {/* เปลี่ยนวัน เวลา หรือผู้บำบัดได้ในหน้าต่างอนุมัติ */}
+                    <Button size="lg" leading={<CalendarCheck2 size={16} />} onClick={() => setApproving(req)}>
                       อนุมัติและจัดคิว
                     </Button>
                   </footer>
@@ -252,7 +249,6 @@ export default function Requests() {
 
       <ApproveDialog request={approving} onClose={() => setApproving(null)} />
       <RejectDialog request={rejecting} onClose={() => setRejecting(null)} />
-      <BookDialog preset={booking} onClose={() => setBooking(null)} />
     </WorkPage>
   );
 }
@@ -304,15 +300,6 @@ function RequestDetail({ r }: { r: BookingRequest }) {
   const visits = store.appointments.filter((a) => a.patientId === p.id && a.status === "done");
   const lastPain = [...p.painHistory].sort((a, b) => b.date.localeCompare(a.date))[0];
   const tone = stop ? "is-stop" : flags.length || clash.length ? "is-warn" : "is-ok";
-  const d = new Date(r.date + "T00:00:00");
-  const qs: { key: keyof typeof r.screening; label: string }[] = [
-    { key: "fever", label: "มีไข้" },
-    { key: "highBP", label: "ความดันสูง" },
-    { key: "contagious", label: "โรคติดต่อ" },
-    { key: "recentSurgery", label: `ผ่าตัดไม่เกิน ${store.settings.surgeryRecoveryDays} วัน` },
-    { key: "pregnant", label: "ตั้งครรภ์" },
-    { key: "menstruation", label: "มีประจำเดือน" },
-  ];
 
   return (
     <div className="rq__body scroll-y scroll-y--light">
@@ -328,50 +315,33 @@ function RequestDetail({ r }: { r: BookingRequest }) {
 
       <div className="rq2">
         <div className="rq2__main">
-          {/* ticket */}
-          <section className={clsx("rq2__ticket", clash.length ? "is-clash" : "")}>
-            <div className="rq2__date">
-              <small>{d.toLocaleDateString("th-TH", { weekday: "short" })}</small>
-              <b>{d.getDate()}</b>
-              <small>{d.toLocaleDateString("th-TH", { month: "short" })}</small>
-            </div>
-            <div className="rq2__slot">
-              <small>ช่วงเวลาที่ขอ</small>
-              <b>
-                {r.start}–{fromMinutes(toMinutes(r.start) + s.minutes)} น.
-              </b>
-              <span className={clash.length ? "rq2__pill is-bad" : "rq2__pill is-good"}>{clash.length ? "คิวชน" : "คิวว่าง"}</span>
-            </div>
-            <dl className="rq2__kv">
-              <div>
-                <dt>บริการ</dt>
-                <dd>
-                  {s.name} · {s.minutes} นาที
-                </dd>
-              </div>
-              <div>
-                <dt>ผู้บำบัด</dt>
-                <dd className="rq__staff">
-                  <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
-                  {t.name}
-                  <em className={`is-${st}`}>{st === "free" ? "ว่าง" : st === "busy" ? "ติดคิว" : st === "service" ? "ไม่รับบริการนี้" : "ไม่เข้าเวร"}</em>
-                </dd>
-              </div>
-              <div>
-                <dt>ค่าบริการ</dt>
-                <dd>{credits ? `หักเครดิตคอร์ส · เหลือ ${credits.total - credits.used} ครั้ง` : `${s.price} บาท`}</dd>
-              </div>
-            </dl>
-          </section>
+          <Ticket
+            date={r.date}
+            start={r.start}
+            minutes={s.minutes}
+            label="ช่วงเวลาที่ขอ"
+            clash={clash.length > 0}
+            pill={<span className={clash.length ? "rq2__pill is-bad" : "rq2__pill is-good"}>{clash.length ? "คิวชน" : "คิวว่าง"}</span>}
+            rows={[
+              { k: "บริการ", v: `${s.name} · ${s.minutes} นาที` },
+              {
+                k: "ผู้บำบัด",
+                v: (
+                  <>
+                    <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
+                    {t.name}
+                    <em className={`is-${st}`}>{st === "free" ? "ว่าง" : st === "busy" ? "ติดคิว" : st === "service" ? "ไม่รับบริการนี้" : "ไม่เข้าเวร"}</em>
+                  </>
+                ),
+                staff: true,
+              },
+              { k: "ค่าบริการ", v: credits ? `หักเครดิตคอร์ส · เหลือ ${credits.total - credits.used} ครั้ง` : `${s.price} บาท` },
+            ]}
+          />
 
-          {/* symptoms */}
+          {/* อาการ ความปวด และตำแหน่งที่ปวดอยู่ในแบบประเมินจากแอป (ด้านขวา) — ที่นี่เหลือหมายเหตุและประวัติ */}
           <section className="rq2__card">
-            <h3>อาการที่แจ้ง</h3>
-            <div className="rq2__pain">
-              <PainMini score={r.painScore} />
-              <b>ปวด {r.painScore}/10</b>
-            </div>
-            <p className="rq2__complaint">{p.complaint}</p>
+            <h3>หมายเหตุและประวัติ</h3>
             {r.note && (
               <blockquote className="rq2__note">
                 <MessageSquareText size={14} /> {r.note}
@@ -394,30 +364,9 @@ function RequestDetail({ r }: { r: BookingRequest }) {
             </div>
           </section>
 
-          {/* screening answers */}
           <section className="rq2__card">
             <h3>แบบคัดกรองจากแอป</h3>
-            <div className="rq2__qs">
-              {qs.map((q) => {
-                const hit = Boolean(r.screening[q.key]);
-                const f = flags.find((x) => x.key === q.key);
-                return (
-                  <div key={q.key} className={clsx("rq2__q", hit && (f?.level === "stop" ? "is-stop" : "is-warn"))}>
-                    <span>{q.label}</span>
-                    <b>{q.key === "highBP" && r.screening.bpSystolic ? `${r.screening.bpSystolic} mmHg` : hit ? "ใช่" : "ไม่ใช่"}</b>
-                  </div>
-                );
-              })}
-            </div>
-            {flags.length > 0 && (
-              <ul className="rq2__advice">
-                {flags.map((f) => (
-                  <li key={f.key} className={f.level === "stop" ? "is-stop" : "is-warn"}>
-                    <b>{f.label}</b> · {f.advice}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ScreeningAnswers r={r} />
           </section>
         </div>
 
@@ -432,16 +381,17 @@ function RequestDetail({ r }: { r: BookingRequest }) {
 function DecisionDetail({ d }: { d: RequestDecision }) {
   const store = useStore();
   const r = d.request;
+  const p = store.patientById(r.patientId);
   const s = store.serviceById(r.serviceId);
   const ok = d.outcome === "approved";
   const slot = d.slot ?? { date: r.date, start: r.start, therapistId: r.therapistId };
   const moved = ok && (slot.date !== r.date || slot.start !== r.start);
-  const flags = evaluateScreening(r.screening, store.settings);
+  const t = store.therapistById(slot.therapistId);
   return (
     <div className="rq__body scroll-y scroll-y--light">
       <PatientHead pid={r.patientId} sub={<Badge tone={ok ? "success" : "danger"} compact dot>{ok ? "อนุมัติแล้ว" : "ปฏิเสธ"}</Badge>} />
-      <div className={clsx("rq__verdict", ok ? "is-ok" : "is-stop")}>
-        {ok ? <CircleCheck size={20} /> : <CircleX size={20} />}
+      <div className={clsx("rq2__verdict", ok ? "is-ok" : "is-stop")}>
+        <span className="rq2__vi">{ok ? <CircleCheck size={20} /> : <CircleX size={20} />}</span>
         <div>
           <b>
             {ok ? "อนุมัติ" : "ปฏิเสธ"} โดย {d.decidedBy}
@@ -451,35 +401,114 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
           </span>
         </div>
       </div>
-      <div className="rq__grid">
-        <section className="rq__card">
-          <h3>{ok ? "คิวที่จัดให้" : "ช่วงเวลาที่ขอ"}</h3>
-          <div className="rq__slot">
-            <span>
-              <b>{thaiDateLong(slot.date)}</b>
-              <small>
-                {slot.start}–{fromMinutes(toMinutes(slot.start) + s.minutes)} น. · {store.therapistById(slot.therapistId).name}
-              </small>
-            </span>
-            {moved && <Badge tone="info" compact>เลื่อนให้ใหม่</Badge>}
-          </div>
-          {moved && <p className="tw-meta">ผู้ป่วยขอไว้ {thaiDateShort(r.date)} {r.start} น.</p>}
-          <div className="rq__kv">
-            <span>บริการ</span>
-            <b>{s.name}</b>
-            <span>Pain ที่แจ้ง</span>
-            <b>{r.painScore}/10</b>
-          </div>
-        </section>
-        <section className="rq__card">
-          <h3>หมายเหตุถึงผู้ป่วย</h3>
-          <p className="rq__complaint">{d.note ?? (ok ? "ระบบแจ้งยืนยันนัดผ่านแอป ThaiWell AI แล้ว" : "ระบบแจ้งเหตุผลผ่านแอป ThaiWell AI แล้ว")}</p>
-        </section>
-        <section className="rq__card rq__card--wide">
-          <h3>แบบคัดกรอง ณ วันที่ส่งคำขอ</h3>
-          <ScreeningGrid screening={r.screening} flags={flags} />
-        </section>
+
+      <div className="rq2">
+        <div className="rq2__main">
+          <Ticket
+            date={slot.date}
+            start={slot.start}
+            minutes={s.minutes}
+            label={ok ? "คิวที่จัดให้" : "ช่วงเวลาที่ขอ"}
+            pill={moved ? <span className="rq2__pill is-good">เลื่อนให้ใหม่</span> : undefined}
+            rows={[
+              { k: "บริการ", v: `${s.name} · ${s.minutes} นาที` },
+              {
+                k: "ผู้บำบัด",
+                v: (
+                  <>
+                    <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
+                    {t.name}
+                  </>
+                ),
+                staff: true,
+              },
+              ...(moved ? [{ k: "ผู้ป่วยขอไว้", v: `${thaiDateShort(r.date)} ${r.start} น.` }] : []),
+            ]}
+          />
+
+          <section className="rq2__card">
+            <h3>หมายเหตุถึงผู้ป่วย</h3>
+            <p className="rq2__complaint">{d.note ?? (ok ? "ระบบแจ้งยืนยันนัดผ่านแอป ThaiWell AI แล้ว" : "ระบบแจ้งเหตุผลผ่านแอป ThaiWell AI แล้ว")}</p>
+          </section>
+
+          <section className="rq2__card">
+            <h3>แบบคัดกรอง ณ วันที่ส่งคำขอ</h3>
+            <ScreeningAnswers r={r} />
+          </section>
+        </div>
+
+        <aside className="rq2__side">
+          <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
+        </aside>
       </div>
     </div>
+  );
+}
+
+/** วัน–เวลาของคำขอ/คิวที่จัดให้ (ใช้ทั้งคำขอที่รออนุมัติและประวัติ) */
+function Ticket({ date, start, minutes, label, pill, clash, rows }: { date: string; start: string; minutes: number; label: string; pill?: React.ReactNode; clash?: boolean; rows: { k: string; v: React.ReactNode; staff?: boolean }[] }) {
+  const d = new Date(date + "T00:00:00");
+  return (
+    <section className={clsx("rq2__ticket", clash && "is-clash")}>
+      <div className="rq2__date">
+        <small>{d.toLocaleDateString("th-TH", { weekday: "short" })}</small>
+        <b>{d.getDate()}</b>
+        <small>{d.toLocaleDateString("th-TH", { month: "short" })}</small>
+      </div>
+      <div className="rq2__slot">
+        <small>{label}</small>
+        <b>
+          {start}–{fromMinutes(toMinutes(start) + minutes)} น.
+        </b>
+        {pill}
+      </div>
+      <dl className="rq2__kv">
+        {rows.map((x) => (
+          <div key={x.k}>
+            <dt>{x.k}</dt>
+            <dd className={x.staff ? "rq__staff" : undefined}>{x.v}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+/** คำตอบแบบคัดกรองตนเองจากแอป + คำแนะนำตามกฎของคลินิก */
+function ScreeningAnswers({ r }: { r: BookingRequest }) {
+  const store = useStore();
+  const flags = evaluateScreening(r.screening, store.settings);
+  const qs: { key: keyof typeof r.screening; label: string }[] = [
+    { key: "fever", label: "มีไข้" },
+    { key: "highBP", label: "ความดันสูง" },
+    { key: "contagious", label: "โรคติดต่อ" },
+    { key: "recentSurgery", label: `ผ่าตัดไม่เกิน ${store.settings.surgeryRecoveryDays} วัน` },
+    { key: "pregnant", label: "ตั้งครรภ์" },
+    { key: "menstruation", label: "มีประจำเดือน" },
+  ];
+  return (
+    <>
+      <div className="rq2__qs">
+        {qs.map((q) => {
+          const hit = Boolean(r.screening[q.key]);
+          const f = flags.find((x) => x.key === q.key);
+          return (
+            <div key={q.key} className={clsx("rq2__q", hit && (f?.level === "stop" ? "is-stop" : "is-warn"))}>
+              <span>{q.label}</span>
+              <b>{q.key === "highBP" && r.screening.bpSystolic ? `${r.screening.bpSystolic} mmHg` : hit ? "ใช่" : "ไม่ใช่"}</b>
+            </div>
+          );
+        })}
+      </div>
+      {flags.length > 0 && (
+        <ul className="rq2__advice">
+          {flags.map((f) => (
+            <li key={f.key} className={f.level === "stop" ? "is-stop" : "is-warn"}>
+              <b>{f.label}</b> · {f.advice}
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

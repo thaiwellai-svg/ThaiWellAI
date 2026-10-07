@@ -231,7 +231,7 @@ export default function Login() {
             </AnimatePresence>
           </button>
 
-          <p className="lg__note">เวอร์ชันสาธิต · กรอกข้อมูลไว้ให้แล้ว กดเข้าสู่ระบบได้เลย</p>
+          {DEMO && <p className="lg__note">เวอร์ชันสาธิต · กรอกข้อมูลไว้ให้แล้ว กดเข้าสู่ระบบได้เลย</p>}
         </motion.form>
       </div>
     </motion.div>

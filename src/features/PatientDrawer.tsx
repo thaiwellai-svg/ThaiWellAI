@@ -18,6 +18,7 @@ import { toArea, type BodyArea } from "./BodyMap";
 import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { useLatest } from "./useLatest";
 import { PhotoPicker } from "./PhotoPicker";
+import { SellPackageDialog } from "./SellPackageDialog";
 import { patientPhoto } from "../data/avatars";
 
 export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {
@@ -44,7 +45,7 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
             </Button>
           )}
           <Button size="lg" fill leading={<CalendarPlus size={16} />} onClick={() => setPlanFor(p.id)}>
-            จัดตารางงาน
+            จัดตารางนัด
           </Button>
         </>
       }
@@ -60,6 +61,7 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
 export function PatientHealth({ id }: { id: string }) {
   const store = useStore();
   const navigate = useNavigate();
+  const [selling, setSelling] = useState(false);
   const [planFor, setPlanFor] = useState<string | null>(null);
   const p = store.patientById(id);
   const visits = useMemo(
@@ -302,9 +304,16 @@ export function PatientHealth({ id }: { id: string }) {
                     "ยังไม่มีนัดครั้งถัดไป"
                   )}
                 </span>
-                <button type="button" onClick={() => setPlanFor(p.id)}>
-                  {credits.remaining === 0 && credits.booked === 0 ? "ต่อคอร์ส" : "วางแผนนัด"}
-                </button>
+                {/* "ต่อคอร์ส" = ขาย/ต่ออายุคอร์ส (เหมือนหน้าข้อมูลผู้ป่วย) · ยังมีครั้งเหลือ = จัดตารางนัด */}
+                {credits.remaining === 0 && credits.booked === 0 ? (
+                  <button type="button" onClick={() => setSelling(true)}>
+                    ต่อคอร์ส
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => setPlanFor(p.id)}>
+                    จัดตารางนัด
+                  </button>
+                )}
               </div>
             </section>
           );
@@ -376,6 +385,7 @@ export function PatientHealth({ id }: { id: string }) {
         )}
       </section>
       <CoursePlanDialog patientId={planFor} onClose={() => setPlanFor(null)} />
+      <SellPackageDialog patientId={selling ? p.id : null} onClose={() => setSelling(false)} />
     </div>
   );
 }

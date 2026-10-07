@@ -515,10 +515,6 @@
   gap: 8px;
   margin-left: auto;
 }
-.adp__actions .adp__danger {
-  color: #c0392b;
-  border-color: #f2c9c2;
-}
 .adp__body {
   flex: 1;
   min-height: 0;

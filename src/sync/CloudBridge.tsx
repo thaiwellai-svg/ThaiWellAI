@@ -28,7 +28,7 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
       kind: "bill.paid",
       summary: `ชำระที่คลินิก ${pay.amount} บาท · ส่งใบเสร็จ ${pay.no ?? ""} เข้าแอป`,
     };
-  if (pay?.status === "pending") return { status: "billed", patch: { bill: { amount: pay.amount, items: [s.name], status: "pending", via: "app" } }, kind: "bill.sent", summary: `ส่งบิล ${pay.amount} บาท ไปเรียกเก็บในแอป` };
+  if (pay?.status === "pending") return { status: "billed", patch: { bill: { amount: pay.amount, items: [s.name], status: "pending", via: "app", receipt_no: pay.no } }, kind: "bill.sent", summary: `ส่งบิล ${pay.amount} บาท ไปเรียกเก็บในแอป` };
   if (a.painAfter !== undefined && a.endedAt)
     return {
       status: "recorded",
@@ -48,7 +48,10 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
     };
   if (a.startedAt) return { status: "in_service", patch: {}, kind: "service.started", summary: `เริ่มรับบริการ · ${t.name}` };
   if (!a.calledAt && a.checkinQueue) return { status: "checked_in", patch: { queue_no: a.checkinQueue }, kind: "queue.issued", summary: `เช็กอินที่คลินิก · คิว ${a.checkinQueue}` };
-  if (a.calledAt) return { status: "called", patch: { queue_no: queueNumber(store.appointments, a) }, kind: "queue.called", summary: `เรียกคิว ${queueNumber(store.appointments, a)} เข้ารับบริการ` };
+  if (a.calledAt) {
+    const q = queueNumber(store.appointments, a);
+    return { status: "called", patch: q ? { queue_no: q } : {}, kind: "queue.called", summary: q ? `เรียกคิว ${q} เข้ารับบริการ` : "เรียกเข้ารับบริการ" };
+  }
   return { status: "confirmed", patch: { date: a.date, start: a.start, therapist: t.name, service: s.name }, kind: "booking.confirmed", summary: `ยืนยันนัด ${a.date} ${a.start} น. · ${t.name}` };
 }
 
@@ -71,7 +74,9 @@ export function CloudBridge() {
   const adopting = useRef(new Set<string>());
   /** เลขคิวเช็กอินล่าสุดของแต่ละวัน (กันออกเลขซ้ำเมื่อเช็กอินพร้อมกันหลายคน) */
   const lastQueue = useRef(new Map<string, number>());
-  const issuing = useRef(new Set<string>()); // cloud ids whose booking already carries the current plan
+  const issuing = useRef(new Set<string>());
+  /** ยอด/เลขใบเสร็จของบิลที่ส่งไปแอปแล้ว (แก้บิลระหว่างรอชำระ → ส่งใหม่) */
+  const billSig = useRef(new Map<string, string>());
   // nothing is pushed until the cloud's current state has been read
   const [ready, setReady] = useState(false);
 
@@ -95,11 +100,14 @@ export function CloudBridge() {
     if (found) {
       syncPhoto(found, cp);
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
+      // ผู้ป่วยเดิมของคลินิก → HN เดิมไปแสดงในแอป
+      if (cp && cp.clinic_hn !== found.hn) void cloud.from("tw_patients").update({ clinic_hn: found.hn }).eq("id", row.patient_id);
       return found;
     }
     const p: Patient = {
       id: `pc${Date.now().toString(36)}`,
-      hn: `HN${String(641_000 + st.patients.length + 1).padStart(7, "0")}`,
+      // HN ถัดจากเลขที่มากที่สุด (ลบผู้ป่วยแล้วไม่ออกเลขซ้ำ)
+      hn: `HN${String(Math.max(641_000 + st.patients.length, ...st.patients.map((x) => Number(x.hn.replace(/\D/g, "")) || 0)) + 1).padStart(7, "0")}`,
       name: cp?.name ?? "ผู้ใช้แอป",
       gender: cp?.gender === "ชาย" ? "ชาย" : "หญิง",
       age: cp?.age ?? 30,
@@ -122,16 +130,33 @@ export function CloudBridge() {
     return p;
   };
 
-  const serviceFor = (name?: string | null) => {
+  /** บริการที่ผู้ป่วยเลือก: รหัสจากแอป → ชื่อตรงกัน → ชื่อที่ยาวที่สุดที่อยู่ในป้าย ("นวดไทยร่วมประคบสมุนไพร" ไม่ใช่ "ประคบสมุนไพร") */
+  const serviceFor = (name?: string | null, id?: string) => {
     const st = ref.current;
+    if (id && st.services.some((s) => s.id === id)) return id;
     if (!name) return st.services[1]?.id ?? st.services[0].id;
-    return (st.services.find((s) => name.includes(s.name) || s.name.includes(name) || name.includes(s.short)) ?? st.services[1] ?? st.services[0]).id;
+    const label = name.split(" · ")[0].trim();
+    const exact = st.services.find((s) => s.name === label);
+    if (exact) return exact.id;
+    const hits = st.services.filter((s) => label.includes(s.name) || s.name.includes(label) || (s.short && label.includes(s.short))).sort((a, b) => b.name.length - a.name.length);
+    return (hits[0] ?? st.services[1] ?? st.services[0]).id;
+  };
+  /** ผู้บำบัดที่ผู้ป่วยเลือก: รหัสจากแอป → ชื่อตรงกัน · ไม่ระบุ = คนแรก */
+  const therapistFor = (row: CloudAppt) => {
+    const st = ref.current;
+    const id = row.assessment?.therapistId;
+    return (
+      (id ? st.therapists.find((t) => t.id === id) : undefined) ??
+      st.therapists.find((t) => row.therapist && (t.name === row.therapist || row.therapist.includes(t.name) || t.name.includes(row.therapist))) ??
+      st.therapists[0]
+    )?.id ?? "";
   };
 
   const inbound = (row: CloudAppt) => {
     const st = ref.current;
     known.current.set(row.id, row.status);
-    if (row.plan?.summary) planSent.current.add(`${row.id}|${row.plan.summary}`);
+    if (row.plan?.summary) planSent.current.add(`${row.id}|${row.plan.summary}|${row.plan.course ? `${row.plan.course.used}/${row.plan.course.total}` : ""}`);
+    if (row.status === "billed" && row.bill) billSig.current.set(row.id, JSON.stringify(row.bill));
     const local = st.appointments.find((a) => a.cloudId === row.id);
     if (row.status === "requested") {
       if (st.requests.some((r) => r.cloudId === row.id) || local) return;
@@ -158,9 +183,8 @@ export function CloudBridge() {
         id: `rq-${row.id}`,
         cloudId: row.id,
         patientId: p.id,
-        serviceId: serviceFor(row.service),
-        // ผู้บำบัดที่ผู้ป่วยเลือกในแอป (ตามชื่อ) · ไม่ระบุ = คนแรก
-        therapistId: st.therapists.find((t) => row.therapist && (t.name === row.therapist || row.therapist.includes(t.name) || t.name.includes(row.therapist)))?.id ?? st.therapists[0]?.id ?? "",
+        serviceId: serviceFor(row.service, as.serviceId),
+        therapistId: therapistFor(row),
         date: row.date ?? todayISO(),
         start: row.start ?? "10:00",
         painScore: as.pain ?? 5,
@@ -180,10 +204,9 @@ export function CloudBridge() {
       if (["confirmed", "checked_in"].includes(row.status) && row.date && row.start && !st.requests.some((r) => r.cloudId === row.id) && !adopting.current.has(row.id)) {
         adopting.current.add(row.id);
         const p = patientFor(row);
-        const t = st.therapists.find((x) => x.name === row.therapist) ?? st.therapists[0] ?? { id: "" };
         st.dispatch({
           type: "schedule",
-          items: [{ patientId: p.id, serviceId: serviceFor(row.service), therapistId: t.id, date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
+          items: [{ patientId: p.id, serviceId: serviceFor(row.service, row.assessment?.serviceId), therapistId: therapistFor(row), date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
         });
         known.current.set(row.id, row.status);
         slotSig.current.set(row.id, `${row.date}|${row.start}|${row.therapist ?? ""}`);
@@ -351,12 +374,27 @@ export function CloudBridge() {
         }
         continue;
       }
-      const back = d.status === "cancelled" || d.status === "no_show";
-      if (was === d.status || (!back && rank(d.status) <= rank(was))) continue;
-      known.current.set(a.cloudId, d.status);
       const name = store.patientById(a.patientId).name;
-      void updateAppt(a.cloudId, { status: d.status, ...d.patch })
-        .then(() => logEvent("clinic", d.kind, { id: a.cloudId! }, name, d.summary))
+      // แก้ยอดบิลระหว่างรอชำระ → แอปได้ยอดใหม่
+      if (was === "billed" && d.status === "billed") {
+        const sig = JSON.stringify(d.patch.bill);
+        if (billSig.current.get(a.cloudId) !== sig) {
+          const first = !billSig.current.has(a.cloudId);
+          billSig.current.set(a.cloudId, sig);
+          if (!first) void updateAppt(a.cloudId, d.patch).then(() => logEvent("clinic", "bill.updated", { id: a.cloudId! }, name, `แก้บิลเป็น ${d.patch.bill?.amount ?? 0} บาท`));
+        }
+        continue;
+      }
+      const back = d.status === "cancelled" || d.status === "no_show";
+      // เลิกยกเลิก / เลิกบันทึกไม่มา → นัดกลับมาในแอป
+      const revive = (was === "cancelled" || was === "no_show") && !back;
+      // ยกเลิกใบเสร็จ → บิลเดิมในแอปถูกยกเลิก (รอชำระใหม่)
+      const voided = (was === "paid" || was === "billed") && d.status === "recorded";
+      if (was === d.status || (!back && !revive && !voided && rank(d.status) <= rank(was))) continue;
+      known.current.set(a.cloudId, d.status);
+      if (d.patch.bill) billSig.current.set(a.cloudId, JSON.stringify(d.patch.bill));
+      void updateAppt(a.cloudId, { status: d.status, ...d.patch, ...(voided ? { bill: null } : {}), ...(revive ? { note: null } : {}) })
+        .then(() => logEvent("clinic", voided ? "bill.voided" : revive ? "booking.restored" : d.kind, { id: a.cloudId! }, name, voided ? "ยกเลิกใบเสร็จ · รอชำระใหม่" : revive ? `คืนนัด ${a.date} ${a.start} น.` : d.summary))
         .catch(() => known.current.set(a.cloudId!, was ?? "requested"));
     }
     for (const dec of store.decisions) {
@@ -369,11 +407,12 @@ export function CloudBridge() {
     for (const p of store.patients) {
       if (!p.cloudId || !p.aiPlan?.approved) continue;
       const appt = [...store.appointments].reverse().find((a) => a.patientId === p.id && a.cloudId && known.current.has(a.cloudId));
-      const key = `${appt?.cloudId}|${p.aiPlan.summary}`;
+      const course = p.course ? { name: p.course.name, total: p.course.total, used: p.course.used } : undefined;
+      const key = `${appt?.cloudId}|${p.aiPlan.summary}|${course ? `${course.used}/${course.total}` : ""}`;
       if (!appt?.cloudId || planSent.current.has(key)) continue;
       planSent.current.add(key);
       const pl = p.aiPlan;
-      void updateAppt(appt.cloudId, { plan: { summary: pl.summary, sessions: pl.sessions, frequency: pl.frequency, phases: pl.phases.map((x) => ({ title: x.title, weeks: x.weeks, focus: x.focus })), homeCare: pl.homeCare } }).then(() =>
+      void updateAppt(appt.cloudId, { plan: { summary: pl.summary, sessions: pl.sessions, frequency: pl.frequency, phases: pl.phases.map((x) => ({ title: x.title, weeks: x.weeks, focus: x.focus })), homeCare: pl.homeCare, ...(course ? { course } : {}) } }).then(() =>
         logEvent("clinic", "plan.shared", { id: appt.cloudId! }, p.name, `ส่งแผนการรักษา ${pl.sessions} ครั้ง (${pl.frequency}) ไปแสดงในแอป`),
       );
     }

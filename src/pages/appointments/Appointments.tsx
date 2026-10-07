@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, IconButton, SearchField, Segmented, ease } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
-import { AppointmentDrawer } from "../../features/AppointmentDrawer";
-import { PatientDrawer } from "../../features/PatientDrawer";
 import { FilterMenu } from "../../features/FilterMenu";
 import { BookDialog } from "../../features/BookDialog";
 import { WaitlistCard } from "../../features/Waitlist";
@@ -121,9 +119,7 @@ export default function Appointments() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [therapist, setTherapist] = useState("all");
   const [query, setQuery] = useState("");
-  const [openAppt, setOpenAppt] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [openPatient, setOpenPatient] = useState<string | null>(null);
   const [dir, setDir] = useState(0);
   const [booking, setBooking] = useState<BookPreset | null>(null);
   // booking for someone on the waitlist: once the dialog closes, mark them booked if they got a new appointment
@@ -414,15 +410,6 @@ export default function Appointments() {
         </div>
       </div>
 
-      <AppointmentDrawer
-        id={openAppt}
-        onClose={() => setOpenAppt(null)}
-        onOpenPatient={(pid) => {
-          setOpenAppt(null);
-          setOpenPatient(pid);
-        }}
-      />
-      <PatientDrawer id={openPatient} onClose={() => setOpenPatient(null)} />
       <BookDialog
         preset={booking}
         onClose={() => setBooking(null)}

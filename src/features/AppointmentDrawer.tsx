@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, X, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
-import { Avatar, Badge, Button, Dialog, Drawer, Field, IconButton, Input, Textarea, useToast } from "../design-system";
-import { bedName, bedsInUse, creditInfo, stageMeta, stageOf, type Stage } from "../data/domain";
-import { baht, timeAgo, thaiDateLong, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
+import { Avatar, Badge, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
+import { bedName, bedsInUse, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
+import { baht, timeAgo, thaiDateLong, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
@@ -27,6 +27,8 @@ import { screeningFlags } from "../data/counterScreening";
 export { stageOf, type Stage } from "../data/domain";
 
 const STEPS: { key: Stage; label: string; icon: typeof Play }[] = [
+  // ใช้งานจริง: ผู้ป่วยต้องเช็กอิน (สแกน QR ที่เคาน์เตอร์ / เช็กอินที่เคาน์เตอร์) ก่อนได้เลขคิว
+  ...(LIVE ? [{ key: "checkin" as Stage, label: "เช็กอิน", icon: ScanLine }] : []),
   { key: "waiting", label: "รอรับบริการ", icon: Hourglass },
   { key: "called", label: "เรียกคิว", icon: Megaphone },
   { key: "treating", label: "รับบริการ", icon: Play },
@@ -62,6 +64,7 @@ export function AppointmentDrawer({
   historyOpen,
   onVoice,
   voiceOpen,
+  startPay,
 }: {
   id: string | null;
   onClose: () => void;
@@ -74,6 +77,8 @@ export function AppointmentDrawer({
   /** opens the voice-summary side panel (visits page) */
   onVoice?: (open?: boolean) => void;
   voiceOpen?: boolean;
+  /** เปิดจากปุ่ม "รับชำระ" (หน้าคิดเงิน) → นัดที่เสร็จแล้วแต่ค้างชำระ เปิดหน้าชำระเงินทันที */
+  startPay?: boolean;
 }) {
   const store = useStore();
   const navigate = useNavigate();
@@ -137,6 +142,9 @@ export function AppointmentDrawer({
     onVoice(true);
   }, [stage, appt, onVoice, autoVoiceFor]);
   const [cancelling, setCancelling] = useState(false);
+  // นัดเสร็จแล้วแต่ยังค้างชำระ → เปิดหน้าชำระเงินในหน้านี้ โดยไม่ย้อนสถานะนัด
+  const [payNow, setPayNow] = useState(false);
+  useEffect(() => setPayNow(!!startPay), [id, startPay]);
   // a contraindication found at today's screening must be cleared by a Thai traditional doctor before the massage starts
   const [override, setOverride] = useState(false);
   const [overrideBy, setOverrideBy] = useState("");
@@ -203,7 +211,9 @@ export function AppointmentDrawer({
   };
 
   const scrToday = p.screening && p.screening.at.slice(0, 10) === todayISO() ? p.screening : undefined;
-  const stopFlags = scrToday ? screeningFlags(scrToday, store.settings.bpThreshold).filter((f) => f.level === "stop") : [];
+  // เหมือน VisitScreening: คัดกรองที่คลินิกวันนี้ก่อน ถ้ายังไม่ได้วัดใช้แบบคัดกรองตนเองจากแอป
+  const stopFlags = (scrToday ? screeningFlags(scrToday, store.settings.bpThreshold) : appt.screening ? evaluateScreening(appt.screening, store.settings) : []).filter((f) => f.level === "stop");
+  const stopFromApp = !scrToday && stopFlags.length > 0;
   const stopToday = stopFlags.length > 0;
   const startNow = (note?: string) => step({ status: "active", startedAt: nowIso(), bedId: bed! }, `เริ่มรับบริการ · ${bedName(store.settings, bed!)} · ${t.name}${note ? ` · ${note}` : ""}`);
 
@@ -213,8 +223,10 @@ export function AppointmentDrawer({
     step({ checkinQueue: q, checkedInAt: nowIso() }, `เช็กอินที่เคาน์เตอร์ · คิว ${q}`, `${p.name} เช็กอินแล้ว · คิว ${q}`);
   };
 
+  const view: Stage = stage === "done" && payNow && !appt.paid && appt.payment?.status !== "pending" ? "billing" : stage;
+  const payLabel = payByCredit ? "หักเครดิต" : method === "app" ? "ส่งบิลเข้าแอป" : "รับชำระ";
   let footer: React.ReactNode = null;
-  if (stage === "checkin")
+  if (view === "checkin")
     footer = (
       <>
         <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
@@ -230,7 +242,7 @@ export function AppointmentDrawer({
         </Button>
       </>
     );
-  else if (stage === "waiting")
+  else if (view === "waiting")
     footer = (
       <>
         <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
@@ -246,7 +258,7 @@ export function AppointmentDrawer({
         </Button>
       </>
     );
-  else if (stage === "called")
+  else if (view === "called")
     footer = (
       <>
         <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
@@ -266,19 +278,19 @@ export function AppointmentDrawer({
         </Button>
       </>
     );
-  else if (stage === "treating")
+  else if (view === "treating")
     footer = (
       <Button size="lg" fill leading={<ClipboardCheck size={16} />} onClick={() => (elapsed < s.minutes * 30 ? setEarlyEnd("") : endTreatment())}>
         จบการรักษา
       </Button>
     );
-  if (stage === "assess" && painAfter !== undefined && appt.diagnoses?.length && appt.procedures?.length)
+  if (view === "assess" && painAfter !== undefined && appt.diagnoses?.length && appt.procedures?.length)
     saveRecord.current = () => {
       step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
       deductStock(store, appt.id, appt.serviceId, store.settings.staffName);
     };
   else saveRecord.current = null;
-  if (stage === "assess")
+  if (view === "assess")
     footer = (
       <Button size="lg" fill disabled={painAfter === undefined || !(appt.diagnoses?.length && appt.procedures?.length)} leading={<Check size={16} />} onClick={() => {
           step({ painAfter, advice: advice.trim() || undefined }, `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}`);
@@ -287,13 +299,20 @@ export function AppointmentDrawer({
         บันทึก
       </Button>
     );
-  else if (stage === "billing")
+  else if (view === "billing")
     footer = (
-      <Button size="lg" fill disabled={!payByCredit && method === "cash" && cash < amount} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
-        {payByCredit ? "หักเครดิต" : method === "app" ? "ส่งบิล" : method === "promptpay" ? "รับเงินแล้ว" : "รับเงิน"}
-      </Button>
+      <>
+        {payNow && (
+          <Button variant="outline" size="lg" onClick={() => setPayNow(false)}>
+            ไว้ทีหลัง
+          </Button>
+        )}
+        <Button size="lg" fill disabled={!payByCredit && method === "cash" && cash < amount} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
+          {payLabel}
+        </Button>
+      </>
     );
-  else if (stage === "done" && appt.payment?.status === "pending")
+  else if (view === "done" && appt.payment?.status === "pending")
     footer = (
       <Button size="lg" fill leading={<Check size={16} />} onClick={() => step(
             { paid: true, payment: { ...appt.payment!, status: "paid", at: nowIso(), slipSentAt: store.settings.autoSendSlip ? nowIso() : undefined } },
@@ -302,28 +321,29 @@ export function AppointmentDrawer({
         ได้รับเงินแล้ว
       </Button>
     );
-  else if (stage === "done" && !appt.paid)
+  else if (view === "done" && !appt.paid)
     footer = (
-      <Button size="lg" fill leading={<ReceiptText size={16} />} onClick={() => step({ status: "active", endedAt: appt.endedAt ?? nowIso(), painAfter: appt.painAfter ?? appt.painBefore }, "เปิดบิลชำระเงิน")}>
-        รับชำระเงิน
+      <Button size="lg" fill leading={<ReceiptText size={16} />} onClick={() => setPayNow(true)}>
+        รับชำระ
       </Button>
     );
-  else if (stage === "done")
+  else if (view === "done")
     footer = (
       <Button variant="outline" size="lg" fill leading={<ReceiptText size={16} />} onClick={() => setReceipt(appt.id)}>
         สลิป
       </Button>
     );
-  else if (stage === "absent" || stage === "cancelled")
+  else if (view === "absent" || view === "cancelled")
     footer = (
-      <Button variant="outline" size="lg" fill leading={<Undo2 size={16} />} onClick={() => step({ status: "waiting", calledAt: undefined, cancel: undefined }, stage === "cancelled" ? "เลิกยกเลิกนัด" : "ย้อนเป็นรอรับบริการ")}>
+      <Button variant="outline" size="lg" fill leading={<Undo2 size={16} />} onClick={() => step({ status: "waiting", calledAt: undefined, cancel: undefined }, view === "cancelled" ? "เลิกยกเลิกนัด" : "ย้อนเป็นรอรับบริการ", `${p.name} กลับเป็นรอรับบริการแล้ว`)}>
         ย้อนกลับ
       </Button>
     );
 
-  const stepIdx = STEPS.findIndex((x) => x.key === stage);
+  const stepIdx = STEPS.findIndex((x) => x.key === view);
   // when each step happened — shown right under the stepper instead of a separate log
   const stepTime: Partial<Record<Stage, string>> = {
+    checkin: appt.checkedInAt,
     called: appt.calledAt,
     treating: appt.startedAt,
     assess: appt.endedAt,
@@ -337,7 +357,7 @@ export function AppointmentDrawer({
         inline={inline}
         open={id !== null}
         onClose={onClose}
-        leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={stageMeta(appt).color} pulse={stage === "treating"} />}
+        leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={stageMeta(appt).color} pulse={view === "treating"} />}
         title={p.name}
         subtitle={`${p.hn} · ${p.gender} ${p.age} ปี · ${appt.type === "walkin" ? "Walk-in" : "นัดล่วงหน้า"}`}
         footer={footer}
@@ -346,7 +366,7 @@ export function AppointmentDrawer({
           <section className="vs__summary">
             <div className="vs__q">
               <small>คิว</small>
-              <b>{queueNo}</b>
+              {queueNo ? <b>{queueNo}</b> : <b className="is-wait">{view === "checkin" ? "รอเช็กอิน" : "—"}</b>}
             </div>
             <div className="vs__when">
               <b>{timeRange(appt.start, s.minutes)} น.</b>
@@ -383,13 +403,14 @@ export function AppointmentDrawer({
                 <b>{t.name}</b>
               </span>
             </span>
-            <span>
-              <small>ค่าบริการ</small>
-              <b>{baht(s.price)} ฿</b>
-            </span>
+            {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิลด้านล่างแล้ว */}
+            {view !== "billing" && view !== "done" && (
+              <span>
+                <small>ค่าบริการ</small>
+                <b>{baht(s.price)} ฿</b>
+              </span>
+            )}
           </div>
-
-          {(stage === "waiting" || stage === "called" || stage === "treating") && <VisitScreening p={p} app={appt.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
 
           {stepIdx >= 0 ? (
             <ol className="vs__steps">
@@ -402,7 +423,7 @@ export function AppointmentDrawer({
               ))}
             </ol>
           ) : (
-            stage === "cancelled" ? (
+            view === "cancelled" ? (
               <div className="cxb">
                 <CalendarX2 size={18} />
                 <div>
@@ -428,25 +449,25 @@ export function AppointmentDrawer({
           )}
 
           <AnimatePresence mode="wait" initial={false}>
-            <motion.section key={stage} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-              {stage === "checkin" && (
+            <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+              {/* คัดกรองก่อนนวด อยู่ในขั้นที่กำลังทำ (ไม่ดันแถบขั้นตอนลงล่างในหน้ารับบริการ) */}
+              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={appt.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
+              {view === "checkin" && (
                 <>
                   <StepHead n={1} title="รอเช็กอินเข้ารับบริการ" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR เช็กอินที่เคาน์เตอร์ในแอป หรือกด “เช็กอินที่เคาน์เตอร์” · เช็กอินแล้วได้เลขคิวตามลำดับที่มาถึง" : "เช็กอินได้ในวันนัด"} />
-                  <PainLine v={appt.painBefore} />
                 </>
               )}
-              {(stage === "waiting" || stage === "called") && (
+              {(view === "waiting" || view === "called") && (
                 <>
                   <StepHead
-                    n={stage === "waiting" ? 1 : 2}
-                    title={stage === "waiting" ? "เรียกคิวผู้ป่วย" : `เลือกเตียงแล้วเริ่มรับบริการ`}
-                    hint={stage === "waiting" ? `ผู้ป่วยมาถึงแล้ว กด “เรียกคิว” ระบบจะประกาศเสียงเรียก ${queueNo}` : `เรียกคิวแล้ว ${clock(appt.calledAt)} น. · เลือกเตียงที่ผู้ป่วยเข้ารับบริการ`}
+                    n={view === "waiting" ? 1 : 2}
+                    title={view === "waiting" ? "เรียกคิวผู้ป่วย" : `เลือกเตียงแล้วเริ่มรับบริการ`}
+                    hint={view === "waiting" ? `ผู้ป่วยมาถึงแล้ว กด “เรียกคิว” ระบบจะประกาศเสียงเรียก ${queueNo}` : `เรียกคิวแล้ว ${clock(appt.calledAt)} น. · เลือกเตียงที่ผู้ป่วยเข้ารับบริการ`}
                   />
-                  {stage === "called" && <BedPicker date={appt.date} self={appt.id} value={bed} onChange={setBed} />}
-                  <PainLine v={appt.painBefore} />
+                  {view === "called" && <BedPicker date={appt.date} self={appt.id} value={bed} onChange={setBed} />}
                 </>
               )}
-              {stage === "treating" && (
+              {view === "treating" && (
                 <>
                   <StepHead n={3} title="กำลังรับบริการ" hint={`${appt.bedId ? bedName(store.settings, appt.bedId) + " · " : ""}ครบเวลาแล้วกด “จบการรักษา” เพื่อไปบันทึกการรักษา`} />
                   <div className="vs__timer">
@@ -460,7 +481,7 @@ export function AppointmentDrawer({
                   </div>
                 </>
               )}
-              {stage === "assess" && (
+              {view === "assess" && (
                 <>
                   <StepHead
                     n={4}
@@ -477,15 +498,15 @@ export function AppointmentDrawer({
                   <div className="rs-stack">
                     <FindingsField appt={appt} n={1} />
                     <ClinicalRecord appt={appt} embedded />
-                    <RecSection n={4} title="ความปวดหลังนวด" hint={`ก่อนนวด ${appt.painBefore}/10 · ให้ผู้ป่วยเลือก`} done={painAfter !== undefined}>
+                    <RecSection n={4} title="ความปวดหลังนวด" hint="ให้ผู้ป่วยเลือกระดับหลังนวด" done={painAfter !== undefined}>
                       <PainScale value={painAfter} onChange={setPainAfter} />
                       {painAfter !== undefined && (
                         <p className={clsx("vs__delta", painAfter < appt.painBefore && "is-good")}>
                           {painAfter < appt.painBefore
-                            ? `ลดลง ${appt.painBefore - painAfter} ระดับ (${Math.round(((appt.painBefore - painAfter) / Math.max(1, appt.painBefore)) * 100)}%)`
+                            ? `ลดลงจาก ${appt.painBefore} เหลือ ${painAfter} (−${appt.painBefore - painAfter} ระดับ · ${Math.round(((appt.painBefore - painAfter) / Math.max(1, appt.painBefore)) * 100)}%)`
                             : painAfter === appt.painBefore
-                              ? "เท่าเดิม"
-                              : "ปวดมากขึ้น — ควรแจ้งแพทย์"}
+                              ? `เท่าเดิม (${appt.painBefore}/10)`
+                              : `ปวดมากขึ้นจาก ${appt.painBefore} — ควรแจ้งแพทย์`}
                         </p>
                       )}
                     </RecSection>
@@ -495,9 +516,9 @@ export function AppointmentDrawer({
                   </div>
                 </>
               )}
-              {stage === "billing" && (
+              {view === "billing" && (
                 <>
-                <StepHead n={5} title="ชำระเงิน" hint="เลือกวิธีชำระ แล้วกดยืนยันที่ปุ่มมุมขวาบน" />
+                <StepHead n={5} title="ชำระเงิน" hint={`เลือกวิธีชำระ แล้วกด “${payLabel}”`} />
                 <PayPanel
                   serviceName={s.name}
                   price={s.price}
@@ -513,7 +534,7 @@ export function AppointmentDrawer({
                 />
                 </>
               )}
-              {stage === "done" && (
+              {view === "done" && (
                 <>
                   <StepHead n={6} title="เสร็จการรักษา" hint={appt.paid ? "เรียบร้อยทุกขั้นแล้ว" : "รักษาเสร็จแล้ว แต่ยังค้างชำระ"} />
                   <div className="vs__result">
@@ -558,12 +579,13 @@ export function AppointmentDrawer({
             </motion.section>
           </AnimatePresence>
 
-          {(stage === "billing" || stage === "done") && <ClinicalRecord appt={appt} locked />}
+          {(view === "billing" || view === "done") && <ClinicalRecord appt={appt} locked />}
 
-          {credits && <CreditPips info={credits} name={p.course!.name} />}
+          {/* ขั้นชำระเงิน: เครดิตคอร์สแสดงในตัวเลือกหักเครดิตแล้ว */}
+          {credits && !(view === "billing" && coveredByCourse) && <CreditPips info={credits} name={p.course!.name} />}
 
           <section className="vs__ctx">
-            {stage === "assess" && !onVoice && <VoiceNote appt={appt} />}
+            {view === "assess" && !onVoice && <VoiceNote appt={appt} />}
             {(() => {
               const ik = intakeOfVisit(appt, p);
               const al = ik ? intakeAlerts(ik, store.settings.bpThreshold) : [];
@@ -712,7 +734,7 @@ export function AppointmentDrawer({
       <Dialog
         open={override}
         onClose={() => setOverride(false)}
-        title="พบข้อห้ามจากการคัดกรองวันนี้"
+        title={stopFromApp ? "พบข้อห้ามจากแบบคัดกรองในแอป" : "พบข้อห้ามจากการคัดกรองวันนี้"}
         subtitle={`${p.name} · ${stopFlags.map((f) => f.label).join(" · ")}`}
         footer={
           <>
@@ -720,7 +742,6 @@ export function AppointmentDrawer({
               ยังไม่เริ่ม
             </Button>
             <Button
-              variant="danger"
               size="md"
               disabled={!overrideBy.trim()}
               onClick={() => {
@@ -738,7 +759,7 @@ export function AppointmentDrawer({
           <ShieldAlert size={16} />
           <div>
             <b>ควรให้แพทย์แผนไทยประเมินก่อนนวด</b>
-            ถ้าแพทย์ประเมินแล้วและอนุญาตให้นวด ให้ระบุชื่อแพทย์ ระบบจะบันทึกไว้ในประวัติของนัด
+            {stopFromApp ? "ผู้ป่วยตอบแบบคัดกรองในแอปว่ามีข้อห้าม · คัดกรองที่คลินิกอีกครั้ง หรือ" : "ถ้า"}แพทย์ประเมินแล้วและอนุญาตให้นวด ให้ระบุชื่อแพทย์ ระบบจะบันทึกไว้ในประวัติของนัด
           </div>
         </div>
         <Field label="แพทย์แผนไทยผู้ประเมิน">
@@ -746,25 +767,6 @@ export function AppointmentDrawer({
         </Field>
       </Dialog>
     </>
-  );
-}
-
-function PainLine({ v }: { v: number }) {
-  return (
-    <div className="vs__pain">
-      <small>Pain Score ก่อนรับบริการ</small>
-      <div>
-        <b>
-          {v}
-          <small>/10</small>
-        </b>
-        <i>
-          {Array.from({ length: 10 }, (_, i) => (
-            <i key={i} className={i < v ? `is-on p${i}` : undefined} />
-          ))}
-        </i>
-      </div>
-    </div>
   );
 }
 
@@ -853,73 +855,6 @@ function StepHead({ title, hint, todo, action }: { n?: number; title: string; hi
           ))}
         </ul>
       )}
-    </div>
-  );
-}
-
-/** past visits as rows — to read alongside while recording this one */
-export function HistoryPanel({ patientId, current, onClose }: { patientId: string; current: string; onClose: () => void }) {
-  const store = useStore();
-  const visits = store.appointments
-    .filter((a) => a.patientId === patientId && a.id !== current && a.status !== "cancelled")
-    .sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start));
-  const done = visits.filter((a) => a.status === "done");
-  const avgDrop = done.filter((a) => a.painAfter !== undefined).reduce((n, a, _, arr) => n + (a.painBefore - a.painAfter!) / arr.length, 0);
-  return (
-    <div className="hp">
-      <div className="hp__head">
-        <div>
-          <b>ประวัติการรับบริการ</b>
-          <small>
-            {done.length} ครั้ง{done.length ? ` · Pain ลดเฉลี่ย ${avgDrop.toFixed(1)}` : ""}
-          </small>
-        </div>
-        <IconButton label="ปิด" variant="soft" size="sm" onClick={onClose}>
-          <X size={15} />
-        </IconButton>
-      </div>
-      <div className="hp__list scroll-y scroll-y--light">
-        {visits.map((a) => {
-          const s = store.serviceById(a.serviceId);
-          const t = store.therapistById(a.therapistId);
-          const meta = stageMeta(a);
-          return (
-            <div key={a.id} className={clsx("hp__row", a.date >= todayISO() && "is-upcoming")}>
-              <div className="hp__date">
-                <b>{thaiDateShort(a.date)}</b>
-                <small>{a.start} น.</small>
-              </div>
-              <div className="hp__body">
-                <div className="hp__top">
-                  <b>{s.short}</b>
-                  <span className={`hp__tag is-${meta.tone}`}>{meta.label}</span>
-                </div>
-                <small>
-                  {t.name}
-                  {a.bedId ? ` · เตียง ${a.bedId}` : ""}
-                </small>
-                {a.painAfter !== undefined && (
-                  <span className="hp__pain">
-                    Pain {a.painBefore} → <b>{a.painAfter}</b>
-                  </span>
-                )}
-                {(a.diagnoses?.length ?? 0) > 0 && (
-                  <p>
-                    <em>วินิจฉัย</em> {a.diagnoses!.map((d) => d.name).join(" · ")}
-                  </p>
-                )}
-                {(a.procedures?.length ?? 0) > 0 && (
-                  <p>
-                    <em>หัตถการ</em> {a.procedures!.map((x) => x.name + (x.area ? ` (${x.area})` : "")).join(" · ")}
-                  </p>
-                )}
-                {a.advice && <p className="hp__advice">“{a.advice}”</p>}
-              </div>
-            </div>
-          );
-        })}
-        {visits.length === 0 && <p className="tw-meta">ยังไม่มีประวัติ — มารับบริการครั้งแรก</p>}
-      </div>
     </div>
   );
 }

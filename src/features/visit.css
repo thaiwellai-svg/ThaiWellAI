@@ -94,7 +94,8 @@
   margin: 2px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
 }
 .vs__steps li {
   position: relative;
@@ -1486,4 +1487,7 @@
   background: var(--color-brand-tint);
   color: var(--color-brand);
   box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+.vs__q b.is-wait {
+  font: 700 13px/1.2 var(--font-sans);
 }

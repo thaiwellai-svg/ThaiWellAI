@@ -13,7 +13,7 @@ import { FilterMenu } from "../../features/FilterMenu";
 import { AppointmentDrawer, queueNumber, stageOf as visitStage } from "../../features/AppointmentDrawer";
 import { VoiceNote } from "../../features/VoiceNote";
 import { tuckDock } from "../../layout/Dock";
-import { PatientDrawer, PatientHealth } from "../../features/PatientDrawer";
+import { PatientHealth } from "../../features/PatientDrawer";
 import { isOverdue, jobRank, stageMeta, stageOf, type Stage } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { thaiDate, todayISO } from "../../data/thaiDate";
@@ -30,7 +30,6 @@ export default function Visits() {
   const [qrOpen, setQrOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [f, setF] = useState<F>("all");
-  const [patient, setPatient] = useState<string | null>(null);
   const [history, setHistory] = useState(false);
   // voice-summary side panel (treatment-record step)
   const [voice, setVoice] = useState(false);
@@ -186,7 +185,6 @@ export default function Visits() {
                 inline
                 id={selected}
                 onClose={() => setParams({})}
-                onOpenPatient={setPatient}
                 onNext={(n) => setParams({ id: n })}
                 onHistory={() => {
                   // opening the health box leaves full-screen mode
@@ -256,7 +254,6 @@ export default function Visits() {
             : []),
         ]}
       />
-      <PatientDrawer id={patient} onClose={() => setPatient(null)} />
     </WorkPage>
   );
 }

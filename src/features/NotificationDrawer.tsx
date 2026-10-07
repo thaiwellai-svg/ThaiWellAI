@@ -89,7 +89,7 @@ export function useNotificationDetail(id: string | null, onDone: () => void): De
                   ปฏิเสธ
                 </Button>
                 <Button size="lg" onClick={() => setApprove(request)}>
-                  พิจารณาอนุมัติ
+                  อนุมัติและจัดคิว
                 </Button>
               </>
             ) : (

@@ -29,6 +29,7 @@ import { ElementIcon } from "../../features/ElementIcon";
 import { ELEMENT_INFO, TH_MONTH, birthElement, type Element } from "../../data/elements";
 import { toAreas, type BodyArea } from "../../features/BodyMap";
 import idFace from "../../assets/cardreader/id_face.png";
+import { DEMO } from "../../data/mode";
 import "./patients.css";
 
 const areasOf = (xs: string[]) => [...new Set(xs.flatMap((x) => toAreas(x)))];
@@ -239,9 +240,12 @@ export default function Patients() {
         <>
           <SearchField className="phead-search" value={query} onChange={setQuery} />
           <FilterMenu value={filter} onChange={setFilter} options={STAT.map((f) => ({ value: f.key, label: f.label, count: stats[f.key], icon: f.icon }))} />
-          <IconButton label="อ่านบัตรประชาชน" onClick={() => setFindCard(true)}>
-            <IdCard size={20} strokeWidth={1.8} />
-          </IconButton>
+          {/* เครื่องอ่านบัตรยังเป็นข้อมูลจำลอง → มีเฉพาะโหมดสาธิต */}
+          {DEMO && (
+            <IconButton label="อ่านบัตรประชาชน" onClick={() => setFindCard(true)}>
+              <IdCard size={20} strokeWidth={1.8} />
+            </IconButton>
+          )}
           <IconButton label="เพิ่มผู้รับบริการ" variant="white" className="padd-btn" onClick={() => navigate("/patients/new")}>
             <UserPlus size={20} strokeWidth={1.8} />
           </IconButton>
@@ -693,7 +697,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
             {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
           </div>
           <div className="ap-col">
-            {!edit && (
+            {!edit && DEMO && (
               <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
                 <span className="ap-card__body">
                   <b>{fromCard ? "อ่านข้อมูลจากบัตรแล้ว" : "อ่านข้อมูลจากบัตรประชาชน"}</b>
