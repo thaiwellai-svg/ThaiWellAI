@@ -478,6 +478,10 @@ export function AppointmentDrawer({
               {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={appt.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
               {/* แจ้งอาการเพิ่มหลังเช็กอิน + ประวัติการประเมินในแอปหลายรอบ */}
               {view !== "done" && <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />}
+              {/* นัดตามคอร์สที่คลินิกลงให้ แต่ผู้ป่วยยังไม่ได้ประเมินก่อนนวดในแอป → ให้รู้ว่าข้อมูลยังไม่อัปเดต */}
+              {(view === "checkin" || view === "waiting" || view === "called") && appt.cloudId?.startsWith("cl-") && !appt.assessRounds?.length && (
+                <p className="vs__noassess">ผู้ป่วยยังไม่ได้ประเมินก่อนนวดในแอปสำหรับนัดนี้ · ข้อมูลสุขภาพเป็นของครั้งก่อน · สอบถามอาการ/คัดกรองที่เคาน์เตอร์</p>
+              )}
               {/* แนวทางที่แอปแนะนำ: ดูก่อนเริ่ม / ระหว่างรักษา / ตอนบันทึก */}
               {(view === "waiting" || view === "called" || view === "treating" || view === "assess") && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
               {view === "checkin" && (

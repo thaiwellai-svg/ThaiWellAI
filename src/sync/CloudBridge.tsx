@@ -55,6 +55,8 @@ const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
     pressure: (["เบา", "ปานกลาง", "หนัก"].includes(as.pressure ?? "") ? as.pressure : "ปานกลาง") as Intake["pressure"],
   };
 };
+/** ลายเซ็นบิล (ไม่ขึ้นกับลำดับคีย์ของ jsonb) */
+const billKey = (b?: CloudAppt["bill"] | null) => (b ? `${b.status}|${b.amount}|${b.receipt_no ?? ""}|${(b.lines ?? []).map((l) => `${l.name}:${l.amount}`).join(",")}` : "");
 /** ลายเซ็นของการประเมิน (เปลี่ยน = มีรอบใหม่ / แจ้งเพิ่ม) */
 const assessSig = (row: CloudAppt) => `${row.assessment?.rounds?.length ?? 0}|${row.assessment?.at ?? ""}|${row.assessment?.addenda?.length ?? 0}`;
 
@@ -222,7 +224,7 @@ export function CloudBridge() {
     const st = ref.current;
     known.current.set(row.id, row.status);
     if (row.plan?.summary) planSent.current.add(`${row.id}|${row.plan.summary}|${row.plan.course ? `${row.plan.course.used}/${row.plan.course.total}` : ""}`);
-    if (row.status === "billed" && row.bill) billSig.current.set(row.id, JSON.stringify(row.bill));
+    if (row.status === "billed" && row.bill) billSig.current.set(row.id, billKey(row.bill));
     const local = st.appointments.find((a) => a.cloudId === row.id);
     const prevSig = asSig.current.get(row.id);
     asSig.current.set(row.id, assessSig(row));
@@ -339,7 +341,8 @@ export function CloudBridge() {
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { screening: { fever: !!sc.fever, highBP: !!sc.highBP, bpSystolic: sc.bpSystolic, menstruation: !!sc.menstruation, pregnant: !!sc.pregnant, recentSurgery: !!sc.recentSurgery, contagious: !!sc.contagious } } });
     const who = st.patientById(local.patientId).name;
     // เช็กอินต้องสแกน QR ที่เคาน์เตอร์ (เปลี่ยนทุก 30 วินาที = มาถึงคลินิกจริง) · รหัสผิด/หมดอายุ/ไม่ใช่วันนัด → ส่งกลับให้สแกนใหม่
-    if (row.status === "checked_in" && !DEMO && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
+    // (เช็กอินที่เคาน์เตอร์ = เจ้าหน้าที่ออกคิวให้แล้ว → ไม่ต้องตรวจ QR)
+    if (row.status === "checked_in" && !DEMO && !local.checkinQueue && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
       const token = /^checkin:([A-Za-z0-9]+)/.exec(row.note ?? "")?.[1]?.toUpperCase();
       const secret = st.settings.checkinSecret;
       const reason = local.date !== todayISO() ? "นัดนี้ไม่ใช่วันนี้" : !token ? "ต้องสแกน QR เช็กอินที่เคาน์เตอร์" : !secret || !validCheckinCode(secret, token) ? "รหัส QR หมดอายุหรือไม่ถูกต้อง" : null;
@@ -565,7 +568,7 @@ export function CloudBridge() {
       const name = store.patientById(a.patientId).name;
       // แก้ยอดบิลระหว่างรอชำระ → แอปได้ยอดใหม่
       if (was === "billed" && d.status === "billed") {
-        const sig = JSON.stringify(d.patch.bill);
+        const sig = billKey(d.patch.bill);
         if (billSig.current.get(a.cloudId) !== sig) {
           const first = !billSig.current.has(a.cloudId);
           billSig.current.set(a.cloudId, sig);
@@ -580,7 +583,7 @@ export function CloudBridge() {
       const voided = (was === "paid" || was === "billed") && d.status === "recorded";
       if (was === d.status || (!back && !revive && !voided && rank(d.status) <= rank(was))) continue;
       known.current.set(a.cloudId, d.status);
-      if (d.patch.bill) billSig.current.set(a.cloudId, JSON.stringify(d.patch.bill));
+      if (d.patch.bill) billSig.current.set(a.cloudId, billKey(d.patch.bill));
       void updateAppt(a.cloudId, { status: d.status, ...d.patch, ...(voided ? { bill: null } : {}), ...(revive ? { note: null } : {}) })
         .then(() => logEvent("clinic", voided ? "bill.voided" : revive ? "booking.restored" : d.kind, { id: a.cloudId! }, name, voided ? "ยกเลิกใบเสร็จ · รอชำระใหม่" : revive ? `คืนนัด ${a.date} ${a.start} น.` : d.summary))
         .catch(() => known.current.set(a.cloudId!, was ?? "requested"));
