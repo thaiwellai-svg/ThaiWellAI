@@ -411,7 +411,27 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
     const sc = edit?.screening;
     // re-screening today: keep body areas and standing answers, measure vitals / fever / skin / pain again
     if (screenOnly) {
-      setScr({ ...emptyScr, pregnant: !!sc?.pregnant, recentSurgery: !!sc?.recentSurgery, numbness: !!sc?.numbness, bloodThinner: !!sc?.bloodThinner, pressure: sc?.pressure ?? "ปานกลาง", painAreas: areasOf(sc?.painAreas ?? []), avoidAreas: areasOf((sc?.avoid ?? "").split(/[,·]\s*/)) });
+      // นัดวันนี้ที่จองผ่านแอป → เติมจากที่ผู้ป่วยประเมินมา (จุดปวด/ห้ามนวดบนหุ่น · คะแนนปวด · ตั้งครรภ์ ผ่าตัด ไข้) เหลือวัดความดัน ชีพจร
+      const t = todayISO();
+      const visit = edit ? store.appointments.find((a) => a.patientId === edit.id && a.date === t && (a.intake || a.screening)) : undefined;
+      const i = visit?.intake;
+      const app = visit?.screening;
+      const uniq = (xs: BodyArea[]) => [...new Set(xs)];
+      const avoid = uniq([...areasOf((sc?.avoid ?? "").split(/[,·]\s*/)), ...areasOf(i?.avoidAreas ?? [])]);
+      setScr({
+        ...emptyScr,
+        fever: !!app?.fever || !!i?.fever,
+        pregnant: !!sc?.pregnant || !!app?.pregnant || !!i?.pregnant,
+        recentSurgery: !!sc?.recentSurgery || !!app?.recentSurgery || !!i?.surgery,
+        numbness: !!sc?.numbness || !!i?.numbness,
+        bloodThinner: !!sc?.bloodThinner || !!i?.bloodThinner,
+        pressure: i?.pressure ?? sc?.pressure ?? "ปานกลาง",
+        painAreas: uniq([...areasOf(i?.focusAreas ?? []), ...areasOf(sc?.painAreas ?? [])]).filter((a) => !avoid.includes(a)),
+        avoidAreas: avoid,
+        pain: i?.pain ?? visit?.painBefore ?? null,
+      });
+      // อาการวันนี้ = ที่ประเมินในแอปครั้งนี้ (ไม่ใช่อาการเก่าในประวัติ)
+      if (i?.complaint) setF((x) => ({ ...x, complaint: i.complaint }));
       setHold(null);
       setSkipScr(false);
       return;
