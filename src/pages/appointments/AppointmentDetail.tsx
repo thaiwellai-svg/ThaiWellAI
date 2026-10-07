@@ -288,7 +288,7 @@ export default function AppointmentDetail() {
                 <>
                   <VisitScreening p={p} app={a.screening} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
                   <AssessHistory rounds={a.assessRounds} addenda={a.addenda} />
-                  <AppGuideCard guide={a.appGuide} compact />
+                  <AppGuideCard guide={a.appGuide} areas={a.intake?.focusAreas} compact />
                 </>
               ) : (
                 <section className={clsx("adp__scr", !p.screening && !appFlags ? "is-none" : stop ? "is-stop" : flags.length ? "is-warn" : "is-ok")}>

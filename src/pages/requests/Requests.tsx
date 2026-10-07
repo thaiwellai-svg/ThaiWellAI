@@ -374,7 +374,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
 
         <aside className="rq2__side">
           <AssessHistory rounds={r.assessRounds} />
-          <AppGuideCard guide={r.appGuide} compact />
+          <AppGuideCard guide={r.appGuide} areas={r.intake?.focusAreas} compact />
           <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         </aside>
       </div>
@@ -443,7 +443,7 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
 
         <aside className="rq2__side">
           <AssessHistory rounds={r.assessRounds} />
-          <AppGuideCard guide={r.appGuide} compact />
+          <AppGuideCard guide={r.appGuide} areas={r.intake?.focusAreas} compact />
           <IntakeCard intake={intakeOfRequest(r, p)} sex={p.gender} element={elementProfile(p).birth} compact />
         </aside>
       </div>

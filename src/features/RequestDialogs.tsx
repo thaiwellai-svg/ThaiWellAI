@@ -67,12 +67,12 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
       }
     >
       {/* แผน/แนวทางการรักษาที่ผู้ป่วยได้รับในแอป → ดูก่อนอนุมัติ (เลือกบริการ/ผู้บำบัดให้ตรง) */}
-      {request.appGuide && (
+      {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) && !flags.some((f) => f.level === "stop") && (
         <section className="sec">
           <div className="sec__head">
             <h3 className="sec__title">แผนการรักษาที่ผู้ป่วยได้รับในแอป</h3>
           </div>
-          <AppGuideCard guide={request.appGuide} compact />
+          <AppGuideCard guide={request.appGuide} areas={request.intake?.focusAreas} compact />
         </section>
       )}
       <section className="sec">

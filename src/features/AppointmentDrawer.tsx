@@ -479,7 +479,7 @@ export function AppointmentDrawer({
               {/* แจ้งอาการเพิ่มหลังเช็กอิน + ประวัติการประเมินในแอปหลายรอบ */}
               {view !== "done" && <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />}
               {/* แนวทางที่แอปแนะนำ: ดูก่อนเริ่ม / ระหว่างรักษา / ตอนบันทึก */}
-              {(view === "waiting" || view === "called" || view === "treating" || view === "assess") && <AppGuideCard guide={appt.appGuide} compact />}
+              {(view === "waiting" || view === "called" || view === "treating" || view === "assess") && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
               {view === "checkin" && (
                 <>
                   <StepHead n={1} title="รอเช็กอินเข้ารับบริการ" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR เช็กอินที่เคาน์เตอร์ในแอป หรือกด “เช็กอินที่เคาน์เตอร์” · เช็กอินแล้วได้เลขคิวตามลำดับที่มาถึง" : "เช็กอินได้ในวันนัด"} />
