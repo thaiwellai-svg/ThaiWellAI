@@ -1795,3 +1795,18 @@
   border-color: var(--color-brand);
   color: var(--color-brand);
 }
+/* ปุ่มโทร / ข้อมูลสุขภาพ ในส่วนหัว (ขนาดเดียวกับ ⋯) */
+.vs__tool,
+.vs__tool.vs__hbtn {
+  flex-shrink: 0;
+  display: grid !important;
+  place-items: center;
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border: 1px solid var(--color-border);
+  background: var(--white);
+  box-shadow: none;
+}

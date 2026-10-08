@@ -405,7 +405,29 @@ export function AppointmentDrawer({
         leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={stageMeta(appt).color} pulse={view === "treating"} />}
         title={p.name}
         subtitle={`${p.hn} · ${p.gender} ${p.age} ปี`}
-        footer={footer}
+        footer={
+          <>
+            {/* โทร · ข้อมูลสุขภาพ · ⋯ แล้วปุ่มหลักของขั้น */}
+            {p.phone && (
+              <a className="vs__call vs__tool" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
+                <Phone size={17} />
+              </a>
+            )}
+            {(onHistory || onOpenPatient) && (
+              <button
+                type="button"
+                className={clsx("vs__hbtn vs__tool", onHistory && historyOpen && "is-on")}
+                aria-pressed={!!(onHistory && historyOpen)}
+                onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
+                aria-label="ข้อมูลสุขภาพ"
+                title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
+              >
+                <HeartPulse size={17} />
+              </button>
+            )}
+            {footer}
+          </>
+        }
       >
         <div className="vs">
           <section className="vs__summary">
@@ -419,23 +441,7 @@ export function AppointmentDrawer({
                 {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
               </small>
             </div>
-            {p.phone && (
-              <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
-                <Phone size={16} />
-              </a>
-            )}
-            {(onHistory || onOpenPatient) && (
-              <button
-                type="button"
-                className={clsx("vs__hbtn", onHistory && historyOpen && "is-on")}
-                aria-pressed={!!(onHistory && historyOpen)}
-                onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
-                aria-label="ข้อมูลสุขภาพ"
-                title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
-              >
-                <HeartPulse size={16} />
-              </button>
-            )}
+
 
           </section>
           <div className="vs__facts">
