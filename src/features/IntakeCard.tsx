@@ -199,7 +199,7 @@ export function IntakeCard({
           <span className="ik3__icon">
             <Hand size={14} />
           </span>
-          <small>แรงนวดที่ต้องการ</small>
+          <small>แรงนวด</small>
           <b>{i.pressure}</b>
           <span className="ik3__steps">
             {(["เบา", "ปานกลาง", "หนัก"] as const).map((lv, k) => (

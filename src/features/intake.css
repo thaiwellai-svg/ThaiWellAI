@@ -555,3 +555,14 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+/* ผลประเมินรวม: ปวด/ความดัน/ชีพจร/แรงนวด เป็นกล่องแยกกัน */
+.ik--merged .ik3 {
+  gap: 8px;
+}
+.ik--merged .ik3__tile {
+  padding: 12px;
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 1px var(--sage-100),
+    0 1px 3px rgb(31 42 34 / 5%);
+}
