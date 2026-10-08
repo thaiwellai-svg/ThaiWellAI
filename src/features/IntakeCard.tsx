@@ -5,7 +5,8 @@ import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { timeAgo } from "../data/thaiDate";
 import { intakeAlerts } from "../data/intake";
-import type { Intake } from "../data/types";
+import type { Intake, Screening } from "../data/types";
+import { SCREENING_QUESTIONS, type ScreeningFlag } from "../data/domain";
 import { toAreas, type BodyArea } from "./BodyMap";
 import { Body3D } from "./Body3D";
 import type { Element } from "../data/elements";
@@ -24,7 +25,26 @@ export function intakeBody(i: Intake) {
   return { heatmap, avoid };
 }
 
-export function IntakeCard({ intake: i, compact, sex, element, body = true, head = true }: { intake: Intake; compact?: boolean; sex?: "ชาย" | "หญิง"; element?: Element; /** show the 3D body (off when the page already shows it) */ body?: boolean; /** หัวการ์ด (ปิดเมื่อหน้านั้นมีหัวข้อของตัวเองแล้ว) */ head?: boolean }) {
+export function IntakeCard({
+  intake: i,
+  compact,
+  sex,
+  element,
+  body = true,
+  head = true,
+  screening,
+  screeningFlags = [],
+}: {
+  intake: Intake;
+  compact?: boolean;
+  sex?: "ชาย" | "หญิง";
+  element?: Element;
+  /** show the 3D body (off when the page already shows it) */ body?: boolean;
+  /** หัวการ์ด (ปิดเมื่อหน้านั้นมีหัวข้อของตัวเองแล้ว) */ head?: boolean;
+  /** แบบคัดกรองของคำขอ → รวมเป็นผลประเมินเดียว (สรุปบนสุด · รายข้อในคำตอบทั้งหมด) ไม่แสดงซ้ำ */
+  screening?: Screening;
+  screeningFlags?: ScreeningFlag[];
+}) {
   const { settings } = useStore();
   const [open, setOpen] = useState(!compact);
   const alerts = intakeAlerts(i, settings.bpThreshold);
@@ -64,10 +84,17 @@ export function IntakeCard({ intake: i, compact, sex, element, body = true, head
       ],
     },
   ];
+  if (screening) {
+    groups.unshift({ title: "คัดกรองก่อนนวด", icon: ShieldCheck, rows: SCREENING_QUESTIONS.map((q) => yn(q.label, !!screening[q.key])) });
+    // ไข้ / ตั้งครรภ์ อยู่ในข้อคัดกรองแล้ว
+    groups[2].rows = groups[2].rows.filter((r) => !/ไข้|ตั้งครรภ์/.test(r.k));
+  }
+  // ผลรวมของคัดกรอง + คำตอบที่ต้องระวัง (ไม่ซ้ำ)
+  const verdict = screening ? [...screeningFlags.map((f) => ({ label: f.label, level: f.level === "stop" ? "stop" : "warn" })), ...alerts].filter((a, k, arr) => arr.findIndex((x) => x.label === a.label) === k) : null;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
 
   return (
-    <section className={clsx("ik ik2", compact && "ik--compact")}>
+    <section className={clsx("ik ik2", compact && "ik--compact", screening && "ik--merged")}>
       {head && <div className="ik2__head">
         <span className="ik__icon">
           <Smartphone size={15} />
@@ -82,9 +109,24 @@ export function IntakeCard({ intake: i, compact, sex, element, body = true, head
         </span>
       </div>}
 
-      {body && <Body3D heatmap={heatmap} avoid={avoid} compact={compact} sex={sex} pain={i.pain} element={element} />}
+      {verdict && (
+        <div className={clsx("ik2__verdict", verdict.length ? (verdict.some((a) => a.level === "stop") ? "is-stop" : "is-warn") : "is-ok")}>
+          {verdict.length ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
+          {verdict.length ? (
+            <span>
+              <b>{verdict.some((a) => a.level === "stop") ? "พบข้อห้าม" : "ข้อควรระวัง"}</b> {verdict.map((a) => a.label).join(" · ")}
+            </span>
+          ) : (
+            <span>
+              <b>ผ่านคัดกรอง</b> ไม่พบข้อห้าม · วัดความดันอีกครั้งก่อนนวด
+            </span>
+          )}
+        </div>
+      )}
 
-      {alerts.length > 0 && (
+      {!verdict && body && <Body3D heatmap={heatmap} avoid={avoid} compact={compact} sex={sex} pain={i.pain} element={element} />}
+
+      {!verdict && alerts.length > 0 && (
         <ul className="ik__alerts">
           {alerts.map((a) => (
             <li key={a.label} className={`is-${a.level}`}>
@@ -166,6 +208,8 @@ export function IntakeCard({ intake: i, compact, sex, element, body = true, head
           </span>
         </div>
       </div>
+
+      {verdict && body && <Body3D heatmap={heatmap} avoid={avoid} compact={compact} sex={sex} element={element} />}
 
       {body && (
         <div className="ik__areas">

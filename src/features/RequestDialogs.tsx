@@ -5,7 +5,7 @@ import { useStore } from "../store/store";
 import { Avatar, Button, Chip, Dialog, Field, Input, Select, Textarea, useToast } from "../design-system";
 import { creditInfo, evaluateScreening, sameDayAppt } from "../data/domain";
 import { thaiDate, thaiDateLong, timeAgo, todayISO } from "../data/thaiDate";
-import { CreditPips, ScreeningAlert, ScreeningGrid } from "./widgets";
+import { CreditPips } from "./widgets";
 import { slotLoad } from "./slotLoad";
 import { patientPhoto } from "../data/avatars";
 import { useLatest } from "./useLatest";
@@ -82,7 +82,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <span>
             {s.name} {s.minutes} นาที · {store.therapistById(request.therapistId).name || "ไม่ระบุผู้บำบัด"}
           </span>
-          {request.note && (
+          {request.note && !/^AI ประเมิน/.test(request.note) && (
             <p className="apv__note">
               <MessageSquareText size={14} />
               {request.note}
@@ -95,22 +95,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <h3>
             ผลประเมินก่อนนวด <small>{timeAgo(intake.at)}</small>
           </h3>
-          <ScreeningAlert flags={flags} />
-          {flags.length ? (
-            <ScreeningGrid screening={request.screening} flags={flags} />
-          ) : (
-            <details className="apv__more">
-              <summary>ดูข้อคัดกรอง</summary>
-              <ScreeningGrid screening={request.screening} flags={flags} />
-            </details>
-          )}
-          {intake.complaint && (
-            <div className="apv__sym">
-              <b>“{intake.complaint}”</b>
-              <span>{[intake.duration && `เป็นมา ${intake.duration.replace(/^ประมาณ\s*/, "")}`, `ปวด ${intake.pain}/10`, intake.goal].filter(Boolean).join(" · ")}</span>
-            </div>
-          )}
-          <IntakeCard intake={intake} sex={p.gender} element={elementProfile(p).birth} compact head={false} />
+          <IntakeCard intake={intake} sex={p.gender} element={elementProfile(p).birth} compact head={false} screening={request.screening} screeningFlags={flags} />
         </section>
 
         {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) && !flags.some((f) => f.level === "stop") && (
