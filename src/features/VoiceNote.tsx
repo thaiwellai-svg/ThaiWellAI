@@ -112,6 +112,8 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const voiceId = store.settings.callVoice ?? DEFAULT_CALL_VOICE;
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [pain, setPain] = useState<number | undefined>(appt.painAfter);
+  /** ผู้ป่วยไม่ประเมินปวดหลังนวด (กดข้าม) → ไปข้อถัดไป ไม่ถามซ้ำ */
+  const [painSkipped, setPainSkipped] = useState(false);
   const [advice, setAdvice] = useState(appt.advice ?? "");
   const toast = useToast();
   const [thinking, setThinking] = useState(false);
@@ -149,8 +151,8 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const dx = appt.diagnoses ?? [];
   const pr = appt.procedures ?? [];
   const findings = appt.findings ?? "";
-  const latest = useRef({ findings, dx, pr, pain, advice });
-  latest.current = { findings, dx, pr, pain, advice };
+  const latest = useRef({ findings, dx, pr, pain, advice, painSkipped });
+  latest.current = { findings, dx, pr, pain, advice, painSkipped };
   const last = msgs[msgs.length - 1];
   const pending = last?.role === "ai" ? last.kind : undefined;
   // read through refs: voice mode finishes a turn from the mic callback, which closes over an older render
@@ -166,8 +168,15 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const fill = (patch: Omit<VoiceFill, "apptId">) => window.dispatchEvent(new CustomEvent<VoiceFill>(VOICE_FILL, { detail: { apptId: appt.id, ...patch } }));
   const savePain = (n: number) => {
     setPain(n);
-    latest.current = { ...latest.current, pain: n };
+    setPainSkipped(false);
+    latest.current = { ...latest.current, pain: n, painSkipped: false };
     fill({ painAfter: n });
+  };
+  const skipPain = () => {
+    setPain(undefined);
+    setPainSkipped(true);
+    latest.current = { ...latest.current, pain: undefined, painSkipped: true };
+    fill({ skipPain: true });
   };
   const saveAdvice = (t: string) => {
     setAdvice(t);
@@ -181,6 +190,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       const d = (e as CustomEvent<VoiceFill>).detail;
       if (d.apptId !== appt.id) return;
       if (d.painAfter !== undefined) setPain(d.painAfter);
+      setPainSkipped(!!d.skipPain && d.painAfter === undefined);
       if (d.advice !== undefined) setAdvice(d.advice);
     };
     window.addEventListener(RECORD_DRAFT, on);
@@ -212,7 +222,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     if (!l.findings.trim()) return "finding";
     if (!l.dx.length) return "dx";
     if (!l.pr.length) return "proc";
-    if (l.pain === undefined) return "pain";
+    if (l.pain === undefined && !l.painSkipped) return "pain";
     if (!l.advice.trim()) return "advice";
     return "summary";
   };
@@ -331,7 +341,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     }
     if (slot === "summary") {
       const l = latest.current;
-      const lack = [!l.findings.trim() && "อาการ", !l.dx.length && "วินิจฉัย", !l.pr.length && "หัตถการ", l.pain === undefined && "ปวดหลังนวด", !l.advice.trim() && "คำแนะนำ"].filter(Boolean);
+      const lack = [!l.findings.trim() && "อาการ", !l.dx.length && "วินิจฉัย", !l.pr.length && "หัตถการ", l.pain === undefined && !l.painSkipped && "ปวดหลังนวด", !l.advice.trim() && "คำแนะนำ"].filter(Boolean);
       const t = lack.length
         ? `${prefix}สรุปตอนนี้ค่ะ ยังขาด${lack.join(" ")} พิมพ์หรือพูดชื่อหัวข้อเพื่อบันทึกต่อได้เลยนะคะ`
         : `${prefix}ครบทุกเรื่องแล้วค่ะ ลองดูสรุปด้านล่าง แก้ได้ทุกช่อง แล้วกดบันทึกการรักษาได้เลยนะคะ`;
@@ -665,9 +675,10 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: undefined, diagnoses: [], procedures: [] }, log: "เริ่มบันทึกการรักษาใหม่" });
     window.dispatchEvent(new CustomEvent<VoiceFill>(VOICE_FILL, { detail: { apptId: appt.id, clear: true } }));
     setPain(undefined);
+    setPainSkipped(false);
     setAdvice("");
     setEditAdvice(false);
-    latest.current = { findings: "", dx: [], pr: [], pain: undefined, advice: "" };
+    latest.current = { findings: "", dx: [], pr: [], pain: undefined, advice: "", painSkipped: false };
     begin();
     toast({
       message: "ล้างบันทึกการรักษาและเริ่มใหม่แล้ว",
@@ -714,7 +725,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
     finding: findings.trim() || undefined,
     dx: dx.map((d) => d.name.replace(/\s*\(.*\)/, "")).join(", ") || undefined,
     proc: pr.map((x) => x.name.replace("เพื่อการรักษา", "รักษา").replace("เพื่อสุขภาพ", "สุขภาพ") + (x.minutes ? ` ${x.minutes}น.` : "")).join(", ") || undefined,
-    pain: pain !== undefined ? `${appt.painBefore} → ${pain}` : undefined,
+    pain: pain !== undefined ? `${appt.painBefore} → ${pain}` : painSkipped ? "ข้าม" : undefined,
     advice: advice.trim() ? `${advice.trim().split("\n").length} ข้อ` : undefined,
   };
   const steps = SET.map((x) => ({ ...x, value: value[x.slot] }));
@@ -783,7 +794,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   const summary = () => {
     const done = steps.filter((x) => x.value).length;
     const drop = pain !== undefined ? appt.painBefore - pain : 0;
-    const ready = pain !== undefined && dx.length > 0 && pr.length > 0;
+    const ready = (pain !== undefined || painSkipped) && dx.length > 0 && pr.length > 0;
     const row = (n: number, label: string, body: ReactNode, ok: boolean) => (
       <div className={clsx("rs2__row", ok && "is-ok")}>
         <i>{ok ? <Check size={11} strokeWidth={3.2} /> : n}</i>
@@ -879,16 +890,17 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
           <>
             <div className="rs2__pain">
               <b>
-                {appt.painBefore} <span>→</span> {pain ?? "?"}
+                {appt.painBefore} <span>→</span> {pain ?? (painSkipped ? "–" : "?")}
               </b>
+              {pain === undefined && painSkipped && <em>ไม่ได้ประเมิน (ผู้ป่วยประเมินในแอปทีหลังได้)</em>}
               {pain !== undefined && <em className={drop > 0 ? "is-down" : undefined}>{drop > 0 ? `ลดลง ${drop} (${Math.round((drop / Math.max(1, appt.painBefore)) * 100)}%)` : drop === 0 ? "เท่าเดิม" : `เพิ่มขึ้น ${-drop}`}</em>}
               <button type="button" className="rs2__link" onClick={() => setEditPain((v) => !v)}>
                 {editPain ? <Check size={12} /> : <Pencil size={12} />} {editPain ? "เสร็จ" : "แก้"}
               </button>
             </div>
-            {(editPain || pain === undefined) && <PainRow sm onPick={(n) => (savePain(n), setEditPain(false))} />}
+            {(editPain || (pain === undefined && !painSkipped)) && <PainRow sm onPick={(n) => (savePain(n), setEditPain(false))} />}
           </>,
-          pain !== undefined,
+          pain !== undefined || painSkipped,
         )}
         {row(5, "", adviceBox(false), !!advice.trim())}
         <button
@@ -933,7 +945,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             type="button"
             className="rc-skip"
             onClick={() => {
-              fill({ skipPain: true });
+              skipPain();
               say("me", "ข้าม (ไม่ได้ประเมินปวดหลังนวด)");
               void askNext();
             }}

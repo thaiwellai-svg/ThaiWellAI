@@ -127,8 +127,8 @@ export function AppointmentDrawer({
   }, [id]);
   // …and tell the chat what the form holds now
   useEffect(() => {
-    if (id) window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_DRAFT, { detail: { apptId: id, painAfter, advice } }));
-  }, [id, painAfter, advice]);
+    if (id) window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_DRAFT, { detail: { apptId: id, painAfter, advice, skipPain } }));
+  }, [id, painAfter, advice, skipPain]);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [useCredit, setUseCredit] = useState(true);
   // ending far earlier than the service time needs a reason

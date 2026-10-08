@@ -666,6 +666,23 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   });
 
   const chatIdle = async (p) => { await p.waitForTimeout(300); await p.waitForFunction(() => !document.querySelector('.rc-typing'), null, { timeout: 60000 }); await p.waitForTimeout(300); };
+  await check('N09', 'therapist', 'ผู้ป่วยไม่ประเมินปวดหลังนวด', 'แชท: กด “ข้าม” ที่ข้อปวด → ถามข้อคำแนะนำต่อ (ไม่ถามซ้ำ) → สรุปครบ → บันทึกได้', async (p, ex) => {
+    await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];delete a.painAfter;s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
+    await send('บ่าขวาตึง กดเจ็บ');
+    await send('ลมปลายปัตคาด');
+    await send('นวดรักษาเส้นอิทา 45 นาที');
+    await send('ใช่');
+    ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-skip').count()) === 1, 'ข้อปวดหลังนวดมีปุ่ม “ข้าม”');
+    await p.locator('.rc-msg.is-ai').last().locator('.rc-skip').click(); await chatIdle(p);
+    const lastAi = await p.locator('.rc-msg.is-ai').last().innerText();
+    ex(!(await p.locator('.rc-msg.is-ai').last().locator('.rc-pain button').count()) && /ข้อ 5\/5|คำแนะนำ/.test(lastAi), `ข้ามแล้วถามข้อคำแนะนำต่อ ไม่ถามปวดซ้ำ (${lastAi.replace(/\s+/g, ' ').slice(0, 60)})`);
+    const ticked = await p.locator('.rc-set li.is-done').count();
+    ex(ticked >= 4, `รายการคำถามติ๊กข้อปวดว่าข้ามแล้ว (${ticked}/5)`);
+  });
+
   await check('N03', 'therapist', 'จบการนวด ผู้บำบัดคุยกับผู้ช่วย AI', 'แชท: เล่า → AI ถามคะแนนปวด (component) → ร่างคำแนะนำ → สั่งแก้ → สรุป → บันทึก', async (p, ex) => {
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];s.__id=a.id;");
     const id = (await state(p)).__id;
