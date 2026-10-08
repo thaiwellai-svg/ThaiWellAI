@@ -318,3 +318,34 @@
 .apv__act > * {
   flex-shrink: 0;
 }
+/* ปุ่มโทรในการ์ดขอนัด */
+.apv__call {
+  position: absolute !important;
+  top: 14px;
+  right: 14px;
+  z-index: 2 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--color-brand);
+  font: 700 13px/1 var(--font-sans);
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+}
+.apv__call:active {
+  transform: scale(0.97);
+}
+.apv__call.is-none {
+  background: rgb(255 255 255 / 18%);
+  color: var(--white);
+  box-shadow: none;
+  font-weight: 600;
+}
+.apv__req .apv__call span {
+  color: inherit;
+  font: inherit;
+}
