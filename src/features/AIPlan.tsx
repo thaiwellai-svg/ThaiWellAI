@@ -277,43 +277,58 @@ ${THAI_MASSAGE_KNOWLEDGE}
                 <span className="aip-type">{plan.massageType}</span>
               </div>
               <p className="aip-hero__sum">{plan.summary}</p>
-              <div className="aip-hero__stats">
+              {/* จำนวนครั้ง · ความถี่ · ระยะเวลา — แถวละ 1 เรื่อง (ร่างแผนปรับได้ก่อนแพทย์อนุมัติ) */}
+              <dl className="aip-set">
                 <div>
-                  {/* ร่างแผน (ยังไม่อนุมัติ) → คลินิกปรับจำนวนครั้ง/ความถี่ให้เหมาะกับผู้ป่วยได้ */}
-                  {plan.approved ? (
-                    <b>{plan.sessions}</b>
-                  ) : (
-                    <span className="aip-step">
-                      <button type="button" aria-label="ลดจำนวนครั้ง" disabled={plan.sessions <= 1} onClick={() => editPlan({ sessions: plan.sessions - 1 })}>
-                        −
-                      </button>
-                      <b>{plan.sessions}</b>
-                      <button type="button" aria-label="เพิ่มจำนวนครั้ง" disabled={plan.sessions >= 20} onClick={() => editPlan({ sessions: plan.sessions + 1 })}>
-                        +
-                      </button>
-                    </span>
-                  )}
-                  <small>ครั้ง</small>
-                </div>
-                <div>
-                  {plan.approved ? (
-                    <b className="is-txt">{plan.frequency || "—"}</b>
-                  ) : (
-                    <span className="aip-freq">
-                      {[1, 2, 3].map((n) => (
-                        <button key={n} type="button" aria-pressed={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} onClick={() => editPlan({ frequency: `สัปดาห์ละ ${n} ครั้ง` })}>
-                          {n}/สัปดาห์
+                  <dt>จำนวนครั้ง</dt>
+                  <dd>
+                    {plan.approved ? (
+                      <b>{plan.sessions} ครั้ง</b>
+                    ) : (
+                      <span className="aip-step">
+                        <button type="button" aria-label="ลดจำนวนครั้ง" disabled={plan.sessions <= 1} onClick={() => editPlan({ sessions: plan.sessions - 1 })}>
+                          −
                         </button>
-                      ))}
-                    </span>
-                  )}
-                  <small>ความถี่</small>
+                        <b>{plan.sessions}</b>
+                        <button type="button" aria-label="เพิ่มจำนวนครั้ง" disabled={plan.sessions >= 20} onClick={() => editPlan({ sessions: plan.sessions + 1 })}>
+                          +
+                        </button>
+                        <small>ครั้ง</small>
+                      </span>
+                    )}
+                  </dd>
                 </div>
                 <div>
-                  <b>{plan.phases.length}</b>
-                  <small>ระยะ</small>
+                  <dt>ความถี่ / สัปดาห์</dt>
+                  <dd>
+                    {plan.approved ? (
+                      <b>{plan.frequency || "—"}</b>
+                    ) : (
+                      <span className="aip-freq" role="radiogroup" aria-label="ความถี่">
+                        {[1, 2, 3].map((n) => (
+                          <button key={n} type="button" role="radio" aria-checked={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} aria-pressed={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} onClick={() => editPlan({ frequency: `สัปดาห์ละ ${n} ครั้ง` })}>
+                            {n} ครั้ง
+                          </button>
+                        ))}
+                      </span>
+                    )}
+                  </dd>
                 </div>
-              </div>
+                <div>
+                  <dt>ระยะเวลา</dt>
+                  <dd>
+                    {(() => {
+                      const per = Number(/(\d+)/.exec(plan.frequency ?? "")?.[1] ?? 1) || 1;
+                      const weeks = Math.ceil(plan.sessions / per);
+                      return (
+                        <b>
+                          ประมาณ {weeks} สัปดาห์ <small>· {plan.phases.length} ระยะ</small>
+                        </b>
+                      );
+                    })()}
+                  </dd>
+                </div>
+              </dl>
             </div>
 
             {plan.referToDoctor && (
