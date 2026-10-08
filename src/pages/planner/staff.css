@@ -855,3 +855,17 @@ button.so-track:disabled {
     --sum: 48px;
   }
 }
+/* ป้าย "วันนี้" อยู่ใต้ชื่อวัน (ชื่อวันยาว เช่น พฤหัสบดี ไม่เบียด) */
+.pv-week {
+  --day: 92px;
+}
+.pv-row__day {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+}
+.pv-row__day em {
+  padding: 2px 7px;
+  font-size: 10px;
+}
