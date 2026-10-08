@@ -66,7 +66,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
             ปิด
           </Button>
           <Button variant="primary" size="lg" fill disabled={!canApprove} onClick={approve} leading={<CalendarCheck2 size={16} />}>
-            อนุมัติและจัดคิว
+            อนุมัติ
           </Button>
         </>
       }

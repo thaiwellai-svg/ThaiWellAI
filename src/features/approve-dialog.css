@@ -189,7 +189,7 @@
   min-width: 132px;
 }
 .apv .tw-overlay-foot > .tw-btn--primary {
-  min-width: 240px;
+  min-width: 180px;
 }
 @media (max-width: 900px) {
   .apv .tw-overlay-foot > .tw-btn--fill {
