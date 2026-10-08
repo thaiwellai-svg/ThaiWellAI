@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck2, CircleAlert, MessageSquareText } from "lucide-react";
+import { CalendarCheck2, CalendarDays, CircleAlert, MessageSquareText } from "lucide-react";
 import type { BookingRequest } from "../data/types";
 import { useStore } from "../store/store";
 import { Avatar, Button, Chip, Dialog, Field, Input, Textarea, useToast } from "../design-system";
@@ -88,6 +88,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
       <div className="apv__read scroll-y scroll-y--light">
         {/* คำขอ: วันเวลา · บริการ · ผู้บำบัด · หมายเหตุ */}
         <section className="apv__req">
+          <CalendarDays className="apv__req-bg" size={132} strokeWidth={1.4} aria-hidden />
           <small>ขอนัด</small>
           <b>
             {thaiDate(request.date)} · {request.start} น.

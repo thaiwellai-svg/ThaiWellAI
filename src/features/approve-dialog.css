@@ -295,3 +295,26 @@
 .apv__slots .slot.is-na[aria-pressed="true"] .slot__cap {
   color: var(--color-text-muted);
 }
+/* ไอคอนปฏิทินจาง ๆ โผล่จากขอบขวาของการ์ดขอนัด */
+.apv__req {
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.apv__req > :not(.apv__req-bg) {
+  position: relative;
+  z-index: 1;
+}
+.apv__req-bg {
+  position: absolute;
+  right: -26px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  color: var(--white);
+  opacity: 0.14;
+  pointer-events: none;
+}
+.apv__read > *,
+.apv__act > * {
+  flex-shrink: 0;
+}
