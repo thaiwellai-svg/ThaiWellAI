@@ -402,7 +402,7 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
           <h2 className="appt__title">ตารางรายคน</h2>
         </div>
         <Button size="md" className="so-define" leading={<CalendarCog size={16} />} onClick={onEdit}>
-          แก้ตารางประจำ
+          ปรับตารางงาน
         </Button>
       </div>
       <div className="so-person__body scroll-y scroll-y--light">
