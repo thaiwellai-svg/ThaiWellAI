@@ -820,6 +820,40 @@ export function AppointmentDrawer({
                 </div>
               );
             })()}
+            {/* ข้อมูลสุขภาพของผู้ป่วย (ทุกครั้งที่มา) → กดเปิดรายละเอียด */}
+            {(onHistory || onOpenPatient) && (() => {
+              const done = store.appointments.filter((x) => x.patientId === p.id && x.id !== appt.id && x.status === "done").sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`));
+              const last = done[0];
+              return (
+                <button type="button" className={clsx("vhc", onHistory && historyOpen && "is-on")} onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}>
+                  <div className="vcc__head">
+                    <span className="vcc__icon">
+                      <HeartPulse size={15} />
+                    </span>
+                    <b>ข้อมูลสุขภาพ</b>
+                    <small>{onHistory && historyOpen ? "ซ่อน" : "ดูทั้งหมด"} ›</small>
+                  </div>
+                  <div className="vhc__stats">
+                    <span>
+                      <b>{done.length}</b>
+                      <small>ครั้งที่มา</small>
+                    </span>
+                    <span>
+                      <b>{last ? `${last.painBefore}→${last.painAfter ?? "–"}` : "—"}</b>
+                      <small>ปวดล่าสุด</small>
+                    </span>
+                    <span>
+                      <b className="is-txt">{last ? thaiDateShort(last.date) : "ครั้งแรก"}</b>
+                      <small>มาล่าสุด</small>
+                    </span>
+                  </div>
+                  <div className="vcc__row">
+                    <small>แพ้</small>
+                    <span>{p.allergies?.length ? p.allergies.map((x) => <em key={x} className="is-allergy">{x}</em>) : <em>ไม่ได้ระบุ</em>}</span>
+                  </div>
+                </button>
+              );
+            })()}
           </section>
 
           {(appt.log?.length ?? 0) > 0 && (

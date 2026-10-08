@@ -2470,3 +2470,69 @@
   padding: 0 10px;
   font-size: 12px;
 }
+
+/* การ์ดข้อมูลสุขภาพ (กดเปิดกล่องข้อมูลสุขภาพ) */
+.vhc {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 1px var(--sage-100),
+    0 4px 14px rgba(0, 0, 0, 0.03);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+.vhc:hover,
+.vhc.is-on {
+  box-shadow:
+    inset 0 0 0 1.5px var(--color-brand),
+    0 6px 18px rgba(76, 132, 90, 0.12);
+}
+.vhc .vcc__head small {
+  color: var(--color-brand);
+  font-weight: 700;
+}
+.vhc__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.vhc__stats > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--sage-50);
+}
+.vhc__stats b {
+  font: 800 17px/1.2 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.vhc__stats b.is-txt {
+  font-size: 14px;
+  line-height: 20px;
+}
+.vhc__stats small {
+  font: 500 11px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vhc .vcc__head,
+.vhc .vcc__row {
+  width: 100%;
+}
+.vhc .vcc__head b {
+  flex: 1;
+}
+.vhc .vcc__row em,
+.vhc__stats small,
+.vhc .vcc__row > small {
+  white-space: nowrap;
+}
