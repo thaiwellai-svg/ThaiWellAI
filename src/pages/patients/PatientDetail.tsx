@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
-import { stageMeta, creditInfo, coursePrepaid } from "../../data/domain";
+import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
@@ -82,11 +82,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const [selling, setSelling] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [removing, setRemoving] = useState(false);
-  const planNext = p?.course
-    ? store.appointments
-        .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.calledAt && a.date >= today)
-        .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))[0]
-    : undefined;
+  // นัดถัดไปของคอร์ส (ตัวนับกลาง) → ปุ่มยกเลิกนัดตามแผน
+  const planNext = p?.course ? courseUsage(p, store.appointments)?.bookedVisits.find((a) => a.status === "waiting" && !a.calledAt && a.date >= today) : undefined;
 
   const visits = useMemo(
     () => (p ? store.appointments.filter((a) => a.patientId === p.id).sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start)) : []),
@@ -305,8 +302,10 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <div className="hx-tix" style={{ gridTemplateColumns: `repeat(${Math.min(credits.total, 10)}, minmax(0, 1fr))` }}>
                   {Array.from({ length: credits.total }, (_, k) => {
                     const st = k < credits.used ? "used" : k < credits.used + credits.booked ? "booked" : "free";
+                    const base = p.course!.base ?? 0;
+                    const v = st === "used" ? credits.usedVisits[k - base] : st === "booked" ? credits.bookedVisits[k - credits.used] : undefined;
                     return (
-                      <span key={k} className={`hx-tix__t is-${st}`}>
+                      <span key={k} className={`hx-tix__t is-${st}`} title={v ? `ครั้งที่ ${k + 1} · ${thaiDateShort(v.date)} ${v.start} น.` : undefined}>
                         {st === "used" ? <Check size={12} strokeWidth={3} /> : k + 1}
                       </span>
                     );
@@ -323,6 +322,30 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <i /> ว่าง {credits.remaining}
                   </span>
                 </div>
+                {/* นับจากนัดจริง: ครั้งไหนนับแล้ว/จองไว้ (นับเมื่อบันทึกการรักษา) */}
+                {(credits.used > 0 || credits.booked > 0) && (
+                  <details className="pd2__more pd2__visits">
+                    <summary>ดูรายครั้ง</summary>
+                    <ol>
+                      {(p.course.base ?? 0) > 0 && (
+                        <li>
+                          <b>1–{p.course.base}</b>
+                          <span>นับไว้ก่อนใช้ระบบ</span>
+                          <em className="is-used">ใช้แล้ว</em>
+                        </li>
+                      )}
+                      {[...credits.usedVisits, ...credits.bookedVisits].map((v) => (
+                        <li key={v.id}>
+                          <b>{credits.noOf(v.id)}</b>
+                          <span>
+                            {thaiDateShort(v.date)} · {v.start} น.
+                          </span>
+                          <em className={credits.usedVisits.includes(v) ? "is-used" : "is-booked"}>{credits.usedVisits.includes(v) ? "รักษาแล้ว" : "จองไว้"}</em>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
                 {/* วิธีชำระของคอร์ส: ชำระรายครั้ง หรือ ชำระล่วงหน้า (หักเครดิตทุกครั้ง) */}
                 <div className="pd2__bill" role="radiogroup" aria-label="วิธีชำระคอร์ส">
                   {(

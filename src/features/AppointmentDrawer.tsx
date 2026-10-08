@@ -186,7 +186,9 @@ export function AppointmentDrawer({
   // a course only pays for its own service
   // คอร์สชำระรายครั้ง → จ่ายทุกครั้ง (ไม่มีหักเครดิต) · คอร์สจ่ายล่วงหน้า → หักเครดิตได้
   const prepaid = coursePrepaid(p, store.biz.sales);
-  const coveredByCourse = prepaid && !!p.course && p.course.serviceId === appt.serviceId && !!credits && credits.total - credits.used > 0;
+  // ครั้งที่ของนัดนี้ในคอร์ส (นับตั้งแต่บันทึกการรักษา) → อยู่ในจำนวนครั้งของคอร์ส = หักเครดิตได้
+  const courseNo = credits && p.course?.serviceId === appt.serviceId ? credits.noOf(appt.id) : 0;
+  const coveredByCourse = prepaid && !!credits && courseNo > 0 && courseNo <= credits.total;
   const perVisitCourse = !prepaid && !!p.course && p.course.serviceId === appt.serviceId;
   const payByCredit = coveredByCourse && useCredit;
   // ค่าบริการ + หัตถการที่ทำเพิ่ม · หักเครดิตคอร์ส = หักเฉพาะค่าบริการ (หัตถการเพิ่มยังต้องจ่าย)
@@ -589,7 +591,7 @@ export function AppointmentDrawer({
                   price={s.price}
                   extras={extras}
                   unpriced={unpriced}
-                  course={coveredByCourse ? { name: p.course!.name, left: credits!.total - credits!.used, total: credits!.total } : null}
+                  course={coveredByCourse ? { name: p.course!.name, left: credits!.total - courseNo + 1, total: credits!.total } : null}
                   useCredit={useCredit}
                   setUseCredit={setUseCredit}
                   method={method}
@@ -598,11 +600,13 @@ export function AppointmentDrawer({
                   setReceived={setReceived}
                   patientName={p.name}
                   courseNote={
-                    perVisitCourse && credits
-                      ? `คอร์ส${p.course!.name} · ชำระรายครั้ง (ครั้งที่ ${Math.min(credits.total, credits.used + 1)}/${credits.total})`
-                      : p.course && !coveredByCourse && prepaid && credits && credits.total - credits.used > 0
+                    perVisitCourse && credits && courseNo > 0
+                      ? `คอร์ส${p.course!.name} · ชำระรายครั้ง (ครั้งที่ ${courseNo}/${credits.total})`
+                      : p.course && prepaid && p.course.serviceId !== appt.serviceId
                         ? `คอร์ส${p.course.name}ใช้กับบริการนี้ไม่ได้`
-                        : undefined
+                        : p.course && prepaid && courseNo > (credits?.total ?? 0)
+                          ? `เกินคอร์ส (ครั้งที่ ${courseNo}/${credits?.total}) · ชำระรายครั้ง`
+                          : undefined
                   }
                 />
                 </>

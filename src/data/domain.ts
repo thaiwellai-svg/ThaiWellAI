@@ -122,14 +122,71 @@ export function coursePrepaid(patient: Pick<Patient, "id" | "course">, sales: { 
   return !LIVE || sales.some((s) => s.patientId === patient.id);
 }
 
-export function creditInfo(patient: Patient, appointments: Appointment[]): CreditInfo | null {
-  if (!patient.course) return null;
+/** นัดนี้นับเป็นการใช้คอร์สแล้ว = บันทึกการรักษาแล้ว (หรือเสร็จสิ้น) */
+export const countsForCourse = (a: Appointment) => a.status === "done" || isRecorded(a);
+
+export interface CourseUsage extends CreditInfo {
+  /** ใช้แล้วเกินจำนวนครั้ง / ใช้แล้ว + จองไว้ เกินจำนวนครั้ง */
+  over: number;
+  /** นัดที่นับแล้ว (เก่า → ใหม่) · นัดที่จองไว้ (ใกล้ → ไกล) */
+  usedVisits: Appointment[];
+  bookedVisits: Appointment[];
+  /** ครั้งที่ของนัดนี้ในคอร์ส (0 = ไม่ใช่นัดของคอร์ส) */
+  noOf: (apptId: string) => number;
+}
+
+/**
+ * ตัวนับคอร์สตัวเดียวของทั้งระบบ — คิดจากนัดจริง ไม่ใช่ตัวเลขที่บวก/ลบทีละครั้ง
+ * นัดของคอร์ส = บริการเดียวกับคอร์ส · ตั้งแต่วันเริ่มคอร์ส · ไม่ยกเลิก/ไม่มา
+ *   ใช้แล้ว = base + นัดที่บันทึกการรักษาแล้ว · จองไว้ = นัดที่ยังไม่รักษา ตั้งแต่วันนี้ · เหลือ = ทั้งหมด − ใช้แล้ว − จองไว้
+ */
+export function courseUsage(patient: Pick<Patient, "id" | "course">, appointments: Appointment[]): CourseUsage | null {
+  const c = patient.course;
+  if (!c) return null;
   const today = todayISO();
-  const booked = appointments.filter(
-    (a) => a.patientId === patient.id && (a.status === "waiting" || a.status === "active") && a.date >= today,
-  ).length;
-  const { total, used } = patient.course;
-  return { total, used, booked, remaining: Math.max(0, total - used - booked) };
+  const mine = appointments
+    .filter((a) => a.patientId === patient.id && a.serviceId === c.serviceId && a.date >= c.startedOn && a.status !== "cancelled" && a.status !== "absent")
+    .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
+  const usedVisits = mine.filter(countsForCourse);
+  const bookedVisits = mine.filter((a) => !countsForCourse(a) && (a.status === "waiting" || a.status === "active") && a.date >= today);
+  // คอร์สเดิมที่ยังไม่มี base → ส่วนที่นับไว้เกินนัดจริง = นับไว้ก่อน
+  const base = c.base ?? Math.max(0, c.used - usedVisits.length);
+  const used = base + usedVisits.length;
+  const booked = bookedVisits.length;
+  const order = [...usedVisits, ...bookedVisits].map((a) => a.id);
+  return {
+    total: c.total,
+    used,
+    booked,
+    remaining: Math.max(0, c.total - used - booked),
+    over: Math.max(0, used + booked - c.total),
+    usedVisits,
+    bookedVisits,
+    noOf: (id) => {
+      const i = order.indexOf(id);
+      return i < 0 ? 0 : base + i + 1;
+    },
+  };
+}
+
+export function creditInfo(patient: Patient, appointments: Appointment[]): CourseUsage | null {
+  return courseUsage(patient, appointments);
+}
+
+/** ให้ course.used ของทุกคนตรงกับนัดจริง (คอร์สเดิมที่ยังไม่มี base → เก็บส่วนที่นับไว้ก่อนเป็น base ครั้งเดียว) */
+export function syncCourseCounts(patients: Patient[], appointments: Appointment[]): Patient[] {
+  let changed = false;
+  const out = patients.map((p) => {
+    const c = p.course;
+    if (!c) return p;
+    const counted = courseUsage({ id: p.id, course: { ...c, base: 0 } }, appointments)!.used;
+    const base = c.base ?? Math.max(0, c.used - counted);
+    const used = base + counted;
+    if (used === c.used && base === c.base) return p;
+    changed = true;
+    return { ...p, course: { ...c, base, used } };
+  });
+  return changed ? out : patients;
 }
 
 export interface RequestConflict {
@@ -231,4 +288,10 @@ export function bedName(settings: ClinicSettings, id?: string) {
     if (b) return `${r.name} · ${b.name}`;
   }
   return id;
+}
+
+/** นัดอื่นของผู้ป่วยวันเดียวกัน (1 คน 1 นัดต่อวัน) · ไม่นับนัดที่ยกเลิก/ไม่มา */
+export function sameDayAppt(appointments: Appointment[], patientId: string, date: string, exceptId?: string): Appointment | undefined {
+  if (!patientId || !date) return undefined;
+  return appointments.find((a) => a.patientId === patientId && a.date === date && a.id !== exceptId && a.status !== "cancelled" && a.status !== "absent");
 }

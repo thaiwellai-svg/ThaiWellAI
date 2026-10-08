@@ -112,7 +112,10 @@ export interface Course {
   name: string;
   serviceId: string;
   total: number;
+  /** ใช้ไปแล้ว = base + นัดของคอร์สที่บันทึกการรักษาแล้ว (คำนวณใหม่ทุกครั้งที่ข้อมูลเปลี่ยน · ดู courseUsage) */
   used: number;
+  /** ครั้งที่นับไว้ก่อน ที่ไม่มีนัดในระบบ (คอร์สเก่า/ย้ายข้อมูล) */
+  base?: number;
   /** ISO date the treatment plan was opened by the Thai traditional doctor */
   startedOn: string;
   expiresOn: string;

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarPlus, Check, CircleAlert, Footprints, Phone, UserPlus } from "lucide-react";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Field, Input, SearchField, Segmented, Select, useToast } from "../design-system";
-import { creditInfo, requestConflicts, shiftsOn, staffState, type StaffState } from "../data/domain";
+import { creditInfo, requestConflicts, sameDayAppt, shiftsOn, staffState, type StaffState } from "../data/domain";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
 import { addISODays, fromISODate, thaiDate, thaiDateLong, timeRange, toMinutes, todayISO } from "../data/thaiDate";
 import type { VisitType } from "../data/types";
@@ -121,10 +121,11 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
   const patient = patientId ? store.patientById(patientId) : null;
   const credits = patient ? creditInfo(patient, store.appointments) : null;
   const service = store.serviceById(serviceId);
-  const clash = patient ? store.appointments.some((a) => a.patientId === patient.id && a.date === date && (a.status === "waiting" || a.status === "active")) : false;
+  // 1 คน 1 นัดต่อวัน → มีนัดวันนี้แล้ว (ยังไม่ยกเลิก) = จองเพิ่มไม่ได้
+  const clash = patient ? sameDayAppt(store.appointments, patient.id, date) : undefined;
   const full = !!start && freeTherapists.length === 0;
   const therapist = therapistId ? store.therapistById(therapistId) : null;
-  const canSave = !!patient && !!start && !!therapistId && !full && !isPastSlot(date, start);
+  const canSave = !!patient && !!start && !!therapistId && !full && !clash && !isPastSlot(date, start);
 
   const regValid = !!reg && !!reg.first.trim() && !!reg.last.trim() && Number(reg.age) > 0 && /^[0-9-]{9,12}$/.test(reg.phone);
   const startReg = () => {
@@ -523,11 +524,11 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
             </div>
           )}
           {clash && (
-            <div className="alert alert--caution">
+            <div className="alert alert--stop">
               <CircleAlert size={16} />
               <div>
-                <b>ผู้ป่วยมีนัดในวันนี้อยู่แล้ว</b>
-                ตรวจว่าไม่ได้จองซ้ำ
+                <b>มีนัดวันนี้แล้ว {clash.start} น.</b>
+                1 คนจองได้วันละ 1 นัด · เลือกวันอื่น หรือเลื่อนนัดเดิม
               </div>
             </div>
           )}

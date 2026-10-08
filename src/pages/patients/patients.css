@@ -2947,3 +2947,42 @@
     grid-column: 1 / -1;
   }
 }
+
+/* คอร์ส: รายครั้งที่นับแล้ว / จองไว้ */
+.pd2__visits ol {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.pd2__visits li {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  font: 500 12.5px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.pd2__visits li b {
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.pd2__visits li em {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 11.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--sage-50);
+  color: var(--color-text-muted);
+}
+.pd2__visits li em.is-used {
+  background: var(--color-brand-soft, var(--sage-50));
+  color: var(--color-brand);
+}
+.pd2__visits li em.is-booked {
+  background: #fdf3d8;
+  color: #9a6b00;
+}

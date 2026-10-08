@@ -3,7 +3,7 @@ import { CalendarCheck2, CircleAlert } from "lucide-react";
 import type { BookingRequest } from "../data/types";
 import { useStore } from "../store/store";
 import { Avatar, Button, Chip, Dialog, Field, Input, Select, Textarea, useToast } from "../design-system";
-import { creditInfo, evaluateScreening } from "../data/domain";
+import { creditInfo, evaluateScreening, sameDayAppt } from "../data/domain";
 import { thaiDate, thaiDateLong, timeAgo, todayISO } from "../data/thaiDate";
 import { CreditPips, ScreeningAlert, ScreeningGrid } from "./widgets";
 import { slotLoad } from "./slotLoad";
@@ -39,7 +39,9 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   const credits = creditInfo(p, store.appointments);
   const noCredit = credits !== null && credits.remaining === 0;
   const chosen = slots.find((x) => x.time === start);
-  const canApprove = Boolean(date && start && chosen && chosen.free > 0);
+  // 1 คน 1 นัดต่อวัน
+  const sameDay = sameDayAppt(store.appointments, p.id, date, request.courseVisitId);
+  const canApprove = Boolean(date && start && chosen && chosen.free > 0 && !sameDay);
 
   const approve = () => {
     store.dispatch({ type: "approve", id: request.id, patch: { date, start, therapistId, serviceId: request.serviceId } });
@@ -66,6 +68,15 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
         </>
       }
     >
+      {sameDay && (
+        <div className="alert alert--stop">
+          <CircleAlert size={16} />
+          <div>
+            <b>มีนัดวันนี้แล้ว {sameDay.start} น.</b>
+            1 คนจองได้วันละ 1 นัด · เลือกวันอื่น หรือปฏิเสธคำขอนี้
+          </div>
+        </div>
+      )}
       {request.note && (
         <div className="alert alert--info">
           <CircleAlert size={16} />

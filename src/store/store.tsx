@@ -8,7 +8,7 @@ import { defaultBiz, type Biz } from "../data/biz";
 import { DEMO } from "../data/mode";
 import { beat, BRIDGE_KEY, publishAvailability, sendToApp, takeNewAppEvents, type AppEvent } from "../features/appBridge";
 import { slotLoad } from "../features/slotLoad";
-import { staffState, coursePrepaid } from "../data/domain";
+import { staffState, syncCourseCounts } from "../data/domain";
 
 export interface State {
   version: number;
@@ -131,7 +131,6 @@ function load(): State {
   return fresh();
 }
 
-const byCredit = (a: Appointment) => (a.payment?.method === "credit" || !!a.payment?.credit) && a.payment.status === "paid";
 
 let uid = Date.now();
 const nextId = (p: string) => `${p}${(uid++).toString(36)}`;
@@ -207,44 +206,22 @@ function reducer(state: State, action: Action): State {
         decisions: state.decisions.filter((d) => d.request.id !== action.request.id),
       };
     case "setStatus": {
-      let patients = state.patients;
-      const appointments = state.appointments.map((a) => {
-        if (a.id !== action.id) return a;
-        // Completing a session consumes one course credit; undoing it refunds.
-        const wasDone = a.status === "done";
-        const isDone = action.status === "done";
-        if (wasDone !== isDone) {
-          patients = patients.map((p) =>
-            p.id === a.patientId && p.course ? { ...p, course: { ...p.course, used: Math.max(0, p.course.used + (isDone ? 1 : -1)) } } : p,
-          );
-        }
-        return { ...a, status: action.status, painAfter: isDone ? (action.painAfter ?? a.painAfter) : a.painAfter };
-      });
-      return { ...state, appointments, patients };
+      // จำนวนครั้งของคอร์สนับใหม่จากนัดจริงหลังทุกการเปลี่ยนแปลง (syncCourseCounts ใน auditedReducer)
+      const appointments = state.appointments.map((a) =>
+        a.id !== action.id ? a : { ...a, status: action.status, painAfter: action.status === "done" ? (action.painAfter ?? a.painAfter) : a.painAfter },
+      );
+      return { ...state, appointments };
     }
     case "updateAppointment":
     case "restoreAppointment": {
       const id = action.type === "updateAppointment" ? action.id : action.appointment.id;
-      let patients = state.patients;
       const appointments = state.appointments.map((a) => {
         if (a.id !== id) return a;
-        const next: Appointment =
-          action.type === "updateAppointment"
-            ? { ...a, ...action.patch, log: action.log ? [...(a.log ?? []), { at: new Date().toISOString(), label: action.log }] : a.log }
-            : action.appointment;
-        // a course credit is used only when the visit is paid *with* the credit; cancelling that receipt (or undo) gives it back
-        const owner = state.patients.find((x) => x.id === a.patientId);
-        const perVisit = !!owner?.course && !coursePrepaid(owner, state.biz.sales) && owner.course.serviceId === next.serviceId;
-        // คอร์สชำระรายครั้ง: นับ 1 ครั้งเมื่อรักษาเสร็จ (ไม่ใช่ตอนหักเครดิต)
-        const wasCredit = perVisit ? a.status === "done" : byCredit(a);
-        const isCredit = perVisit ? next.status === "done" : byCredit(next);
-        if (wasCredit !== isCredit)
-          patients = patients.map((p) =>
-            p.id === a.patientId && p.course ? { ...p, course: { ...p.course, used: Math.max(0, p.course.used + (isCredit ? 1 : -1)) } } : p,
-          );
-        return next;
+        return action.type === "updateAppointment"
+          ? { ...a, ...action.patch, log: action.log ? [...(a.log ?? []), { at: new Date().toISOString(), label: action.log }] : a.log }
+          : action.appointment;
       });
-      return { ...state, appointments, patients };
+      return { ...state, appointments };
     }
     case "togglePaid":
       return { ...state, appointments: state.appointments.map((a) => (a.id === action.id ? { ...a, paid: !a.paid } : a)) };
@@ -486,7 +463,26 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
     case "updatePatient": {
       const k = Object.keys(action.patch);
       const NAMES: Record<string, string> = { photo: "รูปโปรไฟล์", course: "คอร์ส", aiPlan: "แผนการรักษา AI", documents: "เอกสารแนบ", birthMonth: "เดือนเกิด", complaint: "อาการสำคัญ", conditions: "โรคประจำตัว", allergies: "การแพ้", phone: "เบอร์โทร" };
-      return { cat: "ผู้ป่วย", text: `แก้ไข ${k.map((x) => NAMES[x] ?? x).join(", ")}`, patientId: action.id };
+      // คอร์สเปลี่ยน → บอกว่าเปลี่ยนอะไร (เปิดใหม่ · ต่อ/เพิ่มครั้ง · วิธีชำระ · ปิด)
+      const prevC = prev.patients.find((p) => p.id === action.id)?.course;
+      const nextC = action.patch.course;
+      const courseText = !("course" in action.patch)
+        ? ""
+        : !nextC
+          ? `ปิดคอร์ส ${prevC?.name ?? ""}`.trim()
+          : !prevC || prevC.startedOn !== nextC.startedOn || prevC.serviceId !== nextC.serviceId
+            ? `เปิดคอร์ส ${nextC.name} · ${nextC.total} ครั้ง · ${nextC.billing === "prepaid" ? "ชำระล่วงหน้า" : "ชำระรายครั้ง"}`
+            : [
+                nextC.total !== prevC.total ? `คอร์ส ${prevC.total} → ${nextC.total} ครั้ง` : "",
+                nextC.billing !== prevC.billing ? `วิธีชำระคอร์ส: ${nextC.billing === "prepaid" ? "ชำระล่วงหน้า" : "ชำระรายครั้ง"}` : "",
+                nextC.expiresOn !== prevC.expiresOn ? `หมดอายุ ${nextC.expiresOn}` : "",
+              ]
+                .filter(Boolean)
+                .join(" · ");
+      const rest = k.filter((x) => x !== "course");
+      const text = [courseText, rest.length ? `แก้ไข ${rest.map((x) => NAMES[x] ?? x).join(", ")}` : ""].filter(Boolean).join(" · ");
+      if (!text) return null;
+      return { cat: "ผู้ป่วย", text, patientId: action.id };
     }
     case "updateSettings":
       return { cat: "ตั้งค่า", text: `แก้ไข ${Object.keys(action.patch).map((k) => SETTING[k] ?? k).join(", ")}` };
@@ -527,8 +523,11 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
 
 /** every change goes through here so the audit trail can't be skipped */
 function auditedReducer(state: State, action: Action): State {
-  const next = reducer(state, action);
-  if (next === state) return state;
+  const reduced = reducer(state, action);
+  if (reduced === state) return state;
+  // ตัวนับคอร์สตัวเดียว: ใช้ไป = นัดของคอร์สที่บันทึกการรักษาแล้ว (ทุกหน้า + แอปใช้ค่าเดียวกัน)
+  const synced = syncCourseCounts(reduced.patients, reduced.appointments);
+  const next = synced === reduced.patients ? reduced : { ...reduced, patients: synced };
   const d = describe(state, action);
   if (!d) return next;
   const entry: AuditEntry = { id: `log${(uid++).toString(36)}`, at: new Date().toISOString(), by: state.settings.staffName, ...(d.patientId ? d : { cat: d.cat, text: d.text }) };
@@ -679,7 +678,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const patientMap = useMemo(() => new Map(state.patients.map((p) => [p.id, p])), [state.patients]);
   // ไม่พบ (เช่น คลินิกใหม่ยังไม่มีข้อมูล / ถูกลบ) → ค่าว่างที่แสดงผลได้ ไม่ให้หน้าพัง
-  const patientById = useCallback((id: string) => patientMap.get(id) ?? state.patients[0] ?? MISSING_PATIENT, [patientMap, state.patients]);
+  const patientById = useCallback((id: string) => patientMap.get(id) ?? MISSING_PATIENT, [patientMap, state.patients]);
 
   const serviceById = useCallback(
     (id: string) => state.services.find((x) => x.id === id) ?? SERVICES.find((x) => x.id === id) ?? state.services[0] ?? SERVICES[0],

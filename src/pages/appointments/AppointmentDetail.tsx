@@ -4,7 +4,7 @@ import { AssessHistory } from "../../features/AssessHistory";
 import { useEffect, useMemo, useState } from "react";
 import { extraTotal, visitTotal } from "../../features/billing";
 import { useNavigate, useParams } from "react-router-dom";
-import { CalendarClock, CalendarX2, ClipboardList, History, MessageSquareText, Phone, Play, ReceiptText, ShieldAlert, ShieldCheck, Stethoscope, Ticket, Undo2, UserRound } from "lucide-react";
+import { CalendarClock, CalendarX2, CircleAlert, ClipboardList, History, MessageSquareText, Phone, Play, ReceiptText, ShieldAlert, ShieldCheck, Stethoscope, Ticket, Undo2, UserRound } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Button, Dialog, EmptyState, Field, Input, Select, useToast } from "../../design-system";
@@ -13,7 +13,7 @@ import { BackLead } from "../../layout/BackLead";
 import { CancelDialog } from "../../features/CancelDialog";
 import { ReceiptDialog } from "../../features/Receipt";
 import { slotLoad } from "../../features/slotLoad";
-import { bedName, creditInfo, evaluateScreening, stageMeta, staffState } from "../../data/domain";
+import { bedName, creditInfo, evaluateScreening, sameDayAppt, stageMeta, staffState } from "../../data/domain";
 import { VisitScreening } from "../../features/ScreeningAlert";
 import { screeningFlags } from "../../data/counterScreening";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
@@ -57,14 +57,10 @@ export default function AppointmentDetail() {
   const flags = p.screening ? screeningFlags(p.screening, store.settings.bpThreshold) : (appFlags ?? []);
   const stop = flags.some((f) => f.level === "stop");
 
-  // booked sessions of the current treatment plan: each upcoming appointment holds one course credit (see creditInfo)
-  const plan = p.course
-    ? store.appointments
-        .filter((x) => x.patientId === p.id && (x.status === "waiting" || x.status === "active") && x.date >= todayISO())
-        .sort((x, y) => (x.date + x.start).localeCompare(y.date + y.start))
-    : [];
-  const idx = plan.findIndex((x) => x.id === a.id);
-  const sessionNo = idx >= 0 && p.course ? p.course.used + idx + 1 : 0;
+  // นัดที่จองไว้ของคอร์ส (ตัวนับกลาง)
+  const plan = credits?.bookedVisits ?? [];
+  // ครั้งที่ของคอร์ส จากตัวนับกลาง (นัดจริง)
+  const sessionNo = credits ? credits.noOf(a.id) : 0;
 
   return (
     <WorkPage eyebrow="ตารางนัด" title="รายละเอียดนัด" bell={false} lead={<BackLead eyebrow={`ตารางนัด · ${p.name}`} title="รายละเอียดนัด" onBack={back} />}>
@@ -213,7 +209,7 @@ export default function AppointmentDetail() {
                 )}
               </section>
 
-              {p.course && sessionNo > 0 && (
+              {p.course && credits && sessionNo > 0 && (
                 <section className="adp__card">
                   <header>
                     <Ticket size={15} /> แผนการรักษา
@@ -224,13 +220,13 @@ export default function AppointmentDetail() {
                   <p className="adp__muted">{p.course.name}</p>
                   <div className="adp__track">
                     {Array.from({ length: p.course.total }, (_, k) => {
-                      const used = k < p.course!.used;
-                      const booked = plan[k - p.course!.used];
+                      const used = k < credits!.used;
+                      const booked = plan[k - credits!.used];
                       return (
                         <button
                           key={k}
                           type="button"
-                          className={clsx(used && "is-used", booked && "is-booked", booked?.id === a.id && "is-this")}
+                          className={clsx(used && "is-used", booked && "is-booked", k === sessionNo - 1 && "is-this")}
                           disabled={!booked || booked.id === a.id}
                           onClick={() => booked && navigate(`/appointments/${booked.id}`, { replace: true })}
                           title={booked ? `${thaiDateShort(booked.date)} ${booked.start}` : undefined}
@@ -364,6 +360,8 @@ function RescheduleDialog({ appt, onClose }: { appt: Appointment | null; onClose
   const t = store.therapistById(tid);
   const st = time ? staffState(t, { date, start: time, serviceId: appt.serviceId }, others) : "free";
   const same = date === appt.date && time === appt.start && tid === appt.therapistId;
+  // 1 คน 1 นัดต่อวัน → วันใหม่มีนัดอื่นแล้ว = เลื่อนไปวันนั้นไม่ได้
+  const sameDay = sameDayAppt(store.appointments, appt.patientId, date, appt.id);
 
   const save = () => {
     store.dispatch({ type: "updateAppointment", id: appt.id, patch: { date, start: time, therapistId: tid }, log: `เลื่อนนัด ${thaiDateShort(appt.date)} ${appt.start} → ${thaiDateShort(date)} ${time} น.` });
@@ -383,7 +381,7 @@ function RescheduleDialog({ appt, onClose }: { appt: Appointment | null; onClose
           <Button variant="outline" size="md" onClick={onClose}>
             กลับ
           </Button>
-          <Button size="md" disabled={!time || same} leading={<CalendarClock size={16} />} onClick={save}>
+          <Button size="md" disabled={!time || same || !!sameDay} leading={<CalendarClock size={16} />} onClick={save}>
             ยืนยันเลื่อนนัด
           </Button>
         </>
@@ -392,6 +390,15 @@ function RescheduleDialog({ appt, onClose }: { appt: Appointment | null; onClose
       <Field label="วันที่">
         <Input type="date" min={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
       </Field>
+      {sameDay && (
+        <div className="alert alert--stop">
+          <CircleAlert size={16} />
+          <div>
+            <b>วันนี้มีนัดอื่นแล้ว {sameDay.start} น.</b>
+            1 คนจองได้วันละ 1 นัด · เลือกวันอื่น
+          </div>
+        </div>
+      )}
       <div className="ad__slots">
         <small>เวลา (จำนวนเตียงว่าง)</small>
         <div>

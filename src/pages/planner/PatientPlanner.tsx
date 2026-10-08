@@ -6,7 +6,7 @@ import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, IconButton, Select, spring, useToast } from "../../design-system";
 import { useLatest } from "../../features/useLatest";
 import { slotLoad } from "../../features/slotLoad";
-import { creditInfo, staffState } from "../../data/domain";
+import { creditInfo, sameDayAppt, staffState } from "../../data/domain";
 import { slotTimes } from "../../data/seed";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
 import { TH_WEEKDAYS_SHORT, addDays, diffDays, fromISODate, startOfWeek, thaiDateLong, thaiMonthYear, toISODate, todayISO } from "../../data/thaiDate";
@@ -60,14 +60,15 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
   const renewSessions = patient.aiPlan?.sessions ?? patient.course?.total ?? 6;
   const renew = () => {
     if (!patient.course || !credits) return;
-    const name = patient.course.name.replace(/\d+\s*ครั้ง/, `${renewSessions} ครั้ง`);
+    // ต่อคอร์ส = เพิ่มครั้งในคอร์สเดิม (ไม่ล้างที่ใช้ไปแล้ว) · ชื่อคอร์สตามจำนวนจริง · ยืดวันหมดอายุ
+    const total = patient.course.total + renewSessions;
+    const name = /\d+\s*ครั้ง/.test(patient.course.name) ? patient.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) : `${patient.course.name} ${total} ครั้ง`;
     store.dispatch({
       type: "updatePatient",
       id: patient.id,
-      // already-booked visits stay on the old course, so the new one starts with its full count free
-      patch: { course: { ...patient.course, name, total: renewSessions + credits.booked, used: 0, startedOn: today, expiresOn: toISODate(addDays(new Date(), 90)) } },
+      patch: { course: { ...patient.course, name, total, expiresOn: toISODate(addDays(new Date(), 90)) } },
     });
-    toast({ message: `เปิดคอร์สใหม่ ${renewSessions} ครั้งแล้ว · ให้แพทย์ยืนยันแผน` });
+    toast({ message: `ต่อคอร์ส +${renewSessions} ครั้ง · รวม ${total} ครั้ง` });
   };
   const upcoming = useMemo(
     () => store.appointments.filter((a) => a.patientId === patientId && a.date >= today && (a.status === "waiting" || a.status === "active")).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)),
@@ -112,8 +113,12 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
     const draft = { date: iso, start, therapistId: freeTherapist(iso, start, prefer?.therapistId) };
     setDrafts((ds) => [...ds, draft].sort((a, b) => a.date.localeCompare(b.date)));
   };
+  // 1 คน 1 นัดต่อวัน → วันที่มีนัดอยู่แล้ว เลือกเพิ่มไม่ได้
+  const dayTaken = (iso: string) => sameDayAppt(store.appointments, patient.id, iso);
   const toggle = (iso: string) => {
     if (drafts.some((d) => d.date === iso)) return setDrafts((ds) => ds.filter((d) => d.date !== iso));
+    const taken = dayTaken(iso);
+    if (taken) return toast({ message: `วันนี้มีนัดแล้ว ${taken.start} น. · 1 คนจองได้วันละ 1 นัด`, tone: "danger" });
     if (limitReached) return toast({ message: `เลือกได้ไม่เกิน ${remaining} ครั้ง`, tone: "danger" });
     add(iso);
   };
@@ -134,7 +139,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
       const iso = cursor;
       const tooClose = [...mine.filter((a) => a.date >= today && a.status === "waiting").map((a) => a.date), ...picked.map((p) => p.date)].some((x) => Math.abs(diffDays(x, iso)) < minGap);
       const start = firstSlot(iso, prefer);
-      if (iso >= today && !store.settings.closedWeekdays.includes(fromISODate(iso).getDay()) && !tooClose && start) {
+      if (iso >= today && !store.settings.closedWeekdays.includes(fromISODate(iso).getDay()) && !tooClose && !dayTaken(iso) && start) {
         picked.push({ date: iso, start, therapistId: freeTherapist(iso, start, picked[picked.length - 1]?.therapistId) });
         cursor = toISODate(addDays(fromISODate(iso), planGap));
       } else cursor = toISODate(addDays(fromISODate(iso), 1));
@@ -144,7 +149,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
   };
 
   const save = () => {
-    const ok = drafts.filter((d) => d.start && d.therapistId);
+    const ok = drafts.filter((d) => d.start && d.therapistId && !dayTaken(d.date));
     store.dispatch({
       type: "schedule",
       items: ok.map((d) => ({

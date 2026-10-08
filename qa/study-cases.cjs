@@ -76,8 +76,16 @@ async function registerViaCard(p) {
 // ผู้ป่วยที่มีคอร์สและนัดล่วงหน้ามากที่สุด (ไม่ใช่ผู้ใช้แอปตัวอย่าง — นัดของเขาอยู่ใน cloud)
 async function coursePatient(p) {
   const s = await state(p);
-  const n = (pt) => s.appointments.filter((a) => a.patientId === pt.id && a.status === 'waiting' && !a.calledAt && a.date > today()).length;
+  // นัดของคอร์ส = บริการเดียวกับคอร์ส ตั้งแต่วันเริ่มคอร์ส (ตัวนับกลาง)
+  const n = (pt) => s.appointments.filter((a) => a.patientId === pt.id && a.serviceId === pt.course.serviceId && a.date >= pt.course.startedOn && a.status === 'waiting' && !a.calledAt && a.date > today()).length;
   return s.patients.filter((pt) => pt.course && !pt.cloudId).sort((a, b) => n(b) - n(a))[0].name;
+}
+/** นัดตามคอร์ส 3 นัดล่วงหน้า (บริการของคอร์ส · ตัวนับกลางนับเฉพาะนัดของคอร์ส) */
+async function addCourseVisits(p, who) {
+  await mutate(p, `const pt = s.patients.find((x) => x.name === __arg.who); const t0 = s.appointments.find((a) => a.patientId === pt.id) || s.appointments[0];
+    const d = (n) => new Date(Date.now() + 7 * 3600e3 + n * 864e5).toISOString().slice(0, 10);
+    pt.course.total = Math.max(pt.course.total, pt.course.used + 4);
+    [3, 5, 7].forEach((n) => s.appointments.push({ id: 'qa-cv' + n, patientId: pt.id, serviceId: pt.course.serviceId, therapistId: t0.therapistId, date: d(n), start: '10:00', status: 'waiting', type: 'booked', painBefore: 5, paid: false, log: [] }));`, { who });
 }
 async function next(p, ms = 1800) { await p.getByRole('button', { name: 'ถัดไป' }).click(); await p.waitForTimeout(ms); }
 async function answer(p, idx, yes) { await p.locator('.ap-qn__row').nth(idx).locator('.ap-qn__opt').nth(yes ? 1 : 0).click(); }
@@ -216,7 +224,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   await check('R10', 'reception', 'คำขอจองจากแอป · ผ่านคัดกรอง', 'อนุมัติคำขอ', async (p, ex) => {
     // คำขอจากแอปที่ผ่านคัดกรอง (ใส่ในเครื่อง — โหมดทดสอบไม่แตะฐานข้อมูลจริง)
-    await mutate(p, `let d=new Date(Date.now()+7*3600e3+864e5);if(d.getUTCDay()===0)d=new Date(d.getTime()+864e5);s.requests.unshift({ id: 'rq-qa-ok', patientId: s.patients[2].id, serviceId: 's1', therapistId: 't2', date: d.toISOString().slice(0,10), start: '14:00', painScore: 5, screening: { fever: false, highBP: false, menstruation: false, pregnant: false, recentSurgery: false, contagious: false }, submittedAt: new Date().toISOString() });`);
+    await mutate(p, `let d=new Date(Date.now()+7*3600e3+864e5);if(d.getUTCDay()===0)d=new Date(d.getTime()+864e5);const iso=d.toISOString().slice(0,10);const free=s.patients.find((pt)=>!pt.cloudId&&!s.appointments.some((a)=>a.patientId===pt.id&&a.date===iso&&a.status!=='cancelled'&&a.status!=='absent'))||s.patients[2];s.requests.unshift({ id: 'rq-qa-ok', patientId: free.id, serviceId: 's1', therapistId: 't2', date: d.toISOString().slice(0,10), start: '14:00', painScore: 5, screening: { fever: false, highBP: false, menstruation: false, pregnant: false, recentSurgery: false, contagious: false }, submittedAt: new Date().toISOString() });`);
     await go(p, '/requests', 1500);
     const before = (await state(p)).requests.length;
     await p.getByRole('button', { name: 'อนุมัติและจัดคิว' }).click(); await p.waitForTimeout(700);
@@ -382,6 +390,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   // ===== DOCTOR =====
   await check('D01', 'doctor', 'ผู้ป่วยมีคอร์ส · ต้องการยกเลิกบางวัน', 'ยกเลิกนัดตามแผน (เลือกวัน) + คืนเครดิต + เลิกทำ', async (p, ex) => {
     const who = await coursePatient(p);
+    await addCourseVisits(p, who);
     await go(p, '/patients', 1300);
     await p.locator('.prow', { hasText: who }).first().click(); await p.waitForTimeout(800);
     const before = await p.locator('.pd2__legend').innerText();
@@ -392,12 +401,14 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const after = await p.locator('.pd2__legend').innerText();
     const bk = (t) => Number((t.match(/จองไว้\s*(\d+)/) || [])[1]); ex(bk(after) === bk(before) - 2, `เครดิตจองไว้ลดลง 2 (${bk(before)} → ${bk(after)})`);
     await p.getByRole('button', { name: 'เลิกทำ' }).click(); await p.waitForTimeout(800);
-    ex((await p.locator('.pd2__legend').innerText()) === before, 'เลิกทำแล้วกลับเหมือนเดิม');
+    const undone = await p.locator('.pd2__legend').innerText();
+    ex(undone === before, `เลิกทำแล้วกลับเหมือนเดิม (${before.replace(/\s+/g, ' ')} → ${undone.replace(/\s+/g, ' ')})`);
   });
 
   await check('D02', 'doctor', 'เลื่อนนัด', 'หน้ารายละเอียดนัด → เลื่อน', async (p, ex) => {
     const s = await state(p);
-    const a = s.appointments.find((x) => x.status === 'waiting' && x.date > today() && !x.cloudId);
+    // 1 คน 1 นัดต่อวัน: เลือกนัดที่วันนั้นผู้ป่วยไม่มีนัดอื่น
+    const a = s.appointments.find((x) => x.status === 'waiting' && x.date > today() && !x.cloudId && !s.appointments.some((y) => y.id !== x.id && y.patientId === x.patientId && y.date === x.date && y.status !== 'cancelled' && y.status !== 'absent'));
     await go(p, '/appointments/' + a.id, 1200);
     await p.getByRole('button', { name: 'เลื่อนนัด', exact: true }).click(); await p.waitForTimeout(500);
     await p.locator('.ad__slots button:not([disabled])', { hasNotText: a.start }).last().click();
@@ -465,6 +476,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   await check('D04', 'doctor', 'ผู้ป่วยหยุดคอร์ส', 'ยกเลิกนัดที่เหลือทั้งหมดของแผน', async (p, ex) => {
     const who = await coursePatient(p);
+    await addCourseVisits(p, who);
     await go(p, '/patients', 1300);
     await p.locator('.prow', { hasText: who }).first().click(); await p.waitForTimeout(800);
     await p.click('.pd2__cancel'); await p.waitForTimeout(600);
@@ -474,7 +486,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await p.getByRole('button', { name: new RegExp(`ยกเลิก ${n} นัด`) }).click(); await p.waitForTimeout(1000);
     const s = await state(p);
     const pt = s.patients.find((x) => x.name === who);
-    const left = s.appointments.filter((a) => a.patientId === pt.id && a.status === 'waiting' && !a.calledAt && a.date >= today()).length;
+    const left = s.appointments.filter((a) => a.patientId === pt.id && a.serviceId === pt.course.serviceId && a.status === 'waiting' && !a.calledAt && a.date >= today()).length;
     ex(left === 0, `ยกเลิกครบ ${n} นัด`);
     ex(s.appointments.filter((a) => a.cancel?.by === 'clinic').length === n, 'บันทึกว่าคลินิกเป็นผู้ยกเลิก');
   });

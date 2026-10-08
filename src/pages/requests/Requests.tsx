@@ -11,7 +11,7 @@ import { WorkPage } from "../../layout/WorkPage";
 import { BackLead } from "../../layout/BackLead";
 import { ApproveDialog, RejectDialog } from "../../features/RequestDialogs";
 import { FilterMenu } from "../../features/FilterMenu";
-import { creditInfo, evaluateScreening, requestConflicts, staffState } from "../../data/domain";
+import { creditInfo, evaluateScreening, requestConflicts, sameDayAppt, staffState } from "../../data/domain";
 import { ELEMENT_INFO, elementProfile } from "../../data/elements";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
 import { fromMinutes, thaiDate, thaiDateLong, thaiDateShort, timeAgo, toMinutes } from "../../data/thaiDate";
@@ -310,6 +310,23 @@ function RequestDetail({ r }: { r: BookingRequest }) {
       {/* ซ้ำกับนัดตามคอร์สวันเดียวกัน (แอปรุ่นเก่าจองใหม่แทนการประเมินก่อนนวด) */}
       {(() => {
         const cv = r.courseVisitId ? store.appointments.find((a) => a.id === r.courseVisitId) : undefined;
+        // มีนัดอื่นวันเดียวกันแล้ว (1 คน 1 นัดต่อวัน)
+        const sd = !cv ? sameDayAppt(store.appointments, p.id, r.date) : undefined;
+        if (sd)
+          return (
+            <div className="rq2__verdict is-warn rq2__dup">
+              <span className="rq2__vi">
+                <ShieldAlert size={20} />
+              </span>
+              <div>
+                <b>มีนัดวันนี้แล้ว · {thaiDate(sd.date)} {sd.start} น.</b>
+                <span>1 คนจองได้วันละ 1 นัด · ถ้าไม่ได้ตั้งใจจองเพิ่ม ให้ปฏิเสธ หรืออนุมัติเป็นวันอื่น</span>
+              </div>
+              <Button size="md" variant="outline" onClick={() => store.dispatch({ type: "reject", id: r.id, reason: `มีนัดวันเดียวกันแล้ว ${thaiDate(sd.date)} ${sd.start} น.` })}>
+                ปฏิเสธ (ซ้ำ)
+              </Button>
+            </div>
+          );
         if (!cv) return null;
         const c = p.course;
         const list = c ? store.appointments.filter((a) => a.patientId === p.id && a.serviceId === c.serviceId && a.date >= c.startedOn && a.status !== "cancelled" && a.status !== "absent").sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)) : [];

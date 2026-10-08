@@ -194,21 +194,26 @@ ${THAI_MASSAGE_KNOWLEDGE}
     // ครั้งแรกที่มารักษา (ประเมินอาการ + รักษา แล้วแพทย์วางแผน) = ครั้งที่ 1 ของคอร์ส → นัดต่อเฉพาะครั้งที่เหลือ
     //   คอร์สแรก: ครั้งล่าสุดที่รักษาเสร็จ (บริการเดียวกัน · ภายใน 14 วัน) · มีคอร์สเดิมแล้ว: เฉพาะครั้งที่รักษาวันนี้
     const since = p.course ? todayISO() : addISODays(todayISO(), -14);
-    const firstToday = Math.min(1, store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && a.date >= since && a.date <= todayISO() && (a.status === "done" || !!a.endedAt)).length);
+    // ครั้งแรก = ครั้งล่าสุดที่รักษาแล้วในช่วงนั้น → คอร์สเริ่มนับตั้งแต่วันนั้น (ตัวนับคอร์สนับจากนัดจริง)
+    const first = store.appointments
+      .filter((a) => a.patientId === p.id && a.serviceId === svc && a.date >= since && a.date <= todayISO() && (a.status === "done" || !!a.endedAt))
+      .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0];
+    const firstToday = first ? 1 : 0;
     if (!p.course || p.course.used >= p.course.total)
       patch.course = {
         name: `${store.serviceById(svc).name} ${plan.sessions} ครั้ง`,
         serviceId: svc,
         total: plan.sessions,
         used: Math.min(plan.sessions, firstToday),
-        startedOn: todayISO(),
+        base: 0,
+        startedOn: first ? `${first.date}` : todayISO(),
         expiresOn: addISODays(todayISO(), 90),
         // คอร์สตามแผนการรักษา = ชำระรายครั้ง (ซื้อแพ็กเกจล่วงหน้าได้ที่ "ขายคอร์ส / แพ็กเกจ")
         billing: "perVisit",
       };
     store.dispatch({ type: "updatePatient", id: p.id, patch });
     // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
-    const booked = store.appointments.filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.date >= todayISO()).length;
+    const booked = store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && (a.status === "waiting" || a.status === "active") && !a.endedAt && a.date >= todayISO()).length;
     const over = patch.course ? booked - (plan.sessions - patch.course.used) : 0;
     toast({ message: patch.course ? (over > 0 ? `อนุมัติแล้ว · นัดเกินคอร์ส ${over} นัด ดูที่การ์ดคอร์ส` : `อนุมัติแล้ว · เปิดคอร์ส ${plan.sessions} ครั้ง${patch.course.used ? " (นับครั้งแรกแล้ว)" : ""}`) : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
   };

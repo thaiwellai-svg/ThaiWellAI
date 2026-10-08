@@ -5,7 +5,8 @@ import { Avatar, Button, Chip, Dialog, Field, Switch, Textarea, useToast } from 
 import { notifyWaitlist } from "./Waitlist";
 import { useStore } from "../store/store";
 import { patientPhoto } from "../data/avatars";
-import { thaiDateShort, todayISO } from "../data/thaiDate";
+import { thaiDateShort } from "../data/thaiDate";
+import { courseUsage } from "../data/domain";
 import type { Appointment } from "../data/types";
 import "./cancel-dialog.css";
 
@@ -50,12 +51,12 @@ export function CancelDialog({
   const p = appt ? store.patientById(appt.patientId) : null;
   // remaining appointments of the same treatment plan (same course service, not started yet)
   const plan = useMemo(() => {
-    // every booked session holds a course credit (see creditInfo), so the plan = all upcoming sessions not started yet
+    // นัดที่จองไว้ของคอร์ส (ตัวนับกลาง: บริการของคอร์ส ตั้งแต่วันเริ่ม) ที่ยังไม่เริ่ม
+    // นัดที่กำลังยกเลิกอยู่ในรายการเสมอ (เรียกคิวแล้วแต่ยังไม่เริ่มนวด ยกเลิกได้)
     if (!appt || !p?.course) return [];
-    return store.appointments
-      // นัดที่กำลังยกเลิกอยู่ในรายการเสมอ (เรียกคิวแล้วแต่ยังไม่เริ่มนวด ยกเลิกได้)
-      .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.startedAt && ((!a.calledAt && a.date >= todayISO()) || a.id === appt.id))
-      .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+    const u = courseUsage(p, store.appointments);
+    if (!u || !u.bookedVisits.some((a) => a.id === appt.id)) return [];
+    return u.bookedVisits.filter((a) => a.status === "waiting" && !a.startedAt && (!a.calledAt || a.id === appt.id));
   }, [appt, p, store.appointments]);
   useEffect(() => {
     if (!appt) return;

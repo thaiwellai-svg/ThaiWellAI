@@ -97,6 +97,27 @@ export function DbSync({ children, fallback }: { children: ReactNode; fallback: 
   const timer = useRef(0);
   const latest = useRef(store);
   latest.current = store;
+  /** ข้อมูลจากฐานข้อมูล (เครื่องอื่นแก้/ลบ) → ร้านค้าในเครื่องนี้ (ไม่ส่งกลับ: snapshot ชี้ไปที่ข้อมูลชิ้นเดียวกับในร้านค้า) */
+  const applyRemote = useRef((table: string, id: string, item: unknown) => {
+    const m = snap.current?.[table];
+    if (m) {
+      if (item === null) m.delete(id);
+      else m.set(id, item);
+    }
+    const list = LISTS.find((l) => l.table === table);
+    const conf = CONFIG.find((c) => c.id === id);
+    latest.current.dispatch({
+      type: "remote",
+      update: (s) => {
+        if (table === "clinic_config") return conf && item !== null ? conf.set(s, item) : s;
+        if (!list) return s;
+        const cur = list.get(s);
+        if (item === null) return list.set(s, cur.filter((x) => x.id !== id));
+        const i = cur.findIndex((x) => x.id === id);
+        return list.set(s, i >= 0 ? cur.map((x) => (x.id === id ? (item as Item) : x)) : [item as Item, ...cur]);
+      },
+    });
+  });
 
   // เข้าสู่ระบบแล้ว → โหลดข้อมูลทั้งหมด
   useEffect(() => {
@@ -127,11 +148,22 @@ export function DbSync({ children, fallback }: { children: ReactNode; fallback: 
       for (const table of Object.keys(now)) {
         const a = prev[table] ?? new Map();
         const b = now[table];
-        const up = [...b].filter(([id, v]) => a.get(id) !== v).map(([id, v]) => ({ id, data: v, updated_by: DEVICE, updated_at: at }));
+        const changed = [...b].filter(([id, v]) => a.get(id) !== v).map(([id, v]) => ({ id, data: v, updated_by: DEVICE, updated_at: at }));
+        // แถวใหม่ของเครื่องนี้ → upsert · แถวที่มีอยู่แล้ว → update เท่านั้น
+        //   (เครื่องอื่นลบไปแล้ว = ไม่มีแถวให้แก้ → ลบในเครื่องนี้ตาม แทนที่จะสร้างกลับขึ้นมาใหม่)
+        const up = changed.filter((r) => !a.has(r.id) || table === "clinic_config");
+        const edit = changed.filter((r) => a.has(r.id) && table !== "clinic_config");
         const del = [...a.keys()].filter((id) => !b.has(id));
         for (let i = 0; i < up.length; i += 400)
           jobs.push(
             Promise.resolve(cloud.from(table).upsert(up.slice(i, i + 400))).then(({ error: e }) => e && console.warn(table, e.message)),
+          );
+        for (const r of edit)
+          jobs.push(
+            Promise.resolve(cloud.from(table).update({ data: r.data, updated_by: r.updated_by, updated_at: r.updated_at }).eq("id", r.id).select("id")).then(({ data, error: e }) => {
+              if (e) return console.warn(table, e.message);
+              if (!data?.length) applyRemote.current(table, r.id, null);
+            }),
           );
         for (let i = 0; i < del.length; i += 200) jobs.push(Promise.resolve(cloud.from(table).delete().in("id", del.slice(i, i + 200))));
       }
@@ -148,29 +180,54 @@ export function DbSync({ children, fallback }: { children: ReactNode; fallback: 
       ch = ch.on("postgres_changes", { event: "*", schema: "public", table }, (ev) => {
         const row = (ev.eventType === "DELETE" ? ev.old : ev.new) as { id: string; data?: unknown; updated_by?: string };
         if (!row?.id || row.updated_by === DEVICE) return;
-        const item = ev.eventType === "DELETE" ? null : (row.data ?? null);
-        const m = snap.current?.[table];
-        if (m) {
-          if (item === null) m.delete(row.id);
-          else m.set(row.id, item);
-        }
-        const list = LISTS.find((l) => l.table === table);
-        const conf = CONFIG.find((c) => c.id === row.id);
-        latest.current.dispatch({
-          type: "remote",
-          update: (s) => {
-            if (table === "clinic_config") return conf && item !== null ? conf.set(s, item) : s;
-            if (!list) return s;
-            const cur = list.get(s);
-            if (item === null) return list.set(s, cur.filter((x) => x.id !== row.id));
-            const i = cur.findIndex((x) => x.id === row.id);
-            return list.set(s, i >= 0 ? cur.map((x) => (x.id === row.id ? (item as Item) : x)) : [item as Item, ...cur]);
-          },
-        });
+        applyRemote.current(table, row.id, ev.eventType === "DELETE" ? null : (row.data ?? null));
       });
     }
     ch.subscribe();
     return () => void cloud.removeChannel(ch);
+  }, [ready]);
+
+  // ตรวจทานกับฐานข้อมูลเป็นระยะ (ทุก 60 วินาที · กลับมาเปิดแอป · เน็ตกลับมา)
+  //   realtime หลุดตอนพักเครื่อง/เน็ตไม่ดี → ข้อมูลในเครื่องค้าง (เช่น นัดที่ถูกลบไปแล้วยังแสดง) → ดึงใหม่แล้วแก้ให้ตรง
+  useEffect(() => {
+    if (!ready) return;
+    let busy = false;
+    const reconcile = async () => {
+      if (busy || document.hidden || !snap.current) return;
+      busy = true;
+      try {
+        // ประวัติการแก้ไขมีแต่เพิ่ม (ใหญ่ที่สุด) → ไม่ต้องตรวจทาน
+        for (const table of [...LISTS.map((l) => l.table).filter((t) => t !== "clinic_audit"), "clinic_config"]) {
+          const rows = await loadTable(table);
+          const m = snap.current?.[table];
+          if (!m) continue;
+          const remote = new Map(rows.map((r) => [r.id, r.data]));
+          const list = LISTS.find((l) => l.table === table);
+          const local = new Map<string, unknown>(list ? list.get(latest.current as unknown as State).map((x) => [x.id, x]) : CONFIG.map((c) => [c.id, c.get(latest.current as unknown as State)]));
+          for (const [id, v] of m) {
+            // แก้ในเครื่องนี้แล้วยังไม่บันทึก → ข้ามไป รอบันทึกก่อน
+            if (local.get(id) !== v) continue;
+            if (!remote.has(id)) {
+              if (table !== "clinic_config") applyRemote.current(table, id, null);
+            } else if (JSON.stringify(remote.get(id)) !== JSON.stringify(v)) applyRemote.current(table, id, remote.get(id));
+          }
+          for (const [id, v] of remote) if (!m.has(id) && !local.has(id)) applyRemote.current(table, id, v);
+        }
+      } catch {
+        /* เน็ตหลุด → รอบหน้าลองใหม่ */
+      } finally {
+        busy = false;
+      }
+    };
+    const timer = window.setInterval(() => void reconcile(), 60_000);
+    const onVisible = () => !document.hidden && void reconcile();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onVisible);
+    };
   }, [ready]);
 
   if (error) return <div className="dbsync-error">โหลดข้อมูลคลินิกไม่สำเร็จ · {error}</div>;
