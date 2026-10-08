@@ -2303,3 +2303,45 @@
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
+.vtl__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vtl__head > span:last-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vtl__head b {
+  font: 700 14px/1.2 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.vtl__head small {
+  font: 500 11.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vtl li {
+  font-size: 12.5px;
+  padding-bottom: 10px !important;
+}
+.vtl__n {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 700 11px/1.4 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.vtl__more {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0 0 0 36px;
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--color-brand);
+  cursor: pointer;
+}
