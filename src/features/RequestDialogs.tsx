@@ -1,9 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck2, CalendarDays, CircleAlert, MessageSquareText, Phone } from "lucide-react";
+import {
+  CalendarCheck2,
+  CalendarDays,
+  CircleAlert,
+  MessageSquareText,
+  Phone,
+} from "lucide-react";
 import type { BookingRequest } from "../data/types";
 import { useStore } from "../store/store";
-import { Avatar, Button, Chip, Dialog, Field, Input, Textarea, useToast } from "../design-system";
-import { creditInfo, evaluateScreening, sameDayAppt, shiftsOn, staffState } from "../data/domain";
+import {
+  Avatar,
+  Button,
+  Chip,
+  Dialog,
+  Field,
+  Input,
+  Textarea,
+  useToast,
+} from "../design-system";
+import {
+  creditInfo,
+  evaluateScreening,
+  sameDayAppt,
+  shiftsOn,
+  staffState,
+} from "../data/domain";
 import { thaiDate, thaiDateLong, timeAgo, todayISO } from "../data/thaiDate";
 import { CreditPips } from "./widgets";
 import { slotLoad } from "./slotLoad";
@@ -17,7 +38,13 @@ import { draftCourse } from "../data/draftPlan";
 import "./approve-dialog.css";
 import { elementProfile } from "../data/elements";
 
-export function ApproveDialog({ request: incoming, onClose }: { request: BookingRequest | null; onClose: () => void }) {
+export function ApproveDialog({
+  request: incoming,
+  onClose,
+}: {
+  request: BookingRequest | null;
+  onClose: () => void;
+}) {
   const request = useLatest(incoming);
   const store = useStore();
   const toast = useToast();
@@ -34,7 +61,10 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
     }
   }, [incoming]);
 
-  const slots = useMemo(() => (date ? slotLoad(store.appointments, date, store.settings) : []), [store.appointments, store.settings, date]);
+  const slots = useMemo(
+    () => (date ? slotLoad(store.appointments, date, store.settings) : []),
+    [store.appointments, store.settings, date],
+  );
   if (!request) return null;
 
   const p = store.patientById(request.patientId);
@@ -45,32 +75,82 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   const noCredit = credits !== null && credits.remaining === 0;
   const chosen = slots.find((x) => x.time === start);
   // คอร์สแนะนำจากผลประเมิน (ยังไม่มีคอร์สและไม่มีร่างแผน)
-  const draft = !credits && !p.aiPlan ? draftCourse(intake, s, request.appGuide, flags.some((f) => f.level === "stop")) : null;
-  const therapist = therapistId ? store.therapists.find((t) => t.id === therapistId) : undefined;
+  const draft =
+    !credits && !p.aiPlan
+      ? draftCourse(
+          intake,
+          s,
+          request.appGuide,
+          flags.some((f) => f.level === "stop"),
+        )
+      : null;
+  const therapist = therapistId
+    ? store.therapists.find((t) => t.id === therapistId)
+    : undefined;
   // ผู้บำบัดแต่ละคนวันนั้น: เวลาเข้างาน · รอบที่ว่าง (เตียงว่าง + ไม่มีนัด + ทำบริการนี้)
   const staff = store.therapists.map((t) => {
     const blocks = date ? shiftsOn(t, date) : [];
-    const states = slots.map((sl) => (sl.free > 0 ? staffState(t, { date, start: sl.time, serviceId: request.serviceId }, store.appointments) : "busy"));
+    const states = slots.map((sl) =>
+      sl.free > 0
+        ? staffState(
+            t,
+            { date, start: sl.time, serviceId: request.serviceId },
+            store.appointments,
+          )
+        : "busy",
+    );
     const free = states.filter((x) => x === "free").length;
-    const can = blocks.length > 0 && states.some((x) => x !== "service" && x !== "off");
+    const can =
+      blocks.length > 0 && states.some((x) => x !== "service" && x !== "off");
     // ช่วงเข้างานวันนั้น (เริ่มแรกสุด–เลิกช้าสุด)
-    const span = blocks.length ? `${blocks.map((b) => b.split("–")[0]).sort()[0]}–${blocks.map((b) => b.split("–")[1]).sort().slice(-1)[0]}` : "";
+    const span = blocks.length
+      ? `${blocks.map((b) => b.split("–")[0]).sort()[0]}–${
+          blocks
+            .map((b) => b.split("–")[1])
+            .sort()
+            .slice(-1)[0]
+        }`
+      : "";
     return { t, shift: span || "ไม่เข้างาน", free, can };
   });
-  const therapistFree = !!therapist && !!start && staffState(therapist, { date, start, serviceId: request.serviceId }, store.appointments) === "free";
+  const therapistFree =
+    !!therapist &&
+    !!start &&
+    staffState(
+      therapist,
+      { date, start, serviceId: request.serviceId },
+      store.appointments,
+    ) === "free";
   // 1 คน 1 นัดต่อวัน
-  const sameDay = sameDayAppt(store.appointments, p.id, date, request.courseVisitId);
-  const canApprove = Boolean(date && start && chosen && chosen.free > 0 && !sameDay && therapistFree);
+  const sameDay = sameDayAppt(
+    store.appointments,
+    p.id,
+    date,
+    request.courseVisitId,
+  );
+  const canApprove = Boolean(
+    date && start && chosen && chosen.free > 0 && !sameDay && therapistFree,
+  );
 
   const approve = () => {
-    store.dispatch({ type: "approve", id: request.id, patch: { date, start, therapistId, serviceId: request.serviceId } });
+    store.dispatch({
+      type: "approve",
+      id: request.id,
+      patch: { date, start, therapistId, serviceId: request.serviceId },
+    });
     const keepDraft = !!draft && saveDraft;
     if (keepDraft) {
       const { why: _why, ...plan } = draft;
       void _why;
-      store.dispatch({ type: "updatePatient", id: p.id, patch: { aiPlan: plan } });
+      store.dispatch({
+        type: "updatePatient",
+        id: p.id,
+        patch: { aiPlan: plan },
+      });
     }
-    toast({ message: `อนุมัตินัด ${p.name} · ${thaiDate(date)} ${start} น.${keepDraft ? ` · บันทึกร่างคอร์ส ${draft.sessions} ครั้ง` : ""}` });
+    toast({
+      message: `อนุมัตินัด ${p.name} · ${thaiDate(date)} ${start} น.${keepDraft ? ` · บันทึกร่างคอร์ส ${draft.sessions} ครั้ง` : ""}`,
+    });
     onClose();
   };
 
@@ -80,7 +160,14 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
       wide
       className="apv"
       onClose={onClose}
-      leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />}
+      leading={
+        <Avatar
+          name={p.name}
+          src={patientPhoto(p)}
+          size="card"
+          shape="squircle"
+        />
+      }
       title={p.name}
       subtitle={`${p.hn} · ขอเมื่อ ${timeAgo(request.submittedAt)}`}
       footer={
@@ -88,7 +175,14 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <Button variant="outline" size="lg" fill onClick={onClose}>
             ปิด
           </Button>
-          <Button variant="primary" size="lg" fill disabled={!canApprove} onClick={approve} leading={<CalendarCheck2 size={16} />}>
+          <Button
+            variant="primary"
+            size="lg"
+            fill
+            disabled={!canApprove}
+            onClick={approve}
+            leading={<CalendarCheck2 size={16} />}
+          >
             อนุมัติ
           </Button>
         </>
@@ -98,10 +192,19 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
       <div className="apv__read scroll-y scroll-y--light">
         {/* คำขอ: วันเวลา · บริการ · ผู้บำบัด · หมายเหตุ */}
         <section className="apv__req">
-          <CalendarDays className="apv__req-bg" size={132} strokeWidth={1.4} aria-hidden />
+          <CalendarDays
+            className="apv__req-bg"
+            size={132}
+            strokeWidth={1.4}
+            aria-hidden
+          />
           {/* ติดต่อผู้ป่วย (โทรตกลงเวลาใหม่ / ถามอาการเพิ่ม) */}
           {p.phone ? (
-            <a className="apv__call" href={`tel:${p.phone.replace(/[^0-9+]/g, "")}`} aria-label={`โทร ${p.phone}`}>
+            <a
+              className="apv__call"
+              href={`tel:${p.phone.replace(/[^0-9+]/g, "")}`}
+              aria-label={`โทร ${p.phone}`}
+            >
               <Phone size={15} />
               <span>{p.phone}</span>
             </a>
@@ -113,7 +216,8 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
             {thaiDate(request.date)} · {request.start} น.
           </b>
           <span>
-            {s.name} {s.minutes} นาที · {store.therapistById(request.therapistId).name || "ไม่ระบุผู้บำบัด"}
+            {s.name} {s.minutes} นาที ·{" "}
+            {store.therapistById(request.therapistId).name || "ไม่ระบุผู้บำบัด"}
           </span>
           {request.note && !/^AI ประเมิน/.test(request.note) && (
             <p className="apv__note">
@@ -128,12 +232,25 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <h3>
             ผลประเมินก่อนนวด <small>{timeAgo(intake.at)}</small>
           </h3>
-          <IntakeCard intake={intake} sex={p.gender} element={elementProfile(p).birth} compact head={false} screening={request.screening} screeningFlags={flags} />
+          <IntakeCard
+            intake={intake}
+            sex={p.gender}
+            element={elementProfile(p).birth}
+            compact
+            head={false}
+            screening={request.screening}
+            screeningFlags={flags}
+          />
         </section>
 
-        {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) && !flags.some((f) => f.level === "stop") && (
-          <AppGuideCard guide={request.appGuide} areas={request.intake?.focusAreas} compact />
-        )}
+        {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) &&
+          !flags.some((f) => f.level === "stop") && (
+            <AppGuideCard
+              guide={request.appGuide}
+              areas={request.intake?.focusAreas}
+              compact
+            />
+          )}
       </div>
 
       <div className="apv__act scroll-y scroll-y--light">
@@ -141,57 +258,71 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <div className="alert alert--stop">
             <CircleAlert size={16} />
             <div>
-              <b>มีนัดวันนี้แล้ว {sameDay.start} น.</b>
-              1 คนจองได้วันละ 1 นัด · เลือกวันอื่น หรือปฏิเสธคำขอนี้
+              <b>มีนัดวันนี้แล้ว {sameDay.start} น.</b>1 คนจองได้วันละ 1 นัด ·
+              เลือกวันอื่น หรือปฏิเสธคำขอนี้
             </div>
           </div>
         )}
-        <section className="apv__sec">
-          <h3>คอร์ส</h3>
-          {credits ? (
-            <>
-              <CreditPips info={credits} adding={noCredit ? 0 : 1} name={p.course!.name} />
-              {noCredit && (
-                <div className="alert alert--stop">
-                  <CircleAlert size={16} />
-                  <div>
-                    <b>เครดิตคอร์สหมดแล้ว</b>
-                    ให้แพทย์เปิดคอร์สใหม่ หรือชำระรายครั้ง
+        {(credits || (p.aiPlan && !p.aiPlan.approved) || draft) && (
+          <section className="apv__sec">
+            <h3>คอร์ส</h3>
+            {credits ? (
+              <>
+                <CreditPips
+                  info={credits}
+                  adding={noCredit ? 0 : 1}
+                  name={p.course!.name}
+                />
+                {noCredit && (
+                  <div className="alert alert--stop">
+                    <CircleAlert size={16} />
+                    <div>
+                      <b>เครดิตคอร์สหมดแล้ว</b>
+                      ให้แพทย์เปิดคอร์สใหม่ หรือชำระรายครั้ง
+                    </div>
                   </div>
+                )}
+              </>
+            ) : p.aiPlan && !p.aiPlan.approved ? (
+              <p className="apv__none">
+                มีร่างแผนรอแพทย์อนุมัติ · {p.aiPlan.sessions} ครั้ง
+              </p>
+            ) : draft ? (
+              // คอร์สแนะนำจากผลประเมิน → บันทึกเป็นร่างแผนเมื่ออนุมัติ (คลินิกปรับ + แพทย์อนุมัติที่หน้าผู้ป่วย)
+              <div className="apv__draft">
+                <div className="apv__draft-top">
+                  <small>คอร์สแนะนำเบื้องต้น</small>
+                  <b>
+                    {s.name} {draft.sessions} ครั้ง
+                  </b>
+                  <span>
+                    {draft.frequency} · {draft.why.join(" · ")}
+                  </span>
                 </div>
-              )}
-            </>
-          ) : p.aiPlan && !p.aiPlan.approved ? (
-            <p className="apv__none">ยังไม่มีคอร์ส · มีร่างแผนรอแพทย์อนุมัติ ({p.aiPlan.sessions} ครั้ง)</p>
-          ) : draft ? (
-            // คอร์สแนะนำจากผลประเมิน → บันทึกเป็นร่างแผนเมื่ออนุมัติ (คลินิกปรับ + แพทย์อนุมัติที่หน้าผู้ป่วย)
-            <div className="apv__draft">
-              <div className="apv__draft-top">
-                <small>คอร์สแนะนำเบื้องต้น</small>
-                <b>
-                  {s.name} {draft.sessions} ครั้ง
-                </b>
-                <span>
-                  {draft.frequency} · {draft.why.join(" · ")}
-                </span>
+                <label className="apv__draft-save">
+                  <input
+                    type="checkbox"
+                    checked={saveDraft}
+                    onChange={(e) => setSaveDraft(e.target.checked)}
+                  />
+                  <span>
+                    บันทึกเป็นร่างแผน · ไปปรับและให้แพทย์อนุมัติที่หน้าผู้ป่วย
+                  </span>
+                </label>
               </div>
-              <label className="apv__draft-save">
-                <input type="checkbox" checked={saveDraft} onChange={(e) => setSaveDraft(e.target.checked)} />
-                <span>บันทึกเป็นร่างแผน · ไปปรับและให้แพทย์อนุมัติที่หน้าผู้ป่วย</span>
-              </label>
-            </div>
-          ) : (
-            <p className="apv__none">
-              ไม่มีคอร์ส · ชำระรายครั้ง
-              {/* ไม่แนะนำคอร์ส: ผลประเมินปวดน้อย */}
-              <small>ปวด {intake.pain}/10 · ไม่จำเป็นต้องเปิดคอร์ส</small>
-            </p>
-          )}
-        </section>
+            ) : null}
+          </section>
+        )}
         <section className="apv__sec">
           <h3>วันที่</h3>
           <Field label="" hint={date ? thaiDateLong(date) : undefined}>
-            <Input type="date" value={date} min={todayISO()} onChange={(e) => setDate(e.target.value)} aria-label="วันที่" />
+            <Input
+              type="date"
+              value={date}
+              min={todayISO()}
+              onChange={(e) => setDate(e.target.value)}
+              aria-label="วันที่"
+            />
           </Field>
         </section>
 
@@ -203,13 +334,36 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <ul className="apv__staff">
             {staff.map(({ t, shift, free, can }) => (
               <li key={t.id}>
-                <button type="button" className={clsx("apv__person", therapistId === t.id && "is-on", !can && "is-off")} aria-pressed={therapistId === t.id} disabled={!can} onClick={() => setTherapistId(t.id)}>
-                  <Avatar name={t.name} src={therapistPhoto(t)} size="sm" color={t.color} />
+                <button
+                  type="button"
+                  className={clsx(
+                    "apv__person",
+                    therapistId === t.id && "is-on",
+                    !can && "is-off",
+                  )}
+                  aria-pressed={therapistId === t.id}
+                  disabled={!can}
+                  onClick={() => setTherapistId(t.id)}
+                >
+                  <Avatar
+                    name={t.name}
+                    src={therapistPhoto(t)}
+                    size="sm"
+                    color={t.color}
+                  />
                   <span className="apv__pname">
                     <b>{t.name}</b>
                     <small>
                       {shift !== "ไม่เข้างาน" && <span>{shift} · </span>}
-                      <em className={clsx(can && free ? "is-free" : "is-none")}>{!can ? (shift === "ไม่เข้างาน" ? "หยุดวันนี้" : "ไม่ทำบริการนี้") : free ? `ว่าง ${free} รอบ` : "เต็ม"}</em>
+                      <em className={clsx(can && free ? "is-free" : "is-none")}>
+                        {!can
+                          ? shift === "ไม่เข้างาน"
+                            ? "หยุดวันนี้"
+                            : "ไม่ทำบริการนี้"
+                          : free
+                            ? `ว่าง ${free} รอบ`
+                            : "เต็ม"}
+                      </em>
                     </small>
                   </span>
                 </button>
@@ -221,15 +375,38 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
         {/* เวลา: ของผู้บำบัดที่เลือก */}
         <section className="apv__sec">
           <h3>
-            เวลา <small>{therapist ? therapist.name : "เลือกผู้บำบัดก่อน"}</small>
+            เวลา{" "}
+            <small>{therapist ? therapist.name : "เลือกผู้บำบัดก่อน"}</small>
           </h3>
           <div className="slots apv__slots">
             {slots.map((sl) => {
-              const st = therapist ? staffState(therapist, { date, start: sl.time, serviceId: request.serviceId }, store.appointments) : "free";
+              const st = therapist
+                ? staffState(
+                    therapist,
+                    { date, start: sl.time, serviceId: request.serviceId },
+                    store.appointments,
+                  )
+                : "free";
               const ok = st === "free" && sl.free > 0;
-              const why = st === "busy" ? "มีนัด" : st === "off" ? "นอกเวลา" : st === "service" ? "ไม่ทำบริการ" : sl.free === 0 ? "เตียงเต็ม" : `ว่าง ${sl.free} เตียง`;
+              const why =
+                st === "busy"
+                  ? "มีนัด"
+                  : st === "off"
+                    ? "นอกเวลา"
+                    : st === "service"
+                      ? "ไม่ทำบริการ"
+                      : sl.free === 0
+                        ? "เตียงเต็ม"
+                        : `ว่าง ${sl.free} เตียง`;
               return (
-                <button key={sl.time} type="button" className={clsx("slot", !ok && "is-na")} aria-pressed={start === sl.time} disabled={!ok} onClick={() => setStart(sl.time)}>
+                <button
+                  key={sl.time}
+                  type="button"
+                  className={clsx("slot", !ok && "is-na")}
+                  aria-pressed={start === sl.time}
+                  disabled={!ok}
+                  onClick={() => setStart(sl.time)}
+                >
                   <span className="slot__time">{sl.time}</span>
                   <span className="slot__cap">{why}</span>
                 </button>
@@ -241,7 +418,9 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <div className="alert alert--caution">
             <CircleAlert size={16} />
             <div>
-              <b>{start} น. ไม่ว่างกับ{therapist.name}</b>
+              <b>
+                {start} น. ไม่ว่างกับ{therapist.name}
+              </b>
               เลือกเวลาอื่น หรือผู้บำบัดคนอื่นที่ว่าง
             </div>
           </div>
@@ -251,9 +430,20 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   );
 }
 
-const REASONS = ["คิวเต็มช่วงเวลาที่ขอ", "ผลคัดกรองไม่ผ่าน ต้องพบแพทย์ก่อน", "เครดิตคงเหลือไม่พอ", "ผู้ป่วยขอยกเลิก"];
+const REASONS = [
+  "คิวเต็มช่วงเวลาที่ขอ",
+  "ผลคัดกรองไม่ผ่าน ต้องพบแพทย์ก่อน",
+  "เครดิตคงเหลือไม่พอ",
+  "ผู้ป่วยขอยกเลิก",
+];
 
-export function RejectDialog({ request: incoming, onClose }: { request: BookingRequest | null; onClose: () => void }) {
+export function RejectDialog({
+  request: incoming,
+  onClose,
+}: {
+  request: BookingRequest | null;
+  onClose: () => void;
+}) {
   const request = useLatest(incoming);
   const store = useStore();
   const toast = useToast();
@@ -271,11 +461,19 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
   const p = store.patientById(request.patientId);
 
   const reject = () => {
-    store.dispatch({ type: "reject", id: request.id, reason, note: note.trim() || undefined });
+    store.dispatch({
+      type: "reject",
+      id: request.id,
+      reason,
+      note: note.trim() || undefined,
+    });
     toast({
       message: `ปฏิเสธคำขอของ ${p.name} แล้ว`,
       tone: "danger",
-      action: { label: "เลิกทำ", onClick: () => store.dispatch({ type: "restoreRequest", request }) },
+      action: {
+        label: "เลิกทำ",
+        onClick: () => store.dispatch({ type: "restoreRequest", request }),
+      },
     });
     onClose();
   };
@@ -284,7 +482,14 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
     <Dialog
       open={incoming !== null}
       onClose={onClose}
-      leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />}
+      leading={
+        <Avatar
+          name={p.name}
+          src={patientPhoto(p)}
+          size="card"
+          shape="squircle"
+        />
+      }
       title="ปฏิเสธคำขอจอง"
       subtitle={`${p.name} · ${thaiDate(request.date)} ${request.start} น.`}
       footer={
@@ -308,7 +513,11 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
           ))}
         </div>
         <Field label="หมายเหตุ (ไม่บังคับ)">
-          <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น แนะนำเวลาอื่นที่ว่าง" />
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="เช่น แนะนำเวลาอื่นที่ว่าง"
+          />
         </Field>
       </section>
     </Dialog>

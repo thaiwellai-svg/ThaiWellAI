@@ -22,7 +22,8 @@ async function wipeCloud() {
   const at = new Date().toISOString();
   for (const p of pts ?? []) {
     const prof = (p.profile ?? {}) as Record<string, unknown>;
-    await cloud.from("tw_patients").update({ clinic_hn: null, profile: { ...prof, course: null, visits: [], resetAt: at } }).eq("id", p.id);
+    // resetAll → แอปล้างทุกอย่างเหมือนเพิ่งเริ่มใช้ (เหลือแค่รูปประจำตัวของบัญชี)
+    await cloud.from("tw_patients").update({ clinic_hn: null, profile: { ...(prof.avatar ? { avatar: prof.avatar } : {}), course: null, visits: [], resetAt: at, resetAll: true } }).eq("id", p.id);
   }
   return pts?.length ?? 0;
 }
@@ -107,7 +108,7 @@ export function WipeDataDialog({ open, onClose }: { open: boolean; onClose: () =
         <p className="rp__keep">
           <b>ยังเก็บไว้:</b> ข้อมูลคลินิก ผู้บำบัด บริการ แพ็กเกจ สินค้า การตั้งค่า และบัญชีเข้าระบบ
         </p>
-        <p className="rp__app">ข้อมูลในแอป ThaiWell ของผู้ป่วยทุกคนจะถูกล้างตาม · บัญชีแอปยังอยู่</p>
+        <p className="rp__app">แอป ThaiWell ของผู้ป่วยทุกคนล้างทุกอย่างเหมือนเพิ่งเริ่มใช้ · บัญชีและการเข้าสู่ระบบยังอยู่</p>
         <label className="rp__type">
           <span>
             พิมพ์ <b>{CONFIRM}</b> เพื่อยืนยัน

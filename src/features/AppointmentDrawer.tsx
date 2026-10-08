@@ -16,6 +16,7 @@ import { AssessHistory } from "./AssessHistory";
 import { AppGuideCard } from "./AppGuideCard";
 import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "./billing";
 import { ReceiptDialog } from "./Receipt";
+import { CoursePayChoice, PrepayCourseDialog } from "./PrepayCourse";
 import { VisitSummary } from "./VisitSummary";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
@@ -132,6 +133,7 @@ export function AppointmentDrawer({
   }, [id, painAfter, advice, skipPain]);
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [useCredit, setUseCredit] = useState(true);
+  const [prepayOpen, setPrepayOpen] = useState(false);
   // ending far earlier than the service time needs a reason
   const [earlyEnd, setEarlyEnd] = useState<string | null>(null);
   /** จบก่อนเวลา: done = รักษาครบตามแผนแล้ว (เสร็จเร็ว) · stop = หยุดกลางคัน (ต้องมีเหตุผล) */
@@ -194,6 +196,8 @@ export function AppointmentDrawer({
   const courseNo = credits && p.course?.serviceId === appt.serviceId ? credits.noOf(appt.id) : 0;
   const coveredByCourse = prepaid && !!credits && courseNo > 0 && courseNo <= credits.total;
   const perVisitCourse = !prepaid && !!p.course && p.course.serviceId === appt.serviceId;
+  // คอร์สที่ยังไม่เลือกวิธีชำระ → เลือกตอนชำระครั้งแรก (รายครั้ง / ทั้งคอร์สล่วงหน้า)
+  const payUndecided = LIVE && !!p.course && !p.course.billing && p.course.serviceId === appt.serviceId && courseNo > 0 && courseNo <= (credits?.total ?? 0) && !store.biz.sales.some((x) => x.patientId === p.id && !x.void);
   const payByCredit = coveredByCourse && useCredit;
   // ค่าบริการ + หัตถการที่ทำเพิ่ม · หักเครดิตคอร์ส = หักเฉพาะค่าบริการ (หัตถการเพิ่มยังต้องจ่าย)
   const extras = extraLines(appt);
@@ -350,7 +354,7 @@ export function AppointmentDrawer({
             ไว้ทีหลัง
           </Button>
         )}
-        <Button size="lg" fill disabled={unpriced > 0 || (amount > 0 && method === "cash" && cash < amount)} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
+        <Button size="lg" fill disabled={payUndecided || unpriced > 0 || (amount > 0 && method === "cash" && cash < amount)} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
           {payLabel}
         </Button>
       </>
@@ -593,7 +597,13 @@ export function AppointmentDrawer({
               )}
               {view === "billing" && (
                 <>
-                <StepHead n={5} title="ชำระเงิน" hint={`เลือกวิธีชำระ แล้วกด “${payLabel}”`} />
+                <StepHead n={5} title="ชำระเงิน" hint={payUndecided ? "เลือกวิธีชำระคอร์สก่อน" : `เลือกวิธีชำระ แล้วกด “${payLabel}”`} />
+                {payUndecided ? (
+                  <>
+                    <CoursePayChoice p={p} left={credits!.total - courseNo + 1} price={s.price} onPrepay={() => setPrepayOpen(true)} />
+                    <PrepayCourseDialog p={p} left={credits!.total - courseNo + 1} price={s.price} open={prepayOpen} onClose={() => setPrepayOpen(false)} />
+                  </>
+                ) : (
                 <PayPanel
                   serviceName={s.name}
                   price={s.price}
@@ -617,6 +627,7 @@ export function AppointmentDrawer({
                           : undefined
                   }
                 />
+                )}
                 </>
               )}
               {view === "done" && (

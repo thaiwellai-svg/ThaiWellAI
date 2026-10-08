@@ -229,6 +229,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const before = (await state(p)).requests.length;
     await p.getByRole('button', { name: 'อนุมัติและจัดคิว' }).click(); await p.waitForTimeout(700);
     const dlg = p.locator('.tw-dialog');
+    // เลือกผู้บำบัดและเวลาที่ว่างจริง (อนุมัติได้เฉพาะเวลาที่ผู้บำบัดว่าง)
+    await dlg.locator('.apv__person:not([disabled])').first().click().catch(() => {}); await p.waitForTimeout(200);
+    await dlg.locator('.apv__slots .slot:not([disabled])').first().click().catch(() => {}); await p.waitForTimeout(200);
     const btn = dlg.getByRole('button', { name: /อนุมัติ|ยืนยัน/ }).last();
     await btn.click(); await p.waitForTimeout(1000);
     const s = await state(p);

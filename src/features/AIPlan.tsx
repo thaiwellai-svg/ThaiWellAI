@@ -210,8 +210,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
         base: 0,
         startedOn: first ? `${first.date}` : todayISO(),
         expiresOn: addISODays(todayISO(), 90),
-        // คอร์สตามแผนการรักษา = ชำระรายครั้ง (ซื้อแพ็กเกจล่วงหน้าได้ที่ "ขายคอร์ส / แพ็กเกจ")
-        billing: "perVisit",
+        // วิธีชำระ (รายครั้ง / ทั้งคอร์สล่วงหน้า) เลือกตอนชำระครั้งแรก
       };
     store.dispatch({ type: "updatePatient", id: p.id, patch });
     // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
