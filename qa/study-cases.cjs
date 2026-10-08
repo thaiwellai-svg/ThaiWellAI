@@ -750,6 +750,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
     await send('บ่าขวาตึง กดเจ็บ');
     await send('ใช่');
+    await p.locator('.rc-body canvas').first().waitFor({ timeout: 8000 }).catch(() => {});
     ex((await p.locator('.rc-body canvas').count()) === 1, 'ข้อหัตถการแสดงหุ่น 3D ในแชท');
     await send('นวดรักษาที่คอ บ่า ไหล่ และหลังส่วนล่าง 45 นาที');
     const list = await p.locator('.rc-body__list').last().innerText();
@@ -768,6 +769,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await chatIdle(p);
     const send = async (t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
     await send('หัตถการ');
+    // หุ่น 3D โหลดแบบ lazy → รอให้วาดก่อนตรวจ (เครื่องช้าเคยทำให้ผลสุ่ม)
+    await p.locator('.rc-msg.is-ai').last().locator('.rc-body canvas').waitFor({ timeout: 8000 }).catch(() => {});
     ex((await p.locator('.rc-msg.is-ai').last().locator('.rc-body canvas').count()) === 1, 'พิมพ์ “หัตถการ” → เปิดหัวข้อหัตถการพร้อมหุ่น');
     await send('นวดรักษาที่บ่า ไหล่ 30 นาที'); await send('ใช่');
     await send('แก้หัตถการ');
