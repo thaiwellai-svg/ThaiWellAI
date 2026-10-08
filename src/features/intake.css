@@ -603,3 +603,14 @@
 .ik3__st--none::before {
   background: var(--sage-300) !important;
 }
+/* ค่าในกล่อง: ตัวเลขกับคำไทยดูสูงเท่ากัน (คำไทยสูง/กว้างกว่าตัวเลข → เล็กลงเล็กน้อย) · ทุกกล่องเส้นฐานเดียวกัน */
+.ik--merged .ik3__tile b {
+  min-height: 24px;
+  align-items: baseline;
+  font-size: 19px !important;
+  line-height: 24px !important;
+}
+.ik--merged .ik3__tile b.ik3__txt {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}

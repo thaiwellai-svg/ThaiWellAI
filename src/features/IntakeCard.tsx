@@ -209,7 +209,7 @@ export function IntakeCard({
             <Hand size={14} />
           </span>
           <small>แรงนวด</small>
-          <b>{has("pressure") ? i.pressure : "—"}</b>
+          <b className={has("pressure") ? "ik3__txt" : undefined}>{has("pressure") ? i.pressure : "—"}</b>
           {!has("pressure") && <span className="ik3__st ik3__st--none">ไม่ได้ประเมิน</span>}
           {has("pressure") && <span className="ik3__steps">
             {(["เบา", "ปานกลาง", "หนัก"] as const).map((lv, k) => (
