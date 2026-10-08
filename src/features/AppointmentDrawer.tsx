@@ -511,12 +511,6 @@ export function AppointmentDrawer({
 
           <AnimatePresence mode="wait" initial={false}>
             <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-              {/* คัดกรองก่อนนวด อยู่ในขั้นที่กำลังทำ (ไม่ดันแถบขั้นตอนลงล่างในหน้ารับบริการ) */}
-              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={vHas("screening") ? va?.screening : undefined} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
-              {/* แจ้งอาการเพิ่มหลังเช็กอิน + ประวัติการประเมินในแอปหลายรอบ */}
-              {view !== "done" && <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />}
-              {/* แนวทางที่แอปแนะนำ: ดูก่อนเริ่ม / ระหว่างรักษา / ตอนบันทึก */}
-              {(view === "waiting" || view === "called" || view === "treating" || view === "assess") && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
               {view === "checkin" && (
                 <>
                   <StepHead n={1} title="รอเช็กอิน" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR ในแอป หรือกด “เช็กอินที่เคาน์เตอร์”" : "เช็กอินได้ในวันนัด"} />
@@ -545,6 +539,14 @@ export function AppointmentDrawer({
                     </i>
                   </div>
                 </>
+              )}
+              {/* ข้อมูลก่อนนวด (หลังสิ่งที่ต้องทำในขั้นนี้): คัดกรอง · แจ้งเพิ่ม · แนวทางการรักษา — การ์ดแบบเดียวกัน */}
+              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && (
+                <div className="vs__pre">
+                  <VisitScreening p={p} app={vHas("screening") ? va?.screening : undefined} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
+                  <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />
+                  {view !== "checkin" && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
+                </div>
               )}
               {view === "assess" && (
                 <>

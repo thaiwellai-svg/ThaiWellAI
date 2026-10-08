@@ -1908,3 +1908,54 @@
     padding-left: 16px;
   }
 }
+
+/* ข้อมูลก่อนนวด: การ์ดพื้นขาวแบบเดียวกัน · สีเฉพาะไอคอน/หัวข้อ */
+.vs__pre {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.vs__pre > *,
+.vs__pre .ah > * {
+  border-radius: 16px !important;
+  background: var(--white) !important;
+  box-shadow: inset 0 0 0 1px var(--sage-100) !important;
+}
+.vs__pre .ah {
+  background: none !important;
+  box-shadow: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vs__pre .vscr {
+  padding: 12px 14px;
+}
+.vs__pre .vscr > svg {
+  flex-shrink: 0;
+  box-sizing: content-box;
+  padding: 6px;
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 12%, white);
+}
+.vs__pre .vscr b {
+  color: currentColor;
+}
+.vs__pre .vscr button:not(.vscr__again) {
+  height: 34px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+.vs__pre .vscr button:not(.vscr__again) span {
+  color: currentColor;
+}
+.vs__pre .ah-add {
+  padding: 12px 14px;
+}
+.vs__pre .ah-add b {
+  color: #9a6b00;
+}
+.vs__pre .agc {
+  padding: 12px 14px;
+}

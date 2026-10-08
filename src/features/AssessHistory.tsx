@@ -5,6 +5,8 @@ import type { Addendum, AssessRound } from "../data/types";
 import { thaiDateLong } from "../data/thaiDate";
 import "./assess-history.css";
 
+/** ข้อความที่แอปสร้างเอง ("ผู้ป่วยอัปเดตผลประเมิน · ชื่อ · …") → เหลือเฉพาะสิ่งที่เปลี่ยน */
+const cleanAddendum = (t: string) => t.replace(/^ผู้ป่วยอัปเดตผลประเมิน\s*·\s*[^·]+·\s*/, "ประเมินซ้ำ: ");
 const hm = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 const when = (iso: string) => {
   const d = iso.slice(0, 10);
@@ -45,13 +47,13 @@ export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRo
             <MessageSquareWarning size={16} />
           </span>
           <div>
-            <b>แจ้งอาการเพิ่มหลังเช็กอิน</b>
+            <b>แจ้งเพิ่มหลังเช็กอิน</b>
             {addenda.map((a, i) => (
               <p key={`${a.at}${i}`}>
-                <small>{hm(a.at)} น.</small> {a.text}
+                <small>{hm(a.at)} น.</small> {cleanAddendum(a.text)}
               </p>
             ))}
-            <em>ตรวจอาการนี้ก่อนเริ่มนวด</em>
+            <em>ตรวจก่อนเริ่มนวด</em>
           </div>
         </div>
       )}
