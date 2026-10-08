@@ -713,9 +713,9 @@ export function AppointmentDrawer({
                       )}
                     </div>
                     {/* แรงนวดที่ผู้ป่วยต้องการ (ไม่ได้ถาม = ไม่ได้ประเมิน) */}
-                    <div>
+                    <div style={{ ["--pc" as string]: ik && (!ik.asked || ik.asked.includes("pressure")) ? (ik.pressure === "หนัก" ? "#d8392a" : ik.pressure === "ปานกลาง" ? "#e08a1e" : "#2f9a5b") : "var(--color-text-muted)" }}>
                       <small>แรงนวด</small>
-                      <b className="vcc__dur">{ik && (!ik.asked || ik.asked.includes("pressure")) ? ik.pressure : "—"}</b>
+                      <b className="vcc__dur" style={{ color: "var(--pc)" }}>{ik && (!ik.asked || ik.asked.includes("pressure")) ? ik.pressure : "—"}</b>
                       {!(ik && (!ik.asked || ik.asked.includes("pressure"))) && <span className="vcc__sub">ไม่ได้ประเมิน</span>}
                     </div>
                   </div>

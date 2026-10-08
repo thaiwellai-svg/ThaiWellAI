@@ -204,12 +204,13 @@ export function IntakeCard({
             </div>
           );
         })()}
-        <div className="ik3__tile" style={{ ["--tc" as string]: "#4c845a" }}>
+        {/* แรงนวด: สีตามระดับ (เบา เขียว · ปานกลาง ส้ม · หนัก แดง) */}
+        <div className="ik3__tile" style={{ ["--tc" as string]: !has("pressure") ? "#6b7a71" : i.pressure === "หนัก" ? "#d8392a" : i.pressure === "ปานกลาง" ? "#e08a1e" : "#2f9a5b" }}>
           <span className="ik3__icon">
             <Hand size={14} />
           </span>
           <small>แรงนวด</small>
-          <b className={has("pressure") ? "ik3__txt" : undefined}>{has("pressure") ? i.pressure : "—"}</b>
+          <b className={has("pressure") ? "ik3__txt" : undefined} style={has("pressure") ? { color: "var(--tc)" } : undefined}>{has("pressure") ? i.pressure : "—"}</b>
           {!has("pressure") && <span className="ik3__st ik3__st--none">ไม่ได้ประเมิน</span>}
           {has("pressure") && <span className="ik3__steps">
             {(["เบา", "ปานกลาง", "หนัก"] as const).map((lv, k) => (
