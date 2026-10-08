@@ -395,12 +395,47 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
           );
         })()
       ) : (
-        <section className="hx-card hx-course2 is-empty">
-          <p className="hx-muted">ไม่มีคอร์ส · ชำระรายครั้ง</p>
-          <button type="button" className="hx-course2__start" onClick={() => setPlanFor(p.id)}>
-            จัดนัด
-          </button>
-        </section>
+        (() => {
+          // ยังไม่มีคอร์ส แต่มีร่างแผน (รอแพทย์อนุมัติ) → แสดงร่างคอร์ส + นัดที่จองไว้ตามแผน
+          const plan = p.aiPlan && !p.aiPlan.approved ? p.aiPlan : null;
+          const svc = plan?.phases[0]?.serviceId;
+          const booked = plan ? upcoming.filter((v) => !svc || v.serviceId === svc) : [];
+          return plan ? (
+            <section className="hx-card hx-course2 is-draft">
+              <div className="hx-course2__head">
+                <span className="hx-course2__icon">
+                  <Ticket size={16} />
+                </span>
+                <div>
+                  <b>
+                    ร่างคอร์ส {svc ? store.serviceById(svc).name : ""} {plan.sessions} ครั้ง
+                  </b>
+                  <small>
+                    {plan.frequency} · จองไว้ {booked.length} นัด
+                  </small>
+                </div>
+                <em className="hx-course2__days is-soon">รอแพทย์อนุมัติ</em>
+              </div>
+              <div className="hx-tix" style={{ gridTemplateColumns: `repeat(${Math.min(plan.sessions, 10)}, minmax(0, 1fr))` }}>
+                {Array.from({ length: plan.sessions }, (_, k) => (
+                  <span key={k} className={`hx-tix__t is-${k < booked.length ? "booked" : "free"}`}>
+                    {k + 1}
+                  </span>
+                ))}
+              </div>
+              <button type="button" className="hx-course2__start" onClick={() => navigate(`/patients?id=${p.id}`)}>
+                ไปอนุมัติแผน
+              </button>
+            </section>
+          ) : (
+            <section className="hx-card hx-course2 is-empty">
+              <p className="hx-muted">ยังไม่มีคอร์ส</p>
+              <button type="button" className="hx-course2__start" onClick={() => setPlanFor(p.id)}>
+                จัดนัด
+              </button>
+            </section>
+          );
+        })()
       )}
 
       {/* upcoming */}

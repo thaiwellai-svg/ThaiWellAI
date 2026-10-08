@@ -392,8 +392,13 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                   </button>
                 )}
               </>
+            ) : p.aiPlan && !p.aiPlan.approved ? (
+              // ร่างแผนรอแพทย์อนุมัติ → คอร์สเปิดเมื่ออนุมัติ (นับนัดที่จองไว้ตามแผน)
+              <p className="pd2__muted">
+                ร่างคอร์ส {p.aiPlan.sessions} ครั้ง · รอแพทย์อนุมัติแผน · จองไว้ {store.appointments.filter((a) => a.patientId === p.id && a.status === "waiting" && a.date >= todayISO() && (!p.aiPlan!.phases[0]?.serviceId || a.serviceId === p.aiPlan!.phases[0].serviceId)).length} นัด
+              </p>
             ) : (
-              <p className="pd2__muted">ไม่มีคอร์ส · ชำระรายครั้ง</p>
+              <p className="pd2__muted">ยังไม่มีคอร์ส</p>
             )}
           </section>
 
