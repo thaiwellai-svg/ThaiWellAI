@@ -757,17 +757,24 @@ export function AppointmentDrawer({
                     </div>
                   </div>
 
-                  {ik && (ik.focusAreas.length > 0 || ik.avoidAreas.length > 0) && (
+                  {ik && ik.focusAreas.length > 0 && (
                     <div className="vcc__row">
-                      <small>ตำแหน่ง</small>
+                      <small>จุดที่ปวด</small>
                       <span>
                         {ik.focusAreas.map((x) => (
                           <em key={x} className="is-focus">
                             {x}
                           </em>
                         ))}
+                      </span>
+                    </div>
+                  )}
+                  {ik && ik.avoidAreas.length > 0 && (
+                    <div className="vcc__row">
+                      <small>ห้ามนวด</small>
+                      <span>
                         {ik.avoidAreas.map((x) => (
-                          <em key={x} className="is-avoid" title="ไม่ต้องการให้นวด">
+                          <em key={x} className="is-avoid">
                             <Ban size={11} /> {x}
                           </em>
                         ))}
