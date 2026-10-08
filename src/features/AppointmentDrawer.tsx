@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, Activity, Hand, History, Leaf, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -796,22 +796,31 @@ export function AppointmentDrawer({
           </section>
 
           {(appt.log?.length ?? 0) > 0 && (
-            <section className="vs__log">
+            <section className="vs__log vtl">
               <div className="vcc__head">
                 <span className="vcc__icon">
                   <History size={15} />
                 </span>
-                <b>ประวัติของนัด</b>
-                <small>{appt.log!.length} รายการ</small>
+                <b>ไทม์ไลน์นัดนี้</b>
+                <small>
+                  {appt.log!.length} รายการ · ล่าสุด {clock(appt.log![appt.log!.length - 1].at)} น.
+                </small>
               </div>
               <ol>
-                {appt.log!.map((l, i) => (
-                  <li key={i}>
-                    <time>{clock(l.at)}</time>
-                    {/* ข้อความที่แอปสร้างเอง → เหลือเฉพาะสิ่งที่เปลี่ยน */}
-                    <span>{l.label.replace(/^แจ้งจากแอป:\s*ผู้ป่วยอัปเดตผลประเมิน\s*·\s*[^·]+·\s*/, "ประเมินซ้ำในแอป: ").replace(/แอป ThaiWell AI/g, "แอป ThaiWell")}</span>
-                  </li>
-                ))}
+                {appt.log!.map((l, i) => {
+                  // ข้อความที่แอปสร้างเอง → เหลือเฉพาะสิ่งที่เปลี่ยน
+                  const text = l.label.replace(/^แจ้งจากแอป:\s*ผู้ป่วยอัปเดตผลประเมิน\s*·\s*[^·]+·\s*/, "ประเมินซ้ำในแอป: ").replace(/แอป ThaiWell AI/g, "แอป ThaiWell");
+                  const Icon = /เช็กอิน/.test(text) ? ScanLine : /เรียกคิว/.test(text) ? Megaphone : /เริ่ม/.test(text) ? Play : /บันทึก|วินิจฉัย|หัตถการ/.test(text) ? ClipboardCheck : /ชำระ|บิล|ใบเสร็จ|เครดิต/.test(text) ? ReceiptText : /เลื่อน/.test(text) ? CalendarClock : /ยกเลิก|ไม่มา/.test(text) ? CalendarX2 : /แอป/.test(text) ? Smartphone : /จบ|เสร็จ/.test(text) ? CircleCheck : Hourglass;
+                  return (
+                    <li key={i}>
+                      <i className="vtl__dot">
+                        <Icon size={13} />
+                      </i>
+                      <span>{text}</span>
+                      <time>{clock(l.at)}</time>
+                    </li>
+                  );
+                })}
               </ol>
             </section>
           )}
