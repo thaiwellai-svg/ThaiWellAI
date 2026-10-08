@@ -2150,3 +2150,8 @@
     margin-left: 0;
   }
 }
+.vs__timer small .vs__timer-end {
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--color-brand);
+}

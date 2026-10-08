@@ -532,7 +532,7 @@ export function AppointmentDrawer({
                   <div className="vs__timer">
                     <b>{mmss}</b>
                     <small>
-                      จาก {s.minutes} นาที · เริ่ม {clock(appt.startedAt)} น.
+                      จาก {s.minutes} นาที · เริ่ม {clock(appt.startedAt)} น. · <b className="vs__timer-end">เสร็จ {clock(new Date(Date.parse(appt.startedAt!) + s.minutes * 60_000).toISOString())} น.</b>
                     </small>
                     <i>
                       <motion.i animate={{ width: `${pct * 100}%` }} transition={{ duration: 0.6 }} />
