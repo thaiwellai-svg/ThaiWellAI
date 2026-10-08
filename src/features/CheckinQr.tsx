@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { QrCode } from "lucide-react";
 import { Button, Dialog } from "../design-system";
@@ -27,6 +27,16 @@ export function CheckinQr({ open, onClose }: { open: boolean; onClose: () => voi
     const t = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, [open]);
+  // ผู้ป่วยสแกนแล้วเช็กอินสำเร็จ (ได้เลขคิว) หลังเปิดหน้าต่างนี้ → ปิดเอง
+  const openedAt = useRef("");
+  useEffect(() => {
+    if (open) openedAt.current = new Date().toISOString();
+  }, [open]);
+  useEffect(() => {
+    if (!open || !openedAt.current) return;
+    const scanned = store.appointments.some((a) => a.log?.some((l) => l.label.startsWith("เช็กอินจากแอป") && l.at > openedAt.current));
+    if (scanned) onClose();
+  }, [open, store.appointments]); // eslint-disable-line react-hooks/exhaustive-deps
   const w = checkinWindow(now);
   const left = Math.ceil(((w + 1) * CHECKIN_WINDOW_MS - now) / 1000);
   const code = settings.checkinSecret ? checkinCode(settings.checkinSecret, w) : "";
@@ -48,7 +58,7 @@ export function CheckinQr({ open, onClose }: { open: boolean; onClose: () => voi
       title="QR เช็กอิน"
       subtitle="ตั้งจอนี้ที่เคาน์เตอร์ ให้ผู้ป่วยสแกนด้วยแอป ThaiWell"
       footer={
-        <Button size="lg" onClick={onClose}>
+        <Button variant="outline" size="lg" fill onClick={onClose}>
           ปิด
         </Button>
       }
