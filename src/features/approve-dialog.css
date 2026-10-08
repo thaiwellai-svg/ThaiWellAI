@@ -1,0 +1,150 @@
+/* อนุมัติคำขอจอง: ซ้าย = อ่านข้อมูล · ขวา = เลือกวันเวลาแล้วอนุมัติ (เลื่อนแยกกัน) */
+.tw-dialog.apv {
+  width: min(1140px, calc(100vw - 48px));
+  height: min(820px, calc(100dvh - 48px));
+}
+.apv .tw-overlay-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+}
+.apv__read,
+.apv__act {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 24px 24px;
+}
+.apv__read {
+  border-right: 1px solid var(--sage-100);
+}
+.apv__act {
+  background: var(--sage-50);
+  padding-top: 16px;
+}
+
+/* หัวข้อของแต่ละส่วน */
+.apv__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.apv__sec > h3 {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font: 700 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.apv__sec > h3 small {
+  font: 500 12px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* สรุปคำขอ */
+.apv__req {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--sage-50);
+}
+.apv__req small,
+.apv__sum small {
+  font: 600 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.apv__req b,
+.apv__sum b {
+  font: 800 18px/1.25 var(--font-sans);
+  color: var(--color-text);
+}
+.apv__req span,
+.apv__sum span {
+  font: 500 13px/1.35 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* ผลคัดกรองผ่านหมด → รายข้อพับไว้ */
+.apv__more > summary {
+  list-style: none;
+  cursor: pointer;
+  width: fit-content;
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.apv__more > summary::-webkit-details-marker {
+  display: none;
+}
+.apv__more[open] > summary {
+  margin-bottom: 10px;
+}
+
+.apv__none {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--white);
+  font: 500 13px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.apv__act .credits {
+  background: var(--white);
+}
+.apv__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.apv__slots {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+.apv__act .slot:not([aria-pressed="true"]):not(:disabled) {
+  background: var(--white);
+}
+
+/* สิ่งที่จะนัด (ก่อนกดอนุมัติ) */
+.apv__sum {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+
+/* จอแคบ: เรียงบนลงล่าง เลื่อนทั้งหน้าต่าง */
+@media (max-width: 900px) {
+  .tw-dialog.apv {
+    height: calc(100dvh - 32px);
+  }
+  .apv .tw-overlay-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  /* จอแคบ: เลือกวันเวลาก่อน แล้วค่อยอ่านข้อมูลประกอบ */
+  .apv__act {
+    order: -1;
+  }
+  .apv__read {
+    border-right: 0;
+    overflow: visible;
+  }
+  .apv__act {
+    overflow: visible;
+    padding-bottom: 24px;
+  }
+  .apv__fields {
+    grid-template-columns: 1fr;
+  }
+}
