@@ -204,17 +204,6 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
             </div>
           </div>
         )}
-        {date && start && therapistFree && (
-          <div className="apv__sum">
-            <small>จะนัดเป็น</small>
-            <b>
-              {thaiDateLong(date)} · {start} น.
-            </b>
-            <span>
-              {s.name} · {store.therapistById(therapistId).name}
-            </span>
-          </div>
-        )}
       </div>
     </Dialog>
   );
