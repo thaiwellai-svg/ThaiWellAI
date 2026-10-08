@@ -625,6 +625,31 @@ export function AppointmentDrawer({
               {view === "billing" && (
                 <>
                 <StepHead n={5} title="ชำระเงิน" hint={payUndecided ? "เลือกวิธีชำระคอร์สก่อน" : `เลือกวิธีชำระ แล้วกด “${payLabel}”`} />
+                {/* คิดเงินจากอะไร: ค่าบริการครั้งนี้ / ตามคอร์ส (รายครั้ง · หักเครดิต) */}
+                {(() => {
+                  const c = p.course && p.course.serviceId === appt.serviceId ? p.course : null;
+                  const draft = !p.course && p.aiPlan && !p.aiPlan.approved ? p.aiPlan : null;
+                  const [tone, title, sub] = c
+                    ? payByCredit
+                      ? ["is-credit", `หักเครดิตคอร์ส · ครั้งที่ ${courseNo}/${credits?.total}`, `${c.name} · จ่ายล่วงหน้าแล้ว${extraSum ? " · เก็บเฉพาะหัตถการเพิ่ม" : ""}`]
+                      : courseNo > (credits?.total ?? 0)
+                        ? ["is-warn", `เกินคอร์ส · ครั้งที่ ${courseNo}/${credits?.total}`, `${c.name} · คิดค่าบริการครั้งนี้`]
+                        : ["is-course", `ตามคอร์ส · ครั้งที่ ${courseNo}/${credits?.total}`, `${c.name} · ${payUndecided ? "เลือกวิธีชำระคอร์สด้านล่าง" : "ชำระรายครั้ง (ค่าบริการครั้งนี้)"}`]
+                    : p.course
+                      ? ["is-plain", "ค่าบริการครั้งนี้", `บริการนี้ไม่อยู่ในคอร์ส${p.course.name}`]
+                      : draft
+                        ? ["is-warn", "ค่าบริการครั้งนี้", `ร่างคอร์ส ${draft.sessions} ครั้งยังรอแพทย์อนุมัติ · ยังไม่นับเป็นคอร์ส`]
+                        : ["is-plain", "ค่าบริการครั้งนี้", "ไม่มีคอร์ส"];
+                  return (
+                    <div className={clsx("vs__basis", tone)}>
+                      <Ticket size={16} />
+                      <span>
+                        <b>{title}</b>
+                        <small>{sub}</small>
+                      </span>
+                    </div>
+                  );
+                })()}
                 {payUndecided ? (
                   <>
                     <CoursePayChoice p={p} left={credits!.total - courseNo + 1} price={s.price} onPrepay={() => setPrepayOpen(true)} />
