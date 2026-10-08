@@ -1,246 +1,266 @@
-/* หัวนัด (ขั้นรับบริการ): คิว · เวลา · บริการ · ผู้บำบัด · ปุ่ม + แถบขั้นตอน ในการ์ดเดียว */
-.vhd {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 14px 16px 12px;
-  border-radius: 20px;
-  background: var(--sage-50);
-}
-.vsp__body .vs > .vhd {
+/* ส่วนหัวนัด (หน้ารับบริการ): ตั๋วคิว · แถวบริการ/ผู้บำบัด · แท็บขั้นตอน */
+.vsp__body .vs > .vq,
+.vsp__body .vs > .vmeta,
+.vsp__body .vs > .vst {
   grid-column: 1 / -1;
 }
-.vhd__top {
+
+/* ---------- ตั๋วคิว ---------- */
+.vq {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 14px;
+  align-items: stretch;
   min-width: 0;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 1px var(--sage-100),
+    0 1px 2px rgb(31 42 34 / 4%);
 }
-.vhd__q {
+.vq__no {
+  position: relative;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 76px;
-  padding: 8px 12px;
-  border-radius: 14px;
-  background: var(--color-brand);
-  color: var(--white);
+  gap: 2px;
+  min-width: 108px;
+  padding: 14px 16px;
+  border-right: 2px dashed var(--sage-100);
 }
-.vhd__q small {
-  font: 500 10.5px/1 var(--font-sans);
-  opacity: 0.8;
+/* รอยเจาะตั๋ว บน/ล่าง */
+.vq__no::before,
+.vq__no::after {
+  content: "";
+  position: absolute;
+  right: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-surface, #fff);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
 }
-.vhd__q b {
-  margin-top: 4px;
-  font: 800 20px/1 var(--font-sans);
-  letter-spacing: 0.02em;
+.vq__no::before {
+  top: -9px;
+}
+.vq__no::after {
+  bottom: -9px;
+}
+.vq__no small {
+  font: 600 11px/1 var(--font-sans);
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+.vq__no b {
+  font: 800 28px/1.05 var(--font-sans);
+  color: var(--color-brand);
+  letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.vhd__q.is-wait {
-  background: var(--white);
+.vq__no.is-wait b {
+  font-size: 20px;
   color: var(--color-text-muted);
-  box-shadow: inset 0 0 0 1px var(--sage-100);
 }
-.vhd__q.is-wait b {
-  font-size: 13px;
-  font-weight: 700;
-}
-.vhd__when {
-  flex-shrink: 0;
+.vq__body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 4px;
+  padding: 12px 16px 12px 20px;
 }
-.vhd__when b {
-  font: 800 20px/1.1 var(--font-sans);
+.vq__time {
+  font: 800 22px/1.1 var(--font-sans);
   color: var(--color-text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.vhd__when small {
-  font: 500 12px/1.2 var(--font-sans);
+.vq__date {
+  font: 500 12.5px/1.2 var(--font-sans);
   color: var(--color-text-muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* บริการ · ผู้บำบัด · ค่าบริการ: คั่นด้วยเส้นบาง ๆ */
-.vhd__meta {
-  flex: 1;
-  min-width: 0;
+/* สถานะตอนนี้ */
+.vq__live {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  color: var(--color-text-muted);
+  font: 600 12px/1.2 var(--font-sans);
+}
+.vq__live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.vq__live.is-treating,
+.vq__live.is-called {
+  background: #e8f1fb;
+  color: #2f6fb3;
+}
+.vq__live.is-treating::before {
+  animation: vq-pulse 1.4s ease-in-out infinite;
+}
+.vq__live.is-billing,
+.vq__live.is-assess {
+  background: #fdf3d8;
+  color: #9a6b00;
+}
+.vq__live.is-done {
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+}
+@keyframes vq-pulse {
+  50% {
+    opacity: 0.3;
+  }
+}
+.vq__acts {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-left: 14px;
-  border-left: 1px solid var(--sage-100);
+  gap: 8px;
+  padding: 0 14px;
 }
-.vhd__meta > span {
+
+/* ---------- บริการ · ผู้บำบัด · ค่าบริการ ---------- */
+.vmeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  padding: 0 4px;
+}
+.vmeta > span {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.vhd__meta small {
-  font: 500 11px/1 var(--font-sans);
+.vmeta small {
+  font: 500 11.5px/1 var(--font-sans);
   color: var(--color-text-muted);
 }
-.vhd__meta b {
-  font: 600 13.5px/1.25 var(--font-sans);
+.vmeta b {
+  font: 600 14px/1.25 var(--font-sans);
   color: var(--color-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
-.vhd__meta .vhd__who {
+.vmeta .vmeta__who {
   flex-direction: row;
   align-items: center;
   gap: 8px;
 }
-.vhd__who > span:not(.tw-avatar) {
-  min-width: 0;
+.vmeta__who > span:not(.tw-avatar) {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.vhd__acts {
-  flex-shrink: 0;
-  display: flex;
-  gap: 8px;
-}
 
-/* แถบขั้นตอน: เส้นความคืบหน้าวิ่งผ่านจุด · ขั้นปัจจุบันเด่น · เวลาใต้ชื่อขั้น */
-.vhd__steps {
-  --dot: 24px;
-  position: relative;
+/* ---------- แท็บเม็ดยา: ขั้นตอน ---------- */
+.vst {
   list-style: none;
   margin: 0;
-  padding: 10px 0 0;
-  display: grid;
-  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
-  border-top: 1px solid var(--sage-100);
-}
-.vhd__steps::before,
-.vhd__steps::after {
-  content: "";
-  position: absolute;
-  top: calc(10px + var(--dot) / 2 - 1.5px);
-  left: calc(50% / var(--n));
-  height: 3px;
-  border-radius: 3px;
-}
-.vhd__steps::before {
-  right: calc(50% / var(--n));
-  background: var(--sage-100);
-}
-.vhd__steps::after {
-  width: calc((100% - 100% / var(--n)) * var(--p));
-  background: var(--color-brand);
-  transition: width var(--dur-fast) var(--ease-out);
-}
-.vhd__steps li {
-  position: relative;
-  z-index: 1;
+  padding: 4px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 4px;
-  min-width: 0;
-  text-align: center;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.vhd__dot {
-  display: grid;
-  place-items: center;
-  width: var(--dot);
-  height: var(--dot);
-  border-radius: 50%;
-  background: var(--white);
+.vst::-webkit-scrollbar {
+  display: none;
+}
+.vst li {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
   color: var(--color-text-muted);
-  box-shadow: inset 0 0 0 1.5px var(--sage-100);
-}
-.vhd__steps li.is-done .vhd__dot {
-  background: var(--color-brand);
-  color: var(--white);
-  box-shadow: none;
-}
-.vhd__steps li.is-now .vhd__dot {
-  background: var(--white);
-  color: var(--color-brand);
-  box-shadow:
-    inset 0 0 0 2px var(--color-brand),
-    0 0 0 4px var(--color-brand-tint);
-}
-.vhd__steps small {
-  max-width: 100%;
-  font: 500 11px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.vhd__steps li.is-done small {
-  color: var(--color-text);
+.vst li > svg {
+  flex-shrink: 0;
 }
-.vhd__steps li.is-now small {
-  font-weight: 700;
-  color: var(--color-brand);
+.vst li > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
 }
-.vhd__steps time {
-  font: 600 10.5px/1 var(--font-sans);
-  color: var(--color-text-muted);
+.vst small {
+  font: 600 12px/1.15 var(--font-sans);
+}
+.vst time {
+  font: 500 10.5px/1 var(--font-sans);
+  opacity: 0.85;
   font-variant-numeric: tabular-nums;
 }
+.vst li.is-done {
+  background: var(--color-brand);
+  color: var(--white);
+}
+.vst li.is-now {
+  background: var(--white);
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 2px var(--color-brand);
+}
+.vst li.is-now small {
+  font-weight: 800;
+}
 
-/* แผงแคบ: คิว+เวลา แถวแรก · บริการ/ผู้บำบัด แถวสอง */
+/* ---------- แผงแคบ ---------- */
 @container rec (max-width: 640px) {
-  .vhd__top {
-    flex-wrap: wrap;
-    gap: 10px;
+  .vq__no {
+    min-width: 84px;
+    padding: 12px;
   }
-  .vhd__q {
-    min-width: 64px;
-    padding: 7px 10px;
+  .vq__no b {
+    font-size: 22px;
   }
-  .vhd__q b {
-    font-size: 17px;
+  .vq__body {
+    padding: 10px 10px 10px 16px;
   }
-  .vhd__when {
-    flex: 1;
-    min-width: 0;
+  .vq__time {
+    font-size: 18px;
   }
-  .vhd__when b {
-    font-size: 17px;
-  }
-  .vhd__when small {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .vhd__acts {
+  .vq__acts {
+    flex-direction: column;
     gap: 6px;
+    padding: 0 10px;
   }
-  .vhd__meta {
-    order: 3;
-    flex-basis: 100%;
-    padding: 10px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--sage-100);
+  /* แผงแคบ: ชื่อเต็มเฉพาะขั้นปัจจุบัน · ขั้นอื่นเหลือไอคอน */
+  .vst li:not(.is-now) {
+    flex: 0 0 auto;
+    padding: 4px 12px;
   }
-  .vhd__steps small {
-    font-size: 10px;
+  .vst li:not(.is-now) > span {
+    display: none;
+  }
+  .vst li.is-now {
+    flex: 1 1 auto;
   }
 }
 @media (max-width: 700px) {
-  .vhd__top {
-    flex-wrap: wrap;
-  }
-  .vhd__when {
-    flex: 1;
-  }
-  .vhd__meta {
-    order: 3;
-    flex-basis: 100%;
-    padding: 10px 0 0;
-    border-left: 0;
-    border-top: 1px solid var(--sage-100);
+  .vq__acts {
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 10px;
   }
 }
