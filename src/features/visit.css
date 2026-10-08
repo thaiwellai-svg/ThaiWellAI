@@ -1898,3 +1898,13 @@
     flex: 1 1 auto;
   }
 }
+/* เส้นคั่นระหว่าง บริการ | ผู้บำบัด | ค่าบริการ */
+.vs__qmeta > span + span {
+  padding-left: 22px;
+  border-left: 1px solid var(--sage-100);
+}
+@container rec (max-width: 640px) {
+  .vs__qmeta > span + span {
+    padding-left: 16px;
+  }
+}
