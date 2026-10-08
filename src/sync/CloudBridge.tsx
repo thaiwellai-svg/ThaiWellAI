@@ -167,7 +167,7 @@ export function CloudBridge() {
       syncPhoto(found, cp);
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
       // ผู้ป่วยเดิมของคลินิก → HN เดิมไปแสดงในแอป
-      if (cp && cp.clinic_hn !== found.hn) void cloud.from("tw_patients").update({ clinic_hn: found.hn }).eq("id", row.patient_id);
+      if (cp && cp.clinic_hn !== found.hn) void cloud.from("tw_patients").update({ clinic_hn: found.hn }).eq("id", row.patient_id).then(() => undefined);
       return found;
     }
     const p: Patient = {
@@ -192,7 +192,7 @@ export function CloudBridge() {
       photo: cp?.profile?.avatar ?? defaultAppAvatar(cp?.gender ?? undefined),
     };
     st.dispatch({ type: "addPatient", patient: p });
-    void cloud.from("tw_patients").update({ clinic_hn: p.hn }).eq("id", row.patient_id);
+    void cloud.from("tw_patients").update({ clinic_hn: p.hn }).eq("id", row.patient_id).then(() => undefined);
     return p;
   };
 
@@ -540,6 +540,8 @@ export function CloudBridge() {
         const cp = ev.new as NonNullable<CloudAppt["tw_patients"]>;
         const p = ref.current.patients.find((x) => x.cloudId === cp?.id);
         if (p && leader.current) syncPhoto(p, cp);
+        // แอปถูกล้าง/สร้างบัญชีใหม่ (HN หาย) → ลืมว่าเคยส่งแล้ว ให้ส่ง HN + คอร์ส + ประวัติไปใหม่
+        if (p && cp && cp.clinic_hn !== p.hn) courseSig.current.delete(cp.id);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "tw_appointments" }, async (ev) => {
         const id = (ev.new as CloudAppt)?.id;
@@ -647,7 +649,7 @@ export function CloudBridge() {
           const as = (data.assessment ?? {}) as Record<string, unknown> & { course?: { name: string; no: number; total: number } };
           if (as.course && `${as.course.name}|${as.course.no}/${as.course.total}` === sig) return;
           const next = { ...as, course, ...(as.source === "clinic" ? { summary: `นัดตามคอร์ส ${course.name} ครั้งที่ ${course.no}/${course.total}` } : {}) };
-          void cloud.from("tw_appointments").update({ assessment: next }).eq("id", id);
+          void cloud.from("tw_appointments").update({ assessment: next }).eq("id", id).then(({ error: e }) => e && visitNoSig.current.delete(id));
         });
       });
     }
