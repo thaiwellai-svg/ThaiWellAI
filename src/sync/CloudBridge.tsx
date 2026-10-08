@@ -43,11 +43,15 @@ const roundsOf = (row: CloudAppt): AssessRound[] => {
   const real = (a: Omit<CloudAssessment, "rounds" | "addenda">) => typeof a.pain === "number";
   return [...(as.rounds ?? []).filter(real).map((r) => roundOf(r, row.created_at)), ...(real(as) ? [roundOf(as, row.created_at)] : [])];
 };
+/** ผู้ป่วยคัดกรองข้อห้ามมาจริง (แอปรุ่นเก่าส่ง "ไม่มี" ทุกข้อแม้ไม่ได้ถาม → ถือว่ายังไม่ได้คัดกรอง เว้นแต่มีข้อที่ตอบว่ามี) */
+const screenedIn = (as?: CloudAssessment | null) => as?.screened === true || Object.values(as?.screening ?? {}).some((v) => v === true);
 const screeningOf = (sc?: CloudAssessment["screening"]): Screening => ({ fever: !!sc?.fever, highBP: !!sc?.highBP, bpSystolic: sc?.bpSystolic, menstruation: !!sc?.menstruation, pregnant: !!sc?.pregnant, recentSurgery: !!sc?.recentSurgery, contagious: !!sc?.contagious });
 const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
   const as = row.assessment ?? {};
   return {
     at: as.at ?? row.created_at,
+    // แอปส่งมาแค่นี้ · ข้ออื่น (ยา ผิวหนัง ชา ผ่าตัด แพ้) ไม่ได้ถาม
+    asked: ["complaint", "pain", "focusAreas", "avoidAreas", ...(as.conditions ? ["conditions"] : []), ...(as.pressure ? ["pressure"] : []), ...(screenedIn(as) ? ["screening"] : [])],
     goal: "บรรเทาอาการ",
     complaint: as.complaint ?? fallbackComplaint,
     pain: as.pain ?? 5,
@@ -247,7 +251,7 @@ export function CloudBridge() {
     if (started) {
       st.dispatch({ type: "updateAppointment", id: v.id, patch: { addenda: [...(v.addenda ?? []), { at: round.at, text: `ประเมินในแอป (ส่งมาเป็นคำขอจอง) · ${as.summary ?? `ปวด ${as.pain}/10`}` }] }, log: "ผลประเมินจากคำขอจองที่ซ้ำกับนัดตามคอร์ส (หลังเช็กอิน)" });
     } else {
-      st.dispatch({ type: "updateAppointment", id: v.id, patch: { intake: intakeOf(row, v.intake?.complaint ?? ""), painBefore: as.pain, screening: screeningOf(as.screening), assessRounds: [...(v.assessRounds ?? []).filter((r) => !/^นัด(ตามคอร์ส|จากคลินิก)/.test(r.summary ?? "")), round], ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผลประเมินจากแอปของนัดตามคอร์สนี้ · ปวด ${as.pain}/10` });
+      st.dispatch({ type: "updateAppointment", id: v.id, patch: { intake: intakeOf(row, v.intake?.complaint ?? ""), painBefore: as.pain, screening: screenedIn(as) ? screeningOf(as.screening) : undefined, assessRounds: [...(v.assessRounds ?? []).filter((r) => !/^นัด(ตามคอร์ส|จากคลินิก)/.test(r.summary ?? "")), round], ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผลประเมินจากแอปของนัดตามคอร์สนี้ · ปวด ${as.pain}/10` });
       syncHealth(patientId, row, date);
     }
     return v.id;
@@ -406,7 +410,7 @@ export function CloudBridge() {
       if (row.assessment && before && lastAt && lastAt !== seenAt) {
         const as = row.assessment;
         syncHealth(local.patientId, row, local.date);
-        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screeningOf(as.screening), assessRounds: rounds, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length})${late ? " · หลังเช็กอิน" : ""} · ปวด ${as.pain ?? "-"}/10` });
+        st.dispatch({ type: "updateAppointment", id: local.id, patch: { intake: intakeOf(row, local.intake?.complaint ?? ""), painBefore: as.pain ?? local.painBefore, screening: screenedIn(as) ? screeningOf(as.screening) : undefined, assessRounds: rounds, ...(as.guide ? { appGuide: as.guide } : {}) }, log: `ผู้ป่วยประเมินใหม่ในแอป (รอบที่ ${rounds.length})${late ? " · หลังเช็กอิน" : ""} · ปวด ${as.pain ?? "-"}/10` });
         if (prevSig !== undefined) {
           toast({ message: `${who} ประเมินใหม่ก่อนนวด · ปวด ${as.pain ?? "-"}/10` });
           void pushNotify("ผู้ป่วยประเมินใหม่ก่อนนวด", `${who} · รอบที่ ${rounds.length} · ปวด ${as.pain ?? "-"}/10`, "/visits");
@@ -426,7 +430,7 @@ export function CloudBridge() {
       }
     }
     // นัดที่อนุมัติก่อนมีการเก็บแบบคัดกรอง → เติมจากที่ผู้ป่วยตอบในแอป
-    const sc = row.assessment?.screening;
+    const sc = screenedIn(row.assessment) ? row.assessment?.screening : undefined;
     if (!local.screening && sc)
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { screening: { fever: !!sc.fever, highBP: !!sc.highBP, bpSystolic: sc.bpSystolic, menstruation: !!sc.menstruation, pregnant: !!sc.pregnant, recentSurgery: !!sc.recentSurgery, contagious: !!sc.contagious } } });
     const who = st.patientById(local.patientId).name;

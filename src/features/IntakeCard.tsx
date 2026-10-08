@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, AlertTriangle, Briefcase, Check, ChevronDown, Gauge, Hand, HeartPulse, Info, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
+import { Activity, AlertTriangle, Briefcase, Check, ChevronDown, Gauge, Hand, HeartPulse, Info, Minus, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { timeAgo } from "../data/thaiDate";
@@ -50,29 +50,31 @@ export function IntakeCard({
   const alerts = intakeAlerts(i, settings.bpThreshold);
   const { heatmap, avoid } = intakeBody(i);
   // grouped answers; `flag` marks an answer that needs attention
-  type Row = { k: string; v: string; yes?: boolean; flag?: boolean; plain?: boolean };
+  type Row = { k: string; v: string; yes?: boolean; flag?: boolean; plain?: boolean; f?: string; none?: boolean };
+  // ข้อที่ผู้ป่วยตอบมาจริง (ไม่ได้ถาม = ไม่แสดง แทนการเดาว่า "ไม่มี")
+  const has = (f: string) => !i.asked || i.asked.includes(f);
   const yn = (k: string, v: boolean, yesText = "มี"): Row => ({ k, v: v ? yesText : "ไม่มี", yes: v, flag: v });
   const groups: { title: string; icon: typeof HeartPulse; rows: Row[] }[] = [
     {
       title: "ประวัติสุขภาพ",
       icon: HeartPulse,
       rows: [
-        { k: "โรคประจำตัว", v: i.conditions.join(", ") || "ไม่มี", flag: false, yes: i.conditions.length > 0 },
-        { k: "ยาที่ใช้อยู่", v: i.medications.join(", ") || "ไม่มี", yes: i.medications.length > 0 },
-        yn("ยาเพิ่มความเสี่ยงเลือดออก", i.bloodThinner),
-        { k: "ประวัติการผ่าตัด", v: i.surgery ?? "ไม่มี", yes: !!i.surgery, flag: !!i.surgery },
-        { k: "การบาดเจ็บล่าสุด", v: i.injury ?? "ไม่มี", yes: !!i.injury, flag: !!i.injury },
-        { k: "การแพ้", v: i.allergy ?? "ไม่แพ้น้ำมันนวด", yes: !!i.allergy, flag: !!i.allergy },
+        { k: "โรคประจำตัว", v: i.conditions.join(", ") || "ไม่มี", flag: false, yes: i.conditions.length > 0, f: "conditions" },
+        { k: "ยาที่ใช้อยู่", v: i.medications.join(", ") || "ไม่มี", yes: i.medications.length > 0, f: "medications" },
+        { ...yn("ยาเพิ่มความเสี่ยงเลือดออก", i.bloodThinner), f: "bloodThinner" },
+        { k: "ประวัติการผ่าตัด", v: i.surgery ?? "ไม่มี", yes: !!i.surgery, flag: !!i.surgery, f: "surgery" },
+        { k: "การบาดเจ็บล่าสุด", v: i.injury ?? "ไม่มี", yes: !!i.injury, flag: !!i.injury, f: "injury" },
+        { k: "การแพ้", v: i.allergy ?? "ไม่แพ้น้ำมันนวด", yes: !!i.allergy, flag: !!i.allergy, f: "allergy" },
       ],
     },
     {
       title: "ตรวจก่อนนวด",
       icon: ShieldCheck,
       rows: [
-        { k: "ผิวหนังบริเวณที่นวด", v: i.skin, yes: !/ปกติ/.test(i.skin), flag: !/ปกติ/.test(i.skin) },
-        yn("อาการชา / อ่อนแรง", i.numbness),
-        yn("ไข้หรือการติดเชื้อ", i.fever),
-        i.pregnant === null ? { k: "ตั้งครรภ์", v: "ไม่เกี่ยวข้อง" } : yn("ตั้งครรภ์", i.pregnant, "ตั้งครรภ์"),
+        { k: "ผิวหนังบริเวณที่นวด", v: i.skin, yes: !/ปกติ/.test(i.skin), flag: !/ปกติ/.test(i.skin), f: "skin" },
+        { ...yn("อาการชา / อ่อนแรง", i.numbness), f: "numbness" },
+        { ...yn("ไข้หรือการติดเชื้อ", i.fever), f: "screening" },
+        { ...(i.pregnant === null ? { k: "ตั้งครรภ์", v: "ไม่เกี่ยวข้อง" } : yn("ตั้งครรภ์", i.pregnant, "ตั้งครรภ์")), f: "screening" },
       ],
     },
     {
@@ -84,13 +86,16 @@ export function IntakeCard({
       ],
     },
   ];
+  const screened = has("screening");
   if (screening) {
-    groups.unshift({ title: "คัดกรองก่อนนวด", icon: ShieldCheck, rows: SCREENING_QUESTIONS.map((q) => yn(q.label, !!screening[q.key])) });
+    groups.unshift({ title: "คัดกรองก่อนนวด", icon: ShieldCheck, rows: SCREENING_QUESTIONS.map((q) => ({ ...yn(q.label, !!screening[q.key]), f: "screening" })) });
     // ไข้ / ตั้งครรภ์ อยู่ในข้อคัดกรองแล้ว
     groups[2].rows = groups[2].rows.filter((r) => !/ไข้|ตั้งครรภ์/.test(r.k));
   }
+  // ข้อที่ผู้ป่วยไม่ได้ตอบ → "ไม่ได้ประเมิน" (ไม่เดาว่า "ไม่มี")
+  for (const g of groups) g.rows = g.rows.map((r) => (r.f && !has(r.f) ? { k: r.k, v: "ไม่ได้ประเมิน", none: true } : r));
   // ผลรวมของคัดกรอง + คำตอบที่ต้องระวัง (ไม่ซ้ำ)
-  const verdict = screening ? [...screeningFlags.map((f) => ({ label: f.label, level: f.level === "stop" ? "stop" : "warn" })), ...alerts].filter((a, k, arr) => arr.findIndex((x) => x.label === a.label) === k) : null;
+  const verdict = screening ? [...(screened ? screeningFlags : []).map((f) => ({ label: f.label, level: f.level === "stop" ? "stop" : "warn" })), ...alerts].filter((a, k, arr) => arr.findIndex((x) => x.label === a.label) === k) : null;
   const total = groups.reduce((n, g) => n + g.rows.length, 0);
 
   return (
@@ -110,9 +115,13 @@ export function IntakeCard({
       </div>}
 
       {verdict && (
-        <div className={clsx("ik2__verdict", verdict.length ? (verdict.some((a) => a.level === "stop") ? "is-stop" : "is-warn") : "is-ok")}>
-          {verdict.length ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
-          {verdict.length ? (
+        <div className={clsx("ik2__verdict", verdict.length ? (verdict.some((a) => a.level === "stop") ? "is-stop" : "is-warn") : screened ? "is-ok" : "is-warn")}>
+          {verdict.length || !screened ? <ShieldAlert size={16} /> : <ShieldCheck size={16} />}
+          {!screened && !verdict.length ? (
+            <span>
+              <b>ไม่ได้ประเมินข้อห้าม</b> คัดกรองที่เคาน์เตอร์ก่อนนวด (ไข้ ความดัน ตั้งครรภ์ ผ่าตัด)
+            </span>
+          ) : verdict.length ? (
             <span>
               <b>{verdict.some((a) => a.level === "stop") ? "พบข้อห้าม" : "ข้อควรระวัง"}</b> {verdict.map((a) => a.label).join(" · ")}
             </span>
@@ -139,9 +148,9 @@ export function IntakeCard({
       {/* in the patient's words */}
       <blockquote className="ik2__quote">
         <p>“{i.complaint}”</p>
-        <small>
-          {i.duration} · ต้องการ{i.goal}
-        </small>
+        {(has("duration") && i.duration && i.duration !== "-") || has("goal") ? (
+          <small>{[has("duration") && i.duration !== "-" ? i.duration : "", has("goal") ? `ต้องการ${i.goal}` : ""].filter(Boolean).join(" · ")}</small>
+        ) : null}
       </blockquote>
 
       {/* measurements: 2×2 tiles with status */}
@@ -200,12 +209,12 @@ export function IntakeCard({
             <Hand size={14} />
           </span>
           <small>แรงนวด</small>
-          <b>{i.pressure}</b>
-          <span className="ik3__steps">
+          <b className={has("pressure") ? undefined : "ik3__none"}>{has("pressure") ? i.pressure : "ไม่ได้ประเมิน"}</b>
+          {has("pressure") && <span className="ik3__steps">
             {(["เบา", "ปานกลาง", "หนัก"] as const).map((lv, k) => (
               <em key={lv} className={k <= ["เบา", "ปานกลาง", "หนัก"].indexOf(i.pressure) ? "on" : undefined} />
             ))}
-          </span>
+          </span>}
         </div>
       </div>
 
@@ -243,8 +252,8 @@ export function IntakeCard({
                     <g.icon size={12} /> {g.title}
                   </p>
                   {g.rows.map((r) => (
-                    <div key={r.k} className={clsx("ik2__row", r.flag && "is-flag", r.plain && "is-plain")}>
-                      <span className={clsx("ik2__mark", r.plain ? "is-plain" : r.flag ? "is-flag" : r.yes ? "is-info" : "is-ok")}>{r.plain ? null : r.flag ? <AlertTriangle size={10} strokeWidth={2.6} /> : r.yes ? <Info size={10} strokeWidth={2.6} /> : <Check size={10} strokeWidth={3} />}</span>
+                    <div key={r.k} className={clsx("ik2__row", r.flag && "is-flag", r.plain && "is-plain", r.none && "is-none")}>
+                      <span className={clsx("ik2__mark", r.none ? "is-none" : r.plain ? "is-plain" : r.flag ? "is-flag" : r.yes ? "is-info" : "is-ok")}>{r.none ? <Minus size={10} strokeWidth={3} /> : r.plain ? null : r.flag ? <AlertTriangle size={10} strokeWidth={2.6} /> : r.yes ? <Info size={10} strokeWidth={2.6} /> : <Check size={10} strokeWidth={3} />}</span>
                       <span className="ik2__k">{r.k}</span>
                       <span className="ik2__v">{r.v}</span>
                     </div>

@@ -86,8 +86,12 @@ export const SAMPLE_INTAKE: Omit<Intake, "at"> = {
 };
 
 /** the assessment that came with a booking request (or its demo stand-in) */
+/** ผลประเมินจากแอปที่รับไว้ก่อนมีรายการข้อที่ตอบ → แอปถามแค่อาการ ปวด ตำแหน่ง โรคประจำตัว แรงนวด (คัดกรอง = มีข้อที่ตอบว่ามี) */
+const legacyAsked = (i: Intake, sc?: { [k: string]: unknown }): Intake =>
+  i.asked ? i : { ...i, asked: ["complaint", "pain", "focusAreas", "avoidAreas", "conditions", "pressure", ...(Object.values(sc ?? {}).some((v) => v === true) ? ["screening"] : [])] };
+
 export function intakeOfRequest(r: BookingRequest, p: Patient): Intake {
-  if (r.intake) return r.intake;
+  if (r.intake) return r.cloudId ? legacyAsked(r.intake, r.screening as unknown as Record<string, unknown>) : r.intake;
   if (r.id === "r1") return { ...SAMPLE_INTAKE, at: r.submittedAt };
   return demoIntake(p, r.painScore, r.screening, r.submittedAt);
 }
@@ -96,17 +100,17 @@ export function intakeOfRequest(r: BookingRequest, p: Patient): Intake {
 export function intakeOfVisit(a: Appointment, p: Patient): Intake | null {
   // ผลประเมินของนัดนี้ (รอบล่าสุดที่ผู้ป่วยส่งมาสำหรับวันนัดนี้)
   const r = a.assessRounds?.[a.assessRounds.length - 1];
-  if (a.intake && (!r || r.at <= a.intake.at)) return a.intake;
+  if (a.intake && (!r || r.at <= a.intake.at)) return a.cloudId ? legacyAsked(a.intake, a.screening as unknown as Record<string, unknown>) : a.intake;
   if (r)
-    return {
+    return legacyAsked({
       ...(a.intake ?? { goal: "บรรเทาอาการ", duration: "-", conditions: p.conditions, medications: [], bloodThinner: false, skin: "ปกติ", numbness: false, fever: false, pregnant: null, pressure: "ปานกลาง" as const }),
       at: r.at,
       complaint: r.complaint || a.intake?.complaint || p.complaint,
       pain: r.pain,
       focusAreas: r.focusAreas.length ? r.focusAreas : (a.intake?.focusAreas ?? []),
       avoidAreas: r.avoidAreas.length ? r.avoidAreas : (a.intake?.avoidAreas ?? []),
-    };
-  if (a.intake) return a.intake;
+    }, a.screening as unknown as Record<string, unknown>);
+  if (a.intake) return a.cloudId ? legacyAsked(a.intake, a.screening as unknown as Record<string, unknown>) : a.intake;
   // ใช้งานจริง: ยังไม่ได้ประเมินสำหรับนัดนี้ = ไม่มี (ไม่สร้างข้อมูลแทน)
   if (LIVE || a.cloudId?.startsWith("cl-")) return null;
   if (a.type !== "booked") return null;

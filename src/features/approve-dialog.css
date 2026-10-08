@@ -23,7 +23,6 @@
   border-right: 1px solid var(--sage-100);
 }
 .apv__act {
-  background: var(--sage-50);
   padding-top: 16px;
 }
 
@@ -106,12 +105,12 @@
   margin: 0;
   padding: 12px 14px;
   border-radius: 14px;
-  background: var(--white);
+  background: var(--sage-50);
   font: 500 13px/1.3 var(--font-sans);
   color: var(--color-text-muted);
 }
 .apv__act .credits {
-  background: var(--white);
+  background: var(--sage-50);
 }
 .apv__fields {
   display: grid;
@@ -120,9 +119,6 @@
 }
 .apv__slots {
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-}
-.apv__act .slot:not([aria-pressed="true"]):not(:disabled) {
-  background: var(--white);
 }
 
 /* สิ่งที่จะนัด (ก่อนกดอนุมัติ) */

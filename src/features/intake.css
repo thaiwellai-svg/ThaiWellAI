@@ -566,3 +566,17 @@
     inset 0 0 0 1px var(--sage-100),
     0 1px 3px rgb(31 42 34 / 5%);
 }
+/* ข้อที่ผู้ป่วยไม่ได้ประเมิน */
+.ik2__row.is-none .ik2__v,
+.ik3__none {
+  color: var(--color-text-muted) !important;
+  font-weight: 500 !important;
+  font-style: italic;
+}
+.ik3__none {
+  font-size: 13px !important;
+}
+.ik2__mark.is-none {
+  background: var(--sage-100);
+  color: var(--color-text-muted);
+}

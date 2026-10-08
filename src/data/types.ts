@@ -65,6 +65,8 @@ export interface Screening {
 /** แบบประเมินก่อนรับบริการ — filled by the patient in the ThaiWell AI app before the visit */
 export interface Intake {
   at: string; // ISO, when sent
+  /** ข้อที่ผู้ป่วยตอบมาจริง (ไม่มี = ตอบครบทุกข้อ) · ข้อที่ไม่ได้ถามไม่แสดงเป็น "ไม่มี" · "screening" = คัดกรองข้อห้ามแล้ว */
+  asked?: string[];
   goal: string; // วัตถุประสงค์การนวด
   complaint: string; // อาการหลัก
   pain: number; // 0–10

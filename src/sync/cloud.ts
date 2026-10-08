@@ -60,6 +60,8 @@ export interface CloudAssessment {
   conditions?: string[];
   pressure?: string;
   screening?: { fever?: boolean; highBP?: boolean; bpSystolic?: number; pregnant?: boolean; recentSurgery?: boolean; contagious?: boolean; menstruation?: boolean };
+  /** ผู้ป่วยตอบคำถามข้อห้ามแล้ว (แอปรุ่นเก่าไม่ส่ง → ดูว่ามีข้อไหนเป็นจริง) */
+  screened?: boolean;
   summary?: string;
   /** รหัสบริการ / ผู้บำบัดที่ผู้ป่วยเลือกในแอป (รหัสเดียวกับคลินิก) */
   serviceId?: string;
