@@ -319,7 +319,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await mutate(p, "const t=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);const a=s.appointments.find(x=>x.date===t&&x.status==='waiting'&&!x.calledAt);s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
-    await p.getByRole('button', { name: 'ไม่มา', exact: true }).click(); await p.waitForTimeout(800);
+    // ไม่มา อยู่ในเมนู ⋯
+    await p.getByRole('button', { name: 'เพิ่มเติม' }).first().click(); await p.waitForTimeout(300);
+    await p.getByRole('menuitem', { name: /ไม่มา/ }).click(); await p.waitForTimeout(800);
     ex((await state(p)).appointments.find((a) => a.id === id).status === 'absent', 'สถานะเป็นไม่มา');
     await p.getByRole('button', { name: 'ย้อนกลับ' }).click(); await p.waitForTimeout(800);
     ex((await state(p)).appointments.find((a) => a.id === id).status === 'waiting', 'ย้อนกลับเป็นรอรับบริการ');

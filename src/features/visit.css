@@ -1776,3 +1776,22 @@
   display: block;
   margin-top: -4px;
 }
+
+/* ปุ่ม ⋯ (ยกเลิกนัด · ไม่มา) ข้างปุ่มหลักของขั้น */
+.vs__more {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--white);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.vs__more:hover,
+.vs__more.is-on {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}

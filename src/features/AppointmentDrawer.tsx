@@ -16,6 +16,7 @@ import { AssessHistory } from "./AssessHistory";
 import { AppGuideCard } from "./AppGuideCard";
 import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "./billing";
 import { ReceiptDialog } from "./Receipt";
+import { MoreMenu } from "./MoreMenu";
 import { CoursePayChoice, PrepayCourseDialog } from "./PrepayCourse";
 import { VisitSummary } from "./VisitSummary";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
@@ -267,18 +268,21 @@ export function AppointmentDrawer({
 
   const view: Stage = stage === "done" && payNow && !appt.paid && appt.payment?.status !== "pending" ? "billing" : stage;
   const payLabel = payByCredit && !extraSum ? "หักเครดิต" : method === "app" ? "ส่งบิลเข้าแอป" : "รับชำระ";
+  // ทางเลือกที่ไม่ค่อยใช้ (ยกเลิกนัด · ไม่มา) อยู่ในเมนู ⋯
+  const moreMenu = (
+    <MoreMenu
+      className="vs__more"
+      items={[
+        ...(view !== "called" && appt.date <= todayISO() ? [{ label: "ไม่มา", icon: <UserX size={16} />, onClick: () => step({ status: "absent" }, "ไม่มาตามนัด", `${p.name} ไม่มาตามนัด`) }] : []),
+        { label: "ยกเลิกนัด", icon: <CalendarX2 size={16} />, onClick: () => setCancelling(true), danger: true },
+      ]}
+    />
+  );
   let footer: React.ReactNode = null;
   if (view === "checkin")
     footer = (
       <>
-        <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
-          ยกเลิกนัด
-        </Button>
-        {appt.date <= todayISO() && (
-          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `${p.name} ไม่มาตามนัด`)}>
-            ไม่มา
-          </Button>
-        )}
+        {moreMenu}
         <Button size="lg" fill leading={<ScanLine size={16} />} disabled={appt.date !== todayISO()} onClick={counterCheckin}>
           เช็กอินที่เคาน์เตอร์
         </Button>
@@ -287,14 +291,7 @@ export function AppointmentDrawer({
   else if (view === "waiting")
     footer = (
       <>
-        <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
-          ยกเลิกนัด
-        </Button>
-        {appt.date <= todayISO() && (
-          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `${p.name} ไม่มาตามนัด`)}>
-            ไม่มา
-          </Button>
-        )}
+        {moreMenu}
         <Button size="lg" fill leading={<Megaphone size={16} />} onClick={() => call()}>
           เรียกคิว
         </Button>
@@ -303,9 +300,7 @@ export function AppointmentDrawer({
   else if (view === "called")
     footer = (
       <>
-        <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
-          ยกเลิกนัด
-        </Button>
+        {moreMenu}
         <Button variant="outline" size="lg" leading={<BellRing size={16} />} onClick={() => call(true)}>
           เรียกซ้ำ
         </Button>
