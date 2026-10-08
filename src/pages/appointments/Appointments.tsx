@@ -133,7 +133,7 @@ export default function Appointments() {
     if (booking || !w) return;
     waitFor.current = null;
     if (store.appointments.filter((a) => a.patientId === w.e.patientId).length > w.n)
-      store.dispatch({ type: "biz", cat: "นัดหมาย", patientId: w.e.patientId, log: `จองคิวให้จากรายการรอคิว · ${store.patientById(w.e.patientId).name}`, update: (b) => ({ ...b, waitlist: b.waitlist.map((x) => (x.id === w.e.id ? { ...x, status: "booked" } : x)) }) });
+      store.dispatch({ type: "biz", cat: "นัดหมาย", patientId: w.e.patientId, log: `จองนัดจากรายการรอคิว · ${store.patientById(w.e.patientId).name}`, update: (b) => ({ ...b, waitlist: b.waitlist.map((x) => (x.id === w.e.id ? { ...x, status: "booked" } : x)) }) });
   }, [booking, store]);
   const [clashOpen, setClashOpen] = useState(false);
   const { settings } = store;
@@ -260,7 +260,7 @@ export default function Appointments() {
                       <small>{t.role}</small>
                     </span>
                     <Badge tone="neutral" compact>
-                      {n} คิว
+                      {n} นัด
                     </Badge>
                   </button>
                 );
@@ -297,7 +297,7 @@ export default function Appointments() {
                         <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />
                         <div className="pcard__id">
                           <p className="pcard__name">{p.name}</p>
-                          <p className="pcard__sub">ส่งผ่านแอป ThaiWell AI · {timeAgo(r.submittedAt)}</p>
+                          <p className="pcard__sub">จากแอป ThaiWell · {timeAgo(r.submittedAt)}</p>
                         </div>
                       </div>
                       <div className="pcard__strip">
@@ -333,7 +333,7 @@ export default function Appointments() {
                           leading={<CalendarClock size={14} />}
                           onClick={() => setBooking({ requestId: r.id, patientId: r.patientId, serviceId: r.serviceId, therapistId: r.therapistId })}
                         >
-                          เลื่อน / จัดใหม่
+                          จัดเวลาใหม่
                         </Button>
                       </div>
                     </motion.div>
@@ -344,7 +344,7 @@ export default function Appointments() {
                     layout="position"
                     className="deck__toggle clash-toggle"
                     aria-expanded={clashOpen}
-                    aria-label={clashOpen ? "ย่อรายการ" : `กางทั้งหมด ${conflicts.length} รายการ`}
+                    aria-label={clashOpen ? "ย่อ" : `ดูทั้งหมด ${conflicts.length} คำขอ`}
                     onClick={() => setClashOpen((o) => !o)}
                     whileTap={{ scale: 0.92 }}
                   >
@@ -493,7 +493,7 @@ function WeekView({ from, appts, onOpenDay, onBook }: { from: string; appts: App
                         ) : (
                           <span className="wcell__add">
                             <Plus size={16} strokeWidth={2.2} />
-                            เพิ่มคิว
+                            เพิ่มนัด
                           </span>
                         )
                       ) : (
@@ -509,7 +509,7 @@ function WeekView({ from, appts, onOpenDay, onBook }: { from: string; appts: App
                                 <span>{store.patientById(a.patientId).name.replace(/^(นาย|นางสาว|นาง)\s*/, "")}</span>
                               </span>
                             ))}
-                            {list.length > 3 && <span className="wcell__more">+{list.length - 3} ราย</span>}
+                            {list.length > 3 && <span className="wcell__more">+{list.length - 3} คน</span>}
                           </span>
                         </>
                       )}
@@ -581,7 +581,7 @@ function DayView({ date, appts, therapistFilter, onOpen }: { date: string; appts
               <p className="dhead__role">{t.role}</p>
             </div>
             <Badge tone="neutral" compact className="dhead__count">
-              {dayAppts.filter((a) => a.therapistId === t.id).length} คิว
+              {dayAppts.filter((a) => a.therapistId === t.id).length} นัด
             </Badge>
           </div>
         </div>
@@ -646,7 +646,7 @@ function DayView({ date, appts, therapistFilter, onOpen }: { date: string; appts
                   </span>
                   <span className="dblock__name">{n > 1 ? bareName(p.name) : p.name}</span>
                   <span className="dblock__meta">{n > 1 ? s.short : `${s.name} · ${s.minutes} นาที`}</span>
-                  {a.type === "walkin" && <span className="dblock__tag">Walk-in</span>}
+                  {a.type === "walkin" && <span className="dblock__tag">วอล์กอิน</span>}
                 </motion.button>
               );
             })}

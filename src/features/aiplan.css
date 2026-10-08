@@ -679,3 +679,7 @@
 .aip-foot > div > .tw-btn {
   flex: 1;
 }
+.ai-empty p b {
+  display: block;
+  color: var(--color-text);
+}

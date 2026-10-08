@@ -948,3 +948,7 @@
     flex-wrap: wrap;
   }
 }
+.adp__scr .adp__scr-flags {
+  color: var(--vc);
+  font-weight: 600;
+}

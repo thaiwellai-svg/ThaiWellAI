@@ -7,7 +7,7 @@ import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Badge, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
 import { bedName, bedsInUse, coursePrepaid, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
-import { baht, timeAgo, thaiDateLong, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
+import { baht, timeAgo, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
@@ -206,7 +206,7 @@ export function AppointmentDrawer({
 
   const call = (again = false) => {
     void announce(callText(queueNo, p.name), store.settings.callVoice ?? DEFAULT_CALL_VOICE).then((how) => {
-      if (how === "device") toast({ message: "เชื่อมต่อเสียงเรียกคิวไม่ได้ · ใช้เสียงของเครื่องแทน", tone: "danger" });
+      if (how === "device") toast({ message: "ใช้เสียงเรียกคิวของเครื่องแทน", tone: "danger" });
     });
     step({ calledAt: nowIso() }, again ? `เรียกคิว ${queueNo} ซ้ำ` : `เรียกคิว ${queueNo}`);
   };
@@ -230,9 +230,9 @@ export function AppointmentDrawer({
     payment.items = [{ name: s.name, amount: s.price }, ...extras.map((l) => ({ name: l.name, amount: l.amount }))];
     if (payByCredit && extraSum) payment.credit = true;
     if (m !== "app" && store.settings.autoSendSlip) payment.slipSentAt = new Date().toISOString();
-    if (m === "app") step({ status: "done", paid: false, payment }, `ส่งบิล ${baht(amount)} บาท ไปแอป ThaiWell AI${payment.credit ? " (หักเครดิตค่าบริการ · เก็บเฉพาะหัตถการเพิ่ม)" : ""}`, `ส่งบิลให้ ${p.name} ในแอปแล้ว`);
+    if (m === "app") step({ status: "done", paid: false, payment }, `ส่งบิล ${baht(amount)} บาท เข้าแอป ThaiWell${payment.credit ? " (หักเครดิตค่าบริการแล้ว เก็บเฉพาะหัตถการเพิ่ม)" : ""}`, "ส่งบิลเข้าแอปแล้ว");
     else {
-      step({ status: "done", paid: true, payment }, m === "credit" ? "หักเครดิตคอร์ส 1 ครั้ง" : `${payment.credit ? "หักเครดิตคอร์ส 1 ครั้ง · " : ""}รับชำระ ${METHOD_LABEL[m]} ${baht(amount)} บาท${extraSum ? ` (รวมหัตถการเพิ่ม ${baht(extraSum)})` : ""}`, store.settings.autoSendSlip ? "ชำระเงินเรียบร้อย · ส่งสลิปเข้าแอป ThaiWell AI แล้ว" : "ชำระเงินเรียบร้อย · เสร็จการรักษา");
+      step({ status: "done", paid: true, payment }, m === "credit" ? "หักเครดิตคอร์ส 1 ครั้ง" : `${payment.credit ? "หักเครดิตคอร์ส 1 ครั้ง · " : ""}รับชำระ ${METHOD_LABEL[m]} ${baht(amount)} บาท${extraSum ? ` (รวมหัตถการเพิ่ม ${baht(extraSum)})` : ""}`, store.settings.autoSendSlip ? "รับชำระแล้ว · ส่งใบเสร็จเข้าแอปแล้ว" : "รับชำระแล้ว");
       setReceipt(appt.id);
     }
   };
@@ -262,7 +262,7 @@ export function AppointmentDrawer({
           ยกเลิกนัด
         </Button>
         {appt.date <= todayISO() && (
-          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `บันทึก ${p.name} ไม่มาตามนัด`)}>
+          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `${p.name} ไม่มาตามนัด`)}>
             ไม่มา
           </Button>
         )}
@@ -278,7 +278,7 @@ export function AppointmentDrawer({
           ยกเลิกนัด
         </Button>
         {appt.date <= todayISO() && (
-          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `บันทึก ${p.name} ไม่มาตามนัด`)}>
+          <Button variant="outline" size="lg" leading={<UserX size={16} />} onClick={() => step({ status: "absent" }, "ไม่มาตามนัด", `${p.name} ไม่มาตามนัด`)}>
             ไม่มา
           </Button>
         )}
@@ -320,7 +320,7 @@ export function AppointmentDrawer({
       </Button>
     );
   const painDone = painAfter !== undefined || skipPain;
-  const recordLabel = painAfter !== undefined ? `บันทึกการรักษา · Pain ${appt.painBefore} → ${painAfter}` : "บันทึกการรักษา · ไม่ได้ประเมินความปวดหลังนวด";
+  const recordLabel = painAfter !== undefined ? `บันทึกการรักษา · ปวด ${appt.painBefore} → ${painAfter}` : "บันทึกการรักษา · ไม่ได้ประเมินปวดหลังนวด";
   if (view === "assess" && painDone && appt.diagnoses?.length && appt.procedures?.length)
     saveRecord.current = () => {
       step({ painAfter, recordedAt: new Date().toISOString(), advice: advice.trim() || undefined }, recordLabel);
@@ -353,7 +353,7 @@ export function AppointmentDrawer({
     footer = (
       <Button size="lg" fill leading={<Check size={16} />} onClick={() => step(
             { paid: true, payment: { ...appt.payment!, status: "paid", at: nowIso(), slipSentAt: store.settings.autoSendSlip ? nowIso() : undefined } },
-            store.settings.autoSendSlip ? "ผู้ป่วยชำระผ่านแอปแล้ว · ส่งสลิปอัตโนมัติ" : "ผู้ป่วยชำระผ่านแอปแล้ว",
+            store.settings.autoSendSlip ? "ผู้ป่วยชำระในแอปแล้ว · ส่งใบเสร็จแล้ว" : "ผู้ป่วยชำระในแอปแล้ว",
           )}>
         ได้รับเงินแล้ว
       </Button>
@@ -367,12 +367,12 @@ export function AppointmentDrawer({
   else if (view === "done")
     footer = (
       <Button variant="outline" size="lg" fill leading={<ReceiptText size={16} />} onClick={() => setReceipt(appt.id)}>
-        สลิป
+        ใบเสร็จ
       </Button>
     );
   else if (view === "absent" || view === "cancelled")
     footer = (
-      <Button variant="outline" size="lg" fill leading={<Undo2 size={16} />} onClick={() => step({ status: "waiting", calledAt: undefined, cancel: undefined }, view === "cancelled" ? "เลิกยกเลิกนัด" : "ย้อนเป็นรอรับบริการ", `${p.name} กลับเป็นรอรับบริการแล้ว`)}>
+      <Button variant="outline" size="lg" fill leading={<Undo2 size={16} />} onClick={() => step({ status: "waiting", calledAt: undefined, cancel: undefined }, view === "cancelled" ? "เลิกยกเลิกนัด" : "ย้อนเป็นรอรับบริการ", "ย้อนเป็นรอรับบริการแล้ว")}>
         ย้อนกลับ
       </Button>
     );
@@ -396,7 +396,7 @@ export function AppointmentDrawer({
         onClose={onClose}
         leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={stageMeta(appt).color} pulse={view === "treating"} />}
         title={p.name}
-        subtitle={`${p.hn} · ${p.gender} ${p.age} ปี · ${appt.type === "walkin" ? "Walk-in" : "นัดล่วงหน้า"}`}
+        subtitle={`${p.hn} · ${p.gender} ${p.age} ปี`}
         footer={footer}
       >
         <div className="vs">
@@ -407,7 +407,9 @@ export function AppointmentDrawer({
             </div>
             <div className="vs__when">
               <b>{timeRange(appt.start, s.minutes)} น.</b>
-              <small>{thaiDateLong(appt.date)}</small>
+              <small>
+                {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
+              </small>
             </div>
             {p.phone && (
               <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
@@ -466,11 +468,15 @@ export function AppointmentDrawer({
                 <div>
                   <b>ยกเลิกนัดแล้ว · {appt.cancel ? (appt.cancel.by === "patient" ? "ผู้ป่วยแจ้งยกเลิก" : "คลินิกยกเลิก") : "ยกเลิก"}</b>
                   {appt.cancel && (
-                    <small>
-                      {appt.cancel.reason}
-                      {appt.cancel.note ? ` · ${appt.cancel.note}` : ""} · โดย {appt.cancel.staff} ·{" "}
-                      {new Date(appt.cancel.at).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} น.
-                    </small>
+                    <>
+                      <small>
+                        {appt.cancel.reason}
+                        {appt.cancel.note ? ` (${appt.cancel.note})` : ""}
+                      </small>
+                      <small>
+                        โดย {appt.cancel.staff} · {new Date(appt.cancel.at).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} น.
+                      </small>
+                    </>
                   )}
                 </div>
               </div>
@@ -478,8 +484,8 @@ export function AppointmentDrawer({
             <div className="alert alert--stop">
               <UserX size={16} />
               <div>
-                <b>ไม่มารับบริการ</b>
-                ย้อนกลับได้ถ้าผู้ป่วยมาถึงแล้ว
+                <b>ไม่มาตามนัด</b>
+                ผู้ป่วยมาแล้ว กด “ย้อนกลับ”
               </div>
             </div>
             )
@@ -495,22 +501,22 @@ export function AppointmentDrawer({
               {(view === "waiting" || view === "called" || view === "treating" || view === "assess") && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
               {view === "checkin" && (
                 <>
-                  <StepHead n={1} title="รอเช็กอินเข้ารับบริการ" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR เช็กอินที่เคาน์เตอร์ในแอป หรือกด “เช็กอินที่เคาน์เตอร์” · เช็กอินแล้วได้เลขคิวตามลำดับที่มาถึง" : "เช็กอินได้ในวันนัด"} />
+                  <StepHead n={1} title="รอเช็กอิน" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR ในแอป หรือกด “เช็กอินที่เคาน์เตอร์”" : "เช็กอินได้ในวันนัด"} />
                 </>
               )}
               {(view === "waiting" || view === "called") && (
                 <>
                   <StepHead
                     n={view === "waiting" ? 1 : 2}
-                    title={view === "waiting" ? "เรียกคิวผู้ป่วย" : `เลือกเตียงแล้วเริ่มรับบริการ`}
-                    hint={view === "waiting" ? `ผู้ป่วยมาถึงแล้ว กด “เรียกคิว” ระบบจะประกาศเสียงเรียก ${queueNo}` : `เรียกคิวแล้ว ${clock(appt.calledAt)} น. · เลือกเตียงที่ผู้ป่วยเข้ารับบริการ`}
+                    title={view === "waiting" ? "รอเรียกคิว" : "เลือกเตียง"}
+                    hint={view === "waiting" ? `กด “เรียกคิว” เพื่อประกาศเสียงคิว ${queueNo}` : `เรียกคิวแล้ว ${clock(appt.calledAt)} น. · เลือกเตียงแล้วกด “เริ่ม”`}
                   />
                   {view === "called" && <BedPicker date={appt.date} self={appt.id} value={bed} onChange={setBed} />}
                 </>
               )}
               {view === "treating" && (
                 <>
-                  <StepHead n={3} title="กำลังรับบริการ" hint={`${appt.bedId ? bedName(store.settings, appt.bedId) + " · " : ""}ครบเวลาแล้วกด “จบการรักษา” เพื่อไปบันทึกการรักษา`} />
+                  <StepHead n={3} title="กำลังรับบริการ" hint={`${appt.bedId ? bedName(store.settings, appt.bedId) + " · " : ""}ครบเวลาแล้วกด “จบการรักษา”`} />
                   <div className="vs__timer">
                     <b>{mmss}</b>
                     <small>
@@ -527,9 +533,10 @@ export function AppointmentDrawer({
                   <StepHead
                     n={4}
                     title="บันทึกการรักษา"
+                    hint="ใส่วินิจฉัยและหัตถการ แล้วกด “บันทึก”"
                     action={
                       onVoice && (
-                        <button type="button" className={clsx("vs__assist", voiceOpen && "is-on")} aria-pressed={!!voiceOpen} onClick={() => onVoice()} title="คุยกับ AI แล้วบันทึกให้">
+                        <button type="button" className={clsx("vs__assist", voiceOpen && "is-on")} aria-pressed={!!voiceOpen} onClick={() => onVoice()} title="คุยกับ AI ให้ช่วยกรอก">
                           <BotMessageSquare size={17} />
                           ผู้ช่วยบันทึก
                         </button>
@@ -539,7 +546,7 @@ export function AppointmentDrawer({
                   <div className="rs-stack">
                     <FindingsField appt={appt} n={1} />
                     <ClinicalRecord appt={appt} embedded />
-                    <RecSection n={4} title="ความปวดหลังนวด" hint="ไม่บังคับ · ให้ผู้ป่วยเลือกระดับหลังนวด หรือข้ามได้" done={painDone}>
+                    <RecSection n={4} title="ความปวดหลังนวด" hint="ไม่บังคับ · ให้ผู้ป่วยเลือก หรือข้าม" done={painDone}>
                       <PainScale
                         value={painAfter}
                         onChange={(v) => {
@@ -556,20 +563,20 @@ export function AppointmentDrawer({
                           setPainAfter(undefined);
                         }}
                       >
-                        {skipPain ? "✓ ข้ามแล้ว · ไม่ได้ประเมินความปวดหลังนวด" : "ข้าม (ผู้ป่วยไม่ประเมิน)"}
+                        {skipPain ? "✓ ข้ามแล้ว (ไม่ได้ประเมิน)" : "ข้าม (ไม่ประเมิน)"}
                       </button>
                       {painAfter !== undefined && (
                         <p className={clsx("vs__delta", painAfter < appt.painBefore && "is-good")}>
                           {painAfter < appt.painBefore
-                            ? `ลดลงจาก ${appt.painBefore} เหลือ ${painAfter} (−${appt.painBefore - painAfter} ระดับ · ${Math.round(((appt.painBefore - painAfter) / Math.max(1, appt.painBefore)) * 100)}%)`
+                            ? `ปวด ${appt.painBefore} → ${painAfter} · ลดลง ${Math.round(((appt.painBefore - painAfter) / Math.max(1, appt.painBefore)) * 100)}%`
                             : painAfter === appt.painBefore
-                              ? `เท่าเดิม (${appt.painBefore}/10)`
-                              : `ปวดมากขึ้นจาก ${appt.painBefore} — ควรแจ้งแพทย์`}
+                              ? `ปวดเท่าเดิม (${appt.painBefore}/10)`
+                              : `ปวด ${appt.painBefore} → ${painAfter} · ปวดมากขึ้น ควรแจ้งแพทย์`}
                         </p>
                       )}
                     </RecSection>
-                    <RecSection n={5} title="คำแนะนำถึงผู้ป่วย" hint="ไม่บังคับ · ส่งไปแอป ThaiWell AI" done={!!advice.trim()}>
-                      <Textarea value={advice} onChange={(e) => setAdvice(e.target.value)} placeholder="เช่น ประคบร้อนที่บ่าวันละ 15 นาที · ท่าฤาษีดัดตนแก้ลมปลายปัตคาด" />
+                    <RecSection n={5} title="คำแนะนำถึงผู้ป่วย" hint="ไม่บังคับ · ส่งเข้าแอป ThaiWell" done={!!advice.trim()}>
+                      <Textarea value={advice} onChange={(e) => setAdvice(e.target.value)} placeholder="เช่น ประคบร้อนที่บ่าวันละ 15 นาที" />
                     </RecSection>
                   </div>
                 </>
@@ -592,9 +599,9 @@ export function AppointmentDrawer({
                   patientName={p.name}
                   courseNote={
                     perVisitCourse && credits
-                      ? `คอร์ส${p.course!.name} · ชำระรายครั้ง · ครั้งที่ ${Math.min(credits.total, credits.used + 1)}/${credits.total}`
+                      ? `คอร์ส${p.course!.name} · ชำระรายครั้ง (ครั้งที่ ${Math.min(credits.total, credits.used + 1)}/${credits.total})`
                       : p.course && !coveredByCourse && prepaid && credits && credits.total - credits.used > 0
-                        ? `คอร์ส${p.course.name}ใช้กับบริการนี้ไม่ได้ · ชำระรายครั้ง`
+                        ? `คอร์ส${p.course.name}ใช้กับบริการนี้ไม่ได้`
                         : undefined
                   }
                 />
@@ -602,16 +609,16 @@ export function AppointmentDrawer({
               )}
               {view === "done" && (
                 <>
-                  <StepHead n={6} title="เสร็จการรักษา" hint={appt.paid ? "เรียบร้อยทุกขั้นแล้ว" : "รักษาเสร็จแล้ว แต่ยังค้างชำระ"} />
+                  <StepHead n={6} title="เสร็จสิ้น" hint={appt.paid ? "ครบทุกขั้นแล้ว" : "รักษาเสร็จแล้ว ยังค้างชำระ"} />
                   <div className="vs__result">
                     <span>
-                      <small>Pain Score</small>
+                      <small>ปวดก่อน → หลังนวด</small>
                       <b>
                         {appt.painBefore} → {appt.painAfter ?? "–"}
                       </b>
                     </span>
                     <span>
-                      <small>การชำระเงิน</small>
+                      <small>ชำระเงิน</small>
                       {appt.payment ? (
                         <Badge tone={appt.payment.status === "paid" ? "success" : "warning"} compact>
                           {appt.payment.status === "paid" ? METHOD_LABEL[appt.payment.method] : "รอชำระในแอป"}
@@ -623,7 +630,7 @@ export function AppointmentDrawer({
                       )}
                     </span>
                     <span>
-                      <small>ยอด</small>
+                      <small>ยอดชำระ</small>
                       <b>{baht(appt.payment?.amount ?? s.price + extraSum)} ฿</b>
                     </span>
                   </div>
@@ -632,7 +639,7 @@ export function AppointmentDrawer({
                   {onNext && next && appt.paid && (
                     <button type="button" className="vs__next" onClick={() => onNext(next.id)}>
                       <span>
-                        <small>ต่อคนถัดไป</small>
+                        <small>คนถัดไป</small>
                         <b>
                           {next.start} · {store.patientById(next.patientId).name}
                         </b>
@@ -673,7 +680,7 @@ export function AppointmentDrawer({
                     </span>
                     <b>อาการสำคัญ</b>
                     {/* ผลประเมินของนัดวันนี้ (ไม่ใช่ข้อมูลรวมของผู้ป่วย) */}
-                    {ik ? <small>ประเมินสำหรับนัด {thaiDateShort(appt.date)} · {timeAgo(ik.at)}</small> : appt.cloudId ? <small className="vcc__none">ยังไม่ได้ประเมินสำหรับนัดนี้</small> : null}
+                    {ik ? <small>ประเมินในแอป {timeAgo(ik.at)}</small> : appt.cloudId ? <small className="vcc__none">ยังไม่ได้ประเมินในแอป</small> : null}
                   </div>
                   <p className="vcc__text">
                     {ik?.complaint ?? p.complaint}
@@ -682,7 +689,7 @@ export function AppointmentDrawer({
 
                   <div className="vcc__facts">
                     <div style={{ ["--tc" as string]: tc }}>
-                      <small>Pain ก่อนนวด</small>
+                      <small>ปวดก่อนนวด</small>
                       <b>
                         {pbKnown ? pb : "—"}
                         <i>/10</i>
@@ -694,7 +701,7 @@ export function AppointmentDrawer({
                       </span>
                       {!pbKnown && (
                         <span className="vcc__sub">
-                          {prevDone ? `ล่าสุด: หลังนวดครั้งก่อน ${prevDone.painAfter}/10 (${thaiDateShort(prevDone.date)}) · ` : ""}คัดกรองที่เคาน์เตอร์เพื่อได้คะแนนวันนี้
+                          {prevDone ? `ครั้งก่อนหลังนวด ${prevDone.painAfter}/10 · ` : ""}คัดกรองเพื่อวัดวันนี้
                         </span>
                       )}
                     </div>
@@ -707,8 +714,8 @@ export function AppointmentDrawer({
                     ) : (
                       <div>
                         <small>มาแบบ</small>
-                        <b className="vcc__dur">{appt.type === "booked" ? "นัดล่วงหน้า" : "Walk-in"}</b>
-                        <span className="vcc__sub">{appt.cloudId ? "ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้" : "ไม่มีแบบประเมินจากแอป"}</span>
+                        <b className="vcc__dur">{appt.type === "booked" ? "นัดล่วงหน้า" : "วอล์กอิน"}</b>
+                        {!appt.cloudId && <span className="vcc__sub">ไม่มีแบบประเมินจากแอป</span>}
                       </div>
                     )}
                   </div>
@@ -773,7 +780,7 @@ export function AppointmentDrawer({
 
           {(appt.log?.length ?? 0) > 0 && (
             <section className="vs__log">
-              <h3 className="sec__title">บันทึกการรับบริการ</h3>
+              <h3 className="sec__title">ประวัติของนัด</h3>
               <ol>
                 {appt.log!.map((l, i) => (
                   <li key={i}>
@@ -825,7 +832,7 @@ export function AppointmentDrawer({
             <span className="early__bar" style={{ ["--p" as string]: `${Math.round(pct * 100)}%` }}>
               <i />
             </span>
-            <small>เร็วกว่าเวลาบริการ {Math.max(0, s.minutes - usedMin)} นาที</small>
+            <small>เร็วกว่ากำหนด {Math.max(0, s.minutes - usedMin)} นาที</small>
           </div>
           <div className="early__modes" role="radiogroup" aria-label="ผลการรักษา">
             <button
@@ -841,8 +848,8 @@ export function AppointmentDrawer({
             >
               <CircleCheck size={22} />
               <span>
-                <b>เสร็จการรักษาก่อนเวลา</b>
-                <small>รักษาครบตามแผนแล้ว อาการดีขึ้น · นับเป็นการรับบริการปกติ</small>
+                <b>เสร็จก่อนเวลา</b>
+                <small>รักษาครบแล้ว นับเป็นครั้งปกติ</small>
               </span>
             </button>
             <button
@@ -858,8 +865,8 @@ export function AppointmentDrawer({
             >
               <Ban size={22} />
               <span>
-                <b>หยุดการรักษากลางคัน</b>
-                <small>ยังไม่ครบตามแผน · ต้องระบุเหตุผลเพื่อบันทึกในประวัติ</small>
+                <b>หยุดกลางคัน</b>
+                <small>ยังไม่ครบ ต้องระบุเหตุผล</small>
               </span>
             </button>
           </div>
@@ -881,7 +888,7 @@ export function AppointmentDrawer({
       <Dialog
         open={override}
         onClose={() => setOverride(false)}
-        title={stopFromApp ? "พบข้อห้ามจากแบบคัดกรองในแอป" : "พบข้อห้ามจากการคัดกรองวันนี้"}
+        title={stopFromApp ? "พบข้อห้าม (คัดกรองในแอป)" : "พบข้อห้าม (คัดกรองวันนี้)"}
         subtitle={`${p.name} · ${stopFlags.map((f) => f.label).join(" · ")}`}
         footer={
           <>
@@ -897,7 +904,7 @@ export function AppointmentDrawer({
                 setOverrideBy("");
               }}
             >
-              แพทย์ประเมินแล้ว · เริ่มรับบริการ
+              แพทย์ประเมินแล้ว · เริ่ม
             </Button>
           </>
         }
@@ -905,11 +912,11 @@ export function AppointmentDrawer({
         <div className="alert alert--stop">
           <ShieldAlert size={16} />
           <div>
-            <b>ควรให้แพทย์แผนไทยประเมินก่อนนวด</b>
-            {stopFromApp ? "ผู้ป่วยตอบแบบคัดกรองในแอปว่ามีข้อห้าม · คัดกรองที่คลินิกอีกครั้ง หรือ" : "ถ้า"}แพทย์ประเมินแล้วและอนุญาตให้นวด ให้ระบุชื่อแพทย์ ระบบจะบันทึกไว้ในประวัติของนัด
+            <b>ให้แพทย์แผนไทยประเมินก่อนนวด</b>
+            {stopFromApp ? "คัดกรองซ้ำที่คลินิก หรือใส่ชื่อแพทย์ที่อนุญาตให้นวด" : "ใส่ชื่อแพทย์ที่อนุญาตให้นวด · บันทึกในประวัติของนัด"}
           </div>
         </div>
-        <Field label="แพทย์แผนไทยผู้ประเมิน">
+        <Field label="แพทย์ผู้ประเมิน">
           <Input value={overrideBy} onChange={(e) => setOverrideBy(e.target.value)} placeholder="ชื่อ-นามสกุล แพทย์ผู้ประเมิน" />
         </Field>
       </Dialog>

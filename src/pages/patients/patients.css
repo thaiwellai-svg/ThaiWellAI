@@ -2754,3 +2754,196 @@
 .pd2__bill button[aria-checked="true"] b {
   color: var(--color-brand);
 }
+
+/* ═════ patient detail — one card pattern (ui guide §3) ═════
+   icon + short title · badge/action top-right · content; rarely-used parts fold away */
+.pd {
+  padding-bottom: calc(var(--dock-height, 72px) + 16px);
+}
+/* wide screens: don't stretch the detail into long lines */
+.pd > * {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+}
+.pd__stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.pd__stat.is-link {
+  cursor: pointer;
+}
+.pd2__h {
+  min-height: 30px;
+}
+.pd2__act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 30px;
+  margin-left: auto;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.pd2__act:hover {
+  background: var(--sage-50);
+}
+.pd2__h em + .pd2__act {
+  margin-left: 0;
+}
+.pd2__h .pd2__sell {
+  align-self: center;
+  margin-top: 0;
+  color: #b06a0c;
+  box-shadow: inset 0 0 0 1px #ecd3ae;
+}
+.pd2__h .pd2__sell:hover {
+  background: #fdf4e3;
+}
+.pd2__course-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.pd2__bill {
+  margin: 0;
+}
+/* fold (details/summary) */
+.pd2__more summary,
+.el2__fold > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+.pd2__more summary::-webkit-details-marker,
+.el2__fold > summary::-webkit-details-marker {
+  display: none;
+}
+.pd2__more summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sage-50);
+  font: 600 12.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pd2__more summary:hover {
+  color: var(--color-text);
+}
+.pd2__more summary > svg:last-child,
+.el2__chev {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.pd2__more[open] summary > svg:last-child,
+.el2__fold[open] .el2__chev {
+  transform: rotate(180deg);
+}
+.pd2__more[open] summary {
+  margin-bottom: 10px;
+}
+.pd2__more .pd2__kv {
+  padding-top: 0;
+  border-top: 0;
+}
+/* element card: header = summary */
+.el2__fold > summary em.el2__tag {
+  background: color-mix(in srgb, var(--c) 14%, white);
+  color: var(--c);
+}
+.el2__fold > summary em.el2__tag + .el2__chev {
+  margin-left: 0;
+}
+.el2__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+.el2__inner .el2__born {
+  justify-self: end;
+}
+/* AI plan teaser = same card pattern as the rest */
+.ai-teaser {
+  gap: 10px !important;
+  background: var(--white) !important;
+}
+.ai-teaser__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.ai-teaser__text b {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font: 700 14px/1.3 var(--font-sans);
+}
+.ai-teaser__text b i {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: #fdf1dc;
+  font: 700 11px/1.3 var(--font-sans);
+  font-style: normal;
+  color: #a2620a;
+}
+.ai-teaser__text b i.is-ok {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.ai-teaser em {
+  height: 30px;
+  font: 700 12px/30px var(--font-sans);
+}
+/* the detail pane gets narrow (side panel open, or a small screen) → one column */
+.pdetail .sheet {
+  container-type: inline-size;
+}
+@container (max-width: 720px) {
+  .pd {
+    padding-inline: 18px;
+  }
+  .pd__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pd__stat b {
+    font-size: 19px;
+  }
+  .el2__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .el2__kv {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@container (max-width: 520px) {
+  .pd__hero {
+    flex-wrap: wrap;
+  }
+  .pd__stats {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+/* tablet portrait: the list fills the page → two columns instead of long stretched rows */
+@media (min-width: 700px) and (max-width: 999px) {
+  .pwrap .plist__items {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+  }
+  .pwrap .plist__items > :not(.prow) {
+    grid-column: 1 / -1;
+  }
+}

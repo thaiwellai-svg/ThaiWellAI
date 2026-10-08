@@ -17,7 +17,7 @@ import "./spotlight.css";
 
 const PROMPTS = [
   { icon: ClipboardList, c: "#2f9a6b", title: "สรุปงานวันนี้", text: "สรุปงานวันนี้ให้หน่อย มีอะไรต้องรีบจัดการ" },
-  { icon: ShieldAlert, c: "#d0662b", title: "ตรวจข้อห้าม", text: "คำขอจองคิวรายไหนมีข้อห้าม ควรทำอย่างไร" },
+  { icon: ShieldAlert, c: "#d0662b", title: "ตรวจข้อห้าม", text: "คำขอจองไหนมีข้อห้าม ควรทำอย่างไร" },
   { icon: PersonStanding, c: "#3a8ee0", title: "ท่าฤาษีดัดตน", text: "แนะนำท่าฤาษีดัดตนสำหรับคนปวดคอบ่าไหล่จากออฟฟิศซินโดรม" },
   { icon: Leaf, c: "#5a9a3a", title: "ธาตุและสมุนไพร", text: "ผู้ป่วยธาตุไฟควรนวดและใช้สมุนไพรอย่างไร" },
   { icon: MessageSquareText, c: "#8b6bff", title: "ร่างข้อความ", text: "ร่างข้อความแจ้งผู้ป่วยเลื่อนนัดเพราะผู้บำบัดลาป่วย" },
@@ -328,7 +328,7 @@ ${context}`,
                         <div className="a5__empty">
                           <MessageSquareText size={22} />
                           <p>ยังไม่มีแชท</p>
-                          <small>เริ่มถามได้เลย บทสนทนาจะเก็บไว้ที่นี่</small>
+                          <small>แชทที่เคยคุยจะอยู่ที่นี่</small>
                         </div>
                       )}
                       {(() => {

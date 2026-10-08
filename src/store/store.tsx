@@ -277,13 +277,13 @@ function reducer(state: State, action: Action): State {
         // ยังเป็นคำขอ (ยังไม่อนุมัติ) → ปิดคำขอ · อนุมัติแล้ว → ยกเลิกนัด
         const req = !appt && e.ref ? state.requests.find((r) => r.id === e.ref) : undefined;
         if (req) {
-          const decision: RequestDecision = { id: nextId("d"), request: req, outcome: "rejected", reason: `ผู้ป่วยยกเลิกจากแอป${e.reason ? ` · ${e.reason}` : ""}`, decidedAt: now, decidedBy: "แอป ThaiWell AI" };
+          const decision: RequestDecision = { id: nextId("d"), request: req, outcome: "rejected", reason: `ผู้ป่วยยกเลิกจากแอป${e.reason ? ` · ${e.reason}` : ""}`, decidedAt: now, decidedBy: "แอป ThaiWell" };
           return { ...state, requests: state.requests.filter((r) => r.id !== req.id), decisions: [decision, ...state.decisions], notifications: [notify("ผู้ป่วยยกเลิกคำขอจอง", `${pname(req.patientId)} · ${req.date} ${req.start} น.`, "info", req.id, "/requests"), ...state.notifications] };
         }
         if (!appt || appt.status === "cancelled" || appt.startedAt) return state;
         return {
           ...state,
-          appointments: patchAppt({ status: "cancelled", cancel: { at: now, by: "patient", reason: e.reason || "ยกเลิกจากแอป", staff: "แอป ThaiWell AI" } }, "ผู้ป่วยยกเลิกนัดจากแอป"),
+          appointments: patchAppt({ status: "cancelled", cancel: { at: now, by: "patient", reason: e.reason || "ยกเลิกจากแอป", staff: "แอป ThaiWell" } }, "ผู้ป่วยยกเลิกนัดจากแอป"),
           notifications: [notify("ผู้ป่วยยกเลิกนัดจากแอป", `${pname(appt.patientId)} · ${appt.date} ${appt.start} น.`, "info", appt.id), ...state.notifications],
         };
       }
@@ -444,7 +444,7 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
   const SETTING: Record<string, string> = { clinicName: "ชื่อคลินิก", promptpayId: "พร้อมเพย์", autoSendSlip: "ส่งสลิปอัตโนมัติ", rooms: "ห้องและเตียง", staffName: "ชื่อผู้ใช้", staffRole: "ตำแหน่ง", openTime: "เวลาเปิด", closeTime: "เวลาปิด", closedWeekdays: "วันเปิดทำการ", bedsPerSlot: "จำนวนเตียงต่อรอบ", requireApproval: "การอนุมัติคำขอ", callVoice: "เสียงเรียกคิว", bpThreshold: "เกณฑ์ความดัน" };
   switch (action.type) {
     case "cloudRequest":
-      return { cat: "นัดหมาย", text: "รับคำขอจองจากแอป ThaiWell AI", patientId: action.request.patientId };
+      return { cat: "นัดหมาย", text: "รับคำขอจองจากแอป ThaiWell", patientId: action.request.patientId };
     case "updateRequest":
       return action.log ? { cat: "นัดหมาย", text: action.log, patientId: prev.requests.find((r) => r.id === action.id)?.patientId } : null;
     case "approve": {
@@ -515,9 +515,9 @@ function describe(prev: State, action: Action): Omit<AuditEntry, "id" | "at" | "
     case "reset":
       return { cat: "ระบบ", text: "รีเซ็ตข้อมูลตัวอย่าง" };
     case "removePatient":
-      return { cat: "ผู้ป่วย", text: `ลบผู้รับบริการ ${prev.patients.find((p) => p.id === action.id)?.name ?? ""} (${prev.patients.find((p) => p.id === action.id)?.hn ?? ""}) พร้อมข้อมูลการรักษา` };
+      return { cat: "ผู้ป่วย", text: `ลบผู้ป่วย ${prev.patients.find((p) => p.id === action.id)?.name ?? ""} (${prev.patients.find((p) => p.id === action.id)?.hn ?? ""}) พร้อมข้อมูลการรักษา` };
     case "wipeTestData":
-      return { cat: "ระบบ", text: `ล้างข้อมูลทดสอบทั้งหมด · ผู้รับบริการ ${prev.patients.length} คน · นัด ${prev.appointments.length} รายการ` };
+      return { cat: "ระบบ", text: `ล้างข้อมูลทดสอบทั้งหมด · ผู้ป่วย ${prev.patients.length} คน · นัด ${prev.appointments.length} รายการ` };
     case "resetPatientData":
       return { cat: "ผู้ป่วย", text: `รีเซ็ตข้อมูลการรักษา (ทดสอบ) ${prev.patients.find((p) => p.id === action.id)?.name ?? ""}`, patientId: action.id };
     default:

@@ -60,22 +60,22 @@ import { CALL_VOICES, DEFAULT_CALL_VOICE, announce, callText } from "../../featu
 import "./settings.css";
 
 const SECTIONS = [
-  { id: "account", label: "บัญชีผู้ใช้งาน", desc: "โปรไฟล์ · ตำแหน่ง · รหัสผ่าน", icon: UserRound, tint: "#4c845a" },
-  { id: "clinic", label: "คลินิก", desc: "ชื่อ · ที่อยู่ · โลเคชั่น · พื้นหลังแอป", icon: Building2, tint: "#5b7fa6" },
-  { id: "hours", label: "เวลาทำการและคิว", desc: "เวลาเปิด–ปิด · วันทำการ · เตียง", icon: Clock3, tint: "#d08a3c" },
-  { id: "services", label: "บริการและราคา", desc: "รายการบริการของคลินิก", icon: Sparkles, tint: "#b0739a" },
-  { id: "staff", label: "ผู้บำบัด", desc: "รายชื่อและตารางงาน", icon: Stethoscope, tint: "#3e9a8f" },
-  { id: "safety", label: "กฎคัดกรองความปลอดภัย", desc: "ความดัน · ผ่าตัด · ข้อห้าม", icon: ShieldCheck, tint: "#c0614f" },
-  { id: "notify", label: "การแจ้งเตือน", desc: "เจ้าหน้าที่ · ผู้ป่วย · ส่งประวัติไปแอป", icon: Bell, tint: "#d9a531" },
-  { id: "payment", label: "การรับชำระเงิน", desc: "พร้อมเพย์ · ภาษีมูลค่าเพิ่ม", icon: QrCode, tint: "#2f8f9a" },
+  { id: "account", label: "บัญชีผู้ใช้", desc: "โปรไฟล์ · รหัสผ่าน", icon: UserRound, tint: "#4c845a" },
+  { id: "clinic", label: "คลินิก", desc: "ข้อมูลคลินิก · พื้นหลังแอป", icon: Building2, tint: "#5b7fa6" },
+  { id: "hours", label: "เวลาและคิว", desc: "เวลาทำการ · ห้องและเตียง", icon: Clock3, tint: "#d08a3c" },
+  { id: "services", label: "บริการและราคา", desc: "", icon: Sparkles, tint: "#b0739a" },
+  { id: "staff", label: "ผู้บำบัด", desc: "", icon: Stethoscope, tint: "#3e9a8f" },
+  { id: "safety", label: "กฎคัดกรอง", desc: "เกณฑ์ความดัน ผ่าตัด และข้อห้าม", icon: ShieldCheck, tint: "#c0614f" },
+  { id: "notify", label: "การแจ้งเตือน", desc: "เจ้าหน้าที่ · ผู้ป่วย", icon: Bell, tint: "#d9a531" },
+  { id: "payment", label: "การรับชำระ", desc: "พร้อมเพย์ · ภาษีมูลค่าเพิ่ม", icon: QrCode, tint: "#2f8f9a" },
   { id: "audit", label: "ประวัติการแก้ไข", desc: "ใครทำอะไร เมื่อไร", icon: History, tint: "#7c5cc4" },
-  { id: "guide", label: "คู่มือการใช้งาน", desc: "วิธีใช้ทุกเมนูแบบทีละขั้น", icon: GraduationCap, tint: "#2f8f9a" },
-  { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง · กู้คืน · รีเซ็ตทั้งระบบ", icon: Database, tint: "#7d8681" },
+  { id: "guide", label: "คู่มือการใช้งาน", desc: "วิธีใช้ทีละขั้น", icon: GraduationCap, tint: "#2f8f9a" },
+  { id: "data", label: "ข้อมูลและการสำรอง", desc: "สำรอง กู้คืน และรีเซ็ต", icon: Database, tint: "#7d8681" },
 ] as const;
 /** menu groups (account lives in the profile card on top) */
 const GROUPS: { label: string; ids: string[] }[] = [
   { label: "คลินิก", ids: ["clinic", "hours", "services", "staff"] },
-  { label: "การดูแลผู้ป่วย", ids: ["safety", "notify"] },
+  { label: "ผู้ป่วย", ids: ["safety", "notify"] },
   { label: "ระบบ", ids: ["payment", "audit", "data"] },
   { label: "ช่วยเหลือ", ids: ["guide"] },
 ];
@@ -134,20 +134,20 @@ function Stepper({ value, onChange, min, max, step = 1, unit }: { value: number;
 }
 
 const SHARE_TOPICS: { id: ShareTopic; label: string; desc: string; icon: typeof Sparkles }[] = [
-  { id: "visits", label: "ประวัติการรับบริการ", desc: "วันที่ บริการ ผู้บำบัด", icon: History },
-  { id: "pain", label: "Pain Score ก่อน–หลัง", desc: "กราฟระดับความปวด", icon: Activity },
-  { id: "advice", label: "คำแนะนำและท่ากายบริหาร", desc: "ที่ผู้บำบัดบันทึกไว้", icon: HeartHandshake },
-  { id: "credits", label: "แผนการรักษาและเครดิต", desc: "ครั้งที่ใช้ไปและคงเหลือ", icon: Ticket },
+  { id: "visits", label: "ประวัติการรักษา", desc: "วันที่ บริการ ผู้บำบัด", icon: History },
+  { id: "pain", label: "ปวดก่อน–หลังนวด", desc: "กราฟความปวด", icon: Activity },
+  { id: "advice", label: "คำแนะนำและท่าบริหาร", desc: "ที่ผู้บำบัดบันทึกไว้", icon: HeartHandshake },
+  { id: "credits", label: "คอร์สคงเหลือ", desc: "ครั้งที่ใช้ไปและคงเหลือ", icon: Ticket },
   { id: "screening", label: "ผลคัดกรองก่อนนวด", desc: "ความดัน ไข้ ข้อห้าม", icon: ShieldCheck },
-  { id: "receipt", label: "ใบเสร็จรับเงิน", desc: "ค่าบริการแต่ละครั้ง", icon: Receipt },
+  { id: "receipt", label: "ใบเสร็จ", desc: "ค่าบริการแต่ละครั้ง", icon: Receipt },
 ];
 
 const previewText = (topics: ShareTopic[]) => {
   const parts: string[] = [];
   if (topics.includes("visits")) parts.push("นวดไทยเพื่อสุขภาพ กับ พท.ป. วิภาวดี");
-  if (topics.includes("pain")) parts.push("ความปวด 7 → 3");
+  if (topics.includes("pain")) parts.push("ปวด 7 → 3");
   if (topics.includes("advice")) parts.push("มีท่ากายบริหารใหม่ 2 ท่า");
-  if (topics.includes("credits")) parts.push("เครดิตคงเหลือ 4/6 ครั้ง");
+  if (topics.includes("credits")) parts.push("คอร์สคงเหลือ 4/6 ครั้ง");
   if (topics.includes("screening")) parts.push("ผลคัดกรองผ่าน");
   if (topics.includes("receipt")) parts.push("ใบเสร็จ 350 บาท");
   return parts.length ? parts.join(" · ") : "ยังไม่ได้เลือกหัวข้อ";
@@ -195,7 +195,7 @@ export default function Settings() {
               animate={{ opacity: [0, 1, 1, 0], y: 0 }}
               transition={{ duration: 1.8, times: [0, 0.1, 0.8, 1] }}
             >
-              <Check size={14} strokeWidth={3} /> บันทึกอัตโนมัติแล้ว
+              <Check size={14} strokeWidth={3} /> บันทึกแล้ว
             </motion.span>
           )}
         </AnimatePresence>
@@ -257,7 +257,7 @@ export default function Settings() {
               </span>
               <div>
                 <h2>{section.label}</h2>
-                <p>{section.desc}</p>
+                {section.desc && <p>{section.desc}</p>}
               </div>
             </div>
             <AnimatePresence mode="wait" initial={false}>
@@ -273,12 +273,12 @@ export default function Settings() {
                 {active === "account" && <AccountSection onSaved={() => setSaved(Date.now())} />}
 
                 {active === "payment" && (
-                  <Group title="พร้อมเพย์ของคลินิก" desc="ใช้สร้าง QR ตอนรับชำระเงินที่เคาน์เตอร์ · ตรวจให้ตรงกับบัญชีจริงของคลินิก">
+                  <Group title="พร้อมเพย์ของคลินิก" desc="ใช้สร้าง QR ตอนรับชำระ">
                     <PromptPaySetting />
                   </Group>
                 )}
                 {active === "payment" && (
-                  <Group title="ภาษีมูลค่าเพิ่มและใบกำกับภาษี" desc="เปิดเมื่อคลินิกจดทะเบียน VAT · ใช้ออกใบกำกับภาษีเต็มรูปให้ผู้รับบริการ">
+                  <Group title="ภาษีมูลค่าเพิ่ม (VAT)" desc="เปิดเมื่อจด VAT แล้ว · ออกใบกำกับภาษีได้">
                     <VatSetting />
                   </Group>
                 )}
@@ -288,20 +288,20 @@ export default function Settings() {
                 {active === "guide" && <UserGuide />}
                 {active === "data" && (
                   <>
-                    <Group title="สำรองและกู้คืนข้อมูล">
+                    <Group title="สำรองและกู้คืน">
                       <BackupPanel />
                     </Group>
                     {/* รีเซ็ตทั้งระบบ: ระบบคลินิก + แอปผู้ใช้ทุกคน (ใช้ก่อนเริ่มใช้งานจริง / ทดสอบรอบใหม่) */}
-                    <Group title="รีเซ็ตข้อมูลทั้งระบบ" desc="ล้างข้อมูลทดสอบทั้งหมดของระบบคลินิกและแอป ThaiWell AI ของผู้ใช้ทุกคน · ข้อมูลคลินิก ผู้บำบัด บริการ ราคา และการตั้งค่า ยังอยู่">
-                      <Row title="ล้างข้อมูลทั้งหมดในระบบ" desc="ผู้รับบริการ นัด ใบเสร็จ คำขอจอง แจ้งเตือน ประวัติ — ในคลินิกและในแอปของผู้ใช้ · สำรองข้อมูลด้านบนก่อนถ้าอยากเก็บไว้">
+                    <Group title="รีเซ็ตทั้งระบบ" desc="ล้างข้อมูลทดสอบในคลินิกและแอป ThaiWell">
+                      <Row title="ล้างข้อมูลทั้งหมด" desc="ผู้ป่วย นัด ใบเสร็จ คำขอจอง · การตั้งค่ายังอยู่">
                         <Button variant="danger" size="md" leading={<Trash2 size={14} />} onClick={() => setWiping(true)}>
                           รีเซ็ตทั้งระบบ
                         </Button>
                       </Row>
                     </Group>
                     <WipeDataDialog open={wiping} onClose={() => setWiping(false)} />
-                    {DEMO && <Group title="รีเซ็ตข้อมูลจำลอง" desc="ข้อมูลทั้งหมดในแอปเป็นข้อมูลสมมติ ไม่มีข้อมูลสุขภาพของบุคคลจริง บันทึกไว้ในเครื่องนี้เท่านั้น">
-                      <Row title="สร้างข้อมูลตัวอย่างใหม่" desc="ผู้ป่วย คิวนัด คำขอจอง การชำระเงิน แจ้งเตือน และตารางงาน จะกลับเป็นชุดเริ่มต้นของวันนี้ · การตั้งค่าคลินิกและบัญชีผู้ใช้ยังอยู่">
+                    {DEMO && <Group title="รีเซ็ตข้อมูลจำลอง" desc="ข้อมูลสมมติ เก็บในเครื่องนี้เท่านั้น">
+                      <Row title="สร้างข้อมูลตัวอย่างใหม่" desc="กลับเป็นชุดเริ่มต้นของวันนี้ · การตั้งค่ายังอยู่">
                         <Button variant="outline" size="md" className="acc-logout" leading={<RotateCcw size={14} />} onClick={() => setConfirmReset(true)}>
                           รีเซ็ตข้อมูล
                         </Button>
@@ -313,7 +313,7 @@ export default function Settings() {
                 {active === "clinic" && (
                   <>
                     <ClinicProfile onGo={(id) => setActive(id)} />
-                    <Group title="พื้นหลังแอป" desc="ฉาก 3D สร้างด้วยโค้ดทั้งหมด · ภาพถ่ายเคลื่อนไหวใช้ภาพจาก Figma">
+                    <Group title="พื้นหลังแอป">
                       <div className="st-backdrops">
                         {BACKDROPS.map((b) => (
                           <button key={b.value} type="button" className="st-bd" aria-pressed={backdrop === b.value} onClick={() => set("backdrop", b.value)}>
@@ -333,8 +333,8 @@ export default function Settings() {
 
                 {active === "hours" && (
                   <>
-                    <Group title="เวลาทำการ" desc="รอบคิวและตารางงานของเจ้าหน้าที่จะอยู่ในช่วงนี้ · พักกลางวัน 12:00–13:00">
-                      <Row title="เปิด – ปิด">
+                    <Group title="เวลาทำการ" desc="พักกลางวัน 12:00–13:00">
+                      <Row title="เวลาเปิด–ปิด">
                         <div className="st-time">
                           <Select value={settings.openTime} onChange={(e) => set("openTime", e.target.value)} aria-label="เวลาเปิด">
                             {HOURS.filter((h) => h < settings.closeTime).map((h) => (
@@ -349,7 +349,7 @@ export default function Settings() {
                           </Select>
                         </div>
                       </Row>
-                      <Row title="วันเปิดทำการ" desc={`เปิด ${openDays.length} วัน · วันที่ปิด ผู้ป่วยจะจองคิวไม่ได้`}>
+                      <Row title="วันเปิดทำการ" desc={`เปิด ${openDays.length} วัน · วันปิดจองไม่ได้`}>
                         <div className="days">
                           {[1, 2, 3, 4, 5, 6, 0].map((d) => {
                             const closed = settings.closedWeekdays.includes(d);
@@ -370,20 +370,20 @@ export default function Settings() {
                       </Row>
                     </Group>
                     <Group title="คิว">
-                      <Row title="จำนวนเตียงต่อรอบ" desc="จำกัดผู้รับบริการในแต่ละช่วงเวลา">
+                      <Row title="จำนวนเตียงต่อรอบ" desc="จำนวนผู้ป่วยสูงสุดต่อช่วงเวลา">
                         <Stepper value={settings.bedsPerSlot} min={1} max={20} unit="เตียง" onChange={(n) => set("bedsPerSlot", n)} />
                       </Row>
-                      <Row title="ระยะห่างขั้นต่ำระหว่างนัด" desc="ใช้ตรวจตอนวางแผนนัดตามคอร์ส">
+                      <Row title="ระยะห่างระหว่างนัด" desc="ใช้ตอนวางแผนนัดตามคอร์ส">
                         <Stepper value={settings.minDaysBetweenSessions} min={1} max={7} unit="วัน" onChange={(n) => set("minDaysBetweenSessions", n)} />
                       </Row>
-                      <Row title="ต้องอนุมัติคำขอจองคิว" desc="คำขอจากแอป ThaiWell AI ต้องผ่านเจ้าหน้าที่ก่อนเข้าคิว">
-                        <Switch checked={settings.requireApproval} label="ต้องอนุมัติคำขอจองคิว" onChange={(v) => set("requireApproval", v)} />
+                      <Row title="อนุมัติคำขอจองก่อน" desc="คำขอจากแอป ThaiWell ต้องผ่านเจ้าหน้าที่">
+                        <Switch checked={settings.requireApproval} label="อนุมัติคำขอจองก่อน" onChange={(v) => set("requireApproval", v)} />
                       </Row>
                     </Group>
-                    <Group title="ห้องและเตียง" desc="ใช้ตอนเลือกเตียงเริ่มรับบริการ · แตะชื่อห้องเพื่อแก้ · เตียงที่มีผู้ป่วยใช้อยู่ลบไม่ได้">
+                    <Group title="ห้องและเตียง" desc="แตะชื่อห้องเพื่อแก้ · เตียงที่ใช้อยู่ลบไม่ได้">
                       <RoomsEditor />
                     </Group>
-                    <Group title="เสียงเรียกคิว" desc="เสียง AI ภาษาไทยจาก BMS VoxCPM · มีเสียงกริ่งก่อนประกาศ · ถ้าเชื่อมต่อไม่ได้จะใช้เสียงของเครื่องแทน">
+                    <Group title="เสียงเรียกคิว" desc="เสียง AI ภาษาไทย · ต่อไม่ได้จะใช้เสียงเครื่อง">
                       <Row title="เสียงผู้ประกาศ">
                         <div className="st-voice">
                           <Select value={settings.callVoice ?? DEFAULT_CALL_VOICE} onChange={(e) => set("callVoice", e.target.value)} aria-label="เสียงผู้ประกาศ">
@@ -397,7 +397,7 @@ export default function Settings() {
                             variant="outline"
                             leading={<Volume2 size={15} />}
                             onClick={() => {
-                              void announce(callText("A001", "สมใจ ใจดี", "ห้องนวดไทย"), settings.callVoice ?? DEFAULT_CALL_VOICE).then((how) => how === "device" && toast({ message: "เชื่อมต่อ VoxCPM ไม่ได้ · ใช้เสียงของเครื่องแทน", tone: "danger" }));
+                              void announce(callText("A001", "สมใจ ใจดี", "ห้องนวดไทย"), settings.callVoice ?? DEFAULT_CALL_VOICE).then((how) => how === "device" && toast({ message: "ต่อเสียง AI ไม่ได้ ใช้เสียงเครื่องแทน", tone: "danger" }));
                             }}
                           >
                             ฟังตัวอย่าง
@@ -410,15 +410,15 @@ export default function Settings() {
 
                 {active === "safety" && (
                   <>
-                    <Group title="เกณฑ์ที่ปรับได้" desc="ระบบใช้กฎเหล่านี้ตรวจแบบคัดกรองก่อนอนุมัติคิว — ตรวจสอบย้อนกลับได้ ไม่ใช้ AI ตัดสินแทน">
-                      <Row title="ความดันตัวบนที่ต้องพบแพทย์ก่อน" desc="เกินค่านี้ระบบแจ้งเตือนระดับห้ามนวด">
+                    <Group title="เกณฑ์ที่ปรับได้" desc="ใช้ตรวจแบบคัดกรองก่อนนวด · ไม่ใช้ AI ตัดสิน">
+                      <Row title="ความดันตัวบนสูงสุด" desc="เกินค่านี้ห้ามนวด ต้องพบแพทย์ก่อน">
                         <Stepper value={settings.bpThreshold} min={130} max={200} step={5} unit="mmHg" onChange={(n) => set("bpThreshold", n)} />
                       </Row>
-                      <Row title="ระยะพักฟื้นหลังผ่าตัด" desc="ห้ามนวดหากผ่าตัดไม่เกินจำนวนวันนี้">
+                      <Row title="ระยะพักฟื้นหลังผ่าตัด" desc="ผ่าตัดมาไม่ถึงกี่วัน ห้ามนวด">
                         <Stepper value={settings.surgeryRecoveryDays} min={7} max={90} unit="วัน" onChange={(n) => set("surgeryRecoveryDays", n)} />
                       </Row>
                     </Group>
-                    <Group title="ข้อห้ามและข้อควรระวัง" desc="กฎตายตัวตามแนวทางการนวดไทย">
+                    <Group title="ข้อห้ามและข้อควรระวัง" desc="กฎตายตัวตามแนวทางนวดไทย">
                       {[
                         ["โรคติดต่อระยะแพร่กระจาย", "ห้ามให้บริการ", "danger"],
                         ["มีไข้", "ห้ามให้บริการ", "danger"],
@@ -441,7 +441,7 @@ export default function Settings() {
                       <div className="st-group__head st-group__head--row">
                         <div>
                           <h3>บริการ {store.services.length} รายการ</h3>
-                          <p>แตะบริการเพื่อแก้ชื่อ ระยะเวลา หรือราคา</p>
+                          <p>แตะเพื่อแก้ไข</p>
                         </div>
                         <Button size="md" leading={<Plus size={16} />} onClick={() => setEditSvc("new")}>
                           เพิ่มบริการ
@@ -455,7 +455,7 @@ export default function Settings() {
                               <div className="st-row__text">
                                 <b>{s.name}</b>
                                 <small>
-                                  {s.minutes} นาที · {by.length ? `${by.length} คนให้บริการ` : "ยังไม่มีผู้ให้บริการ"}
+                                  {s.minutes} นาที · {by.length ? `ผู้บำบัด ${by.length} คน` : "ยังไม่มีผู้บำบัด"}
                                 </small>
                               </div>
                               <span className="st-faces">
@@ -478,7 +478,7 @@ export default function Settings() {
                     <div className="st-group__head st-group__head--row">
                       <div>
                         <h3>ผู้บำบัด {store.therapists.length} คน</h3>
-                        <p>แตะเพื่อแก้ข้อมูล · เวลาทำงานและบริการกำหนดที่หน้าจัดตารางงาน</p>
+                        <p>แตะเพื่อแก้ไข · ตารางงานตั้งที่หน้าจัดตารางงาน</p>
                       </div>
                       <Button size="md" leading={<Plus size={16} />} onClick={() => setEditStaff("new")}>
                         เพิ่มผู้บำบัด
@@ -517,9 +517,9 @@ export default function Settings() {
 
                 {active === "notify" && (
                   <>
-                    <Group title="แจ้งเตือนเจ้าหน้าที่" desc="แสดงที่กระดิ่งในแอปนี้">
-                      <Row title="คำขอจองคิวใหม่" desc="เมื่อผู้ป่วยส่งคำขอผ่านแอป ThaiWell AI">
-                        <Switch checked={settings.notifyNewRequest} label="คำขอจองคิวใหม่" onChange={(v) => set("notifyNewRequest", v)} />
+                    <Group title="แจ้งเตือนเจ้าหน้าที่" desc="แสดงที่กระดิ่ง">
+                      <Row title="คำขอจองใหม่" desc="เมื่อผู้ป่วยขอจองผ่านแอป">
+                        <Switch checked={settings.notifyNewRequest} label="คำขอจองใหม่" onChange={(v) => set("notifyNewRequest", v)} />
                       </Row>
                       <Row title="ผู้ป่วยไม่มาตามนัด" desc={settings.notifyNoShow ? `เมื่อพ้นเวลานัด ${settings.noShowMinutes} นาที` : "ปิดอยู่"}>
                         <Switch checked={settings.notifyNoShow} label="ผู้ป่วยไม่มาตามนัด" onChange={(v) => set("notifyNoShow", v)} />
@@ -535,8 +535,8 @@ export default function Settings() {
                       </AnimatePresence>
                     </Group>
 
-                    <Group title="แจ้งเตือนผู้มารับบริการ" desc="ส่งผ่านแอป ThaiWell AI ของผู้ป่วย">
-                      <Row title="ยืนยันและเลื่อนนัด" desc="เมื่ออนุมัติคำขอ จัดคิวใหม่ หรือปฏิเสธพร้อมเหตุผล">
+                    <Group title="แจ้งเตือนผู้ป่วย" desc="ส่งเข้าแอป ThaiWell ของผู้ป่วย">
+                      <Row title="ยืนยันและเลื่อนนัด" desc="เมื่ออนุมัติ เลื่อน หรือปฏิเสธคำขอ">
                         <Switch checked={settings.notifyConfirm} label="ยืนยันและเลื่อนนัด" onChange={(v) => set("notifyConfirm", v)} />
                       </Row>
                       <Row title="เตือนก่อนถึงนัด" desc={settings.notifyReminder ? `ล่วงหน้า ${settings.reminderHours} ชม.` : "ปิดอยู่"}>
@@ -551,13 +551,13 @@ export default function Settings() {
                           </motion.div>
                         )}
                       </AnimatePresence>
-                      <Row title="แบบติดตามผลหลังนวด" desc={settings.followUpReminder ? `Pain Score และท่ากายบริหาร · หลังรับบริการ ${settings.followUpHours} ชม.` : "ปิดอยู่"}>
+                      <Row title="แบบติดตามผลหลังนวด" desc={settings.followUpReminder ? `ถามปวดหลังนวด · ส่งหลังนวด ${settings.followUpHours} ชม.` : "ปิดอยู่"}>
                         <Switch checked={settings.followUpReminder} label="แบบติดตามผลหลังนวด" onChange={(v) => set("followUpReminder", v)} />
                       </Row>
                       <AnimatePresence initial={false}>
                         {settings.followUpReminder && (
                           <motion.div className="st-sub" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
-                            <Row title="ส่งหลังรับบริการ">
+                            <Row title="ส่งหลังนวด">
                               <Stepper value={settings.followUpHours} min={12} max={96} step={12} unit="ชม." onChange={(n) => set("followUpHours", n)} />
                             </Row>
                           </motion.div>
@@ -565,14 +565,14 @@ export default function Settings() {
                       </AnimatePresence>
                     </Group>
 
-                    <Group title="ใบเสร็จและการชำระเงิน" desc="ใช้ในหน้าคิดเงิน">
-                      <Row title="ส่งสลิปอัตโนมัติ" desc={settings.autoSendSlip ? "ส่งสลิปเข้าแอป ThaiWell AI ทันทีที่ชำระเงินเสร็จ" : "ปิดอยู่ · กดส่งเองจากหน้าสลิป"}>
+                    <Group title="ใบเสร็จ" desc="ใช้ในหน้าชำระเงิน">
+                      <Row title="ส่งสลิปอัตโนมัติ" desc={settings.autoSendSlip ? "ส่งเข้าแอปทันทีที่รับชำระเสร็จ" : "ปิดอยู่ · กดส่งเองจากหน้าสลิป"}>
                         <Switch checked={!!settings.autoSendSlip} label="ส่งสลิปอัตโนมัติ" onChange={(v) => set("autoSendSlip", v)} />
                       </Row>
                     </Group>
 
-                    <Group title="ส่งประวัติไปแอป ThaiWell AI" desc="ผู้ป่วยดูประวัติการรักษาของตัวเองในแอปได้ · ส่งเฉพาะหัวข้อที่เลือก">
-                      <Row title="ส่งประวัติให้ผู้ป่วย" desc={settings.shareHistory ? `${settings.shareTopics.length} หัวข้อ · ${settings.shareTiming === "after" ? "ทันทีหลังรับบริการ" : "สรุปทุกวันจันทร์"}` : "ปิดอยู่ · ผู้ป่วยจะไม่เห็นประวัติในแอป"}>
+                    <Group title="ส่งประวัติเข้าแอป" desc="ผู้ป่วยดูประวัติของตัวเองในแอป ThaiWell">
+                      <Row title="ส่งประวัติให้ผู้ป่วย" desc={settings.shareHistory ? `${settings.shareTopics.length} หัวข้อ · ${settings.shareTiming === "after" ? "ทันทีหลังนวด" : "สรุปทุกวันจันทร์"}` : "ปิดอยู่"}>
                         <Switch checked={settings.shareHistory} label="ส่งประวัติให้ผู้ป่วย" onChange={(v) => set("shareHistory", v)} />
                       </Row>
                       <AnimatePresence initial={false}>
@@ -610,8 +610,8 @@ export default function Settings() {
                               <div className="st-timing" role="radiogroup" aria-label="ส่งเมื่อ">
                                 {(
                                   [
-                                    ["after", "ทันทีหลังรับบริการ", "เมื่อเจ้าหน้าที่กดรับบริการเสร็จ"],
-                                    ["weekly", "สรุปรายสัปดาห์", "ส่งรวมทุกวันจันทร์ 09:00"],
+                                    ["after", "ทันทีหลังนวด", "เมื่อจบการรักษา"],
+                                    ["weekly", "สรุปรายสัปดาห์", "ทุกวันจันทร์ 09:00"],
                                   ] as const
                                 ).map(([v, l, d]) => (
                                   <button key={v} type="button" role="radio" aria-checked={settings.shareTiming === v} onClick={() => set("shareTiming", v)}>
@@ -628,10 +628,10 @@ export default function Settings() {
                                 </span>
                                 <div>
                                   <div className="st-preview__top">
-                                    <b>ThaiWell AI</b>
+                                    <b>ThaiWell</b>
                                     <small>{settings.shareTiming === "after" ? "เมื่อสักครู่" : "จันทร์ 09:00"}</small>
                                   </div>
-                                  <p className="st-preview__title">{settings.shareTiming === "after" ? "บันทึกการรับบริการวันนี้" : "สรุปการรักษาสัปดาห์นี้"}</p>
+                                  <p className="st-preview__title">{settings.shareTiming === "after" ? "บันทึกการรักษาวันนี้" : "สรุปการรักษาสัปดาห์นี้"}</p>
                                   <p className="st-preview__body">{previewText(settings.shareTopics)}</p>
                                 </div>
                               </div>
@@ -654,7 +654,7 @@ export default function Settings() {
         open={askOut}
         onClose={() => setAskOut(false)}
         title="ออกจากระบบ?"
-        subtitle="ข้อมูลคิวและการตั้งค่ายังอยู่ในเครื่องนี้ เข้าสู่ระบบอีกครั้งเพื่อใช้งานต่อ"
+        subtitle="ข้อมูลยังอยู่ในเครื่องนี้"
         footer={
           <>
             <Button variant="outline" size="lg" fill onClick={() => setAskOut(false)}>
@@ -683,7 +683,7 @@ export default function Settings() {
         open={confirmReset}
         onClose={() => setConfirmReset(false)}
         title="รีเซ็ตข้อมูลจำลอง?"
-        subtitle="ข้อมูลผู้ป่วย คิว และการชำระเงินในเครื่องนี้ และข้อมูลที่เชื่อมกับแอป ThaiWell AI (cloud) จะถูกแทนด้วยชุดตัวอย่างใหม่ ย้อนกลับไม่ได้ · แอปบนมือถือให้ปิดแล้วเปิดใหม่"
+        subtitle="ข้อมูลในเครื่องนี้และแอป ThaiWell จะกลับเป็นชุดตัวอย่าง ย้อนกลับไม่ได้ · ปิดแล้วเปิดแอปบนมือถือใหม่"
         footer={
           <>
             <Button variant="outline" size="lg" fill onClick={() => setConfirmReset(false)}>
@@ -697,7 +697,7 @@ export default function Settings() {
               onClick={() => {
                 // ข้อมูลสาธิตชุดเดียวกับแอป ThaiWell AI → รีเซ็ต cloud ไปพร้อมกัน
                 setConfirmReset(false);
-                toast({ message: "รีเซ็ตข้อมูลจำลองทั้ง 2 ระบบแล้ว" });
+                toast({ message: "รีเซ็ตข้อมูลจำลองแล้ว" });
                 resetBothSystems(store.dispatch, DEFAULT_SETTINGS.clinicName);
               }}
             >
@@ -773,7 +773,7 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
         </span>
       }
       title={isNew ? "เพิ่มบริการ" : "แก้ไขบริการ"}
-      subtitle={isNew ? "บริการใหม่จะเลือกได้ในหน้ากำหนดตารางของเจ้าหน้าที่" : current?.name}
+      subtitle={isNew ? "เลือกได้ในตารางงานผู้บำบัด" : current?.name}
       footer={
         <>
           {!isNew && (
@@ -812,7 +812,7 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
         {/* duration */}
         <div className="st-group">
           <div className="st-group__head">
-            <h3>ระยะเวลารับบริการ</h3>
+            <h3>ระยะเวลา</h3>
           </div>
           <div className="svc__seg" role="radiogroup" aria-label="ระยะเวลา">
             {DURATIONS.map((m) => (
@@ -860,7 +860,7 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
               ))}
             </span>
             <span>
-              {by.length} คนให้บริการ · ใช้ในคิว {used} รายการ
+              ผู้บำบัด {by.length} คน · ใช้ใน {used} นัด
             </span>
           </div>
         )}
@@ -871,13 +871,13 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
             <div>
               {used > 0 ? (
                 <>
-                  <b>ลบไม่ได้ — มีคิว {used} รายการใช้บริการนี้</b>
-                  ประวัติการรับบริการยังอ้างถึงบริการนี้ ถ้าไม่เปิดให้จองแล้ว ให้นำออกจากตารางของเจ้าหน้าที่แทน
+                  <b>ลบไม่ได้ — มี {used} นัดใช้บริการนี้</b>
+                  ถ้าเลิกให้บริการ ให้นำออกจากตารางงานผู้บำบัดแทน
                 </>
               ) : (
                 <>
                   <b>ลบ {current?.name}?</b>
-                  จะนำออกจากตารางของเจ้าหน้าที่ {offeredBy} คนด้วย ·{" "}
+                  จะนำออกจากตารางงานผู้บำบัด {offeredBy} คนด้วย ·{" "}
                   <button type="button" className="book__link" onClick={remove}>
                     ยืนยันลบ
                   </button>
@@ -925,7 +925,7 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
     if (!valid) return;
     const therapist = { ...f, name: f.name.trim(), phone: f.phone?.trim() || undefined, id: isNew ? store.nextId("t") : f.id };
     store.dispatch({ type: "saveTherapist", therapist });
-    toast({ message: isNew ? `เพิ่ม ${therapist.name} แล้ว · กำหนดตารางงานต่อที่หน้าจัดตารางงาน` : `บันทึกข้อมูล ${therapist.name} แล้ว` });
+    toast({ message: isNew ? `เพิ่ม ${therapist.name} แล้ว ตั้งตารางงานต่อที่หน้าจัดตารางงาน` : `บันทึกข้อมูล ${therapist.name} แล้ว` });
     onSaved();
     onClose();
   };
@@ -947,8 +947,8 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
           <Stethoscope size={20} strokeWidth={1.9} />
         </span>
       }
-      title={isNew ? "เพิ่มผู้บำบัด" : "แก้ไขข้อมูลผู้บำบัด"}
-      subtitle={isNew ? "เพิ่มแล้วกำหนดวัน เวลา และบริการที่หน้าจัดตารางงาน" : current?.name}
+      title={isNew ? "เพิ่มผู้บำบัด" : "แก้ไขผู้บำบัด"}
+      subtitle={isNew ? "ตั้งวัน เวลา และบริการต่อที่หน้าจัดตารางงาน" : current?.name}
       footer={
         <>
           {!isNew && (
@@ -971,13 +971,13 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
           <div className="tp-hero__text">
             <b>{f.name.trim() || "ชื่อผู้บำบัด"}</b>
             <small>{f.role}</small>
-            <span className="tw-meta">เลือก avatar ด้านล่าง หรือแตะรูปเพื่อถ่าย/เลือกจากคลังภาพ</span>
+            <span className="tw-meta">เลือกรูปด้านล่าง หรือแตะรูปเพื่อถ่ายภาพ</span>
           </div>
         </div>
 
         <div className="st-group">
           <div className="st-group__body svc__card">
-            <Field label="ชื่อ–นามสกุล (พร้อมคำนำหน้าวิชาชีพ)">
+            <Field label="ชื่อ–นามสกุล" hint="ใส่คำนำหน้าวิชาชีพด้วย">
               <Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="เช่น พท.ป. สมใจ ใจดี" autoFocus={isNew} />
             </Field>
             <Field label="เบอร์โทรศัพท์" hint={phoneOk ? undefined : "รูปแบบเบอร์ไม่ถูกต้อง"}>
@@ -988,12 +988,12 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
 
         <div className="st-group">
           <div className="st-group__head">
-            <h3>Avatar</h3>
-            <p>ภาพประจำตัวที่แสดงในตารางนัด คิว และในแอปผู้ใช้</p>
+            <h3>รูปประจำตัว</h3>
+            <p>แสดงในตารางนัดและแอป ThaiWell</p>
           </div>
-          <div className="tp-avatars" role="radiogroup" aria-label="เลือก avatar">
+          <div className="tp-avatars" role="radiogroup" aria-label="เลือกรูปประจำตัว">
             {AVATAR_CHOICES.map((k) => (
-              <button key={k} type="button" role="radio" aria-checked={f.photo === avatarValue(k)} aria-label={`avatar ${k}`} onClick={() => setF({ ...f, photo: avatarValue(k) })}>
+              <button key={k} type="button" role="radio" aria-checked={f.photo === avatarValue(k)} aria-label={`รูปที่ ${k}`} onClick={() => setF({ ...f, photo: avatarValue(k) })}>
                 <img src={avatarUrl(k)} alt="" />
               </button>
             ))}
@@ -1016,7 +1016,7 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
         <div className="st-group">
           <div className="st-group__head">
             <h3>สีประจำตัว</h3>
-            <p>ใช้ในตารางนัดเพื่อบอกว่าคิวไหนเป็นของใคร</p>
+            <p>ใช้แยกนัดของแต่ละคนในตาราง</p>
           </div>
           <div className="tp-colors" role="radiogroup" aria-label="สีประจำตัว">
             {COLORS.map((c) => (
@@ -1031,7 +1031,7 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
           <div className="svc__usage">
             <CalendarCog size={16} />
             <span style={{ flex: 1 }}>
-              {days ? `ทำงาน ${days} วัน/สัปดาห์ · ${current.services.length} บริการ` : "ยังไม่ได้กำหนดตารางงาน"} · ลงคิวแล้ว {queues} รายการ
+              {days ? `ทำงาน ${days} วัน/สัปดาห์` : "ยังไม่มีตารางงาน"} · {queues} นัด
             </span>
             <button type="button" className="book__link" onClick={() => navigate("/planner")}>
               ไปจัดตาราง
@@ -1045,8 +1045,8 @@ function TherapistDialog({ id, onClose, onSaved }: { id: string | null; onClose:
             <div>
               {queues > 0 ? (
                 <>
-                  <b>ลบไม่ได้ — มีคิว {queues} รายการของผู้บำบัดคนนี้</b>
-                  ประวัติการรับบริการยังอ้างถึงอยู่ ถ้าไม่ได้ทำงานแล้ว ให้ปิดวันทำงานทั้งหมดในหน้าจัดตารางงานแทน
+                  <b>ลบไม่ได้ — มี {queues} นัดของผู้บำบัดคนนี้</b>
+                  ถ้าเลิกทำงานแล้ว ให้ปิดวันทำงานในหน้าจัดตารางงานแทน
                 </>
               ) : (
                 <>
@@ -1083,7 +1083,7 @@ function AccountSection({ onSaved }: { onSaved: () => void }) {
         <div className="st-group__head st-group__head--row">
           <div>
             <h3>โปรไฟล์</h3>
-            <p>ชื่อและรูปแสดงบนหน้าหลัก และในประวัติการอนุมัติคิว</p>
+            <p>แสดงบนหน้าหลักและในประวัติการแก้ไข</p>
           </div>
           <Button variant="outline" size="md" leading={<PenLine size={15} />} onClick={() => setEditing("profile")}>
             แก้ไข
@@ -1100,7 +1100,7 @@ function AccountSection({ onSaved }: { onSaved: () => void }) {
           <ReadRow label="ชื่อ–นามสกุล" value={settings.staffName} />
           <ReadRow label="ตำแหน่ง" value={settings.staffRole} />
           <ReadRow label="อีเมล" value={settings.staffEmail} empty="ยังไม่ได้ระบุ" />
-          <ReadRow label="หน่วยบริการ" value={settings.clinicName} />
+          <ReadRow label="คลินิก" value={settings.clinicName} />
         </div>
       </div>
 
@@ -1112,7 +1112,7 @@ function AccountSection({ onSaved }: { onSaved: () => void }) {
           <div className="st-row">
             <div className="st-row__text">
               <b>รหัสผ่าน</b>
-              <small>{changedAt ? `เปลี่ยนล่าสุด ${changedAt}` : "ควรเปลี่ยนรหัสผ่านทุก 90 วัน"}</small>
+              <small>{changedAt ? `เปลี่ยนล่าสุด ${changedAt}` : "ควรเปลี่ยนทุก 90 วัน"}</small>
             </div>
             <span className="acc-dots" aria-hidden>
               ••••••••
@@ -1176,7 +1176,7 @@ function ProfileDialog({ open, onClose, onSaved }: { open: boolean; onClose: () 
         </span>
       }
       title="แก้ไขโปรไฟล์"
-      subtitle="ชื่อ ตำแหน่ง อีเมล และรูปโปรไฟล์"
+      subtitle="ชื่อ ตำแหน่ง อีเมล และรูป"
       footer={
         <>
           <Button variant="outline" size="lg" onClick={onClose}>
@@ -1194,7 +1194,7 @@ function ProfileDialog({ open, onClose, onSaved }: { open: boolean; onClose: () 
           <div className="tp-hero__text">
             <b>{p.name.trim() || "ชื่อผู้ใช้งาน"}</b>
             <small>{p.role}</small>
-            <span className="tw-meta">แตะรูปเพื่อถ่ายหรือเลือกจากคลังภาพ</span>
+            <span className="tw-meta">แตะรูปเพื่อเปลี่ยน</span>
           </div>
         </div>
         <div className="st-group">

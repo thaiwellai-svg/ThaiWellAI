@@ -354,21 +354,6 @@
   height: 86px;
   aspect-ratio: auto;
 }
-/* settings needs its section menu on narrow screens too (iPad portrait) */
-@media (max-width: 1000px) {
-  .appt.st-page {
-    grid-template-columns: 240px minmax(0, 1fr);
-  }
-  .st-page .appt__rail {
-    display: flex;
-  }
-  .st-page .st-me {
-    display: none;
-  }
-  .st-page .st-nav__text small {
-    display: none;
-  }
-}
 
 /* services: add / edit */
 .st-group__head--row {
@@ -1089,4 +1074,40 @@ button.st-me[aria-pressed="true"] {
   margin-top: 6px;
   font-size: 13px;
   color: var(--color-brand);
+}
+
+/* ── responsive (kept last so it wins over the base rules above) ── */
+/* narrow (tablet portrait): slimmer menu, profile row stays reachable but compact */
+@media (max-width: 1000px) {
+  .appt.st-page {
+    grid-template-columns: 232px minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+  .st-page .appt__rail {
+    display: flex;
+  }
+  .st-page .st-me {
+    padding: 8px;
+    gap: 10px;
+  }
+  .st-page .st-me .tw-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  .st-page .st-me__text small,
+  .st-page .st-me__text em {
+    display: none;
+  }
+  .st-head {
+    padding: 14px 16px;
+  }
+}
+/* wide desktop: roomier menu, content column capped so rows stay readable */
+@media (min-width: 1600px) {
+  .appt.st-page {
+    grid-template-columns: 340px minmax(0, 1fr);
+  }
+  .st-inner {
+    max-width: 960px;
+  }
 }

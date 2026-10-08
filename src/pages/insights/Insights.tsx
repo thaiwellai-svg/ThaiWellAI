@@ -148,16 +148,16 @@ export default function Insights() {
         <aside className="appt__rail scroll-y in-rail">
           <section className="bl2-card in-hero">
             <header>
-              <b>ปวดเฉลี่ยก่อน → หลังนวด</b>
+              <b>ปวดเฉลี่ย</b>
             </header>
             <div className="in-hero__nums">
               <span>
-                <small>ก่อน</small>
+                <small>ก่อนนวด</small>
                 <b>{f1(all.before)}</b>
               </span>
               <ArrowRight size={22} />
               <span className="is-after">
-                <small>หลัง</small>
+                <small>หลังนวด</small>
                 <b>{f1(all.after)}</b>
               </span>
             </div>
@@ -181,7 +181,7 @@ export default function Insights() {
 
           <section className="bl2-card">
             <header>
-              <b>ดีขึ้นทางคลินิก</b>
+              <b>สัดส่วนที่ดีขึ้น</b>
             </header>
             <div className="in-rings">
               <div>
@@ -201,7 +201,7 @@ export default function Insights() {
             </span>
             <div>
               <b>{voice} ครั้ง</b>
-              <small>บันทึกด้วยเสียง · ประหยัดเวลา ~{voice * 3} นาที</small>
+              <small>บันทึกด้วยเสียง{voice ? ` (ประหยัด ~${voice * 3} นาที)` : ""}</small>
             </div>
           </section>
 
@@ -211,7 +211,7 @@ export default function Insights() {
                 <Info size={14} /> วิธีคำนวณ
               </b>
             </header>
-            <p>ใช้ทุกการรักษาที่บันทึก Pain ก่อนและหลังนวด (0–10) · ลด ≥ {MCID} คะแนนถือว่ามีนัยสำคัญทางคลินิก · 95% CI = ค่าเฉลี่ย ± 1.96·SD/√n · เป็นข้อมูลสังเกตจากการบริการจริง ไม่ใช่การทดลองแบบสุ่ม</p>
+            <p>จากทุกนัดที่บันทึกปวดก่อน/หลังนวด (0–10)<br />“ดีขึ้น” = ปวดลด ≥ {MCID} คะแนน<br />95% CI = ค่าเฉลี่ย ± 1.96·SD/√n<br />ข้อมูลจากการบริการจริง ไม่ใช่การทดลองแบบสุ่ม</p>
           </section>
         </aside>
 
@@ -234,30 +234,8 @@ export default function Insights() {
             <div className="in-body scroll-y scroll-y--light">
               {tab === "overview" && (
                 <>
-                  <div className="in-mini">
-                    <div>
-                      <small>ปวดก่อน → หลัง</small>
-                      <b>
-                        {f1(all.before)} → <em>{f1(all.after)}</em>
-                      </b>
-                    </div>
-                    <div>
-                      <small>ลดลงเฉลี่ย</small>
-                      <b>{f1(all.mean)}</b>
-                    </div>
-                    <div>
-                      <small>ปวดลด ≥ {MCID}</small>
-                      <b>{pct(all.improved)}</b>
-                    </div>
-                    <div>
-                      <small>ข้อมูล</small>
-                      <b>
-                        {all.n} ครั้ง · {patients} คน
-                      </b>
-                    </div>
-                  </div>
                   <h3 className="in-h">
-                    <Lightbulb size={16} /> ข้อค้นพบจากข้อมูลของคลินิก
+                    <Lightbulb size={16} /> ข้อค้นพบ
                   </h3>
                   {finds.length ? (
                     <div className="in-finds">
@@ -273,11 +251,11 @@ export default function Insights() {
                               <b>−{f1(x.mean)}</b>
                               <em>
                                 {x.tone === "good" ? <ThumbsUp size={12} /> : <ThumbsDown size={12} />} {x.diff > 0 ? "+" : "−"}
-                                {f1(Math.abs(x.diff))} จากค่าเฉลี่ย
+                                {f1(Math.abs(x.diff))} จากเฉลี่ย
                               </em>
                             </span>
                             <small>
-                              {x.tone === "good" ? "ได้ผลดีกว่าค่าเฉลี่ยคลินิก" : "ได้ผลน้อย ควรพิจารณาบริการอื่น"} · {x.n} ครั้ง
+                              {x.tone === "good" ? "ได้ผลดีกว่าเฉลี่ย" : "ได้ผลน้อย ลองบริการอื่น"} · {x.n} ครั้ง
                               <ChevronRight size={13} />
                             </small>
                           </button>
@@ -285,11 +263,11 @@ export default function Insights() {
                       })}
                     </div>
                   ) : (
-                    <p className="in-muted">ยังไม่มีข้อค้นพบที่ชัดเจน · ต้องมีข้อมูลอย่างน้อย 6 ครั้งต่อกลุ่ม</p>
+                    <p className="in-muted">ยังไม่มีข้อค้นพบ (ต้องมีอย่างน้อย 6 ครั้งต่อกลุ่ม)</p>
                   )}
 
                   <h3 className="in-h">
-                    <TrendingDown size={16} /> ความปวดตามจำนวนครั้งที่มารักษา
+                    <TrendingDown size={16} /> ปวดตามครั้งที่มา
                   </h3>
                   {curve.length > 1 ? (
                     <div className="in-chart">
@@ -329,7 +307,7 @@ export default function Insights() {
                           <i className="is-after" /> ปวดหลังนวด
                         </span>
                         <em>
-                          ผู้ป่วยที่มาต่อเนื่อง ปวดตั้งต้นลดจาก {f1(curve[0].mean)} เหลือ {f1(curve[curve.length - 1].mean)} ภายใน {curve[curve.length - 1].n} ครั้ง
+                          ปวดก่อนนวดลดจาก {f1(curve[0].mean)} เหลือ {f1(curve[curve.length - 1].mean)} ใน {curve[curve.length - 1].n} ครั้ง
                         </em>
                       </div>
                     </div>
@@ -360,7 +338,7 @@ export default function Insights() {
                   {elOk.length > 1 && (
                     <div className="in-reco" style={{ ["--c" as string]: ELEMENT_INFO[el].color, ["--t" as string]: ELEMENT_INFO[el].tint }}>
                       <div>
-                        <small>แนะนำสำหรับผู้ป่วยธาตุ{el}</small>
+                        <small>แนะนำสำหรับธาตุ{el}</small>
                         <b>{elOk[0].label}</b>
                         <em>ปวดลดเฉลี่ย {f1(elOk[0].s.mean)} คะแนน</em>
                       </div>
@@ -373,7 +351,7 @@ export default function Insights() {
                   )}
                   <Rows items={elSvc.map((x) => ({ ...x, sub: `${x.s.n} ครั้ง${x.s.n < 3 ? " · ข้อมูลน้อย" : ""}` }))} />
 
-                  <h3 className="in-h">ตารางธาตุ × บริการ · ปวดลดลงเฉลี่ย</h3>
+                  <h3 className="in-h">ปวดลดเฉลี่ย: ธาตุ × บริการ</h3>
                   <div className="in-heat" style={{ gridTemplateColumns: `92px repeat(${store.services.length}, minmax(0, 1fr))` }}>
                     <span />
                     {store.services.map((s) => (
@@ -405,17 +383,17 @@ export default function Insights() {
 
               {tab === "service" && (
                 <>
-                  <h3 className="in-h">ประสิทธิผลตามบริการ</h3>
+                  <h3 className="in-h">ผลตามบริการ</h3>
                   <Rows items={bySvc} />
                 </>
               )}
               {tab === "complaint" && (
                 <>
-                  <h3 className="in-h">ประสิทธิผลตามอาการสำคัญ</h3>
+                  <h3 className="in-h">ผลตามอาการ</h3>
                   <Rows items={byGroup} />
                 </>
               )}
-              {(tab === "service" || tab === "complaint") && <p className="in-muted">● ปวดก่อนนวด → ● ปวดหลังนวด (เฉลี่ย) · ตัวเลขเล็กใต้ค่าที่ลดลง = ช่วงความเชื่อมั่น 95% · “ดีขึ้น” = สัดส่วนที่ปวดลด ≥ {MCID} คะแนน</p>}
+              {(tab === "service" || tab === "complaint") && <p className="in-muted">ตัวเลขเล็ก = ช่วงเชื่อมั่น 95% · “ดีขึ้น” = ปวดลด ≥ {MCID} คะแนน</p>}
             </div>
           </div>
         </div>

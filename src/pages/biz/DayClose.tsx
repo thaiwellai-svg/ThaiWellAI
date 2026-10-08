@@ -138,7 +138,7 @@ export default function DayClose() {
   return (
     <BizPage
       eyebrow="การเงิน"
-      title="ปิดยอดประจำวัน"
+      title="ปิดยอดวัน"
       bar={
         <>
           <Tabs
@@ -161,7 +161,7 @@ export default function DayClose() {
         <>
           {done && (
             <p className="bz-note">
-              วันนี้ปิดยอดไปแล้วโดย {done.by} เวลา {clock(done.at)} น. — บันทึกอีกครั้งจะแทนที่รายการเดิม{" "}
+              ปิดยอดแล้วโดย {done.by} · {clock(done.at)} น. (บันทึกซ้ำจะแทนที่ของเดิม){" "}
               <button type="button" onClick={() => print(sheet(done))}>
                 พิมพ์ใบเดิม
               </button>
@@ -172,14 +172,17 @@ export default function DayClose() {
               const I = ICON[m];
               return <Stat key={m} label={<><I size={13} /> {METHOD_LABEL[m]}</>} value={m === "credit" ? `${t.credits} ครั้ง` : `${baht(t.totals[m])} ฿`} />;
             })}
+            <Stat label="รับเงินรวม" value={`${baht(t.sum)} ฿`} tone="#2f8a52" sub={`ใบเสร็จ ${t.receipts} ใบ`} />
           </div>
-          <p className="adp__muted">
-            ใบเสร็จ {t.receipts} ใบ · ยกเลิกใบเสร็จ {t.voids} ใบ{t.pk ? ` · รวมเงินขายแพ็กเกจ ${baht(t.pk)} บาท` : ""} · รับเงินรวม <b>{baht(t.sum)} บาท</b>
-          </p>
+          {(t.voids > 0 || t.pk > 0) && (
+            <p className="adp__muted">
+              {[t.voids ? `ยกเลิกใบเสร็จ ${t.voids} ใบ` : "", t.pk ? `รวมขายแพ็กเกจ ${baht(t.pk)} บาท` : ""].filter(Boolean).join(" · ")}
+            </p>
+          )}
 
           <div className="dc">
             <section className="dc__count">
-              <h3 className="bz-h">นับเงินสดในลิ้นชัก</h3>
+              <h3 className="bz-h">นับเงินสด</h3>
               <div className="dc__notes">
                 {NOTES.map((d) => (
                   <label key={d}>
@@ -204,7 +207,7 @@ export default function DayClose() {
                 <dd>{baht(counted)}</dd>
               </dl>
               <div className={`dc__diff ${!counted ? "is-idle" : diff === 0 ? "is-ok" : diff > 0 ? "is-over" : "is-short"}`}>
-                {!counted ? "กรอกจำนวนแบงก์และเหรียญที่นับได้" : diff === 0 ? "ตรงยอด" : `${diff > 0 ? "เงินเกิน" : "เงินขาด"} ${baht(Math.abs(diff))} บาท`}
+                {!counted ? "กรอกจำนวนแบงก์/เหรียญ" : diff === 0 ? "ตรงยอด" : `${diff > 0 ? "เงินเกิน" : "เงินขาด"} ${baht(Math.abs(diff))} บาท`}
               </div>
               <h3 className="bz-h">
                 <Landmark size={14} /> นำฝากธนาคาร
@@ -217,13 +220,13 @@ export default function DayClose() {
                   <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="ไม่บังคับ" />
                 </Field>
                 <Field label="หมายเหตุ" className="span-2">
-                  <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={diff ? "เหตุผลที่เงินขาด/เกิน" : "ไม่บังคับ"} />
+                  <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder={diff ? "เหตุผลที่เงินไม่ตรง" : "ไม่บังคับ"} />
                 </Field>
               </div>
               <Button size="lg" block disabled={!counted || (diff !== 0 && !note.trim())} onClick={save}>
                 ยืนยันปิดยอด
               </Button>
-              {diff !== 0 && counted > 0 && !note.trim() && <small className="dc__hint">เงินไม่ตรงยอด — กรุณาระบุหมายเหตุ</small>}
+              {diff !== 0 && counted > 0 && !note.trim() && <small className="dc__hint">เงินไม่ตรง ใส่หมายเหตุก่อน</small>}
             </section>
           </div>
         </>
@@ -250,7 +253,7 @@ export default function DayClose() {
               </div>
             ))
           ) : (
-            <p className="bz-empty">ยังไม่มีประวัติการปิดยอด</p>
+            <p className="bz-empty">ยังไม่มีประวัติปิดยอด</p>
           )}
         </div>
       )}

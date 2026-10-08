@@ -202,6 +202,10 @@
   font: 500 13px/1.2 var(--font-sans);
   color: rgba(255, 255, 255, 0.72);
 }
+.work__head:has(> .work__titles--solo),
+.work__head:has(> .apg__lead .work__titles--solo) {
+  align-items: center;
+}
 .work__title {
   font: 700 28px/1.2 var(--font-sans);
   letter-spacing: -0.01em;
@@ -956,4 +960,53 @@ html[data-dock="mini"] {
   color: #fff;
   font-size: 18px;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ── responsive foundation for every work page (tablet portrait · laptop · desktop) ── */
+/* narrow (tablet portrait): the side list moves above the main panel as a swipeable strip instead of disappearing */
+@media (max-width: 1000px) {
+  .work__body .appt:not(.st-page):has(> .appt__rail) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+  .work__body .appt:not(.st-page) > .appt__rail {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-3);
+    max-height: 36vh;
+    margin: -8px -16px 0;
+    padding: 8px 16px 8px !important;
+    overflow-x: auto;
+    overflow-y: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 16px;
+  }
+  .work__body .appt:not(.st-page) > .appt__rail > * {
+    flex: 0 0 min(320px, 78vw);
+    scroll-snap-align: start;
+  }
+}
+/* wide desktop: a roomier side list; the main panel takes the rest */
+@media (min-width: 1600px) {
+  .work__body .appt:not(.st-page) {
+    grid-template-columns: 360px minmax(0, 1fr);
+  }
+}
+/* short screens (laptops ~720–900 tall): panels end above the bottom dock so it never covers a footer/save button */
+@media (max-height: 900px) and (min-width: 1001px) {
+  html[data-dock="bar"] .work__body {
+    padding-bottom: calc(var(--dock-height) - 8px);
+  }
+  html[data-dock="bar"] .work__body .scroll-y {
+    padding-bottom: var(--space-4) !important;
+  }
+  html[data-dock="bar"] .work__body .appt__rail {
+    margin-bottom: 0;
+    padding-bottom: var(--space-3) !important;
+  }
+  html[data-dock="bar"] .work__body .plan__side-foot {
+    padding-bottom: var(--space-3);
+  }
 }

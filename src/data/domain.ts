@@ -7,7 +7,7 @@ export const STATUS_META: Record<AppointmentStatus, { label: string; tone: Badge
   done: { label: "รับบริการแล้ว", tone: "success", color: "var(--status-done)" },
   waiting: { label: "รอรับบริการ", tone: "warning", color: "var(--status-waiting)" },
   active: { label: "กำลังรับบริการ", tone: "info", color: "var(--status-active)" },
-  absent: { label: "ไม่มารับบริการ", tone: "danger", color: "var(--status-absent)" },
+  absent: { label: "ไม่มา", tone: "danger", color: "var(--status-absent)" },
   cancelled: { label: "ยกเลิก", tone: "neutral", color: "var(--neutral-400)" },
 };
 
@@ -27,14 +27,14 @@ export function stageOf(a: Appointment): Stage {
 export const isRecorded = (a: Pick<Appointment, "painAfter" | "recordedAt">) => a.painAfter !== undefined || !!a.recordedAt;
 
 export const STAGE_META: Record<Stage, { label: string; tone: BadgeTone; color: string; next?: string }> = {
-  checkin: { label: "รอเช็กอินเข้ารับบริการ", tone: "neutral", color: "var(--neutral-400)", next: "เช็กอิน" },
+  checkin: { label: "รอเช็กอิน", tone: "neutral", color: "var(--neutral-400)", next: "เช็กอิน" },
   waiting: { label: "รอรับบริการ", tone: "warning", color: "var(--status-waiting)", next: "เรียกคิว" },
   called: { label: "เรียกคิวแล้ว", tone: "info", color: "#3b82c4", next: "เริ่ม" },
   treating: { label: "กำลังรับบริการ", tone: "info", color: "var(--status-active)", next: "จบ" },
   assess: { label: "รอบันทึกการรักษา", tone: "info", color: "#7c5cc4", next: "บันทึก" },
-  billing: { label: "รอชำระเงิน", tone: "warning", color: "#d97706", next: "คิดเงิน" },
+  billing: { label: "รอชำระเงิน", tone: "warning", color: "#d97706", next: "รับชำระ" },
   done: { label: "เสร็จสิ้น", tone: "success", color: "var(--status-done)" },
-  absent: { label: "ไม่มารับบริการ", tone: "danger", color: "var(--status-absent)" },
+  absent: { label: "ไม่มา", tone: "danger", color: "var(--status-absent)" },
   cancelled: { label: "ยกเลิก", tone: "neutral", color: "var(--neutral-400)" },
 };
 export const stageMeta = (a: Appointment) => {

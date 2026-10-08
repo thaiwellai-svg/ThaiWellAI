@@ -7,7 +7,7 @@ import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Button, Drawer } from "../design-system";
 import { creditInfo, evaluateScreening } from "../data/domain";
-import { diffDays, fromISODate, thaiDate, thaiDateShort, todayISO } from "../data/thaiDate";
+import { diffDays, fromISODate, thaiDateShort, todayISO } from "../data/thaiDate";
 import { ELEMENT_INFO, elementProfile } from "../data/elements";
 import "./patient-health.css";
 import "./health.css";
@@ -36,7 +36,7 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
       onClose={onClose}
       leading={<PhotoPicker name={p.name} src={patientPhoto(p)} onPick={(photo) => store.dispatch({ type: "updatePatient", id: p.id, patch: { photo } })} />}
       title={p.name}
-      subtitle={`${p.hn} · ${p.gender} ${p.age} ปี · ลงทะเบียน ${thaiDate(p.registeredOn)}`}
+      subtitle={`${p.hn} · ${p.gender} ${p.age} ปี`}
       footer={
         <>
           {p.phone && (
@@ -45,7 +45,7 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
             </Button>
           )}
           <Button size="lg" fill leading={<CalendarPlus size={16} />} onClick={() => setPlanFor(p.id)}>
-            จัดตารางนัด
+            จัดนัด
           </Button>
         </>
       }
@@ -57,7 +57,7 @@ export function PatientDrawer({ id, onClose }: { id: string | null; onClose: () 
   );
 }
 
-/** the patient's health summary (อาการ · Pain trend · แผน · นัด · ประวัติ) — drawer and the รับบริการ side box */
+/** the patient's health summary (อาการ · ความปวด · แผน · นัด · ประวัติ) — drawer and the รับบริการ side box */
 export function PatientHealth({ id, apptId }: { id: string; /** นัดที่กำลังรักษา → ข้อมูลสุขภาพโฟกัสที่ครั้งนี้ (แบบคัดกรองของนัดนี้) */ apptId?: string }) {
   const store = useStore();
   const appt = apptId ? store.appointments.find((a) => a.id === apptId) : undefined;
@@ -138,7 +138,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
             <>
               <div className="hx-visit__pain">
                 <span>
-                  <small>ปวดก่อนนวดครั้งนี้</small>
+                  <small>ปวดก่อนนวด</small>
                   <b style={{ color: painTone(intake.pain)[1] }}>
                     {round?.pain ?? intake.pain}
                     <i>/10</i>
@@ -164,7 +164,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
                 <li>
                   <small>ผลคัดกรอง</small>
                   <b className={apptFlags.length || round?.previsit?.red ? "is-warn" : "is-ok"}>
-                    {round?.previsit?.red ? "ควรพบแพทย์ก่อนนวด" : apptFlags.length ? apptFlags.map((f) => f.label).join(" · ") : "ผ่าน · ไม่มีข้อห้าม"}
+                    {round?.previsit?.red ? "ควรพบแพทย์ก่อนนวด" : apptFlags.length ? apptFlags.map((f) => f.label).join(", ") : "ผ่าน"}
                   </b>
                 </li>
                 {appt.addenda?.length ? (
@@ -177,10 +177,10 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
             </>
           ) : (
             <p className="hx-visit__none">
-              ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้ · สอบถามอาการและคัดกรองที่เคาน์เตอร์ก่อนนวด
+              ยังไม่ได้ประเมินในแอป · คัดกรองที่เคาน์เตอร์ก่อนนวด
               {(() => {
                 const prev = visits.find((v) => v.id !== appt.id && v.painAfter !== undefined && `${v.date}${v.start}` < `${appt.date}${appt.start}`);
-                return prev ? <small className="hx-prev"> · ล่าสุด: หลังนวดครั้งก่อน {prev.painAfter}/10 ({thaiDateShort(prev.date)})</small> : null;
+                return prev ? <small className="hx-prev hx-prev--line">ปวดหลังนวดครั้งก่อน {prev.painAfter}/10 ({thaiDateShort(prev.date)})</small> : null;
               })()}
             </p>
           )}
@@ -188,8 +188,8 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
       )}
       {/* body overview first: where to treat */}
       <p className="hx-label hx-label--first">
-        <PersonStanding size={13} /> ตำแหน่งที่ควรดูแล
-        <small>{intake ? (appt ? "จากแบบประเมินของนัดนี้" : "จากแบบประเมินล่าสุด") : treated.length ? "จากหัตถการที่เคยทำ" : ""}</small>
+        <PersonStanding size={13} /> จุดที่ควรดูแล
+        <small>{intake ? (appt ? "จากแบบประเมินนัดนี้" : "จากแบบประเมินล่าสุด") : treated.length ? "จากหัตถการเดิม" : ""}</small>
       </p>
       <section className="hx-card hx-body">
         <Body3D compact sex={p.gender} heatmap={bodyHeat} avoid={bodyAvoid} />
@@ -239,7 +239,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
       <section className="hx-hero">
         <div className="hx-hero__top">
           <div className="hx-hero__text">
-            <small>{appt ? "Pain ก่อนนวดครั้งนี้" : "Pain Score ล่าสุด"}</small>
+            <small>{appt ? "ปวดก่อนนวด" : "ปวดล่าสุด"}</small>
             <b style={latest !== undefined ? { color: painTone(latest)[1] } : undefined}>
               {latest ?? "—"}
               <i>/10</i>
@@ -247,7 +247,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
             {trend.length >= 2 ? (
               <span className={clsx("hx-trend", better ? "is-good" : "is-bad")}>
                 {better ? <TrendingDown size={13} /> : <TrendingUp size={13} />}
-                {better ? `ดีขึ้น ${delta}% จาก ${first}` : `ยังไม่ดีขึ้น · เริ่ม ${first}`}
+                {better ? `ดีขึ้น ${delta}% จาก ${first}` : `ยังไม่ดีขึ้น (เริ่ม ${first})`}
               </span>
             ) : (
               <span className="hx-trend">ยังไม่มีข้อมูลเทียบ</span>
@@ -302,7 +302,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
 
       {/* course */}
       <p className="hx-label">
-        <Ticket size={13} /> คอร์สการรักษา
+        <Ticket size={13} /> คอร์ส
       </p>
       {credits && p.course ? (
         (() => {
@@ -378,7 +378,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
                       ครั้งถัดไป <b>{thaiDateShort(next.date)} · {next.start}</b>
                     </>
                   ) : (
-                    "ยังไม่มีนัดครั้งถัดไป"
+                    "ยังไม่มีนัดถัดไป"
                   )}
                 </span>
                 {/* "ต่อคอร์ส" = ขาย/ต่ออายุคอร์ส (เหมือนหน้าข้อมูลผู้ป่วย) · ยังมีครั้งเหลือ = จัดตารางนัด */}
@@ -388,7 +388,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
                   </button>
                 ) : (
                   <button type="button" onClick={() => setPlanFor(p.id)}>
-                    จัดตารางนัด
+                    จัดนัด
                   </button>
                 )}
               </div>
@@ -397,16 +397,16 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
         })()
       ) : (
         <section className="hx-card hx-course2 is-empty">
-          <p className="hx-muted">ไม่มีคอร์ส — รับบริการรายครั้ง</p>
+          <p className="hx-muted">ไม่มีคอร์ส · ชำระรายครั้ง</p>
           <button type="button" className="hx-course2__start" onClick={() => setPlanFor(p.id)}>
-            เปิดคอร์สการรักษา
+            จัดนัด
           </button>
         </section>
       )}
 
       {/* upcoming */}
       <p className="hx-label">
-        <CalendarDays size={13} /> นัดที่กำลังจะถึง {upcoming.length > 0 && <em>{upcoming.length}</em>}
+        <CalendarDays size={13} /> นัดที่จะถึง {upcoming.length > 0 && <em>{upcoming.length}</em>}
       </p>
       {upcoming.length ? (
         <div className="hx-next">
@@ -435,7 +435,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
 
       {/* history */}
       <p className="hx-label">
-        <History size={13} /> ประวัติการรับบริการ
+        <History size={13} /> ประวัติการรักษา
       </p>
       <section className="hx-card">
         {past.length ? (
@@ -445,7 +445,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
                 <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
                 <span className="hx-hist__body">
                   <b>{store.serviceById(v.serviceId).short}</b>
-                  {v.status === "absent" ? <small>ไม่มารับบริการ</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : null}
+                  {v.status === "absent" ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : null}
                 </span>
                 {v.painAfter !== undefined && (
                   <span className="hx-hist__pain" style={{ ["--p" as string]: tone(v.painAfter) }}>
@@ -487,7 +487,7 @@ function PainChart({ points }: { points: { label: string; value: number }[]; col
   const tone = (v: number) => (v >= 7 ? "#d8392a" : v >= 4 ? "#e08a1e" : "#2f9a5b");
   const DRAW = 1.2;
   return (
-    <svg className="hx-line" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="แนวโน้ม Pain Score">
+    <svg className="hx-line" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="กราฟความปวด">
       <defs>
         <linearGradient id="hx-line-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#4a5a51" stopOpacity="0.16" />

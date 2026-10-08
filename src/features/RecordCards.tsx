@@ -11,14 +11,14 @@ import { fromMinutes, thaiDateShort, timeAgo, toMinutes } from "../data/thaiDate
 import "./cards.css";
 
 export function PainBadge({ score }: { score: number }) {
-  return <Badge tone={painTone(score)}>Pain Score: {score}/10</Badge>;
+  return <Badge tone={painTone(score)}>ปวด {score}/10</Badge>;
 }
 
 /** Compact pain read-out: 5 pips (2 points each) + number, coloured by severity. */
-export function PainMini({ score, label = "Pain" }: { score: number; label?: string }) {
+export function PainMini({ score, label = "ปวด" }: { score: number; label?: string }) {
   const tone = painTone(score);
   return (
-    <span className={`pain-mini pain-mini--${tone}`} title={`Pain Score ${score}/10`}>
+    <span className={`pain-mini pain-mini--${tone}`} title={`ปวด ${score}/10`}>
       <span className="pain-mini__label">{label}</span>
       <span className="pain-mini__pips" aria-hidden>
         {[0, 1, 2, 3, 4].map((i) => (
@@ -83,7 +83,7 @@ export const AppointmentCard = forwardRef<HTMLDivElement, CardMotion & { appt: A
               {s.name} · {s.minutes} นาที
             </span>
           </span>
-          <PainMini score={pain} label={appt.status === "done" && appt.painAfter !== undefined ? "หลังนวด" : "Pain"} />
+          <PainMini score={pain} label={appt.status === "done" && appt.painAfter !== undefined ? "หลังนวด" : "ปวด"} />
         </div>
 
         <div className="pcard__foot">
@@ -98,7 +98,7 @@ export const AppointmentCard = forwardRef<HTMLDivElement, CardMotion & { appt: A
           )}
           {appt.type === "walkin" && (
             <Badge tone="neutral" compact>
-              Walk-in
+              วอล์กอิน
             </Badge>
           )}
           <Badge tone={st.tone} compact dot className="pcard__status">
@@ -133,7 +133,7 @@ export const RequestCard = forwardRef<
         <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />
         <div className="pcard__id">
           <p className="pcard__name">{p.name}</p>
-          <p className="pcard__sub">ส่งผ่านแอป ThaiWell AI · {timeAgo(req.submittedAt)}</p>
+          <p className="pcard__sub">จากแอป ThaiWell · {timeAgo(req.submittedAt)}</p>
         </div>
         {flags.length > 0 ? (
           <Badge tone={stop ? "danger" : "warning"} compact>
@@ -161,7 +161,7 @@ export const RequestCard = forwardRef<
       </div>
 
       <p className="pcard__line">
-        {s.name} · {s.minutes} นาที · {t.name}
+        {s.name} {s.minutes} นาที · {t.name}
       </p>
 
       <div className="pcard__actions">

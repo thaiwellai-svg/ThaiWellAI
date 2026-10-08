@@ -75,7 +75,7 @@ export function ReportDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   const exportVisits = () =>
     downloadCsv(`thaiwell-visits-${from}-${today}.csv`, [
-      ["วันที่", "เวลา", "HN", "ชื่อ", "บริการ", "ผู้บำบัด", "วินิจฉัยหลัก", "ICD-10", "หัตถการ", "ICD-9-CM", "Pain ก่อน", "Pain หลัง", "เลขที่ใบเสร็จ", "ช่องทาง", "ยอดชำระ"],
+      ["วันที่", "เวลา", "HN", "ชื่อ", "บริการ", "ผู้บำบัด", "วินิจฉัยหลัก", "ICD-10", "หัตถการ", "ICD-9-CM", "ปวดก่อนนวด", "ปวดหลังนวด", "เลขที่ใบเสร็จ", "ช่องทาง", "ยอดชำระ"],
       ...r.done$.map((a) => {
         const p = store.patientById(a.patientId);
         const dx = a.diagnoses?.find((d) => d.kind === "principal") ?? a.diagnoses?.[0];
@@ -87,10 +87,10 @@ export function ReportDialog({ open, onClose }: { open: boolean; onClose: () => 
       ["รายงานสรุป", store.settings.clinicName],
       ["ช่วงวันที่", label],
       [],
-      ["ผู้รับบริการทั้งหมด", r.visits],
-      ["รับบริการเสร็จ", r.done],
+      ["นัดทั้งหมด", r.visits],
+      ["นวดเสร็จ", r.done],
       ["ไม่มาตามนัด", r.absent],
-      ["Walk-in", r.walkin],
+      ["วอล์กอิน", r.walkin],
       ["รายรับ (บาท)", r.income],
       ["จำนวนใบเสร็จ", r.receipts],
       [],
@@ -119,7 +119,7 @@ export function ReportDialog({ open, onClose }: { open: boolean; onClose: () => 
             พิมพ์
           </Button>
           <Button variant="outline" leading={<FileSpreadsheet size={16} />} onClick={exportVisits}>
-            Excel รายการรับบริการ
+            Excel รายนัด
           </Button>
           <Button leading={<FileSpreadsheet size={16} />} onClick={exportSummary}>
             Excel สรุป
@@ -148,24 +148,24 @@ export function ReportDialog({ open, onClose }: { open: boolean; onClose: () => 
           <em>{r.receipts} ใบเสร็จ</em>
         </div>
         <div>
-          <small>รับบริการเสร็จ</small>
+          <small>นวดเสร็จ</small>
           <b>{r.done}</b>
-          <em>จาก {r.visits} ราย · walk-in {r.walkin}</em>
+          <em>จาก {r.visits} นัด · วอล์กอิน {r.walkin}</em>
         </div>
         <div>
           <small>ไม่มาตามนัด</small>
           <b>{r.absent}</b>
-          <em>ค้างชำระ {r.due} ราย</em>
+          <em>ค้างชำระ {r.due} นัด</em>
         </div>
         <div>
-          <small>Pain ลดลงเฉลี่ย</small>
+          <small>ปวดลดเฉลี่ย</small>
           <b>{r.painDrop.toFixed(1)}</b>
-          <em>คะแนน ต่อครั้ง</em>
+          <em>คะแนนต่อครั้ง</em>
         </div>
       </div>
       <div className="rp__grid">
         <section>
-          <h4>ช่องทางชำระเงิน</h4>
+          <h4>ช่องทางชำระ</h4>
           {r.methods.map((m) => (
             <div key={m.m} className="rp__bar-row">
               <span>{METHOD_LABEL[m.m]}</span>

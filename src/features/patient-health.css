@@ -370,3 +370,7 @@
   font: 500 12px/1.3 var(--font-sans);
   color: var(--color-text-muted);
 }
+.hx-prev--line {
+  display: block;
+  margin-top: 4px;
+}

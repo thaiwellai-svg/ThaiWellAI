@@ -79,7 +79,7 @@ export default function AppointmentDetail() {
               <Ticket size={13} /> ครั้งที่ {sessionNo}/{p.course.total}
             </span>
           )}
-          <span className="adp__tag">{a.type === "walkin" ? "Walk-in" : "นัดล่วงหน้า"}</span>
+          <span className="adp__tag">{a.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}</span>
           <div className="adp__actions">
             {a.payment && (
               <Button variant="outline" size="md" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
@@ -161,10 +161,13 @@ export default function AppointmentDetail() {
             <div className="adp__cancel">
               <CalendarX2 size={18} />
               <div>
-                <b>ยกเลิกนัดแล้ว · {a.cancel.by === "patient" ? "ผู้ป่วยแจ้งยกเลิก" : "คลินิกยกเลิก"}</b>
+                <b>ยกเลิกนัดแล้ว · {a.cancel.by === "patient" ? "ผู้ป่วยยกเลิก" : "คลินิกยกเลิก"}</b>
                 <small>
                   {a.cancel.reason}
-                  {a.cancel.note ? ` · ${a.cancel.note}` : ""} · โดย {a.cancel.staff} · {thaiDateShort(a.cancel.at.slice(0, 10))} {clock(a.cancel.at)} น.
+                  {a.cancel.note ? ` · ${a.cancel.note}` : ""}
+                </small>
+                <small>
+                  โดย {a.cancel.staff} · {thaiDateShort(a.cancel.at.slice(0, 10))} {clock(a.cancel.at)} น.
                 </small>
               </div>
             </div>
@@ -174,7 +177,7 @@ export default function AppointmentDetail() {
             <div className="adp__col">
               <section className="adp__card">
                 <header>
-                  <ClipboardList size={15} /> รายละเอียดนัด
+                  <ClipboardList size={15} /> ข้อมูลนัด
                 </header>
                 <div className="adp__facts">
                   <div>
@@ -194,7 +197,7 @@ export default function AppointmentDetail() {
                     {a.payment && <em>{a.payment.method === "credit" ? "หักเครดิตแล้ว" : "ชำระแล้ว"}</em>}
                   </div>
                   <div>
-                    <small>Pain</small>
+                    <small>ปวด</small>
                     <b>
                       {a.painBefore}
                       {a.painAfter != null ? ` → ${a.painAfter}` : ""}
@@ -240,7 +243,7 @@ export default function AppointmentDetail() {
                   </div>
                   {credits && (
                     <p className="adp__muted">
-                      ใช้แล้ว {credits.used} · จองไว้ {credits.booked} · ว่าง {credits.remaining}
+                      ใช้แล้ว {credits.used} · จองไว้ {credits.booked} · เหลือ {credits.remaining}
                     </p>
                   )}
                 </section>
@@ -296,21 +299,22 @@ export default function AppointmentDetail() {
                   <span className="adp__scr-i">{stop || flags.length ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}</span>
                   <div>
                     <small>{p.screening || !appFlags ? "ผลคัดกรองล่าสุด" : "แบบคัดกรองจากแอป"}</small>
-                    <b>{!p.screening && !appFlags ? "ยังไม่ได้คัดกรอง" : stop ? "พบข้อห้าม · ต้องให้แพทย์ประเมิน" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}</b>
+                    <b>{!p.screening && !appFlags ? "ยังไม่ได้คัดกรอง" : stop ? "พบข้อห้าม · ให้แพทย์ประเมิน" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}</b>
                     <span>
                       {p.screening
-                        ? `${thaiDateShort(p.screening.at.slice(0, 10))}${p.screening.bpSys ? ` · ความดัน ${p.screening.bpSys}/${p.screening.bpDia ?? "—"}` : ""}${p.screening.pain != null ? ` · ปวด ${p.screening.pain}/10` : ""}${flags.length ? ` · ${flags.map((f) => f.label).join(" · ")}` : ""}`
+                        ? `${thaiDateShort(p.screening.at.slice(0, 10))}${p.screening.bpSys ? ` · ความดัน ${p.screening.bpSys}/${p.screening.bpDia ?? "—"}` : ""}${p.screening.pain != null ? ` · ปวด ${p.screening.pain}/10` : ""}`
                         : appFlags
-                          ? `ผู้ป่วยตอบตอนจอง${flags.length ? ` · ${flags.map((f) => f.label).join(" · ")}` : ""} · วัดความดัน ชีพจร ในวันนัด`
-                          : "คัดกรองได้ตอนผู้ป่วยมารับบริการ"}
+                          ? "ตอบในแอปตอนจอง · วัดความดันในวันนัด"
+                          : "คัดกรองได้ในวันนัด"}
                     </span>
+                    {flags.length > 0 && <span className="adp__scr-flags">{flags.map((f) => f.label).join(", ")}</span>}
                   </div>
                 </section>
               )}
 
               <section className="adp__card">
                 <header>
-                  <History size={15} /> ความเคลื่อนไหว
+                  <History size={15} /> ประวัตินัด
                 </header>
                 {a.log?.length ? (
                   <ol className="adp__log">
@@ -324,7 +328,7 @@ export default function AppointmentDetail() {
                     ))}
                   </ol>
                 ) : (
-                  <p className="adp__muted">ยังไม่มีความเคลื่อนไหว</p>
+                  <p className="adp__muted">ยังไม่มีประวัติ</p>
                 )}
               </section>
             </div>
@@ -389,7 +393,7 @@ function RescheduleDialog({ appt, onClose }: { appt: Appointment | null; onClose
         <Input type="date" min={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
       </Field>
       <div className="ad__slots">
-        <small>เวลา · ตัวเลขคือเตียงว่าง</small>
+        <small>เวลา (จำนวนเตียงว่าง)</small>
         <div>
           {slots.map((x) => (
             <button key={x.time} type="button" disabled={x.free === 0 && x.time !== appt.start} aria-pressed={time === x.time} onClick={() => setTime(x.time)}>
@@ -408,7 +412,7 @@ function RescheduleDialog({ appt, onClose }: { appt: Appointment | null; onClose
           ))}
         </Select>
       </Field>
-      {time && st !== "free" && <p className="ad__warn">{st === "busy" ? "ผู้บำบัดติดคิวเวลานี้" : st === "service" ? "ผู้บำบัดไม่รับบริการนี้" : "ผู้บำบัดไม่เข้าเวรวันนี้"} · เลือกเวลาหรือผู้บำบัดอื่น</p>}
+      {time && st !== "free" && <p className="ad__warn">{st === "busy" ? "ผู้บำบัดมีนัดเวลานี้" : st === "service" ? "ผู้บำบัดไม่รับบริการนี้" : "ผู้บำบัดไม่เข้าเวรวันนี้"} · เลือกเวลาหรือผู้บำบัดอื่น</p>}
     </Dialog>
   );
 }

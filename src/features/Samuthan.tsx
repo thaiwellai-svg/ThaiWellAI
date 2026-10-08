@@ -22,7 +22,7 @@ export function SamuthanPanel({ p, time }: { p: Patient; /** HH:mm of the visit 
     <div className="smt" style={{ ["--c" as string]: top.color, ["--t" as string]: top.tint }}>
       <div className="smt__head">
         <b>สมุฏฐานวินิจฉัยวันนี้</b>
-        <small>ปัจจัย 5 ด้านตามตำราแพทย์แผนไทย + อาการวันนี้</small>
+        <small>5 ปัจจัย + อาการวันนี้</small>
       </div>
       <div className="smt__factors">
         {s.factors.map((f) => {
@@ -100,7 +100,7 @@ export function SamuthanPanel({ p, time }: { p: Patient; /** HH:mm of the visit 
       {evidence.length > 0 && (
         <div className="smt__ev">
           <small>
-            <ChartNoAxesColumn size={13} /> ได้ผลดีที่สุดกับผู้ป่วยธาตุ{birth}ในคลินิกนี้
+            <ChartNoAxesColumn size={13} /> ได้ผลดีกับธาตุ{birth} (คลินิกนี้)
           </small>
           {evidence.map((x, i) => (
             <span key={x.service.id} className={i === 0 ? "is-top" : undefined}>
@@ -110,7 +110,7 @@ export function SamuthanPanel({ p, time }: { p: Patient; /** HH:mm of the visit 
         </div>
       )}
       <p className="smt__note">
-        ข้อมูลประกอบการตัดสินใจ แพทย์แผนไทยต้องยืนยันก่อนใช้{!s.placeKnown ? " · ยังไม่มีที่อยู่ ใช้ภาคกลางเป็นค่าเริ่มต้น" : ""}
+        แพทย์ต้องยืนยันก่อนใช้{!s.placeKnown ? " · ไม่มีที่อยู่ ใช้ภาคกลาง" : ""}
       </p>
     </div>
   );

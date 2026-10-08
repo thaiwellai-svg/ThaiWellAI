@@ -197,7 +197,7 @@ export function TaxInvoiceDialog({ apptId, onClose }: { apptId: string | null; o
       >
         {done ? (
           <p className="adp__muted">
-            ออกให้ {pay.taxInvoice!.buyer} เมื่อ {thaiDateLong(pay.taxInvoice!.at.slice(0, 10))} · ใบกำกับภาษีออกได้ครั้งเดียวต่อใบเสร็จ ถ้าข้อมูลผิดให้ยกเลิกใบเสร็จแล้วรับชำระใหม่
+            ออกให้ {pay.taxInvoice!.buyer} เมื่อ {thaiDateLong(pay.taxInvoice!.at.slice(0, 10))} · ออกได้ครั้งเดียว (ข้อมูลผิดให้ยกเลิกใบเสร็จ)
           </p>
         ) : (
           <div className="bz-form">

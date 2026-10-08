@@ -15,7 +15,7 @@ const KIND: Record<Notification["kind"], { icon: typeof Phone; label: string; go
   alert: { icon: TriangleAlert, label: "คัดกรอง", go: "ไปหน้าคำขอ" },
   noshow: { icon: UserRoundX, label: "ไม่มาตามนัด", go: "ไปตารางนัด" },
   staff: { icon: UsersRound, label: "เจ้าหน้าที่", go: "ไปจัดตารางงาน" },
-  info: { icon: ClipboardList, label: "ติดตามผล", go: "ไปหน้าผู้มารับบริการ" },
+  info: { icon: ClipboardList, label: "ติดตามผล", go: "ไปหน้าผู้ป่วย" },
 };
 
 export interface DetailView {
@@ -158,8 +158,8 @@ export function useNotificationDetail(id: string | null, onDone: () => void): De
               {leave.map(([d, e]) => (
                 <Row key={d} label={e.reason ?? "ลา"} value={thaiDateLong(d)} />
               ))}
-              <h3 className="nd__sub">คิวที่ต้องย้าย ({affected.length})</h3>
-              {affected.length ? affected.map((a) => <MiniAppt key={a.id} a={a} />) : <p className="tw-meta">ไม่มีคิวค้าง</p>}
+              <h3 className="nd__sub">นัดที่ต้องย้าย ({affected.length})</h3>
+              {affected.length ? affected.map((a) => <MiniAppt key={a.id} a={a} />) : <p className="tw-meta">ไม่มีนัดค้าง</p>}
             </section>
           )}
 
@@ -173,7 +173,7 @@ export function useNotificationDetail(id: string | null, onDone: () => void): De
           )}
           {lowCredit.length > 0 && (
             <section className="nd__card">
-              <h3>เครดิตใกล้หมด</h3>
+              <h3>คอร์สใกล้หมด</h3>
               {lowCredit.map(({ p, c }) => (
                 <div key={p.id} className="nd__mini">
                   <Avatar name={p.name} src={patientPhoto(p)} size="sm" shape="squircle" />
@@ -246,7 +246,7 @@ function ApptCard({ a }: { a: Appointment }) {
   return (
     <section className="nd__card">
       <h3>
-        คิวนัด <Badge tone={meta.tone} compact>{meta.label}</Badge>
+        นัด <Badge tone={meta.tone} compact>{meta.label}</Badge>
       </h3>
       <Row label="วันเวลา" value={`${thaiDateLong(a.date)} · ${timeRange(a.start, s.minutes)} น.`} />
       <Row label="บริการ" value={s.name} />

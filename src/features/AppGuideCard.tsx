@@ -18,13 +18,13 @@ export function AppGuideCard({ guide: sent, areas, compact }: { guide?: AppGuide
           <Sparkles size={15} />
         </span>
         <span>
-          <b>แนวทางการรักษาที่แอปแนะนำ</b>
-          <small>{sent ? "ผู้ป่วยเห็นแนวทางนี้ในแอป · ผู้ให้บริการยืนยันหรือปรับก่อนเริ่ม" : "คำนวณจากตำแหน่งที่ผู้ป่วยแจ้ง (ตำราชุดเดียวกับแอป) · ผู้ให้บริการยืนยันหรือปรับก่อนเริ่ม"}</small>
+          <b>แนวทางจากแอป</b>
+          <small>{sent ? "ผู้ป่วยเห็นในแอป · ผู้บำบัดปรับได้" : "จากตำแหน่งที่ผู้ป่วยแจ้ง · ผู้บำบัดปรับได้"}</small>
         </span>
       </header>
       {guide.condition && (
         <div className="agc__row">
-          <small>อาการตามแพทย์แผนไทย</small>
+          <small>อาการแผนไทย</small>
           <b>{guide.condition}</b>
         </div>
       )}
@@ -40,7 +40,7 @@ export function AppGuideCard({ guide: sent, areas, compact }: { guide?: AppGuide
       )}
       {guide.points.length > 0 && (
         <div className="agc__row">
-          <small>จุด / เส้นที่แนะนำ</small>
+          <small>จุด / เส้น</small>
           <div className="agc__chips">
             {guide.points.map((p) => (
               <em key={p}>{p}</em>

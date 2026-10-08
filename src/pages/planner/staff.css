@@ -635,3 +635,13 @@ button.so-track:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* name column of the day / week grids: roomier on wide screens so names don't truncate */
+.so-grid {
+  --so-name-col: 188px;
+}
+@media (min-width: 1600px) {
+  .so-grid {
+    --so-name-col: 240px;
+  }
+}

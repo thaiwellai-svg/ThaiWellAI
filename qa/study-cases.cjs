@@ -624,6 +624,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   // ===== INNOVATION (outcomes evidence / สมุฏฐานวินิจฉัย / voice record) =====
   await check('N01', 'doctor', 'ผู้ป่วยเปิดประวัติ', 'สมุฏฐานวินิจฉัย 5 ด้าน + ผลจริงของคลินิก', async (p, ex) => {
     await go(p, '/patients', 1500);
+    // ธาตุเจ้าเรือน + สมุฏฐาน พับเก็บไว้ → เปิดก่อน
+    await p.evaluate(() => document.querySelectorAll('details').forEach((d) => { if (d.querySelector('.smt')) d.open = true; }));
     await p.locator('.smt').scrollIntoViewIfNeeded();
     ex((await p.locator('.smt__factors > div').count()) === 6, 'แสดงสมุฏฐาน 5 ด้าน + อาการวันนี้');
     ex((await p.locator('.smt__verdict b').innerText()).startsWith('ธาตุ'), 'สรุปธาตุที่เสี่ยงเสียสมดุล');

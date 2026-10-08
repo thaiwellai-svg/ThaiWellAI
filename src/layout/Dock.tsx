@@ -9,9 +9,9 @@ import { AppointmentsIcon, BillingIcon, VisitIcon, HomeIcon, InsightsIcon, Patie
 const NAV: { to: string; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { to: "/", label: "หน้าหลัก", Icon: HomeIcon },
   { to: "/visits", label: "รับบริการ", Icon: VisitIcon },
-  { to: "/patients", label: "ผู้มารับบริการ", Icon: PatientsIcon },
+  { to: "/patients", label: "ผู้ป่วย", Icon: PatientsIcon },
   { to: "/appointments", label: "ตารางนัด", Icon: AppointmentsIcon },
-  { to: "/billing", label: "คิดเงิน", Icon: BillingIcon },
+  { to: "/billing", label: "ชำระเงิน", Icon: BillingIcon },
   { to: "/planner", label: "จัดตารางงาน", Icon: PlannerIcon },
   { to: "/insights", label: "ผลการรักษา", Icon: InsightsIcon },
   { to: "/settings", label: "ตั้งค่า", Icon: SettingsIcon },

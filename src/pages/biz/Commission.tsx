@@ -32,7 +32,7 @@ export default function Commission() {
   const setRate = (tid: string, k: "perCase" | "percent", v: number) => {
     const cur = store.biz.rates[tid] ?? { perCase: 0, percent: 0 };
     if (cur[k] === v) return;
-    store.dispatch({ type: "biz", cat: "ตั้งค่า", log: `ตั้งค่ามือ ${store.therapistById(tid).name}: ${k === "perCase" ? `${v} บาท/เคส` : `${v}% ของรายได้`}`, update: (b) => ({ ...b, rates: { ...b.rates, [tid]: { ...cur, [k]: v } } }) });
+    store.dispatch({ type: "biz", cat: "ตั้งค่า", log: `ตั้งค่ามือ ${store.therapistById(tid).name}: ${k === "perCase" ? `${v} บาท/นัด` : `${v}% ของรายได้`}`, update: (b) => ({ ...b, rates: { ...b.rates, [tid]: { ...cur, [k]: v } } }) });
   };
 
   return (
@@ -59,7 +59,7 @@ export default function Commission() {
               leading={<FileSpreadsheet size={16} />}
               onClick={() =>
                 downloadCsv(`thaiwell-commission-${key}.csv`, [
-                  ["ผู้บำบัด", "จำนวนเคส", "รายได้ (บาท)", "ค่ามือต่อเคส", "% ของรายได้", "ค่ามือรวม (บาท)"],
+                  ["ผู้บำบัด", "จำนวนนัด", "รายได้ (บาท)", "ค่ามือต่อนัด", "% ของรายได้", "ค่ามือรวม (บาท)"],
                   ...rows.map((x) => [x.t.name, x.cases, x.revenue, x.r.perCase, x.r.percent, x.pay]),
                   ["รวม", total.cases, total.revenue, "", "", total.pay],
                 ])
@@ -72,18 +72,18 @@ export default function Commission() {
       }
     >
       <div className="bz-stats">
-        <Stat label="เคสทั้งเดือน" value={total.cases} sub={`ผู้บำบัด ${rows.filter((x) => x.cases).length} คน`} />
-        <Stat label="รายได้จากการรักษา" value={`${baht(total.revenue)} ฿`} sub="รวมมูลค่าครั้งที่หักเครดิตคอร์ส" />
+        <Stat label="นัดทั้งเดือน" value={total.cases} sub={`ผู้บำบัด ${rows.filter((x) => x.cases).length} คน`} />
+        <Stat label="รายได้" value={`${baht(total.revenue)} ฿`} sub="รวมครั้งที่ใช้คอร์ส" />
         <Stat label="ค่ามือรวม" value={`${baht(total.pay)} ฿`} tone="#2f8a52" sub={total.revenue ? `${Math.round((total.pay / total.revenue) * 100)}% ของรายได้` : undefined} />
       </div>
       <table className="bz-table">
         <thead>
           <tr>
             <th>ผู้บำบัด</th>
-            <th className="num">เคส</th>
+            <th className="num">นัด</th>
             <th>แยกตามบริการ</th>
             <th className="num">รายได้</th>
-            <th className="num">บาท/เคส</th>
+            <th className="num">บาท/นัด</th>
             <th className="num">% รายได้</th>
             <th className="num">ค่ามือ</th>
           </tr>
@@ -103,7 +103,7 @@ export default function Commission() {
               </td>
               <td className="num">{baht(x.revenue)}</td>
               <td className="num">
-                <Input className="bz-mini" inputMode="numeric" defaultValue={x.r.perCase} aria-label={`ค่ามือต่อเคส ${x.t.name}`} onBlur={(e) => setRate(x.t.id, "perCase", Number(e.target.value) || 0)} />
+                <Input className="bz-mini" inputMode="numeric" defaultValue={x.r.perCase} aria-label={`ค่ามือต่อนัด ${x.t.name}`} onBlur={(e) => setRate(x.t.id, "perCase", Number(e.target.value) || 0)} />
               </td>
               <td className="num">
                 <Input className="bz-mini" inputMode="numeric" defaultValue={x.r.percent} aria-label={`เปอร์เซ็นต์ ${x.t.name}`} onBlur={(e) => setRate(x.t.id, "percent", Math.min(100, Number(e.target.value) || 0))} />
@@ -126,7 +126,7 @@ export default function Commission() {
           </tr>
         </tfoot>
       </table>
-      <p className="adp__muted">ค่ามือ = จำนวนเคส × บาท/เคส + รายได้ × % · นับเฉพาะเคสที่รับบริการเสร็จและชำระเงินแล้ว · แก้อัตราได้ในตาราง</p>
+      <p className="adp__muted">ค่ามือ = นัด × บาท/นัด + รายได้ × % (นับเฉพาะนัดที่เสร็จและชำระแล้ว)</p>
     </BizPage>
   );
 }

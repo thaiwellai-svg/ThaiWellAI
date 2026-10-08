@@ -166,8 +166,8 @@ export default function Patients() {
 
   const STAT: { key: Filter; label: string; icon: typeof ListFilter }[] = [
     { key: "all", label: "ทั้งหมด", icon: UsersRound },
-    { key: "course", label: "มีแผนการรักษา", icon: ClipboardPlus },
-    { key: "low", label: "เครดิตใกล้หมด", icon: Hourglass },
+    { key: "course", label: "มีคอร์ส", icon: ClipboardPlus },
+    { key: "low", label: "คอร์สใกล้หมด", icon: Hourglass },
     { key: "week", label: "มีนัดใน 7 วัน", icon: CalendarRange },
   ];
 
@@ -197,7 +197,7 @@ export default function Patients() {
                     <span className="prow__chips">
                       {r.c ? (
                         <Badge tone={r.c.remaining <= 1 ? "danger" : "neutral"} compact>
-                          เครดิต {r.c.remaining}/{r.c.total}
+                          เหลือ {r.c.remaining}/{r.c.total}
                         </Badge>
                       ) : (
                         <Badge tone="neutral" compact>
@@ -226,15 +226,15 @@ export default function Patients() {
                 </motion.button>
               );
             })}
-            {visible.length === 0 && <EmptyState onGlass icon={<UsersRound size={24} />} title="ไม่พบผู้รับบริการ" description="ลองเปลี่ยนตัวกรองหรือคำค้นหา" />}
+            {visible.length === 0 && <EmptyState onGlass icon={<UsersRound size={24} />} title="ไม่พบผู้ป่วย" description="ลองเปลี่ยนตัวกรองหรือคำค้น" />}
           </div>
         </div>
   );
 
   return (
     <WorkPage
-      eyebrow="ผู้มารับบริการ"
-      title="ผู้มารับบริการ"
+      eyebrow="ผู้ป่วย"
+      title="ผู้ป่วย"
       bell={false}
       actions={
         <>
@@ -246,7 +246,7 @@ export default function Patients() {
               <IdCard size={20} strokeWidth={1.8} />
             </IconButton>
           )}
-          <IconButton label="เพิ่มผู้รับบริการ" variant="white" className="padd-btn" onClick={() => navigate("/patients/new")}>
+          <IconButton label="เพิ่มผู้ป่วย" variant="white" className="padd-btn" onClick={() => navigate("/patients/new")}>
             <UserPlus size={20} strokeWidth={1.8} />
           </IconButton>
         </>
@@ -288,7 +288,7 @@ export default function Patients() {
                         <div className="sheet">
                           <div className="vp__hist-head">
                             <div>
-                              <b>แผนการรักษาโดย AI</b>
+                              <b>แผนการรักษา AI</b>
                               <small>{store.patientById(current).name}</small>
                             </div>
                             <IconButton label="ปิด" variant="soft" onClick={() => setAiOpen(false)}>
@@ -351,7 +351,7 @@ export default function Patients() {
             open(hit.id);
             toast({ message: `พบประวัติ ${hit.name} · ${hit.hn}` });
           } else {
-            toast({ message: `ยังไม่มีประวัติ ${d.title} ${d.first} ${d.last} · เริ่มลงทะเบียนใหม่` });
+            toast({ message: `ไม่พบประวัติ ${d.title} ${d.first} ${d.last} · ลงทะเบียนใหม่` });
             navigate("/patients/new", { state: { card: d } });
           }
         }}
@@ -495,7 +495,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
           ...(screening?.pain != null ? { painHistory: [...edit.painHistory.filter((x) => x.date !== todayISO()), { date: todayISO(), score: screening.pain }] } : {}),
         },
       });
-      toast({ message: screenOnly ? (flags.some((x) => x.level === "stop") ? "บันทึกผลคัดกรองแล้ว · พบข้อห้าม ต้องให้แพทย์ประเมินก่อนนวด" : "บันทึกผลคัดกรองแล้ว") : "บันทึกข้อมูลผู้รับบริการแล้ว", tone: screenOnly && flags.some((x) => x.level === "stop") ? "danger" : undefined });
+      toast({ message: screenOnly ? (flags.some((x) => x.level === "stop") ? "บันทึกผลคัดกรองแล้ว · พบข้อห้าม ให้แพทย์ประเมินก่อนนวด" : "บันทึกผลคัดกรองแล้ว") : "บันทึกแล้ว", tone: screenOnly && flags.some((x) => x.level === "stop") ? "danger" : undefined });
       onClose();
       return;
     }
@@ -532,29 +532,29 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
     onCreated(id);
   };
 
-  const STEPS = ["ลงทะเบียนข้อมูล", "คัดกรอง", "สรุปข้อมูล"];
+  const STEPS = ["ข้อมูลส่วนตัว", "คัดกรอง", "สรุป"];
   // vital-sign status shown on the tiles
   const sys = Number(scr.bpSys) || 0;
   const bpThreshold = store.settings.bpThreshold ?? 160;
   const bpState = !sys ? { tone: "idle", label: "" } : sys >= bpThreshold ? { tone: "stop", label: "สูง · ห้ามนวด" } : sys >= 140 || sys < 90 ? { tone: "warn", label: sys < 90 ? "ต่ำ" : "ค่อนข้างสูง" } : { tone: "ok", label: "ปกติ" };
   const contra = [
-    { key: "fever", label: "มีไข้ หรือกำลังติดเชื้อ?", hint: "ถ้าใช่ · ห้ามนวด", level: "stop", Icon: Thermometer },
-    { key: "recentSurgery", label: `ผ่าตัดมาภายใน ${store.settings.surgeryRecoveryDays ?? 30} วัน?`, hint: "ถ้าใช่ · ห้ามนวด", level: "stop", Icon: Scissors },
-    { key: "bloodThinner", label: "กินยาละลายลิ่มเลือดอยู่?", hint: "ถ้าใช่ · ลดแรงนวด", level: "warn", Icon: Droplet },
-    { key: "numbness", label: "มีอาการชา หรืออ่อนแรง?", hint: "ถ้าใช่ · นวดอย่างระวัง", level: "warn", Icon: Zap },
-    { key: "skinProblem", label: "มีแผล ผื่น หรือโรคผิวหนัง?", hint: "ถ้าใช่ · เลี่ยงบริเวณนั้น", level: "warn", Icon: Bandage },
-    ...(f.gender === "หญิง" ? [{ key: "pregnant", label: "ตั้งครรภ์ หรืออาจตั้งครรภ์?", hint: "ถ้าใช่ · นวดอย่างระวัง", level: "warn", Icon: Baby }] : []),
+    { key: "fever", label: "มีไข้ หรือติดเชื้อ?", hint: "ใช่ = ห้ามนวด", level: "stop", Icon: Thermometer },
+    { key: "recentSurgery", label: `ผ่าตัดภายใน ${store.settings.surgeryRecoveryDays ?? 30} วัน?`, hint: "ใช่ = ห้ามนวด", level: "stop", Icon: Scissors },
+    { key: "bloodThinner", label: "กินยาละลายลิ่มเลือด?", hint: "ใช่ = ลดแรงนวด", level: "warn", Icon: Droplet },
+    { key: "numbness", label: "ชา หรืออ่อนแรง?", hint: "ใช่ = นวดอย่างระวัง", level: "warn", Icon: Zap },
+    { key: "skinProblem", label: "มีแผล ผื่น หรือโรคผิวหนัง?", hint: "ใช่ = เลี่ยงบริเวณนั้น", level: "warn", Icon: Bandage },
+    ...(f.gender === "หญิง" ? [{ key: "pregnant", label: "ตั้งครรภ์ หรืออาจตั้งครรภ์?", hint: "ใช่ = นวดอย่างระวัง", level: "warn", Icon: Baby }] : []),
   ].map((c) => ({ ...c, key: c.key as "fever" | "recentSurgery" | "bloodThinner" | "numbness" | "skinProblem" | "pregnant", on: !!scr[c.key as keyof typeof scr] }));
 
   return (
     <WorkPage
-      eyebrow={edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}
-      title={edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
+      eyebrow={edit ? `ผู้ป่วย · ${edit.hn}` : "ผู้ป่วย"}
+      title={edit ? "แก้ไขข้อมูลผู้ป่วย" : "เพิ่มผู้ป่วย"}
       bell={false}
       lead={
         <BackLead
-          eyebrow={screenOnly && edit ? `รับบริการ · ${edit.name}` : edit ? `ผู้มารับบริการ · ${edit.hn}` : "ผู้มารับบริการ"}
-          title={screenOnly ? "คัดกรองก่อนนวด" : edit ? "แก้ไขข้อมูลผู้รับบริการ" : "เพิ่มผู้รับบริการใหม่"}
+          eyebrow={screenOnly && edit ? edit.name : edit ? `ผู้ป่วย · ${edit.hn}` : "ผู้ป่วย"}
+          title={screenOnly ? "คัดกรองก่อนนวด" : edit ? "แก้ไขข้อมูลผู้ป่วย" : "เพิ่มผู้ป่วย"}
           onBack={onClose}
         />
       }
@@ -636,10 +636,10 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 <span style={{ ["--c" as string]: "#3b82c4" }}>
                   <IdCard size={14} />
                 </span>
-                ข้อมูลตามบัตรประชาชน
+                ข้อมูลตามบัตร
               </h4>
               <div className="ap-grid">
-                <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง ตรวจสอบอีกครั้ง"}>
+                <Field label="เลขบัตรประชาชน" className="span-3" hint={cidOk ? undefined : "เลขบัตรไม่ถูกต้อง"}>
                   <Input inputMode="numeric" className="ap-cid" placeholder="1-2345-67890-12-3" value={f.cid} maxLength={17} onChange={(e) => setF({ ...f, cid: formatCid(e.target.value) })} aria-invalid={!cidOk || !!dup} />
                 </Field>
                 {dup && (
@@ -686,7 +686,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                     ))}
                   </div>
                 </Field>
-                <Field label="วัน เดือน ปีเกิด *" className="span-2">
+                <Field label="วันเกิด *" className="span-2">
                   <BirthDateField value={f.dob} onChange={(dob) => setF({ ...f, dob })} />
                 </Field>
                 <Field label="ที่อยู่ตามบัตร" className="span-3">
@@ -694,13 +694,13 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 </Field>
               </div>
             </section>
-            {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบเพื่อไปขั้นถัดไป</p>}
+            {!valid && <p className="ap-need">กรอกช่องที่มี * ให้ครบ</p>}
           </div>
           <div className="ap-col">
             {!edit && DEMO && (
               <button type="button" className={fromCard ? "ap-card is-done" : "ap-card"} onClick={() => setReader(true)}>
                 <span className="ap-card__body">
-                  <b>{fromCard ? "อ่านข้อมูลจากบัตรแล้ว" : "อ่านข้อมูลจากบัตรประชาชน"}</b>
+                  <b>{fromCard ? "อ่านบัตรแล้ว" : "อ่านบัตรประชาชน"}</b>
                   <span className="ap-card__steps">
                     {["เสียบบัตร", "อ่านชิป", "กรอกอัตโนมัติ"].map((t, i) => (
                       <span key={t} className={fromCard ? "is-done" : undefined}>
@@ -728,10 +728,10 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 <span style={{ ["--c" as string]: "#2f8a52" }}>
                   <PhoneCall size={14} />
                 </span>
-                ช่องทางติดต่อ
+                การติดต่อ
               </h4>
               <div className="ap-grid">
-                <Field label="เบอร์โทรศัพท์" className="span-3">
+                <Field label="เบอร์โทร" className="span-3">
                   <Input inputMode="tel" placeholder="081-234-5678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
                 </Field>
                 <Field label="อีเมล" className="span-3">
@@ -742,7 +742,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                     <Input style={{ gridColumn: "1 / -1" }} value={f.ecName} onChange={(e) => setF({ ...f, ecName: e.target.value })} placeholder="ชื่อ-นามสกุล" />
                     <Input inputMode="tel" value={f.ecPhone} onChange={(e) => setF({ ...f, ecPhone: e.target.value })} placeholder="เบอร์โทร" />
                     <Select value={f.ecRel} onChange={(e) => setF({ ...f, ecRel: e.target.value })} aria-label="ความเกี่ยวข้อง">
-                      <option value="">เกี่ยวข้องเป็น</option>
+                      <option value="">ความสัมพันธ์</option>
                       {(RELATIONS.includes(f.ecRel) || !f.ecRel ? RELATIONS : [f.ecRel, ...RELATIONS]).map((r) => (
                         <option key={r}>{r}</option>
                       ))}
@@ -831,7 +831,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 <span style={{ ["--c" as string]: "#e0603a" }}>
                   <Activity size={14} />
                 </span>
-                ตอนนี้ปวดมากแค่ไหน?
+                ปวดตอนนี้ (0–10)
                 {scr.pain != null && <em className="ap-pain__lbl" style={{ ["--pc" as string]: scr.pain >= 7 ? "#d8392a" : scr.pain >= 4 ? "#e08a1e" : "#2f9a5b" }}>{scr.pain === 0 ? "ไม่ปวด" : scr.pain <= 3 ? "เล็กน้อย" : scr.pain <= 6 ? "ปานกลาง" : "มาก"}</em>}
               </h4>
               <div className="ap-pain" role="radiogroup" aria-label="ระดับความปวด">
@@ -850,7 +850,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 ข้อมูลสุขภาพ
               </h4>
               <div className="ap-health">
-                <Field label="วันนี้มีอาการอะไรมา?">
+                <Field label="อาการวันนี้">
                   <Textarea rows={2} value={f.complaint} onChange={(e) => setF({ ...f, complaint: e.target.value })} placeholder="เช่น ปวดคอ บ่า ไหล่ขวา 3 วัน" />
                 </Field>
                 <div className="ap-quick">
@@ -864,10 +864,10 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                     );
                   })}
                 </div>
-                <Field label="มีโรคประจำตัวไหม?">
+                <Field label="โรคประจำตัว">
                   <MultiSelect value={splitList(f.conditions)} onChange={(v) => setF({ ...f, conditions: v.join(", ") })} options={CONDITIONS} placeholder="เลือกโรคประจำตัว" none="ไม่มีโรคประจำตัว" />
                 </Field>
-                <Field label="แพ้ยา น้ำมัน หรือสมุนไพรอะไรไหม?">
+                <Field label="แพ้ยา / น้ำมัน / สมุนไพร">
                   <MultiSelect value={splitList(f.allergies)} onChange={(v) => setF({ ...f, allergies: v.join(", ") })} options={ALLERGIES} placeholder="เลือกสิ่งที่แพ้" none="ไม่มีประวัติแพ้" />
                 </Field>
               </div>
@@ -880,19 +880,19 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 สัญญาณชีพ
               </h4>
               <div className="ap-vitals">
-                <Field label="ความดันวัดได้เท่าไร? (mmHg)">
+                <Field label="ความดัน (mmHg)">
                   <div className="ap-bp">
                     <Input inputMode="numeric" placeholder="120" aria-label="ความดันตัวบน" aria-invalid={bpState.tone === "stop"} value={scr.bpSys} onChange={(e) => setScr({ ...scr, bpSys: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                     <span>/</span>
                     <Input inputMode="numeric" placeholder="80" aria-label="ความดันตัวล่าง" value={scr.bpDia} onChange={(e) => setScr({ ...scr, bpDia: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                   </div>
                 </Field>
-                <Field label="ชีพจรกี่ครั้งต่อนาที?">
+                <Field label="ชีพจร (ครั้ง/นาที)">
                   <Input inputMode="numeric" placeholder="72" aria-label="ชีพจร" value={scr.pulse} onChange={(e) => setScr({ ...scr, pulse: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
                 </Field>
               </div>
               {bpState.tone === "stop" && <p className="ap-vwarn">ความดันสูงเกินเกณฑ์ · ห้ามนวด</p>}
-              <Field label="ชอบแรงนวดแบบไหน?">
+              <Field label="แรงนวด">
                 <div className="ap-press2">
                   {(["เบา", "ปานกลาง", "หนัก"] as const).map((x) => (
                     <button key={x} type="button" className="tw-chip" aria-pressed={scr.pressure === x} onClick={() => setScr({ ...scr, pressure: x })}>
@@ -907,9 +907,9 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 <span style={{ ["--c" as string]: "#d97706" }}>
                   <ShieldCheck size={14} />
                 </span>
-                ก่อนนวด มีข้อไหนตรงกับคุณบ้าง?
+                ข้อห้ามก่อนนวด
                 <em className={`ap-ci__sum ${contra.some((c) => c.on && c.level === "stop") ? "is-stop" : contra.some((c) => c.on) ? "is-warn" : "is-ok"}`}>
-                  {contra.some((c) => c.on) ? `ใช่ ${contra.filter((c) => c.on).length} ข้อ` : "ไม่มีข้อไหนตรง"}
+                  {contra.some((c) => c.on) ? `ใช่ ${contra.filter((c) => c.on).length} ข้อ` : "ไม่มี"}
                 </em>
               </h4>
               <div className="ap-qn">
@@ -943,7 +943,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
         onRead={(d) => {
           setF((x) => ({ ...x, title: d.title, first: d.first, last: d.last, gender: d.gender, dob: d.dob, cid: formatCid(d.cid), address: d.address }));
           setFromCard(true);
-          toast({ message: `อ่านบัตรของ ${d.title} ${d.first} ${d.last} แล้ว · ตรวจสอบข้อมูลก่อนไปขั้นถัดไป` });
+          toast({ message: `อ่านบัตร ${d.title} ${d.first} ${d.last} แล้ว · ตรวจข้อมูลก่อนไปต่อ` });
         }}
       />
 
@@ -953,7 +953,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
             <section className="sm-hero">
               <Avatar name={f.first || "?"} src={f.photo || undefined} size="xl" shape="squircle" />
               <div className="sm-hero__main">
-                <small>{edit ? edit.hn : "ผู้รับบริการใหม่"}</small>
+                <small>{edit ? edit.hn : "ผู้ป่วยใหม่"}</small>
                 <h3>
                   {f.title} {f.first} {f.last}
                 </h3>
@@ -1021,7 +1021,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                 <ShieldCheck size={22} />
                 <div>
                   <b>ยังไม่ได้คัดกรอง</b>
-                  <small>คัดกรองได้ตอนผู้ป่วยมารับบริการ</small>
+                  <small>คัดกรองได้ตอนผู้ป่วยมา</small>
                 </div>
                 <button type="button" className="sm-edit" onClick={() => setStep(1)}>
                   คัดกรองตอนนี้
@@ -1033,7 +1033,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                   {flags.length ? <ShieldAlert size={22} /> : <ShieldCheck size={22} />}
                   <div>
                     <b>{flags.length ? (flags.some((x) => x.level === "stop") ? "พบข้อห้าม" : `ข้อควรระวัง ${flags.length} ข้อ`) : "ผ่านการคัดกรอง"}</b>
-                    <small>{flags.some((x) => x.level === "stop") ? "ต้องให้แพทย์แผนไทยประเมินก่อนนวด" : flags.length ? "นวดได้ โดยปรับตามข้อควรระวัง" : "พร้อมรับบริการนวด"}</small>
+                    <small>{flags.some((x) => x.level === "stop") ? "ต้องให้แพทย์ประเมินก่อนนวด" : flags.length ? "นวดได้ ปรับตามข้อควรระวัง" : "พร้อมนวด"}</small>
                   </div>
                   <button type="button" className="sm-edit" onClick={() => setStep(1)}>
                     แก้ไข
@@ -1061,7 +1061,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                     <u>ครั้ง/นาที</u>
                   </div>
                   <div>
-                    <small>ระดับปวด</small>
+                    <small>ปวด</small>
                     <b style={screening?.pain != null ? { color: screening.pain >= 7 ? "#d8392a" : screening.pain >= 4 ? "#e08a1e" : "#2f9a5b" } : undefined}>{screening?.pain ?? "—"}</b>
                     <u>/10</u>
                   </div>
@@ -1074,7 +1074,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                   <section className="sm-card sm-body">
                     <Body3D compact sex={f.gender} heatmap={Object.fromEntries(scr.painAreas.map((x) => [x, Math.max(0.35, (scr.pain ?? 6) / 10)]))} avoid={scr.avoidAreas} />
                     <div className="sm-body__lists">
-                      {scr.painAreas.length === 0 && scr.avoidAreas.length === 0 && <p className="sm-body__none">ไม่ได้ระบุจุดที่ปวดหรือบริเวณห้ามนวด</p>}
+                      {scr.painAreas.length === 0 && scr.avoidAreas.length === 0 && <p className="sm-body__none">ไม่ได้ระบุจุดปวดหรือจุดห้ามนวด</p>}
                       {scr.painAreas.length > 0 && (
                         <div>
                           <small>จุดที่ปวด</small>
@@ -1109,8 +1109,8 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
               if (!month)
                 return (
                   <section className="sm-el is-empty">
-                    <b>วิเคราะห์ธาตุเจ้าเรือน</b>
-                    <small>ระบุวันเกิดเพื่อดูธาตุเจ้าเรือนและแนวทางการนวด</small>
+                    <b>ธาตุเจ้าเรือน</b>
+                    <small>ระบุวันเกิดเพื่อดูธาตุ</small>
                   </section>
                 );
               const el = birthElement(month);
@@ -1131,7 +1131,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
                   <p className="sm-el__trait">{info.trait}</p>
                   {notes.length > 0 && (
                     <div className="sm-el__today">
-                      <small>วิเคราะห์จากข้อมูลวันนี้</small>
+                      <small>จากข้อมูลวันนี้</small>
                       {notes.map((n) => (
                         <p key={n.text} className={`is-${n.tone}`}>
                           {n.tone === "warn" ? <TriangleAlert size={14} /> : n.tone === "ok" ? <Check size={14} strokeWidth={2.6} /> : <Sparkles size={14} />}

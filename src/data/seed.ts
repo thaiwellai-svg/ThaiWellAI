@@ -316,8 +316,8 @@ export function createSeed(): SeedData {
   const notifications: Notification[] = [
     { id: "n3", kind: "noshow", title: "ผู้ป่วยไม่มาตามนัด", body: `${noShowName} · รอบ 08:00 น. เลยเวลา 15 นาที`, at: new Date(Date.now() - 95 * 60_000).toISOString(), read: false, link: "/appointments", ref: noShow.id },
     { id: "n4", kind: "staff", title: "เจ้าหน้าที่แจ้งลา", body: `พท.ป. อรุณี แก้วมณี ลาป่วย${thaiDateWeekday(workdayAhead(2, true))} · มีคิวที่ต้องย้ายผู้บำบัด`, at: new Date(Date.now() - 180 * 60_000).toISOString(), read: false, link: "/planner", ref: "t3" },
-    { id: "n5", kind: "info", title: "ครบกำหนดติดตามผล 48 ชม.", ref: "followup", body: "ผู้รับบริการ 3 รายรอส่งแบบประเมิน Pain Score หลังนวด", at: new Date(Date.now() - 240 * 60_000).toISOString(), read: true, link: "/patients" },
-    { id: "n7", kind: "info", title: "เครดิตใกล้หมด", ref: "credits", body: "ผู้รับบริการ 2 รายเหลือเครดิต 1 ครั้ง · แนะนำนัดพบแพทย์ต่อแผน", at: new Date(Date.now() - 1800 * 60_000).toISOString(), read: true, link: "/patients" },
+    { id: "n5", kind: "info", title: "ครบกำหนดติดตามผล 48 ชม.", ref: "followup", body: "ผู้ป่วย 3 คนยังไม่ประเมินปวดหลังนวด", at: new Date(Date.now() - 240 * 60_000).toISOString(), read: true, link: "/patients" },
+    { id: "n7", kind: "info", title: "คอร์สใกล้หมด", ref: "credits", body: "ผู้ป่วย 2 คนเหลือคอร์ส 1 ครั้ง", at: new Date(Date.now() - 1800 * 60_000).toISOString(), read: true, link: "/patients" },
   ];
 
 
@@ -411,7 +411,7 @@ export function createSeed(): SeedData {
       a.log.push({ at: a.endedAt, label: "จบการรักษา" });
       if (i === 1) return; // รอบันทึกการรักษา
       a.painAfter = Math.max(1, a.painBefore - 3); // รอชำระเงิน
-      a.log.push({ at: iso(4), label: `บันทึกการรักษา · Pain ${a.painBefore} → ${a.painAfter}` });
+      a.log.push({ at: iso(4), label: `บันทึกการรักษา · ปวด ${a.painBefore} → ${a.painAfter}` });
     });
     // the next patient has been called to the counter
     const next = todays.find((a) => a.status === "waiting");

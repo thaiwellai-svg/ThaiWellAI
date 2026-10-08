@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TriangleAlert, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, coursePrepaid } from "../../data/domain";
@@ -27,15 +27,15 @@ import "../../features/health.css";
 
 /** Pain trend chart with axis, points and value labels. */
 function PainChart({ points }: { points: { date: string; score: number }[] }) {
-  const W = 520;
-  const H = 150;
+  const W = 760;
+  const H = 160;
   const pad = { l: 26, r: 14, t: 18, b: 26 };
   const x = (i: number) => pad.l + (i * (W - pad.l - pad.r)) / Math.max(1, points.length - 1);
   const y = (v: number) => pad.t + (1 - v / 10) * (H - pad.t - pad.b);
   const d = points.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.score)}`).join(" ");
   const area = `${d} L${x(points.length - 1)},${H - pad.b} L${x(0)},${H - pad.b} Z`;
   return (
-    <svg className="pchart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="กราฟ Pain Score">
+    <svg className="pchart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="กราฟความปวด">
       <defs>
         <linearGradient id="pc-fill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="#4c845a" stopOpacity="0.2" />
@@ -96,7 +96,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   if (!p)
     return (
       <div className="pd pd--empty">
-        <EmptyState icon={<CalendarPlus size={24} />} title="เลือกผู้รับบริการจากรายการ" description="หรือเพิ่มผู้รับบริการใหม่" action={<Button onClick={onAdd}>เพิ่มผู้รับบริการ</Button>} />
+        <EmptyState icon={<CalendarPlus size={24} />} title="เลือกผู้ป่วยจากรายการ" description="หรือเพิ่มผู้ป่วยใหม่" action={<Button onClick={onAdd}>เพิ่มผู้ป่วย</Button>} />
       </div>
     );
 
@@ -109,7 +109,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     if (!p?.course || !credits) return;
     const total = credits.used + credits.booked;
     store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course, total, name: p.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) } } });
-    toast({ message: `เพิ่มคอร์สเป็น ${total} ครั้งแล้ว · อย่าลืมเก็บเงินส่วนเพิ่ม` });
+    toast({ message: `เพิ่มคอร์สเป็น ${total} ครั้งแล้ว · เก็บเงินส่วนเพิ่มด้วย` });
   };
   // นัดส่วนเกิน = นัดท้ายสุดที่ยังไม่เริ่ม → เปิดหน้าต่างยกเลิกนัดแบบเดียวกับทุกที่ (เลือกไว้ให้ ตรวจ/แก้ได้ก่อนยืนยัน)
   const extraAppts = over
@@ -119,12 +119,16 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         .slice(0, over)
     : [];
   const upcoming = visits.filter((v) => v.date >= today && (v.status === "waiting" || v.status === "active")).reverse();
-  const past = visits.filter((v) => !upcoming.includes(v)).slice(0, 10);
+  // ล่าสุด 5 ครั้ง (ทุกครั้ง + ปวดก่อน/หลัง อยู่ในการ์ด "ความปวด")
+  const past = visits.filter((v) => !upcoming.includes(v)).slice(0, 5);
   const doneCount = visits.filter((v) => v.status === "done").length;
   const h = [...p.painHistory].sort((a, b) => a.date.localeCompare(b.date));
   const first = h[0]?.score;
   const last = h[h.length - 1]?.score;
   const delta = first !== undefined && last !== undefined ? last - first : 0;
+
+  const cid = p.citizenId?.replace(/^(\d)(\d{4})(\d{5})(\d{2})(\d)$/, "$1-$2-$3-$4-$5");
+  const assessed = visits.filter((v) => v.status !== "cancelled" && v.status !== "absent").length;
 
   return (
     <AnimatePresence mode="wait">
@@ -136,36 +140,35 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         exit={{ opacity: 0, x: -10, transition: { duration: 0.12 } }}
         transition={{ duration: 0.3, ease: ease.out }}
       >
-        {/* Identity */}
+        {/* Identity: name, HN, and the safety tags (โรคประจำตัว · แพ้) — shown once, here */}
         <header className="pd__hero">
           <PhotoPicker name={p.name} src={patientPhoto(p)} size="2xl" onPick={(photo) => store.dispatch({ type: "updatePatient", id: p.id, patch: { photo } })} />
           <div className="pd__id">
             <h2>{p.name}</h2>
             <p>
-              {p.hn} · {p.gender} {p.age} ปี · ลงทะเบียน {thaiDate(p.registeredOn)}
+              {p.hn} · {p.gender} {p.age} ปี
             </p>
             <div className="tags">
-              {p.conditions.length ? (
-                p.conditions.map((c) => (
-                  <Badge key={c} tone="warning" compact>
-                    {c}
-                  </Badge>
-                ))
-              ) : (
-                <Badge tone="neutral" compact>
-                  ไม่มีโรคประจำตัว
+              {p.conditions.map((c) => (
+                <Badge key={c} tone="warning" compact>
+                  {c}
                 </Badge>
-              )}
+              ))}
               {p.allergies?.map((a) => (
                 <Badge key={a} tone="danger" compact>
                   แพ้ {a}
                 </Badge>
               ))}
+              {!p.conditions.length && !p.allergies?.length && (
+                <Badge tone="neutral" compact>
+                  ไม่มีโรคประจำตัว · ไม่แพ้
+                </Badge>
+              )}
             </div>
           </div>
           <div className="pd__actions pd__icons">
             {onHealth && (
-              <button type="button" className={healthOpen ? "pd__ib is-on" : "pd__ib"} aria-pressed={!!healthOpen} onClick={onHealth} aria-label="ข้อมูลสุขภาพ" title={healthOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}>
+              <button type="button" className={healthOpen ? "pd__ib is-on" : "pd__ib"} aria-pressed={!!healthOpen} onClick={onHealth} aria-label="ข้อมูลสุขภาพ" title={healthOpen ? "ซ่อนข้อมูลสุขภาพ" : "ข้อมูลสุขภาพ"}>
                 <HeartPulse size={18} />
               </button>
             )}
@@ -173,12 +176,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               items={[
                 ...(onEdit ? [{ label: "แก้ไขข้อมูล", icon: <PenLine size={16} />, onClick: onEdit }] : []),
                 ...(p.phone ? [{ label: "โทร", hint: p.phone, icon: <Phone size={16} />, onClick: () => (window.location.href = `tel:${p.phone.replace(/-/g, "")}`) }] : []),
-                { label: "พิมพ์ / บันทึก PDF", icon: <Printer size={16} />, onClick: print },
+                { label: "พิมพ์ / PDF", icon: <Printer size={16} />, onClick: print },
                 { label: "ใบรับรองแพทย์", icon: <FileHeart size={16} />, onClick: () => setDoc("cert") },
                 { label: "ใบส่งตัว", icon: <Send size={16} />, onClick: () => setDoc("refer") },
-                { label: "ขายคอร์ส / แพ็กเกจ", icon: <ShoppingBag size={16} />, onClick: () => setSelling(true) },
+                { label: "ขายแพ็กเกจ", icon: <ShoppingBag size={16} />, onClick: () => setSelling(true) },
                 { label: "รีเซ็ตข้อมูลการรักษา", hint: "ใช้ทดสอบ", icon: <RotateCcw size={16} />, onClick: () => setResetting(true), danger: true },
-                { label: "ลบผู้รับบริการ", hint: "ลบทั้งคน", icon: <UserX size={16} />, onClick: () => setRemoving(true), danger: true },
+                { label: "ลบผู้ป่วย", hint: "ลบทั้งคน", icon: <UserX size={16} />, onClick: () => setRemoving(true), danger: true },
               ]}
             />
             <ResetPatientDialog patientId={resetting ? p.id : null} onClose={() => setResetting(false)} />
@@ -192,7 +195,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               preset={{ ids: extraAppts.map((a) => a.id), by: "clinic", reason: "เกินจำนวนครั้งในคอร์ส" }}
               onClose={() => setCancelExtra(false)}
             />
-            <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดตารางนัด" title="จัดตารางนัด">
+            <button type="button" className="pd__ib is-primary" onClick={() => setPlanFor(p.id)} aria-label="จัดนัด" title="จัดนัด">
               <CalendarPlus size={18} />
             </button>
           </div>
@@ -200,25 +203,20 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
 
         <ScreeningAlert p={p} />
 
-        {/* Quick stats */}
+        {/* Quick stats: ป้าย → ตัวเลข → หน่วย */}
         <div className="pd__stats">
           <div className="pd__stat">
-            <small>รับบริการแล้ว</small>
+            <small>รักษาแล้ว</small>
             <b>{doneCount}</b>
             <span>ครั้ง</span>
           </div>
           <div className="pd__stat">
-            <small>Pain ล่าสุด</small>
-            <b style={{ color: last !== undefined ? painColor(last) : undefined }}>{last ?? "—"}</b>
-            <span>/10</span>
-          </div>
-          <div className="pd__stat">
-            <small>เปลี่ยนแปลง</small>
-            <b style={{ color: delta < 0 ? "var(--green-700)" : delta > 0 ? "var(--color-danger)" : undefined }}>
-              {delta < 0 ? <TrendingDown size={18} /> : delta > 0 ? <TrendingUp size={18} /> : null}
-              {delta === 0 ? "—" : Math.abs(delta)}
+            <small>ปวดล่าสุด</small>
+            <b style={{ color: last !== undefined ? painColor(last) : undefined }}>
+              {last ?? "—"}
+              {delta < 0 ? <TrendingDown size={18} color="var(--green-700)" /> : delta > 0 ? <TrendingUp size={18} color="var(--color-danger)" /> : null}
             </b>
-            <span>{delta < 0 ? "ดีขึ้น" : delta > 0 ? "แย่ลง" : ""}</span>
+            <span>{h.length > 1 && delta !== 0 ? `/10 · ${delta < 0 ? "ดีขึ้น" : "แย่ลง"}จาก ${first}` : "/10"}</span>
           </div>
           <div className={upcoming[0] ? "pd__stat is-link" : "pd__stat"} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
             <small>นัดถัดไป</small>
@@ -228,8 +226,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         </div>
 
         <div className="pd__grid">
-          {onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}
-          {/* ── row: complaint & personal | course ── */}
+          {/* ── row 1: complaint | course ── */}
           <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
@@ -238,31 +235,29 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               อาการสำคัญ
             </h3>
             <p className="pd2__quote">{p.complaint}</p>
-            <div className="pd2__chips">
-              {p.conditions.map((c) => (
-                <em key={c} className="is-cond">
-                  <HeartPulse size={12} /> {c}
-                </em>
-              ))}
-              {p.allergies?.map((a) => (
-                <em key={a} className="is-allergy">
-                  <TriangleAlert size={12} /> แพ้ {a}
-                </em>
-              ))}
-              {!p.conditions.length && !p.allergies?.length && <em>ไม่มีโรคประจำตัว · ไม่มีประวัติแพ้</em>}
-            </div>
-            {(p.birthDate || p.citizenId || p.email || p.emergency) && (
+            {/* ข้อมูลส่วนตัว — ไม่ค่อยได้ใช้ระหว่างงาน → พับไว้ */}
+            <details className="pd2__more">
+              <summary>
+                ข้อมูลส่วนตัว
+                <ChevronDown size={14} />
+              </summary>
               <dl className="pd2__kv">
+                {p.phone && (
+                  <div>
+                    <dt>เบอร์โทร</dt>
+                    <dd>{p.phone}</dd>
+                  </div>
+                )}
                 {p.birthDate && (
                   <div>
                     <dt>วันเกิด</dt>
                     <dd>{thaiDate(p.birthDate)}</dd>
                   </div>
                 )}
-                {p.citizenId && (
+                {cid && (
                   <div>
                     <dt>เลขบัตรประชาชน</dt>
-                    <dd>{p.citizenId.replace(/^(\d)(\d{4})(\d{5})(\d{2})(\d)$/, "$1-$2-$3-$4-$5")}</dd>
+                    <dd>{cid}</dd>
                   </div>
                 )}
                 {p.email && (
@@ -280,8 +275,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     </dd>
                   </div>
                 )}
+                <div>
+                  <dt>ลงทะเบียน</dt>
+                  <dd>{thaiDate(p.registeredOn)}</dd>
+                </div>
               </dl>
-            )}
+            </details>
           </section>
 
           <section className="pd__card pd2">
@@ -289,34 +288,19 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               <span className="pd2__i" style={{ ["--c" as string]: "#d08a3c" }}>
                 <Ticket size={15} />
               </span>
-              คอร์สการรักษา
+              คอร์ส
               {credits && <em className={credits.remaining <= 1 ? "is-low" : undefined}>เหลือ {credits.remaining} ครั้ง</em>}
+              <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
+                <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
+              </button>
             </h3>
             {credits && p.course ? (
               <>
-                <b className="pd2__course">{p.course.name}</b>
-                {/* วิธีชำระของคอร์ส: จ่ายล่วงหน้า (หักเครดิตทุกครั้ง) หรือ ชำระรายครั้ง (จ่ายทุกครั้งที่มา + หัตถการที่ทำเพิ่ม) */}
-                <div className="pd2__bill" role="radiogroup" aria-label="วิธีชำระคอร์ส">
-                  {(
-                    [
-                      ["perVisit", "ชำระรายครั้ง", "จ่ายทุกครั้งที่มารักษา"],
-                      ["prepaid", "จ่ายล่วงหน้าแล้ว", "มาแต่ละครั้งหักเครดิต"],
-                    ] as const
-                  ).map(([k, label, sub]) => {
-                    const on = (prepaid ? "prepaid" : "perVisit") === k;
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        onClick={() => !on && store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course!, billing: k } }, })}
-                      >
-                        <b>{label}</b>
-                        <small>{sub}</small>
-                      </button>
-                    );
-                  })}
+                <div className="pd2__course-row">
+                  <b className="pd2__course">{p.course.name}</b>
+                  <small className="pd2__muted">
+                    {thaiDateShort(p.course.startedOn)} – {thaiDateShort(p.course.expiresOn, true)}
+                  </small>
                 </div>
                 <div className="hx-tix" style={{ gridTemplateColumns: `repeat(${Math.min(credits.total, 10)}, minmax(0, 1fr))` }}>
                   {Array.from({ length: credits.total }, (_, k) => {
@@ -339,15 +323,35 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <i /> ว่าง {credits.remaining}
                   </span>
                 </div>
-                <small className="pd2__muted">
-                  {thaiDate(p.course.startedOn)} – {thaiDate(p.course.expiresOn)}
-                </small>
+                {/* วิธีชำระของคอร์ส: ชำระรายครั้ง หรือ ชำระล่วงหน้า (หักเครดิตทุกครั้ง) */}
+                <div className="pd2__bill" role="radiogroup" aria-label="วิธีชำระคอร์ส">
+                  {(
+                    [
+                      ["perVisit", "ชำระรายครั้ง", "จ่ายทุกครั้งที่มา"],
+                      ["prepaid", "ชำระล่วงหน้าแล้ว", "หักเครดิตทุกครั้ง"],
+                    ] as const
+                  ).map(([k, label, sub]) => {
+                    const on = (prepaid ? "prepaid" : "perVisit") === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => !on && store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course!, billing: k } }, })}
+                      >
+                        <b>{label}</b>
+                        <small>{sub}</small>
+                      </button>
+                    );
+                  })}
+                </div>
                 {over > 0 && (
                   // ใช้แล้ว + จองไว้ ต้องไม่เกินจำนวนครั้งของคอร์ส → ให้เลือกว่าจะเพิ่มครั้งในคอร์ส หรือยกเลิกนัดส่วนเกิน
                   <div className="pd2__over" role="alert">
                     <b>นัดเกินคอร์ส {over} นัด</b>
                     <small>
-                      คอร์ส {credits.total} ครั้ง แต่ใช้แล้ว {credits.used} + จองไว้ {credits.booked} = {credits.used + credits.booked} ครั้ง
+                      ใช้แล้ว {credits.used} + จองไว้ {credits.booked} จากคอร์ส {credits.total} ครั้ง
                     </small>
                     <div>
                       <button type="button" onClick={growCourse}>
@@ -366,45 +370,14 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 )}
               </>
             ) : (
-              <p className="pd2__muted">ไม่มีคอร์ส — รับบริการแบบชำระรายครั้ง</p>
+              <p className="pd2__muted">ไม่มีคอร์ส · ชำระรายครั้ง</p>
             )}
-            <button type="button" className="pd2__sell" onClick={() => setSelling(true)}>
-              <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส / ซื้อเพิ่ม" : "ขายคอร์ส / แพ็กเกจ"}
-            </button>
           </section>
 
-          {/* ── element (full width) ── */}
-          <ElementCard p={p} />
+          {/* ── AI plan (opens the side panel on wide screens) ── */}
+          {onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}
 
-          {/* ── pain trend (full width) ── */}
-          <section className="pd__card pd__card--wide pd2">
-            <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#c2482b" }}>
-                <Activity size={15} />
-              </span>
-              แนวโน้ม Pain Score
-              {first !== undefined && last !== undefined && h.length > 1 && (
-                <em className={last < first ? "is-good" : "is-bad"}>
-                  {first} → {last}
-                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
-                </em>
-              )}
-            </h3>
-            {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีข้อมูลการประเมิน — จะเริ่มบันทึกหลังรับบริการครั้งแรก</p>}
-          </section>
-
-          {/* ── การประเมินรายครั้ง: แต่ละวันที่มารักษา ผู้ป่วยประเมินอะไรมา ── */}
-          <section className="pd__card pd__card--wide pd2">
-            <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#5b7fd6" }}>
-                <ClipboardList size={15} />
-              </span>
-              การประเมินรายครั้ง
-            </h3>
-            <VisitAssessments p={p} onOpen={openAppt} />
-          </section>
-
-          {/* ── row: upcoming | history ── */}
+          {/* ── row 2: upcoming | history ── */}
           <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#3b82c4" }}>
@@ -412,6 +385,9 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               </span>
               นัดที่จะถึง
               {upcoming.length > 0 && <em>{upcoming.length}</em>}
+              <button type="button" className="pd2__act" onClick={() => setPlanFor(p.id)}>
+                <CalendarPlus size={14} /> จัดนัด
+              </button>
             </h3>
             {upcoming.length ? (
               <div className="hx-next">
@@ -433,7 +409,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 ))}
               </div>
             ) : (
-              <p className="pd2__muted">ยังไม่มีนัดหมาย</p>
+              <p className="pd2__muted">ยังไม่มีนัด</p>
             )}
           </section>
 
@@ -442,7 +418,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
                 <History size={15} />
               </span>
-              ประวัติการรับบริการ
+              ประวัติการรักษา
             </h3>
             {past.length ? (
               <ol className="hx-hist">
@@ -451,7 +427,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
                     <span className="hx-hist__body">
                       <b>{store.serviceById(v.serviceId).short}</b>
-                      {v.status === "absent" ? <small>ไม่มารับบริการ</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
+                      {v.status === "absent" ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
                     </span>
                     {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
                   </li>
@@ -461,6 +437,36 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               <p className="pd2__muted">ยังไม่มีประวัติ</p>
             )}
           </section>
+
+          {/* ── pain: trend chart + per-visit table (folded) ── */}
+          <section className="pd__card pd__card--wide pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#c2482b" }}>
+                <Activity size={15} />
+              </span>
+              ความปวด
+              {first !== undefined && last !== undefined && h.length > 1 && (
+                <em className={last < first ? "is-good" : "is-bad"}>
+                  {first} → {last}
+                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
+                </em>
+              )}
+            </h3>
+            {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีคะแนนปวด</p>}
+            {/* การประเมินรายครั้ง: แต่ละวันที่มารักษา ผู้ป่วยประเมินอะไรมา */}
+            {assessed > 0 && (
+              <details className="pd2__more">
+                <summary>
+                  <ClipboardList size={14} /> ปวดก่อน–หลังนวด รายครั้ง
+                  <ChevronDown size={14} />
+                </summary>
+                <VisitAssessments p={p} onOpen={openAppt} />
+              </details>
+            )}
+          </section>
+
+          {/* ── element (wide, folded) ── */}
+          <ElementCard p={p} />
         </div>
       </motion.div>
       <CoursePlanDialog key="cpd" patientId={planFor} onClose={() => setPlanFor(null)} />

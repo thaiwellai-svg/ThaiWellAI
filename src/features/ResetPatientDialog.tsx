@@ -43,7 +43,7 @@ export function ResetPatientDialog({ patientId, onClose, mode = "reset", onDone 
   const p = store.patientById(id);
   const appts = store.appointments.filter((a) => a.patientId === id);
   const counts = [
-    { label: "นัดและการรับบริการ", n: appts.length },
+    { label: "นัดและการรักษา", n: appts.length },
     { label: "ใบเสร็จ", n: appts.filter((a) => a.payment).length + appts.reduce((n, a) => n + (a.voidedPayments?.length ?? 0), 0) },
     { label: "คำขอจอง", n: store.requests.filter((r) => r.patientId === id).length + store.decisions.filter((d) => d.request.patientId === id).length },
     { label: "คอร์ส", n: p.course ? 1 : 0 },
@@ -59,11 +59,11 @@ export function ResetPatientDialog({ patientId, onClose, mode = "reset", onDone 
       // cloud ก่อน (แอปผู้ป่วย) แล้วค่อยล้างในคลินิก
       if (app) await resetCloud(p.cloudId!, remove);
       store.dispatch(remove ? { type: "removePatient", id } : { type: "resetPatientData", id });
-      toast({ message: `${remove ? "ลบผู้รับบริการ" : "รีเซ็ตข้อมูลการรักษาของ"} ${p.name} แล้ว${app ? " · แอปของผู้ป่วยล้างตาม" : ""}` });
+      toast({ message: `${remove ? "ลบ" : "รีเซ็ตข้อมูลการรักษาของ"} ${p.name} แล้ว${app ? " · แอปล้างตามแล้ว" : ""}` });
       onClose();
       onDone?.();
     } catch (e) {
-      toast({ message: `รีเซ็ตไม่สำเร็จ · ${(e as Error)?.message ?? "ลองใหม่อีกครั้ง"}`, tone: "danger" });
+      toast({ message: `ไม่สำเร็จ · ${(e as Error)?.message ?? "ลองใหม่"}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -79,15 +79,15 @@ export function ResetPatientDialog({ patientId, onClose, mode = "reset", onDone 
           {remove ? <UserX size={20} strokeWidth={1.9} /> : <RotateCcw size={20} strokeWidth={1.9} />}
         </span>
       }
-      title={remove ? "ลบผู้รับบริการ" : "รีเซ็ตข้อมูลการรักษา"}
-      subtitle={`${p.name} · ${p.hn} · ใช้สำหรับทดสอบระบบ`}
+      title={remove ? "ลบผู้ป่วย" : "รีเซ็ตข้อมูลการรักษา"}
+      subtitle={`${p.name} · ใช้ทดสอบระบบ`}
       footer={
         <>
           <Button variant="outline" size="lg" fill onClick={onClose}>
             ปิด
           </Button>
           <Button variant="danger" size="lg" fill disabled={!ok || busy} leading={remove ? <UserX size={16} /> : <RotateCcw size={16} />} onClick={() => void reset()}>
-            {busy ? (remove ? "กำลังลบ…" : "กำลังรีเซ็ต…") : remove ? "ลบผู้รับบริการ" : "รีเซ็ตข้อมูล"}
+            {busy ? (remove ? "กำลังลบ…" : "กำลังรีเซ็ต…") : remove ? "ลบผู้ป่วย" : "รีเซ็ตข้อมูล"}
           </Button>
         </>
       }
@@ -98,8 +98,8 @@ export function ResetPatientDialog({ patientId, onClose, mode = "reset", onDone 
           <span>
             <b>ลบแล้วกู้คืนไม่ได้</b>
             {remove
-              ? "ลบทั้งข้อมูลส่วนตัว (ชื่อ HN เลขบัตรประชาชน ที่อยู่ เบอร์โทร รูป) และข้อมูลการรักษาด้านล่าง · บัญชีแอปของผู้ใช้ยังอยู่ จองใหม่ได้ (ได้ HN ใหม่)"
-              : "ข้อมูลส่วนตัว (ชื่อ HN เลขบัตรประชาชน ที่อยู่ เบอร์โทร รูป) ยังอยู่ · ลบเฉพาะข้อมูลการรักษาด้านล่าง"}
+              ? "ลบข้อมูลส่วนตัวและข้อมูลการรักษาด้านล่าง · บัญชีแอปยังอยู่ จองใหม่ได้ (HN ใหม่)"
+              : "ลบเฉพาะข้อมูลการรักษาด้านล่าง · ข้อมูลส่วนตัวยังอยู่"}
           </span>
         </div>
         <ul className="rp__list">
@@ -110,11 +110,11 @@ export function ResetPatientDialog({ patientId, onClose, mode = "reset", onDone 
             </li>
           ))}
         </ul>
-        {app && <p className="rp__app">ผู้ป่วยใช้แอป ThaiWell AI · นัด ประวัติ คอร์ส บิล และแจ้งเตือนในแอปของผู้ป่วยจะถูกล้างตามด้วย</p>}
+        {app && <p className="rp__app">ผู้ป่วยใช้แอป ThaiWell · ข้อมูลในแอปจะถูกล้างตาม</p>}
         <label className="rp__confirm">
           <input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} />
           <span>
-            เข้าใจแล้วว่าจะลบ{remove ? "ผู้รับบริการ" : "ข้อมูลการรักษาทั้งหมดของ"} {p.name} และกู้คืนไม่ได้
+            เข้าใจแล้วว่าจะลบ{remove ? "" : "ข้อมูลการรักษาของ"} {p.name} และกู้คืนไม่ได้
           </span>
         </label>
       </div>

@@ -31,8 +31,8 @@ export function useInsights() {
     if (flagged.length)
       out.push({
         tone: "stop",
-        title: `คำขอ ${flagged.length} รายการมีข้อห้ามจากแบบคัดกรอง`,
-        body: flagged.map((r) => store.patientById(r.patientId).name).join(", ") + " — ควรให้แพทย์แผนไทยประเมินก่อนอนุมัติ",
+        title: `คำขอจอง ${flagged.length} รายการพบข้อห้าม`,
+        body: flagged.map((r) => store.patientById(r.patientId).name).join(", ") + " · ให้แพทย์ประเมินก่อนอนุมัติ",
         to: "/requests",
         cta: "ตรวจคำขอ",
       });
@@ -43,8 +43,8 @@ export function useInsights() {
     if (lowCredit.length)
       out.push({
         tone: "caution",
-        title: `ผู้ป่วย ${lowCredit.length} รายเครดิตใกล้หมด`,
-        body: "นัดครั้งถัดไปอาจเกินแผนการรักษา แนะนำนัดพบแพทย์เพื่อประเมินผลและต่อแผน",
+        title: `ผู้ป่วย ${lowCredit.length} คนคอร์สใกล้หมด`,
+        body: "นัดพบแพทย์เพื่อประเมินผลและต่อแผน",
         to: "/patients?filter=low",
         cta: "ดูรายชื่อ",
       });
@@ -53,8 +53,8 @@ export function useInsights() {
     if (absent.length)
       out.push({
         tone: "info",
-        title: `${absent.length} รายไม่มาตามนัดวันนี้`,
-        body: "ส่งข้อความผ่านแอป ThaiWell AI เพื่อเลื่อนนัด และคืนเครดิตคิวให้ผู้ป่วยในแผนรักษา",
+        title: `ไม่มาตามนัดวันนี้ ${absent.length} คน`,
+        body: "ส่งข้อความผ่านแอป ThaiWell เพื่อเลื่อนนัด",
         to: "/appointments",
         cta: "เปิดตารางนัด",
       });
@@ -63,15 +63,15 @@ export function useInsights() {
       const avg = done.reduce((s, a) => s + (a.painBefore - (a.painAfter ?? a.painBefore)), 0) / done.length;
       out.push({
         tone: "ok",
-        title: `Pain Score ลดลงเฉลี่ย ${avg.toFixed(1)} คะแนน`,
-        body: `จาก ${done.length} เคสที่รับบริการเสร็จวันนี้ · ระบบจะส่งแบบติดตามผลภายใน ${store.settings.followUpHours} ชม.`,
+        title: `ปวดลดลงเฉลี่ย ${avg.toFixed(1)} คะแนน`,
+        body: `จาก ${done.length} นัดที่เสร็จวันนี้ · ส่งแบบติดตามผลใน ${store.settings.followUpHours} ชม.`,
       });
     }
     const waiting = todays.filter((a) => a.status === "waiting").length;
     out.push({
       tone: "info",
-      title: `เหลือคิวรอรับบริการ ${waiting} ราย`,
-      body: "เตรียมห้องและวัดความดันผู้ป่วยก่อนเข้ารับบริการทุกราย",
+      title: `รอรับบริการ ${waiting} คน`,
+      body: "เตรียมห้องและวัดความดันก่อนนวดทุกคน",
       to: "/appointments",
       cta: "ดูคิว",
     });
@@ -95,7 +95,7 @@ export function AIAssistant({ open, onClose }: { open: boolean; onClose: () => v
         </span>
       }
       title="ผู้ช่วย AI"
-      subtitle="สรุปงานวันนี้ · ข้อเสนอแนะสำหรับเจ้าหน้าที่"
+      subtitle="สรุปงานวันนี้ · ข้อเสนอแนะ"
     >
       <motion.div variants={stagger(0.1, 0.08)} initial="hidden" animate="show" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {insights.map((i) => (
@@ -135,7 +135,7 @@ export function AIAssistant({ open, onClose }: { open: boolean; onClose: () => v
           <ShieldCheck size={16} />
           <div>
             <b>AI เป็นผู้ช่วย ไม่ใช่ผู้ตัดสินใจ</b>
-            ข้อเสนอแนะทั้งหมดคำนวณจากข้อมูลและกฎที่คลินิกกำหนด เจ้าหน้าที่และแพทย์แผนไทยเป็นผู้อนุมัติขั้นสุดท้าย
+            คำนวณจากข้อมูลและกฎของคลินิก เจ้าหน้าที่และแพทย์เป็นผู้อนุมัติ
           </div>
         </motion.div>
       </motion.div>

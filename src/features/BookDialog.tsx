@@ -185,17 +185,17 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
           },
         ],
       });
-      toast({ message: `เพิ่มคิว${type === "walkin" ? " Walk-in" : ""} ${patient.name} · ${start} น.` });
+      toast({ message: `เพิ่มนัด${type === "walkin" ? "วอล์กอิน" : ""} ${patient.name} · ${start} น. แล้ว` });
     }
     onClose();
   };
 
-  const title = request ? "เลื่อนนัด / จัดคิวใหม่" : "เพิ่มคิวนัด";
+  const title = request ? "จัดเวลาใหม่" : "เพิ่มนัด";
   const subtitle = request
-    ? `ขอไว้ ${thaiDate(request.date)} ${request.start} น. · เลือกเวลาใหม่หลังโทรยืนยันกับผู้ป่วย`
+    ? `ขอไว้ ${thaiDate(request.date)} ${request.start} น. · โทรตกลงเวลาใหม่ก่อน`
     : p0.slot
       ? `${thaiDateLong(date)} · ${timeRange(start, service.minutes)} น.`
-      : "ลงคิว Walk-in หรือนัดล่วงหน้าให้ผู้มารับบริการ";
+      : "นัดล่วงหน้า หรือวอล์กอินวันนี้";
 
   return (
     <Dialog
@@ -223,7 +223,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
     >
       <div className="book">
         <section className="book__pick">
-          <h3 className="book__h">1 · ผู้รับบริการ</h3>
+          <h3 className="book__h">1 · ผู้ป่วย</h3>
           {patient && p0.patientId ? (
             <>
             <div className="book__fixed">
@@ -243,7 +243,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
             </div>
             {request && (
               <div className="book__req">
-                <span className="tw-caption">คำขอเดิมจากแอป ThaiWell AI</span>
+                <span className="tw-caption">คำขอเดิมจากแอป ThaiWell</span>
                 <b>
                   {thaiDateLong(request.date)} · {request.start} น.
                 </b>
@@ -258,9 +258,9 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                   ))}
                 </div>
                 <ol className="book__steps">
-                  <li>โทรแจ้งผู้ป่วยว่าเวลาที่ขอไม่ว่าง</li>
-                  <li>เสนอเวลาใหม่จากรอบที่ว่างด้านขวา</li>
-                  <li>กด "ยืนยันนัดใหม่" — ระบบแจ้งผู้ป่วยผ่านแอป ThaiWell AI</li>
+                  <li>โทรแจ้งว่าเวลาที่ขอไม่ว่าง</li>
+                  <li>เลือกรอบว่างใหม่ด้านขวา</li>
+                  <li>กด "ยืนยันนัดใหม่" · แอปแจ้งผู้ป่วยเอง</li>
                 </ol>
               </div>
             )}
@@ -273,8 +273,8 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                     <UserPlus size={18} strokeWidth={1.9} />
                   </span>
                   <span>
-                    <b>ผู้รับบริการใหม่</b>
-                    <small>กรอกข้อมูลพื้นฐาน · เพิ่มรูปและประวัติได้ภายหลัง</small>
+                    <b>ผู้ป่วยใหม่</b>
+                    <small>กรอกข้อมูลพื้นฐาน · เพิ่มประวัติภายหลังได้</small>
                   </span>
                 </div>
                 <div className="book__reg-grid">
@@ -294,7 +294,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                   <Field label="นามสกุล" className="span-2">
                     <Input value={reg.last} onChange={(e) => setReg({ ...reg, last: e.target.value })} />
                   </Field>
-                  <Field label="เบอร์โทรศัพท์" className="span-2" hint="ใช้ส่งแจ้งเตือนนัดผ่านแอป ThaiWell AI">
+                  <Field label="เบอร์โทรศัพท์" className="span-2" hint="ใช้แจ้งเตือนนัดในแอป ThaiWell">
                     <Input inputMode="tel" placeholder="081-234-5678" value={reg.phone} onChange={(e) => setReg({ ...reg, phone: e.target.value })} />
                   </Field>
                 </div>
@@ -309,15 +309,15 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
               </div>
             ) : (
             <>
-              <SearchField tone="light" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN หรือเบอร์โทร" shortcut={false} />
+              <SearchField tone="light" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ / HN / เบอร์" shortcut={false} />
               <div className="book__list scroll-y scroll-y--light">
                 <button type="button" className="book__person book__new" onClick={startReg}>
                   <span className="book__new-icon">
                     <UserPlus size={18} strokeWidth={1.9} />
                   </span>
                   <span className="book__name">
-                    {query.trim() && people.length === 0 ? `ลงทะเบียน “${query.trim()}”` : "ผู้รับบริการใหม่"}
-                    <small>{people.length === 0 && query.trim() ? "ไม่พบในระบบ · ลงทะเบียนแล้วจองต่อได้ทันที" : "ยังไม่เคยมารับบริการ · ลงทะเบียนด่วน"}</small>
+                    {query.trim() && people.length === 0 ? `ลงทะเบียน “${query.trim()}”` : "ผู้ป่วยใหม่"}
+                    <small>{people.length === 0 && query.trim() ? "ไม่พบในระบบ · ลงทะเบียนแล้วจองต่อ" : "มาครั้งแรก · ลงทะเบียนด่วน"}</small>
                   </span>
                 </button>
                 {people.map((p) => {
@@ -358,7 +358,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
           {!request && !p0.slot && (
             <Segmented
               tone="light"
-              label="ประเภทคิว"
+              label="ประเภทนัด"
               value={type}
               onChange={(t) => {
                 setType(t);
@@ -367,7 +367,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
               }}
               options={[
                 { value: "booked", label: "นัดล่วงหน้า" },
-                { value: "walkin", label: "Walk-in" },
+                { value: "walkin", label: "วอล์กอิน" },
               ]}
             />
           )}
@@ -378,7 +378,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                 onChange={setDate}
                 blocked={(d) =>
                   type === "walkin" && d !== today
-                    ? "Walk-in รับเฉพาะวันนี้"
+                    ? "วอล์กอินได้เฉพาะวันนี้"
                     : d < today
                       ? "วันที่ผ่านมาแล้ว"
                       : store.settings.closedWeekdays.includes(fromISODate(d).getDay())
@@ -413,8 +413,8 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                     <div className="alert alert--caution" style={{ marginTop: 4 }}>
                       <CircleAlert size={16} />
                       <div>
-                        <b>วันนี้คิวเต็มทุกรอบแล้ว</b>
-                        รับ Walk-in ไม่ได้ ·{" "}
+                        <b>วันนี้เต็มทุกรอบแล้ว</b>
+                        รับวอล์กอินไม่ได้ ·{" "}
                         <button
                           type="button"
                           className="book__link"
@@ -428,7 +428,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                       </div>
                     </div>
                   ) : (
-                    <span className="tw-field__hint" style={{ color: "var(--color-danger)" }}>ไม่มีรอบว่างในวันนี้ — เลือกวันอื่น</span>
+                    <span className="tw-field__hint" style={{ color: "var(--color-danger)" }}>วันนี้ไม่มีรอบว่าง · เลือกวันอื่น</span>
                   ))}
               </div>
             </>
@@ -468,7 +468,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
                     state === "free"
                       ? `เวร ${hours.join(", ")}`
                       : state === "busy"
-                        ? `ติดคิวรอบ ${start} น.`
+                        ? `มีนัด ${start} น.`
                         : state === "service"
                           ? `ไม่รับ${service.short}`
                           : hours.length
@@ -508,7 +508,7 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
             <div className="alert alert--stop">
               <CircleAlert size={16} />
               <div>
-                <b>ไม่มีผู้บำบัดที่ว่างและรับบริการนี้</b>
+                <b>ไม่มีผู้บำบัดว่างสำหรับบริการนี้</b>
                 เปลี่ยนรอบเวลาหรือบริการ
               </div>
             </div>
@@ -517,8 +517,8 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
             <div className="alert alert--caution">
               <CircleAlert size={16} />
               <div>
-                <b>เครดิตในแผนการรักษาหมดแล้ว</b>
-                คิวนี้จะเป็นการรับบริการแบบชำระเงินเอง หรือให้พบแพทย์เพื่อต่อแผนก่อน
+                <b>เครดิตคอร์สหมดแล้ว</b>
+                นัดนี้ชำระรายครั้ง หรือให้แพทย์เปิดคอร์สใหม่ก่อน
               </div>
             </div>
           )}
@@ -527,11 +527,11 @@ export function BookDialog({ preset, onClose }: { preset: BookPreset | null; onC
               <CircleAlert size={16} />
               <div>
                 <b>ผู้ป่วยมีนัดในวันนี้อยู่แล้ว</b>
-                ตรวจสอบก่อนว่าไม่ได้จองซ้ำ
+                ตรวจว่าไม่ได้จองซ้ำ
               </div>
             </div>
           )}
-          {!patient && <p className="tw-meta">เลือกผู้รับบริการจากรายการด้านซ้าย</p>}
+          {!patient && <p className="tw-meta">เลือกผู้ป่วยทางซ้ายก่อน</p>}
           {patient && start && therapist && (
             <div className="book__summary">
               <b>

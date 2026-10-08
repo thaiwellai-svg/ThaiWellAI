@@ -27,11 +27,11 @@ type Size = "half" | "full";
 type WidgetLayout = { order: WidgetId[]; hidden: WidgetId[]; size: Partial<Record<WidgetId, Size>> };
 
 const WIDGETS: Record<WidgetId, { label: string; size: Size; sizes: Size[] }> = {
-  patients: { label: "ผู้มารับบริการวันนี้", size: "full", sizes: ["full"] },
-  done: { label: "นัดหมายที่เสร็จสิ้น", size: "half", sizes: ["half", "full"] },
+  patients: { label: "ผู้ป่วยวันนี้", size: "full", sizes: ["full"] },
+  done: { label: "นัดที่เสร็จแล้ว", size: "half", sizes: ["half", "full"] },
   credits: { label: "เครดิตคงเหลือ", size: "half", sizes: ["half", "full"] },
   revenue: { label: "รายได้วันนี้", size: "full", sizes: ["half", "full"] },
-  requests: { label: "คำขอจองคิวใหม่", size: "full", sizes: ["full"] },
+  requests: { label: "คำขอจองใหม่", size: "full", sizes: ["full"] },
   staff: { label: "ผู้บำบัดวันนี้", size: "full", sizes: ["full"] },
   calendar: { label: "ตารางงาน", size: "full", sizes: ["full"] },
 };
@@ -124,7 +124,7 @@ export default function Dashboard() {
         return (
           <Card elevated>
             <div className="kpi__head">
-              <p className="tw-label">จำนวนผู้มารับบริการวันนี้</p>
+              <p className="tw-label">ผู้ป่วยวันนี้</p>
               <span className="tw-icon-tile">
                 <img src={usersIcon} alt="" width={18} height={18} />
               </span>
@@ -133,12 +133,12 @@ export default function Dashboard() {
               <span className="tw-figure__value">
                 <AnimatedNumber value={kpi.total} />
               </span>
-              <span className="tw-figure__unit">ราย</span>
+              <span className="tw-figure__unit">คน</span>
             </div>
             <p className="tw-caption">
-              • นัดล่วงหน้า {kpi.booked} ราย • Walk-in {kpi.walkin} ราย
+              นัดล่วงหน้า {kpi.booked} · วอล์กอิน {kpi.walkin}
             </p>
-            <div className="tw-progress" role="img" aria-label="สัดส่วนสถานะผู้รับบริการ">
+            <div className="tw-progress" role="img" aria-label="สัดส่วนสถานะผู้ป่วย">
               {STAT_ORDER.map((s, i) => (
                 <motion.span
                   key={s}
@@ -157,7 +157,7 @@ export default function Dashboard() {
                   type="button"
                   className="kpi__stat"
                   aria-pressed={statusFilter === s}
-                  title={`กรองรายการ: ${STATUS_META[s].label}`}
+                  title={`กรอง: ${STATUS_META[s].label}`}
                   onClick={() => setStatusFilter((f) => (f === s ? null : s))}
                 >
                   <span className="kpi__stat-value">
@@ -173,22 +173,22 @@ export default function Dashboard() {
         return (
           <Card elevated>
             <div className="kpi__head">
-              <p className="tw-label">นัดหมายที่เสร็จสิ้น</p>
+              <p className="tw-label">นัดที่เสร็จแล้ว</p>
             </div>
             <div className="tw-figure">
               <span className="tw-figure__value">
                 <AnimatedNumber value={kpi.bookedDone} /> / {kpi.booked}
               </span>
-              <span className="tw-figure__unit">เคส</span>
+              <span className="tw-figure__unit">นัด</span>
             </div>
-            <p className="tw-caption">คิดเป็น {kpi.pct}% ของงานนัดหมายวันนี้</p>
+            <p className="tw-caption">{kpi.pct}% ของนัดวันนี้</p>
           </Card>
         );
       case "credits":
         return (
           <Card elevated>
             <div className="kpi__head">
-              <p className="tw-label">เครดิตคงเหลือรวมของผู้ป่วย</p>
+              <p className="tw-label">คอร์สคงเหลือ</p>
             </div>
             <div className="tw-figure">
               <span className="tw-figure__value">
@@ -197,7 +197,7 @@ export default function Dashboard() {
               <span className="tw-figure__unit">ครั้ง</span>
             </div>
             <p className="tw-caption">
-              • มีคอร์ส {kpi.coursed} คน • ใกล้หมด {kpi.lowCredit} คน
+              มีคอร์ส {kpi.coursed} คน · ใกล้หมด {kpi.lowCredit} คน
             </p>
           </Card>
         );
@@ -206,7 +206,7 @@ export default function Dashboard() {
         const text = (
           <>
             <div className="kpi__head">
-              <p className="tw-label">รายได้วันนี้ (รวมประมาณการ)</p>
+              <p className="tw-label">รายได้วันนี้</p>
             </div>
             <div className="tw-figure">
               <span className="tw-figure__value">
@@ -225,7 +225,7 @@ export default function Dashboard() {
               </p>
             ) : (
               <p className="tw-caption">
-                • ชำระแล้ว {baht(kpi.paid)} บาท • ค้างชำระ {baht(kpi.revenue - kpi.paid)} บาท
+                ชำระแล้ว {baht(kpi.paid)} · ค้าง {baht(kpi.revenue - kpi.paid)}
               </p>
             )}
           </>
@@ -252,7 +252,7 @@ export default function Dashboard() {
         return (
           <Card elevated className="wstaff">
             <div className="kpi__head">
-              <p className="tw-label">ผู้บำบัดเข้างานวันนี้</p>
+              <p className="tw-label">ผู้บำบัดวันนี้</p>
               <span className="wstaff__count">{staff.length} คน</span>
             </div>
             <div className="wstaff__list">
@@ -265,7 +265,7 @@ export default function Dashboard() {
                       <b>{t.name}</b>
                       <small>{blocks.map((b) => `${b.start}–${b.end}`).join(" · ")}</small>
                     </span>
-                    <span className={clsx("wstaff__jobs", busy && "is-busy")}>{busy ? "กำลังให้บริการ" : `${jobs.filter((a) => a.status !== "done").length} คิว`}</span>
+                    <span className={clsx("wstaff__jobs", busy && "is-busy")}>{busy ? "กำลังนวด" : `${jobs.filter((a) => a.status !== "done").length} นัด`}</span>
                   </div>
                 );
               })}
@@ -279,7 +279,7 @@ export default function Dashboard() {
           <section className="pending" aria-labelledby="pending-title">
             <div className="pending__head">
               <h2 id="pending-title" className="pending__title">
-                คำขอจองคิวใหม่ (รออนุมัติ)
+                คำขอจองรออนุมัติ
               </h2>
               <motion.span key={store.requests.length} className="pending__count" initial={{ scale: 0.7 }} animate={{ scale: 1 }} transition={spring.snappy}>
                 {store.requests.length}
@@ -290,7 +290,7 @@ export default function Dashboard() {
             </div>
 
             {store.requests.length === 0 ? (
-              <EmptyState icon={<CalendarCheck2 size={24} />} title="ไม่มีคำขอค้างอนุมัติ" description="คำขอใหม่จากแอป ThaiWell AI จะแสดงที่นี่" />
+              <EmptyState icon={<CalendarCheck2 size={24} />} title="ไม่มีคำขอจองรออนุมัติ" description="คำขอจากแอป ThaiWell จะแสดงที่นี่" />
             ) : (
               <LayoutGroup id="deck">
                 <div className={clsx("deck", expanded ? "deck--list" : "deck--stacked")}>
@@ -325,7 +325,7 @@ export default function Dashboard() {
                       layout="position"
                       className="deck__toggle"
                       aria-expanded={expanded}
-                      aria-label={expanded ? "ย่อรายการคำขอ" : `กางคำขอทั้งหมด ${store.requests.length} รายการ`}
+                      aria-label={expanded ? "ย่อรายการคำขอ" : `ดูคำขอจองทั้งหมด ${store.requests.length} รายการ`}
                       title={expanded ? "ย่อรายการ" : "กางรายการ"}
                       onClick={() => setExpanded((e) => !e)}
                       whileHover={{ y: -1 }}
@@ -349,7 +349,7 @@ export default function Dashboard() {
         <div className="today">
           <div className="today__head">
             <h2 id="today-title" className="tw-section-title">
-              รายการงานวันนี้
+              นัดวันนี้
             </h2>
             <AnimatePresence>
               {statusFilter && (
@@ -395,7 +395,7 @@ export default function Dashboard() {
           </AnimatePresence>
           {visible.length === 0 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <EmptyState onGlass icon={<SearchX size={24} />} title="ไม่พบรายการ" description="ลองค้นหาด้วยชื่อ HN หรือชื่อผู้บำบัด" />
+              <EmptyState onGlass icon={<SearchX size={24} />} title="ไม่พบนัด" description="ค้นด้วยชื่อ, HN หรือผู้บำบัด" />
             </motion.div>
           )}
         </div>
@@ -536,7 +536,7 @@ function WidgetBoard({
         <AnimatePresence>
           {editing && (
             <motion.div className="wboard__add" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>
-              <p>{hidden.length ? "เพิ่มวิดเจ็ต" : "แสดงวิดเจ็ตครบแล้ว · ลากเพื่อจัดลำดับ"}</p>
+              <p>{hidden.length ? "เพิ่มวิดเจ็ต" : "ลากเพื่อจัดลำดับ"}</p>
               {hidden.length > 0 && (
                 <div className="wboard__chips">
                   {hidden.map((id) => (
@@ -700,7 +700,7 @@ function ScheduleWidget() {
         </AnimatePresence>
         {list.length === 0 && <p className="tw-caption">ไม่มีนัดในวันนี้</p>}
         <button type="button" className="wcal__more" onClick={() => navigate(`/appointments?date=${day}`)}>
-          {list.length > 4 ? `ดูอีก ${list.length - 4} นัดในตารางนัด` : "เปิดตารางนัด"}
+          {list.length > 4 ? `ดูอีก ${list.length - 4} นัด` : "เปิดตารางนัด"}
           <ChevronRight size={14} />
         </button>
       </div>

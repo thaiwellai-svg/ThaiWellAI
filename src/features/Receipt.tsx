@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import QRCode from "qrcode";
-import { Check, CheckCheck, FileText, Printer, Send, X, Ban } from "lucide-react";
+import { Check, CheckCheck, FileText, Printer, RotateCcw, Send, X, Ban } from "lucide-react";
 import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { baht, thaiDateLong } from "../data/thaiDate";
@@ -58,8 +58,8 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
   const paid = pay ? pay.status === "paid" : a.paid;
 
   const send = () => {
-    if (pay) store.dispatch({ type: "updateAppointment", id: a.id, patch: { payment: { ...pay, slipSentAt: new Date().toISOString() } }, log: "ส่งสลิปเข้าแอป" });
-    toast({ message: `ส่งสลิปไปแอป ThaiWell AI ของ ${p.name} แล้ว` });
+    if (pay) store.dispatch({ type: "updateAppointment", id: a.id, patch: { payment: { ...pay, slipSentAt: new Date().toISOString() } }, log: "ส่งใบเสร็จเข้าแอป" });
+    toast({ message: "ส่งใบเสร็จเข้าแอปแล้ว" });
   };
 
   // each line drops in once the paper has come out
@@ -136,7 +136,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                   <dd>
                     {thaiDateLong(at.toISOString().slice(0, 10)).replace(/^วัน\S+ที่ /, "")} · {at.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })} น.
                   </dd>
-                  <dt>ผู้รับบริการ</dt>
+                  <dt>ผู้ป่วย</dt>
                   <dd>
                     {p.name}
                     <small>{p.hn}</small>
@@ -197,7 +197,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                   {pay?.status === "pending" && (
                     <div>
                       <span>สถานะ</span>
-                      <b>รอชำระในแอป ThaiWell AI</b>
+                      <b>รอชำระในแอป</b>
                     </div>
                   )}
                   {pay?.voided && (
@@ -221,7 +221,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                   {qr && <img src={qr} alt="" width={64} height={64} />}
                   <p>
                     ขอบคุณที่ใช้บริการ
-                    <small>สแกนเพื่อดูใบเสร็จและประวัติการรักษาในแอป ThaiWell AI</small>
+                    <small>สแกนดูใบเสร็จในแอป ThaiWell</small>
                     {pay?.slipSentAt && (
                       <em>
                         <CheckCheck size={12} /> ส่งเข้าแอปแล้ว {new Date(pay.slipSentAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })} น.
@@ -237,10 +237,10 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                 <Send size={16} /> {pay?.slipSentAt ? "ส่งซ้ำ" : "ส่งเข้าแอป"}
               </button>
               <button type="button" className="rcx__btn" onClick={() => setRun((r) => r + 1)}>
-                <Printer size={16} /> พิมพ์ใหม่
+                <RotateCcw size={16} /> แสดงซ้ำ
               </button>
               <button type="button" className="rcx__btn rcx__btn--primary" onClick={() => window.print()}>
-                <Printer size={16} /> พิมพ์สลิป
+                <Printer size={16} /> พิมพ์ใบเสร็จ
               </button>
               {store.settings.vat?.registered && !vp && pay?.status === "paid" && pay.method !== "credit" && pay.amount > 0 && (
                 <button type="button" className="rcx__btn" onClick={() => setTaxFor(a.id)}>
@@ -257,7 +257,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
               {voiding && pay && (
                 <motion.div className="rcx__voidbox" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}>
                   <b>ยกเลิกใบเสร็จ {pay.no}</b>
-                  <small>ใบเสร็จเดิมจะขึ้นตรา “ยกเลิก” และยังเก็บไว้ในประวัติ · รายการกลับไปรอชำระเงินใหม่{pay.method === "credit" ? " · คืนเครดิตคอร์ส 1 ครั้ง" : ""}</small>
+                  <small>ใบเดิมขึ้นตรา “ยกเลิก” · กลับไปรอชำระใหม่{pay.method === "credit" ? " (คืนเครดิต 1 ครั้ง)" : ""}</small>
                   <div className="rcx__reasons">
                     {["ออกใบเสร็จผิดคน", "ยอดเงินไม่ถูกต้อง", "เลือกช่องทางผิด", "ผู้ป่วยขอคืนเงิน"].map((r) => (
                       <button key={r} type="button" aria-pressed={reason === r} onClick={() => setReason(r)}>
@@ -281,7 +281,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                       disabled={!reason.trim()}
                       onClick={() => {
                         store.dispatch({ type: "voidPayment", id: a.id, reason: reason.trim(), refund: pay.method !== "credit" && pay.amount > 0 && refund });
-                        toast({ message: `ยกเลิกใบเสร็จ ${pay.no} แล้ว · รายการกลับไปรอชำระเงิน` });
+                        toast({ message: `ยกเลิกใบเสร็จ ${pay.no} แล้ว` });
                         setVoiding(false);
                         setReason("");
                         onClose();

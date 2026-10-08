@@ -209,8 +209,8 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
             ) : (
               <button type="button" className="cp-map__empty" onClick={() => setEdit("location")}>
                 <MapPin size={22} />
-                <b>ยังไม่ได้ปักตำแหน่งคลินิก</b>
-                <small>ผู้ใช้แอปจะยังไม่เห็นระยะทางและนำทางมาไม่ได้ · แตะเพื่อปักตำแหน่ง</small>
+                <b>ยังไม่ได้ปักตำแหน่ง</b>
+                <small>แตะเพื่อปักตำแหน่ง ให้ผู้ป่วยนำทางมาได้</small>
               </button>
             )}
           </div>
@@ -267,7 +267,7 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
           {/* ── ตัวอย่างในแอปผู้ใช้ ── */}
           <section className="cp-card">
             <header>
-              <Sparkles size={15} /> ผู้ใช้เห็นในแอป ThaiWell AI
+              <Sparkles size={15} /> ผู้ป่วยเห็นในแอป ThaiWell
             </header>
             <div className="cp-app">
               <div className="cp-app__card">
@@ -275,7 +275,7 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
                 <span className="cp-app__text">
                   <b>{s.clinicName || "ชื่อคลินิก"}</b>
                   <small>{s.clinicAddress || "ที่อยู่คลินิก"}</small>
-                  <em>{hasLoc ? "ระยะทางจากผู้ใช้ เช่น 1.2 กม." : "คลินิกยังไม่ได้ปักตำแหน่ง"}</em>
+                  <em>{hasLoc ? "ระยะทาง เช่น 1.2 กม." : "คลินิกยังไม่ได้ปักตำแหน่ง"}</em>
                 </span>
               </div>
               <div className="cp-app__acts">
@@ -295,7 +295,7 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
           {/* ── ความพร้อมของข้อมูล ── */}
           <section className="cp-card">
             <header>
-              <Check size={15} /> ความพร้อมของข้อมูล
+              <Check size={15} /> ข้อมูลครบหรือยัง
               <em className={clsx(done === checks.length && "is-done")}>
                 {done}/{checks.length}
               </em>
@@ -326,11 +326,11 @@ export function ClinicProfile({ onGo }: { onGo: (section: "hours" | "payment" | 
 }
 
 const TITLES: Record<EditKind, { title: string; subtitle: string; icon: LucideIcon }> = {
-  logo: { title: "โลโก้คลินิก", subtitle: "เลือกไอคอนที่เข้ากับคลินิก หรือใช้รูปคลินิกของคุณ", icon: Camera },
-  name: { title: "ชื่อคลินิก", subtitle: "แสดงบนหน้าหลัก ใบเสร็จ ข้อความถึงผู้ป่วย และในแอปผู้ใช้", icon: Building2 },
-  address: { title: "ที่อยู่คลินิก", subtitle: "ผู้ใช้แอปเห็นในหน้า “สถานที่” · พิมพ์บนใบเสร็จ", icon: MapPin },
-  phone: { title: "เบอร์โทรคลินิก", subtitle: "ผู้ใช้แอปกดโทรหาคลินิกได้จากหน้า “สถานที่”", icon: Phone },
-  location: { title: "ตำแหน่งคลินิก", subtitle: "ใช้คำนวณระยะทางและนำทางในแอปผู้ใช้", icon: Navigation },
+  logo: { title: "โลโก้คลินิก", subtitle: "เลือกไอคอน หรือใช้รูปของคลินิก", icon: Camera },
+  name: { title: "ชื่อคลินิก", subtitle: "แสดงบนหน้าหลัก ใบเสร็จ และแอป ThaiWell", icon: Building2 },
+  address: { title: "ที่อยู่คลินิก", subtitle: "แสดงในแอปและพิมพ์บนใบเสร็จ", icon: MapPin },
+  phone: { title: "เบอร์โทรคลินิก", subtitle: "ผู้ป่วยกดโทรหาคลินิกได้จากแอป", icon: Phone },
+  location: { title: "ตำแหน่งคลินิก", subtitle: "ใช้บอกระยะทางและนำทางในแอป", icon: Navigation },
 };
 
 /** แก้ข้อมูลคลินิกทีละหัวข้อ */
@@ -377,9 +377,9 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
     try {
       const v = await expandShortLink(t);
       if (v) setPos(v);
-      else toast({ message: "อ่านพิกัดจากลิงก์นี้ไม่ได้ · ค้นหาจากที่อยู่ หรือแตะบนแผนที่แทน" });
+      else toast({ message: "อ่านพิกัดจากลิงก์ไม่ได้ ลองแตะบนแผนที่แทน" });
     } catch {
-      toast({ message: "เปิดลิงก์ไม่ได้ · ตรวจอินเทอร์เน็ต หรือแตะบนแผนที่แทน" });
+      toast({ message: "เปิดลิงก์ไม่ได้ ลองแตะบนแผนที่แทน" });
     } finally {
       setBusy(false);
     }
@@ -392,7 +392,7 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
       setFound(r);
       if (r[0]) setPos([r[0].lat, r[0].lng]);
     } catch {
-      toast({ message: "ค้นหาไม่ได้ · ตรวจอินเทอร์เน็ต" });
+      toast({ message: "ค้นหาไม่ได้ ตรวจอินเทอร์เน็ต" });
     } finally {
       setSearching(false);
     }
@@ -439,7 +439,7 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
       }
     >
       {k === "name" && (
-        <Field label="ชื่อหน่วยบริการ">
+        <Field label="ชื่อคลินิก">
           <Input value={text} onChange={(e) => setText(e.target.value)} autoFocus placeholder="เช่น คลินิกแพทย์แผนไทย สาขาสุขุมวิท" />
         </Field>
       )}
@@ -472,14 +472,14 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
                   </button>
                 ))
               ) : (
-                <small>ไม่พบสถานที่นี้ · ลองพิมพ์ชื่อถนน/ซอย/เขต หรือแตะบนแผนที่</small>
+                <small>ไม่พบสถานที่ ลองพิมพ์ถนน/ซอย หรือแตะบนแผนที่</small>
               )}
             </div>
           )}
           {/* 2) แตะบนแผนที่ / ลากหมุด */}
           <LocationPicker value={pos} onChange={setPos} />
           <p className="cp-loc__hint">
-            {pos ? `หมุดอยู่ที่ ${pos[0].toFixed(5)}, ${pos[1].toFixed(5)} · แตะบนแผนที่หรือลากหมุดเพื่อปรับ` : "แตะบนแผนที่ตรงตำแหน่งคลินิกเพื่อปักหมุด"}
+            {pos ? `หมุด ${pos[0].toFixed(5)}, ${pos[1].toFixed(5)} · ลากหมุดเพื่อปรับ` : "แตะบนแผนที่เพื่อปักหมุด"}
           </p>
           {/* 3) ตำแหน่งปัจจุบัน / วางลิงก์ Google Maps */}
           <div className="clinic-form__loc">
@@ -499,7 +499,7 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
                   },
                   (err) => {
                     setLocating(false);
-                    toast({ message: err.code === 1 ? "ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง · เปิดที่ การตั้งค่า › ThaiWell › ตำแหน่ง หรือแตะบนแผนที่แทน" : "หาตำแหน่งไม่ได้ · ลองค้นหาจากที่อยู่ หรือแตะบนแผนที่แทน" });
+                    toast({ message: err.code === 1 ? "ไม่ได้รับอนุญาตให้ใช้ตำแหน่ง เปิดได้ที่ การตั้งค่า › ThaiWell › ตำแหน่ง" : "หาตำแหน่งไม่ได้ ลองแตะบนแผนที่แทน" });
                   },
                   { enableHighAccuracy: true, timeout: 15000 },
                 );
@@ -509,7 +509,7 @@ function ClinicEditDialog({ kind, onClose }: { kind: EditKind | null; onClose: (
             </Button>
           </div>
           {text.trim() && !parseLatLng(text) && !busy && (
-            <small className="cp-loc__warn">{isShortLink(text) ? (Capacitor.isNativePlatform() ? "อ่านพิกัดจากลิงก์นี้ไม่ได้" : "ลิงก์ย่อเปิดได้ในแอป iPad เท่านั้น · บนเว็บให้แตะบนแผนที่หรือค้นหาแทน") : "อ่านพิกัดไม่ได้ · วางลิงก์ Google Maps หรือพิมพ์ เช่น 13.7337, 100.5717"}</small>
+            <small className="cp-loc__warn">{isShortLink(text) ? (Capacitor.isNativePlatform() ? "อ่านพิกัดจากลิงก์นี้ไม่ได้" : "ลิงก์ย่อใช้ได้ในแอป iPad เท่านั้น") : "อ่านพิกัดไม่ได้ เช่น 13.7337, 100.5717"}</small>
           )}
           {pos && (
             <button type="button" className="cp-loc__clear" onClick={() => setPos(null)}>

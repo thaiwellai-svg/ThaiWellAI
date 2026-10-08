@@ -35,7 +35,7 @@ function Sheet({ p }: { p: Patient }) {
       </header>
 
       <section>
-        <h2>ข้อมูลผู้รับบริการ</h2>
+        <h2>ข้อมูลผู้ป่วย</h2>
         <table>
           <tbody>
             {row("ชื่อ-นามสกุล", p.name)}
@@ -56,14 +56,14 @@ function Sheet({ p }: { p: Patient }) {
         {s ? (
           <>
             <p className={stop ? "pps__verdict is-stop" : flags.length ? "pps__verdict is-warn" : "pps__verdict"}>
-              {stop ? "พบข้อห้าม · ต้องให้แพทย์แผนไทยประเมินก่อนนวด" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}
+              {stop ? "พบข้อห้าม · ต้องให้แพทย์ประเมินก่อนนวด" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ผ่านการคัดกรอง"}
               {flags.length > 0 && <span> — {flags.map((f) => f.label).join(" · ")}</span>}
             </p>
             <table>
               <tbody>
                 {row("ความดัน", s.bpSys ? `${s.bpSys}/${s.bpDia ?? "—"} mmHg` : undefined)}
                 {row("ชีพจร", s.pulse ? `${s.pulse} ครั้ง/นาที` : undefined)}
-                {row("ระดับปวด", s.pain != null ? `${s.pain}/10` : undefined)}
+                {row("ปวด", s.pain != null ? `${s.pain}/10` : undefined)}
                 {row("จุดที่ปวด", s.painAreas?.join(", "))}
                 {row("บริเวณห้ามนวด", s.avoid)}
                 {row("แรงนวดที่ต้องการ", s.pressure)}

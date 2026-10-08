@@ -27,7 +27,7 @@ type PendingFilter = "all" | "flagged" | "clash" | "clear";
 type HistoryFilter = "all" | "approved" | "rejected";
 const clock = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
-/** คำขอจองคิว — queue of booking requests from the ThaiWell AI app (list · detail), and the decision history. */
+/** คำขอจอง — queue of booking requests from the ThaiWell AI app (list · detail), and the decision history. */
 export default function Requests() {
   const store = useStore();
   const [params, setParams] = useSearchParams();
@@ -88,8 +88,8 @@ export default function Requests() {
   return (
     <WorkPage
       eyebrow="หน้าหลัก"
-      title="คำขอจองคิว"
-      lead={<BackLead eyebrow="หน้าหลัก" title="คำขอจองคิว" onBack={() => navigate("/")} />}
+      title="คำขอจอง"
+      lead={<BackLead eyebrow="หน้าหลัก" title="คำขอจอง" onBack={() => navigate("/")} />}
       bell={false}
       actions={
         <>
@@ -98,7 +98,7 @@ export default function Requests() {
               Flow แอป ↔ คลินิก
             </Button>
           )}
-          <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN เบอร์โทร" shortcut={false} />
+          <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ / HN / เบอร์" shortcut={false} />
           {tab === "pending" ? (
             <FilterMenu
               label="ตัวกรอง"
@@ -107,7 +107,7 @@ export default function Requests() {
               options={[
                 { value: "all", label: "ทั้งหมด", count: store.requests.length, icon: ListFilter },
                 { value: "flagged", label: "มีข้อควรระวัง", count: counts.flagged, icon: ShieldAlert },
-                { value: "clash", label: "คิวชน ต้องโทรยืนยัน", count: counts.clash, icon: CalendarRange },
+                { value: "clash", label: "คิวชน · ต้องโทร", count: counts.clash, icon: CalendarRange },
                 { value: "clear", label: "พร้อมอนุมัติ", count: clear, icon: ShieldCheck },
               ]}
             />
@@ -212,7 +212,7 @@ export default function Requests() {
             </AnimatePresence>
             {ids.length === 0 && (
               <div className="rq__empty">
-                <EmptyState onGlass icon={tab === "pending" ? <CalendarCheck2 size={24} /> : <History size={24} />} title={tab === "pending" ? "ไม่มีคำขอค้างอนุมัติ" : "ยังไม่มีประวัติ"} description={tab === "pending" ? "คำขอใหม่จากแอป ThaiWell AI จะแสดงที่นี่" : "การอนุมัติและปฏิเสธจะถูกบันทึกไว้ที่นี่"} />
+                <EmptyState onGlass icon={tab === "pending" ? <CalendarCheck2 size={24} /> : <History size={24} />} title={tab === "pending" ? "ไม่มีคำขอค้างอนุมัติ" : "ยังไม่มีประวัติ"} description={tab === "pending" ? "คำขอใหม่จากแอป ThaiWell จะขึ้นที่นี่" : undefined} />
               </div>
             )}
           </div>
@@ -241,7 +241,7 @@ export default function Requests() {
                 </motion.div>
               ) : (
                 <motion.div key="none" className="rq__none" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <EmptyState icon={<CalendarCheck2 size={24} />} title="เลือกคำขอจากรายการ" description="รายละเอียด ผลคัดกรอง และความพร้อมของคิวจะแสดงที่นี่" />
+                  <EmptyState icon={<CalendarCheck2 size={24} />} title="เลือกคำขอจากรายการ" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -305,7 +305,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
 
   return (
     <div className="rq__body scroll-y scroll-y--light">
-      <PatientHead pid={r.patientId} sub={<span className="rq__src">ส่งผ่านแอป ThaiWell AI · {timeAgo(r.submittedAt)}</span>} />
+      <PatientHead pid={r.patientId} sub={<span className="rq__src">จากแอป ThaiWell · {timeAgo(r.submittedAt)}</span>} />
 
       {/* ซ้ำกับนัดตามคอร์สวันเดียวกัน (แอปรุ่นเก่าจองใหม่แทนการประเมินก่อนนวด) */}
       {(() => {
@@ -321,7 +321,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
             </span>
             <div>
               <b>ซ้ำกับนัดตามคอร์ส{no > 0 && c ? ` ครั้งที่ ${no}/${c.total}` : ""} · {thaiDate(cv.date)} {cv.start} น.</b>
-              <span>ผลประเมินของคำขอนี้ใส่ให้นัดตามคอร์สแล้ว · ถ้าผู้ป่วยไม่ได้ตั้งใจจองเพิ่ม ให้ปฏิเสธคำขอนี้</span>
+              <span>ผลประเมินย้ายไปนัดตามคอร์สแล้ว · ถ้าไม่ได้จองเพิ่ม ให้ปฏิเสธ</span>
             </div>
             <Button size="md" variant="outline" onClick={() => store.dispatch({ type: "reject", id: r.id, reason: `ซ้ำกับนัดตามคอร์ส ${thaiDate(cv.date)} ${cv.start} น. · ใช้นัดตามคอร์สแทน` })}>
               ปฏิเสธ (ซ้ำ)
@@ -332,8 +332,8 @@ function RequestDetail({ r }: { r: BookingRequest }) {
       <div className={clsx("rq2__verdict", tone)}>
         <span className="rq2__vi">{stop || flags.length || clash.length ? <ShieldAlert size={20} /> : <ShieldCheck size={20} />}</span>
         <div>
-          <b>{stop ? "ควรให้แพทย์แผนไทยประเมินก่อนอนุมัติ" : clash.length ? "คิวที่ขอชน · โทรยืนยันหรือเลื่อนให้ใหม่" : flags.length ? "มีข้อควรระวัง · อนุมัติได้โดยแจ้งผู้บำบัด" : "พร้อมอนุมัติ"}</b>
-          <span>{[...flags.map((f) => f.label), ...clash.map((c) => c.label)].join(" · ") || "ผ่านแบบคัดกรองและคิวว่าง"}</span>
+          <b>{stop ? "ให้แพทย์ประเมินก่อนอนุมัติ" : clash.length ? "คิวชน · โทรยืนยันหรือจัดเวลาใหม่" : flags.length ? "มีข้อควรระวัง · แจ้งผู้บำบัดก่อนนวด" : "พร้อมอนุมัติ"}</b>
+          <span>{[...flags.map((f) => f.label), ...clash.map((c) => c.label)].join(", ") || "ผ่านคัดกรอง · คิวว่าง"}</span>
         </div>
       </div>
 
@@ -343,7 +343,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
             date={r.date}
             start={r.start}
             minutes={s.minutes}
-            label="ช่วงเวลาที่ขอ"
+            label="เวลาที่ขอ"
             clash={clash.length > 0}
             pill={<span className={clash.length ? "rq2__pill is-bad" : "rq2__pill is-good"}>{clash.length ? "คิวชน" : "คิวว่าง"}</span>}
             rows={[
@@ -354,7 +354,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
                   <>
                     <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
                     {t.name}
-                    <em className={`is-${st}`}>{st === "free" ? "ว่าง" : st === "busy" ? "ติดคิว" : st === "service" ? "ไม่รับบริการนี้" : "ไม่เข้าเวร"}</em>
+                    <em className={`is-${st}`}>{st === "free" ? "ว่าง" : st === "busy" ? "มีนัดแล้ว" : st === "service" ? "ไม่รับบริการนี้" : "ไม่เข้าเวร"}</em>
                   </>
                 ),
                 staff: true,
@@ -377,12 +377,12 @@ function RequestDetail({ r }: { r: BookingRequest }) {
               </span>
               {lastPain && (
                 <span>
-                  Pain ล่าสุด {lastPain.score} · {thaiDateShort(lastPain.date)}
+                  ปวดล่าสุด {lastPain.score}/10 · {thaiDateShort(lastPain.date)}
                 </span>
               )}
               {p.aiPlan && (
                 <span>
-                  <Stethoscope size={13} /> มีแผนการรักษา {p.aiPlan.sessions} ครั้ง
+                  <Stethoscope size={13} /> แผนการรักษา {p.aiPlan.sessions} ครั้ง
                 </span>
               )}
             </div>
@@ -423,8 +423,9 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
             {ok ? "อนุมัติ" : "ปฏิเสธ"} โดย {d.decidedBy}
           </b>
           <span>
-            {thaiDateLong(d.decidedAt.slice(0, 10))} · {clock(d.decidedAt)} น.{d.reason ? ` · ${d.reason}` : ""}
+            {thaiDateLong(d.decidedAt.slice(0, 10))} · {clock(d.decidedAt)} น.
           </span>
+          {d.reason && <span>{d.reason}</span>}
         </div>
       </div>
 
@@ -434,8 +435,8 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
             date={slot.date}
             start={slot.start}
             minutes={s.minutes}
-            label={ok ? "คิวที่จัดให้" : "ช่วงเวลาที่ขอ"}
-            pill={moved ? <span className="rq2__pill is-good">เลื่อนให้ใหม่</span> : undefined}
+            label={ok ? "นัดที่จัดให้" : "เวลาที่ขอ"}
+            pill={moved ? <span className="rq2__pill is-good">เปลี่ยนเวลา</span> : undefined}
             rows={[
               { k: "บริการ", v: `${s.name} · ${s.minutes} นาที` },
               {
@@ -454,11 +455,11 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
 
           <section className="rq2__card">
             <h3>หมายเหตุถึงผู้ป่วย</h3>
-            <p className="rq2__complaint">{d.note ?? (ok ? "ระบบแจ้งยืนยันนัดผ่านแอป ThaiWell AI แล้ว" : "ระบบแจ้งเหตุผลผ่านแอป ThaiWell AI แล้ว")}</p>
+            <p className="rq2__complaint">{d.note ?? (ok ? "แจ้งยืนยันนัดในแอป ThaiWell แล้ว" : "แจ้งเหตุผลในแอป ThaiWell แล้ว")}</p>
           </section>
 
           <section className="rq2__card">
-            <h3>แบบคัดกรอง ณ วันที่ส่งคำขอ</h3>
+            <h3>แบบคัดกรองตอนจอง</h3>
             <ScreeningAnswers r={r} />
           </section>
         </div>

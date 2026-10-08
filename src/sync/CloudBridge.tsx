@@ -358,7 +358,7 @@ export function CloudBridge() {
         const p = patientFor(row);
         st.dispatch({
           type: "schedule",
-          items: [{ patientId: p.id, serviceId: serviceFor(row.service, row.assessment?.serviceId), therapistId: therapistFor(row), date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, ...(row.assessment?.guide ? { appGuide: row.assessment.guide } : {}), note: "นัดจากแอป ThaiWell AI (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell AI" }] }],
+          items: [{ patientId: p.id, serviceId: serviceFor(row.service, row.assessment?.serviceId), therapistId: therapistFor(row), date: row.date, start: row.start, status: "waiting", type: "booked", painBefore: row.assessment?.pain ?? 5, paid: false, cloudId: row.id, ...(row.assessment?.guide ? { appGuide: row.assessment.guide } : {}), note: "นัดจากแอป ThaiWell (ดึงจาก cloud)", log: [{ at: new Date().toISOString(), label: row.queue_no ? `เช็กอินจากแอป · คิว ${row.queue_no}` : "นัดจากแอป ThaiWell" }] }],
         });
         known.current.set(row.id, row.status);
         slotSig.current.set(row.id, `${row.date}|${row.start}|${row.therapist ?? ""}`);
@@ -478,7 +478,7 @@ export function CloudBridge() {
       void pushNotify("ชำระผ่านแอปแล้ว", `${who} · ${row.bill.amount} บาท`, "/billing");
     }
     if (row.status === "cancelled" && local.status !== "cancelled" && !local.startedAt) {
-      st.dispatch({ type: "updateAppointment", id: local.id, patch: { status: "cancelled", cancel: { at: new Date().toISOString(), by: "patient", reason: row.note ?? "ยกเลิกจากแอป", staff: "แอป ThaiWell AI" } }, log: "ผู้ป่วยยกเลิกนัดจากแอป" });
+      st.dispatch({ type: "updateAppointment", id: local.id, patch: { status: "cancelled", cancel: { at: new Date().toISOString(), by: "patient", reason: row.note ?? "ยกเลิกจากแอป", staff: "แอป ThaiWell" } }, log: "ผู้ป่วยยกเลิกนัดจากแอป" });
       void pushNotify("ผู้ป่วยยกเลิกนัดจากแอป", `${who} · ${local.date} ${local.start} น.`, "/appointments");
     }
   };
@@ -621,7 +621,7 @@ export function CloudBridge() {
         if (error) return void creating.current.delete(id);
         known.current.set(id, "confirmed");
         slotSig.current.set(id, `${a.date}|${a.start}|${t.name}`);
-        ref.current.dispatch({ type: "updateAppointment", id: a.id, patch: { cloudId: id }, log: "ส่งนัดไปแสดงในแอป ThaiWell AI ของผู้ป่วย" });
+        ref.current.dispatch({ type: "updateAppointment", id: a.id, patch: { cloudId: id }, log: "ส่งนัดไปแสดงในแอป ThaiWell ของผู้ป่วย" });
         void logEvent("clinic", "booking.clinic", { id }, p.name, `คลินิกลงนัด ${a.date} ${a.start} น. · ${s.name}${course ? ` · คอร์ส ครั้งที่ ${no}/${course.total}` : ""}`);
       });
     }

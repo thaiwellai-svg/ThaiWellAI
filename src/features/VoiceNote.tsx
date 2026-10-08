@@ -54,11 +54,11 @@ export function parseLocal(text: string, serviceName: string): Extract {
 
 /** the question set, in clinical order */
 const SET: { slot: Exclude<Slot, "summary">; label: string }[] = [
-  { slot: "finding", label: "อาการที่ตรวจพบ" },
+  { slot: "finding", label: "ตรวจร่างกาย" },
   { slot: "dx", label: "วินิจฉัย" },
   { slot: "proc", label: "หัตถการ" },
-  { slot: "pain", label: "Pain หลังนวด" },
-  { slot: "advice", label: "คำแนะนำผู้ป่วย" },
+  { slot: "pain", label: "ปวดหลังนวด" },
+  { slot: "advice", label: "คำแนะนำถึงผู้ป่วย" },
 ];
 /** every body area mentioned in free text ("บ่า ไหล่ขวา และเอว" → บ่า, ไหล่, หลังส่วนล่าง) */
 export function areasIn(text: string): BodyArea[] {
@@ -75,7 +75,7 @@ export function areasIn(text: string): BodyArea[] {
 
 /** "หัตถการ", "แก้วินิจฉัย", "ขอดูสรุปหน่อย" → the section the user wants to record or edit */
 const TOPICS: [Slot, RegExp][] = [
-  ["finding", /^(อาการ(ที่ตรวจพบ)?|สิ่งที่ตรวจพบ|ตรวจพบ)$/],
+  ["finding", /^(อาการ(ที่ตรวจพบ)?|สิ่งที่ตรวจพบ|ตรวจพบ|ตรวจร่างกาย)$/],
   ["dx", /^(การ)?วินิจฉัย$/],
   ["proc", /^(หัตถ?การ|หัตการ)$/],
   ["pain", /^(pain|เพน|คะแนนปวด|ความปวด|ปวด)(หลังนวด)?$/i],
@@ -95,7 +95,7 @@ const ASK = {
   finding: "เริ่มจากอาการก่อนนะคะ วันนี้ตรวจเจออะไรบ้างคะ ปวดหรือตึงตรงไหน",
   dx: "แล้ววินิจฉัยว่าเป็นอะไรคะ",
   proc: "วันนี้ทำหัตถการอะไรไปบ้างคะ นวดเส้นไหน นานเท่าไหร่",
-  pain: "หลังนวดคนไข้ให้คะแนนปวดเท่าไหร่คะ",
+  pain: "หลังนวดผู้ป่วยให้คะแนนปวดเท่าไหร่คะ",
 };
 const no = (slot: Slot) => SET.findIndex((x) => x.slot === slot) + 1;
 
@@ -301,7 +301,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
   /** a spoken warning when a proposal touches a no-massage area */
   const avoidWarn = (items: Sug[]) => {
     const hit = items.flatMap((x) => areasIn(x.area ?? "")).filter((a) => avoidAreas().includes(a));
-    return hit.length ? ` แต่${[...new Set(hit)].join(" ")}คนไข้แจ้งว่าไม่ให้นวดนะคะ ยืนยันจริงไหมคะ` : "";
+    return hit.length ? ` แต่${[...new Set(hit)].join(" ")}ผู้ป่วยแจ้งว่าไม่ให้นวดนะคะ ยืนยันจริงไหมคะ` : "";
   };
 
   /** ask for whatever is still missing (with its component) */
@@ -324,14 +324,14 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         setThinking(false);
         saveAdvice(a);
       }
-      const t = `${prefix}${had ? "นี่คือคำแนะนำถึงคนไข้ตอนนี้ค่ะ" : "ร่างคำแนะนำถึงคนไข้ไว้ให้แล้วนะคะ"} อยากปรับตรงไหนบอกได้เลยค่ะ`;
+      const t = `${prefix}${had ? "นี่คือคำแนะนำถึงผู้ป่วยตอนนี้ค่ะ" : "ร่างคำแนะนำถึงผู้ป่วยไว้ให้แล้วนะคะ"} อยากปรับตรงไหนบอกได้เลยค่ะ`;
       say("ai", t, "advice");
       void voice(t);
       return;
     }
     if (slot === "summary") {
       const l = latest.current;
-      const lack = [!l.findings.trim() && "อาการ", !l.dx.length && "วินิจฉัย", !l.pr.length && "หัตถการ", l.pain === undefined && "Pain หลังนวด", !l.advice.trim() && "คำแนะนำ"].filter(Boolean);
+      const lack = [!l.findings.trim() && "อาการ", !l.dx.length && "วินิจฉัย", !l.pr.length && "หัตถการ", l.pain === undefined && "ปวดหลังนวด", !l.advice.trim() && "คำแนะนำ"].filter(Boolean);
       const t = lack.length
         ? `${prefix}สรุปตอนนี้ค่ะ ยังขาด${lack.join(" ")} พิมพ์หรือพูดชื่อหัวข้อเพื่อบันทึกต่อได้เลยนะคะ`
         : `${prefix}ครบทุกเรื่องแล้วค่ะ ลองดูสรุปด้านล่าง แก้ได้ทุกช่อง แล้วกดบันทึกการรักษาได้เลยนะคะ`;
@@ -354,7 +354,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
       const told = [ik?.complaint ?? p.complaint, ik?.focusAreas?.length ? `อยากให้เน้น${ik.focusAreas.join(" ")}` : ""].filter(Boolean).join(" ");
       if (told) {
         setSug({ slot, items: [{ name: told }] });
-        const q = `${prefix}คนไข้แจ้งมาว่า${told} วันนี้ตรวจแล้วเป็นตามนี้ไหมคะ หรือเล่าสิ่งที่ตรวจพบได้เลย`;
+        const q = `${prefix}ผู้ป่วยแจ้งมาว่า${told} วันนี้ตรวจแล้วเป็นตามนี้ไหมคะ หรือเล่าสิ่งที่ตรวจพบได้เลย`;
         say("ai", q, slot);
         void voice(q);
         return;
@@ -808,7 +808,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         </header>
         {row(
           1,
-          "อาการที่ตรวจพบ",
+          "ตรวจร่างกาย",
           editF ? (
             <div className="rs2__edit">
               <textarea rows={2} value={fText} onChange={(e) => setFText(e.target.value)} aria-label="แก้อาการที่ตรวจพบ" autoFocus />
@@ -875,7 +875,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
         )}
         {row(
           4,
-          "Pain หลังนวด",
+          "ปวดหลังนวด",
           <>
             <div className="rs2__pain">
               <b>
@@ -899,7 +899,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_SAVE, { detail: { apptId: appt.id } }));
           }}
         >
-          <Check size={15} strokeWidth={3} /> {ready ? "บันทึกการรักษา" : "ยังขาดวินิจฉัย / หัตถการ / Pain"}
+          <Check size={15} strokeWidth={3} /> {ready ? "บันทึกการรักษา" : "ยังกรอกไม่ครบ"}
         </button>
       </div>
     );
@@ -934,11 +934,11 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
             className="rc-skip"
             onClick={() => {
               fill({ skipPain: true });
-              say("me", "ข้าม · ไม่ได้ประเมินความปวดหลังนวด");
+              say("me", "ข้าม (ไม่ได้ประเมินปวดหลังนวด)");
               void askNext();
             }}
           >
-            ข้าม (ผู้ป่วยไม่ประเมิน)
+            ข้าม (ไม่ประเมิน)
           </button>
         </>
       );
@@ -966,7 +966,7 @@ export function VoiceNote({ appt }: { appt: Appointment; bare?: boolean }) {
                   <small>{[x.area || "แตะหุ่นหรือพูดตำแหน่ง", x.minutes ? `${x.minutes} นาที` : ""].filter(Boolean).join(" · ")}</small>
                 </span>
               ))}
-              {clash.length > 0 ? <em className="is-clash">ตรงกับจุดที่คนไข้ไม่ให้นวด: {clash.join(", ")}</em> : avoid.length > 0 && <em>ไม่ให้นวด: {avoid.join(", ")}</em>}
+              {clash.length > 0 ? <em className="is-clash">ตรงกับจุดที่ผู้ป่วยไม่ให้นวด: {clash.join(", ")}</em> : avoid.length > 0 && <em>ไม่ให้นวด: {avoid.join(", ")}</em>}
             </div>
             <div className="rc-body__acts">
               <span>พูดหรือแตะเพื่อเปลี่ยนตำแหน่ง · ได้หลายจุด</span>

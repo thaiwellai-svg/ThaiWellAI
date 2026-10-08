@@ -63,7 +63,7 @@ export function SellPackageDialog({ patientId, onClose }: { patientId: string | 
       open={!!patientId}
       onClose={onClose}
       className="sp"
-      title="ขายคอร์ส / แพ็กเกจ"
+      title="ขายแพ็กเกจ"
       subtitle={p.name}
       footer={
         <>
@@ -92,7 +92,7 @@ export function SellPackageDialog({ patientId, onClose }: { patientId: string | 
           </button>
         ))}
       </div>
-      {same && <p className="sp__note">ผู้ป่วยมีคอร์สบริการเดียวกันเหลืออยู่ · ระบบจะเพิ่ม {pkg!.sessions} ครั้งเข้าคอร์สเดิม และต่ออายุถึง {thaiDate(addISODays(todayISO(), pkg!.validDays))}</p>}
+      {same && <p className="sp__note">มีคอร์สบริการนี้อยู่แล้ว · เพิ่ม {pkg!.sessions} ครั้งเข้าคอร์สเดิม ใช้ได้ถึง {thaiDate(addISODays(todayISO(), pkg!.validDays))}</p>}
 
       <div className="sp__row">
         <span>

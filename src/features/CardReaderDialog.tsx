@@ -20,10 +20,10 @@ export interface IdCardData {
 
 const LABEL: Record<ReaderState, string> = { checking: "กำลังตรวจสอบเครื่องอ่าน", ready: "เครื่องพร้อมใช้งาน", missing: "ไม่พบเครื่องอ่านบัตร", reading: "กำลังอ่านบัตร" };
 const TELL: Record<ReaderState, { title: string; detail: string }> = {
-  checking: { title: "กำลังตรวจสอบเครื่องอ่านบัตร", detail: "รอสักครู่ ระบบกำลังเชื่อมต่อกับเครื่องอ่าน" },
-  ready: { title: "กรุณาเสียบบัตรประชาชนเข้ากับเครื่องอ่าน", detail: "ให้ด้านที่มีชิปหันขึ้น แล้วดันเข้าจนสุด" },
-  missing: { title: "ไม่พบเครื่องอ่านบัตร", detail: "ตรวจสอบว่าเสียบสายเครื่องอ่านกับอุปกรณ์แล้ว จากนั้นลองใหม่" },
-  reading: { title: "กำลังอ่านข้อมูลจากบัตร", detail: "อย่าดึงบัตรออกจนกว่าจะอ่านเสร็จ" },
+  checking: { title: "กำลังตรวจเครื่องอ่านบัตร", detail: "รอสักครู่" },
+  ready: { title: "เสียบบัตรประชาชน", detail: "ด้านชิปหันขึ้น ดันเข้าจนสุด" },
+  missing: { title: "ไม่พบเครื่องอ่านบัตร", detail: "เสียบสายเครื่องอ่านแล้วลองใหม่" },
+  reading: { title: "กำลังอ่านบัตร", detail: "อย่าดึงบัตรออกจนกว่าจะเสร็จ" },
 };
 const DOT: Record<ReaderState, string> = { checking: "#d97706", ready: "#2f8a52", missing: "#c2482b", reading: "#3b82f6" };
 
@@ -121,7 +121,7 @@ export function CardReaderDialog({ open, onClose, onRead }: { open: boolean; onC
               <span className="crd__icon">
                 <CreditCard size={16} />
               </span>
-              <b>อ่านข้อมูลจากบัตรประชาชน</b>
+              <b>อ่านบัตรประชาชน</b>
               <button type="button" className="crd__x" onClick={onClose} aria-label="ปิด">
                 <X size={18} />
               </button>
@@ -165,7 +165,7 @@ export function CardReaderDialog({ open, onClose, onRead }: { open: boolean; onC
                     : insert
                 }
               >
-                {state === "missing" ? "ตรวจสอบอีกครั้ง" : state === "reading" ? "กำลังอ่านบัตร…" : "เสียบบัตรแล้ว"}
+                {state === "missing" ? "ลองใหม่" : state === "reading" ? "กำลังอ่านบัตร…" : "เสียบบัตรแล้ว"}
               </button>
             </footer>
           </motion.div>

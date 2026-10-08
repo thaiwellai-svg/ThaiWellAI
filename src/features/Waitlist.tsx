@@ -52,7 +52,7 @@ export function WaitlistCard({ date, onBook }: { date: string; onBook: (w: WaitE
                 <span className="wl__main">
                   <b>{p.name}</b>
                   <small>
-                    {thaiDateShort(w.date)} · {w.from}–{w.to} น. · {store.serviceById(w.serviceId).short}
+                    {thaiDateShort(w.date)} {w.from}–{w.to} น. · {store.serviceById(w.serviceId).short}
                   </small>
                   {w.status === "notified" && (
                     <em>
@@ -73,7 +73,7 @@ export function WaitlistCard({ date, onBook }: { date: string; onBook: (w: WaitE
           })}
         </div>
       ) : (
-        <p className="wl__empty">ยังไม่มีคนรอคิว · เมื่อมีคนยกเลิกนัด ระบบจะแจ้งคนที่รอในช่วงเวลานั้นให้อัตโนมัติ</p>
+        <p className="wl__empty">ยังไม่มีคนรอคิว · มีคนยกเลิกจะแจ้งให้อัตโนมัติ</p>
       )}
       <WaitAddDialog open={adding} date={date} onClose={() => setAdding(false)} />
     </div>
@@ -105,7 +105,7 @@ function WaitAddDialog({ open, date, onClose }: { open: boolean; date: string; o
       open={open}
       onClose={close}
       title="เพิ่มรายการรอคิว"
-      subtitle="ถ้ามีคนยกเลิกในช่วงเวลานี้ ระบบจะแจ้งผ่านแอป ThaiWell AI"
+      subtitle="มีคนยกเลิกช่วงนี้ จะแจ้งในแอป ThaiWell"
       footer={
         <>
           <Button variant="outline" size="md" onClick={close}>
@@ -120,7 +120,7 @@ function WaitAddDialog({ open, date, onClose }: { open: boolean; date: string; o
       <div className="bz-form">
         {/* not a <Field>: a <label> would swallow taps on the result buttons */}
         <div className="tw-field span-2">
-          <span className="tw-field__label">ผู้รับบริการ</span>
+          <span className="tw-field__label">ผู้ป่วย</span>
           {picked ? (
             <div className="wl__picked">
               <Avatar name={picked.name} src={patientPhoto(picked)} size="sm" />
@@ -132,7 +132,7 @@ function WaitAddDialog({ open, date, onClose }: { open: boolean; date: string; o
             </div>
           ) : (
             <>
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อ HN หรือเบอร์โทร" autoFocus />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อ / HN / เบอร์" autoFocus />
               {found.length > 0 && (
                 <div className="wl__found">
                   {found.map((p) => (
@@ -155,7 +155,7 @@ function WaitAddDialog({ open, date, onClose }: { open: boolean; date: string; o
             ))}
           </Select>
         </Field>
-        <Field label="วันที่ต้องการ">
+        <Field label="วันที่">
           <Input type="date" min={todayISO()} value={f.date} onChange={(e) => e.target.value && setF({ ...f, date: e.target.value })} />
         </Field>
         <Field label="ตั้งแต่">
@@ -165,7 +165,7 @@ function WaitAddDialog({ open, date, onClose }: { open: boolean; date: string; o
           <Input type="time" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
         </Field>
         <Field label="หมายเหตุ" className="span-2">
-          <Textarea rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="เช่น สะดวกหลังเลิกงาน ขอผู้บำบัดหญิง" />
+          <Textarea rows={2} value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} placeholder="เช่น สะดวกช่วงเย็น ขอผู้บำบัดหญิง" />
         </Field>
       </div>
     </Dialog>

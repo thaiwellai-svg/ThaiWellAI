@@ -30,19 +30,19 @@ export function PromptPaySetting() {
       <div className="pp__form">
         {cur.replace(/\D/g, "") === DEMO_PP && (
           <p className="pp__warn">
-            <AlertTriangle size={14} /> ยังไม่ได้ตั้งเลขพร้อมเพย์ · เงินที่ผู้ป่วยสแกนจ่ายจะไม่เข้าบัญชีคลินิก
+            <AlertTriangle size={14} /> ยังไม่ได้ตั้งเลขพร้อมเพย์ · สแกนจ่ายยังไม่ได้
           </p>
         )}
         <label>
-          <span>เบอร์พร้อมเพย์ หรือเลขประจำตัวผู้เสียภาษี 13 หลัก</span>
+          <span>เบอร์พร้อมเพย์ หรือเลขผู้เสียภาษี 13 หลัก</span>
           <input inputMode="numeric" value={v} onChange={(e) => setV(e.target.value.replace(/[^\d-]/g, "").slice(0, 17))} placeholder="08x-xxx-xxxx" aria-invalid={!kind} />
         </label>
-        <small className={clsx(!kind && d && "is-bad")}>{!d ? "กรอกเบอร์ 10 หลัก หรือเลข 13 หลัก" : kind === "phone" ? "เบอร์โทรศัพท์ที่ผูกพร้อมเพย์" : kind === "tax" ? "เลขผู้เสียภาษี / บัตรประชาชนที่ผูกพร้อมเพย์" : "รูปแบบไม่ถูกต้อง"}</small>
+        <small className={clsx(!kind && d && "is-bad")}>{!d ? "กรอกเบอร์ 10 หลัก หรือเลข 13 หลัก" : kind === "phone" ? "เบอร์โทรศัพท์ที่ผูกพร้อมเพย์" : kind === "tax" ? "เลข 13 หลักที่ผูกพร้อมเพย์" : "รูปแบบไม่ถูกต้อง"}</small>
         <Button
           disabled={!kind || !dirty}
           onClick={() => {
             store.dispatch({ type: "updateSettings", patch: { promptpayId: d } });
-            toast({ message: `บันทึกพร้อมเพย์ ${ppFormat(d)} แล้ว · ลองสแกน QR ทดสอบ 1 บาทก่อนใช้จริง` });
+            toast({ message: `บันทึกพร้อมเพย์ ${ppFormat(d)} แล้ว ลองสแกน QR 1 บาทก่อนใช้จริง` });
           }}
         >
           บันทึก
@@ -59,6 +59,8 @@ export function PromptPaySetting() {
 
 /* ───────────── audit trail ───────────── */
 
+/** display names for the stored audit categories (stored values stay as-is) */
+const catLabel = (c: string) => (c === "นัดหมาย" ? "นัด" : c);
 const CATS: AuditEntry["cat"][] = ["เวชระเบียน", "การเงิน", "นัดหมาย", "ผู้ป่วย", "คลังสินค้า", "ตั้งค่า", "ระบบ"];
 const CAT_TONE: Record<AuditEntry["cat"], string> = { เวชระเบียน: "#7c5cc4", การเงิน: "#d97706", นัดหมาย: "#3b82c4", ผู้ป่วย: "#2f8a52", ตั้งค่า: "#6b7a71", ระบบ: "#c2482b", คลังสินค้า: "#0f766e" };
 
@@ -85,18 +87,18 @@ export function AuditLog() {
       <div className="al__bar">
         <label className="al__search">
           <Search size={14} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา ชื่อผู้ป่วย ผู้ทำรายการ หรือรายละเอียด" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาชื่อผู้ป่วย ผู้ทำ หรือรายละเอียด" />
         </label>
         <div className="al__cats">
           {(["all", ...CATS] as const).map((c) => (
             <button key={c} type="button" aria-pressed={cat === c} style={c !== "all" ? { ["--c" as string]: CAT_TONE[c] } : undefined} onClick={() => setCat(c)}>
-              {c === "all" ? "ทั้งหมด" : c}
+              {c === "all" ? "ทั้งหมด" : catLabel(c)}
               <em>{c === "all" ? (store.audit ?? []).length : (store.audit ?? []).filter((e) => e.cat === c).length}</em>
             </button>
           ))}
         </div>
       </div>
-      {shown.length === 0 && <p className="al__empty">ยังไม่มีรายการ · ทุกการเปลี่ยนแปลงหลังจากนี้จะถูกบันทึกไว้ที่นี่</p>}
+      {shown.length === 0 && <p className="al__empty">ยังไม่มีประวัติการแก้ไข</p>}
       {days.map(([d, es]) => (
         <section key={d} className="al__day">
           <p>{d === todayISO() ? "วันนี้" : thaiDateLong(d)}</p>
@@ -104,7 +106,7 @@ export function AuditLog() {
             {es.map((e) => (
               <li key={e.id} style={{ ["--c" as string]: CAT_TONE[e.cat] }}>
                 <time>{new Date(e.at).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}</time>
-                <span className="al__cat">{e.cat}</span>
+                <span className="al__cat">{catLabel(e.cat)}</span>
                 <span className="al__text">
                   <b>{e.text}</b>
                   <small>
@@ -168,7 +170,7 @@ export function BackupPanel() {
       /* ignore */
     }
     setLast(now);
-    toast({ message: "ดาวน์โหลดไฟล์สำรองแล้ว · เก็บไว้ในที่ปลอดภัย (มีข้อมูลผู้ป่วย)" });
+    toast({ message: "ดาวน์โหลดไฟล์สำรองแล้ว เก็บไว้ในที่ปลอดภัย" });
   };
 
   const pick = async (f: File) => {
@@ -190,7 +192,7 @@ export function BackupPanel() {
         </span>
         <div>
           <b>ดาวน์โหลดไฟล์สำรอง</b>
-          <small>ผู้ป่วย นัด การชำระเงิน เวชระเบียน ตั้งค่า และประวัติการแก้ไขทั้งหมด · {last ? `สำรองล่าสุด ${new Date(last).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "ยังไม่เคยสำรอง"}</small>
+          <small>ข้อมูลทั้งหมดของคลินิก · {last ? `สำรองล่าสุด ${new Date(last).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "ยังไม่เคยสำรอง"}</small>
         </div>
         <Button onClick={download}>ดาวน์โหลด</Button>
       </div>
@@ -200,7 +202,7 @@ export function BackupPanel() {
         </span>
         <div>
           <b>กู้คืนจากไฟล์สำรอง</b>
-          <small>แทนที่ข้อมูลทั้งหมดในเครื่องนี้ด้วยข้อมูลในไฟล์</small>
+          <small>แทนที่ข้อมูลในเครื่องนี้ด้วยไฟล์</small>
         </div>
         <Button variant="outline" onClick={() => file.current?.click()}>
           เลือกไฟล์
@@ -215,13 +217,13 @@ export function BackupPanel() {
               <CalendarClock size={18} />
             </span>
             <div>
-              <b>ใช้ข้อมูลจริง ไม่รีเซ็ตทุกวัน</b>
-              <small>ปิด = ข้อมูลตัวอย่างจะสร้างใหม่ทุกวัน · เปิด = เก็บข้อมูลไว้ต่อเนื่อง (เปิดให้อัตโนมัติเมื่อกู้คืนไฟล์)</small>
+              <b>ใช้ข้อมูลจริง</b>
+              <small>เปิด = เก็บข้อมูลต่อเนื่อง · ปิด = ข้อมูลตัวอย่างใหม่ทุกวัน</small>
             </div>
             <Switch checked={!!store.keepData} label="ใช้ข้อมูลจริง" onChange={(on) => store.dispatch({ type: "setKeepData", on })} />
           </div>
           <p className="bk__note">
-            <ShieldCheck size={13} /> ข้อมูลเก็บในเบราว์เซอร์ของเครื่องนี้เท่านั้น ควรดาวน์โหลดไฟล์สำรองทุกวันจนกว่าจะมีเซิร์ฟเวอร์
+            <ShieldCheck size={13} /> ข้อมูลอยู่ในเครื่องนี้เท่านั้น ควรสำรองทุกวัน
           </p>
         </>
       )}
@@ -229,7 +231,7 @@ export function BackupPanel() {
       <Dialog
         open={!!pending}
         onClose={() => setPending(null)}
-        title="กู้คืนข้อมูลจากไฟล์สำรอง?"
+        title="กู้คืนจากไฟล์สำรอง?"
         subtitle={pending?.name}
         footer={
           <>
@@ -244,20 +246,20 @@ export function BackupPanel() {
                 setPending(null);
               }}
             >
-              แทนที่ข้อมูลในเครื่องนี้
+              กู้คืน
             </Button>
           </>
         }
       >
         {pending && (
           <div className="bk__sum">
-            <p>ข้อมูลปัจจุบันในเครื่องนี้จะถูกแทนที่ทั้งหมด แนะนำให้ดาวน์โหลดไฟล์สำรองของข้อมูลปัจจุบันก่อน</p>
+            <p>ข้อมูลในเครื่องนี้จะถูกแทนที่ทั้งหมด ควรดาวน์โหลดไฟล์สำรองก่อน</p>
             <ul>
               <li>
-                ผู้ป่วย <b>{pending.state.patients.length}</b> ราย
+                ผู้ป่วย <b>{pending.state.patients.length}</b> คน
               </li>
               <li>
-                นัด / การรับบริการ <b>{pending.state.appointments.length}</b> รายการ
+                นัด <b>{pending.state.appointments.length}</b> นัด
               </li>
               <li>
                 ใบเสร็จ <b>{pending.state.appointments.filter((a) => a.payment).length}</b> ใบ

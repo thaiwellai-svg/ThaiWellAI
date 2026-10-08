@@ -53,7 +53,8 @@ export function CancelDialog({
     // every booked session holds a course credit (see creditInfo), so the plan = all upcoming sessions not started yet
     if (!appt || !p?.course) return [];
     return store.appointments
-      .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.startedAt && !a.calledAt && a.date >= todayISO())
+      // นัดที่กำลังยกเลิกอยู่ในรายการเสมอ (เรียกคิวแล้วแต่ยังไม่เริ่มนวด ยกเลิกได้)
+      .filter((a) => a.patientId === p.id && a.status === "waiting" && !a.startedAt && ((!a.calledAt && a.date >= todayISO()) || a.id === appt.id))
       .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
   }, [appt, p, store.appointments]);
   useEffect(() => {
@@ -61,7 +62,6 @@ export function CancelDialog({
     setPicked(preset ? preset.ids : planFirst ? plan.map((a) => a.id) : [appt.id]);
   }, [appt?.id, plan.length]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!appt || !p) return null;
-  const s = store.serviceById(appt.serviceId);
   const targets = plan.length > 1 ? plan.filter((a) => picked.includes(a.id)) : [appt];
   const all = plan.length > 1 && targets.length === plan.length;
   const toggle = (id: string) => setPicked((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
@@ -78,12 +78,12 @@ export function CancelDialog({
         type: "updateAppointment",
         id: a.id,
         patch: { status: "cancelled", cancel: { at, by, reason, note: note.trim() || undefined, staff: store.settings.staffName, batch } },
-        log: `ยกเลิกนัด ${thaiDateShort(a.date)} ${a.start} น. · ${by === "patient" ? "ผู้ป่วยแจ้ง" : "คลินิกยกเลิก"} · ${why}`,
+        log: `ยกเลิกนัด ${thaiDateShort(a.date)} ${a.start} น. · ${by === "patient" ? "ผู้ป่วยยกเลิก" : "คลินิกยกเลิก"} · ${why}`,
       });
     }
     const waiting = notifyWaitlist(store, targets.map((a) => ({ date: a.date, start: a.start, patientId: a.patientId })));
     toast({
-      message: (waiting ? `แจ้งคนรอคิว ${waiting} คนผ่านแอปแล้ว · ` : "") + (targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว${p.course ? ` · คืนเครดิตให้ ${targets.length} ครั้ง` : ""}` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว${notify ? " · แจ้งผู้ป่วยผ่านแอปแล้ว" : ""}`),
+      message: (targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว`) + (waiting ? ` · แจ้งคนรอคิว ${waiting} คน` : ""),
       action: { label: "เลิกทำ", onClick: () => before.forEach((a) => store.dispatch({ type: "restoreAppointment", appointment: a })) },
     });
     onClose();
@@ -97,21 +97,21 @@ export function CancelDialog({
       className="cx"
       leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />}
       title="ยกเลิกนัด"
-      subtitle={`${p.name} · ${thaiDateShort(appt.date)} ${appt.start} น. · ${s.name}`}
+      subtitle={`${p.name} · ${thaiDateShort(appt.date)} ${appt.start} น.`}
       footer={
         <>
           <Button variant="outline" size="md" onClick={onClose}>
             ปิด
           </Button>
           <Button variant="danger" size="md" leading={<CalendarX2 size={16} />} disabled={targets.length === 0} onClick={confirm}>
-            {targets.length === 0 ? "เลือกวันที่จะยกเลิก" : targets.length > 1 ? `ยกเลิก ${targets.length} นัด` : "ยืนยันยกเลิกนัด"}
+            {targets.length === 0 ? "เลือกนัดที่จะยกเลิก" : targets.length > 1 ? `ยกเลิก ${targets.length} นัด` : "ยืนยันยกเลิกนัด"}
           </Button>
         </>
       }
     >
       {plan.length > 1 && (
         <section className="cx__sec">
-          <h3>นัดนี้อยู่ในแผนการรักษา · {p.course!.name}</h3>
+          <h3>นัดตามคอร์ส · {p.course!.name}</h3>
           <div className="cx__scope">
             <button type="button" aria-pressed={targets.length === 1 && picked[0] === appt.id} onClick={() => setPicked([appt.id])}>
               <i>{targets.length === 1 && picked[0] === appt.id && <Check size={12} strokeWidth={3} />}</i>
@@ -125,12 +125,12 @@ export function CancelDialog({
             <button type="button" aria-pressed={all} onClick={() => setPicked(plan.map((a) => a.id))}>
               <i>{all && <Check size={12} strokeWidth={3} />}</i>
               <span>
-                <b>ทั้งหมด · {plan.length} นัด</b>
-                <small>ทุกนัดตามแผนที่ยังไม่ได้รับบริการ</small>
+                <b>ทั้งคอร์ส ({plan.length} นัด)</b>
+                <small>ทุกนัดที่ยังไม่มา</small>
               </span>
             </button>
           </div>
-          <p className="cx__hint">หรือแตะเลือกวันที่ต้องการยกเลิก · เลือกแล้ว {targets.length} จาก {plan.length} นัด</p>
+          <p className="cx__hint">หรือแตะเลือกทีละวัน · เลือก {targets.length}/{plan.length} นัด</p>
           <div className="cx__dates">
             {plan.map((a) => {
               const on = picked.includes(a.id);
@@ -146,7 +146,7 @@ export function CancelDialog({
       )}
 
       <section className="cx__sec">
-        <h3>ใครเป็นผู้ยกเลิก</h3>
+        <h3>ผู้ยกเลิก</h3>
         <div className="cx__seg">
           {(["patient", "clinic"] as const).map((x) => (
             <button
@@ -158,7 +158,7 @@ export function CancelDialog({
                 setReason(REASONS[x][0]);
               }}
             >
-              {x === "patient" ? "ผู้ป่วยแจ้งยกเลิก" : "คลินิกยกเลิก"}
+              {x === "patient" ? "ผู้ป่วยยกเลิก" : "คลินิกยกเลิก"}
             </button>
           ))}
         </div>
@@ -174,26 +174,26 @@ export function CancelDialog({
           ))}
         </div>
         <Field label="หมายเหตุ (ไม่บังคับ)">
-          <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น ผู้ป่วยจะโทรกลับมานัดใหม่" />
+          <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น จะโทรกลับมานัดใหม่" />
         </Field>
       </section>
 
       <div className="cx__info">
         <p>
-          <Info size={15} /> เวลาและเตียงที่จองไว้จะว่างให้คนอื่นจองได้ทันที
+          <Info size={15} /> เวลาและเตียงนี้ว่างให้คนอื่นจองทันที
         </p>
         {p.course && (
           <p>
-            <Ticket size={15} /> คืนเครดิตคอร์สให้ {targets.length} ครั้ง (ยังไม่ถูกหัก)
+            <Ticket size={15} /> คืนเครดิตคอร์ส {targets.length} ครั้ง
           </p>
         )}
-        {paid.length > 0 && <p className="is-warn">ชำระเงินแล้ว {paid.length} นัด · ระบบจะยกเลิกใบเสร็จและบันทึกการคืนเงิน</p>}
+        {paid.length > 0 && <p className="is-warn">ชำระแล้ว {paid.length} นัด · ยกเลิกใบเสร็จและบันทึกคืนเงินให้</p>}
       </div>
 
       <div className={clsx("cx__notify", notify && "is-on")}>
         <span>
-          <b>แจ้งผู้ป่วยผ่านแอป ThaiWell AI</b>
-          <small>ส่งข้อความยกเลิกนัดพร้อมเหตุผล</small>
+          <b>แจ้งผู้ป่วยในแอป ThaiWell</b>
+          <small>ส่งแจ้งยกเลิกพร้อมเหตุผล</small>
         </span>
         <Switch checked={notify} onChange={setNotify} label="แจ้งผู้ป่วย" />
       </div>

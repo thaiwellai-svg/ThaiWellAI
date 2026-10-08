@@ -45,13 +45,13 @@ export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRo
             <MessageSquareWarning size={16} />
           </span>
           <div>
-            <b>ผู้ป่วยแจ้งอาการเพิ่มหลังเช็กอิน</b>
+            <b>แจ้งอาการเพิ่มหลังเช็กอิน</b>
             {addenda.map((a, i) => (
               <p key={`${a.at}${i}`}>
                 <small>{hm(a.at)} น.</small> {a.text}
               </p>
             ))}
-            <em>ผลประเมินที่ใช้ยังเป็นรอบล่าสุดก่อนเช็กอิน · ตรวจอาการที่แจ้งเพิ่มก่อนเริ่มนวด</em>
+            <em>ตรวจอาการนี้ก่อนเริ่มนวด</em>
           </div>
         </div>
       )}
@@ -61,7 +61,7 @@ export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRo
             <History size={15} />
             <span>
               <b>ประเมินในแอป {rounds.length} รอบ</b>
-              <small>ใช้รอบล่าสุด {when(latest.at)}{diffOf(latest, rounds[rounds.length - 2]).length ? ` · ${diffOf(latest, rounds[rounds.length - 2]).join(" · ")}` : ""}</small>
+              <small>ใช้รอบล่าสุด {when(latest.at)}{diffOf(latest, rounds[rounds.length - 2]).length ? ` · ${diffOf(latest, rounds[rounds.length - 2]).join(", ")}` : ""}</small>
             </span>
             <ChevronDown size={16} className={clsx("ah-chev", open && "is-open")} />
           </button>
@@ -80,11 +80,11 @@ export function AssessHistory({ rounds = [], addenda = [] }: { rounds?: AssessRo
                     <p>
                       ปวด <b>{r.pain}/10</b>
                       {r.focusAreas.length ? ` · ${r.focusAreas.join(", ")}` : ""}
-                      {r.avoidAreas.length ? ` · ห้ามนวด ${r.avoidAreas.join(", ")}` : ""}
+                      {r.avoidAreas.length ? ` (ไม่นวด ${r.avoidAreas.join(", ")})` : ""}
                     </p>
                     {r.complaint && <p className="ah-list__text">“{r.complaint}”</p>}
                     {(r.flags ?? []).length > 0 && <p className="ah-list__flag">ข้อห้าม: {r.flags!.join(", ")}</p>}
-                    {d.length > 0 && <p className="ah-list__diff">เปลี่ยนจากรอบก่อน: {d.join(" · ")}</p>}
+                    {d.length > 0 && <p className="ah-list__diff">เปลี่ยนจากรอบก่อน: {d.join(", ")}</p>}
                   </li>
                 );
               })}

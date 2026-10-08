@@ -47,14 +47,14 @@ export default function Packages() {
   return (
     <BizPage
       eyebrow="การเงิน"
-      title="คอร์สและแพ็กเกจ"
+      title="แพ็กเกจ"
       bar={
         <>
           <Tabs
             value={tab}
             onChange={setTab}
             options={[
-              { value: "catalog", label: "แพ็กเกจที่ขาย", count: packages.filter((x) => x.active).length },
+              { value: "catalog", label: "แพ็กเกจ", count: packages.filter((x) => x.active).length },
               { value: "sales", label: "ยอดขาย", count: due.length || undefined },
             ]}
           />
@@ -67,8 +67,8 @@ export default function Packages() {
       }
     >
       <div className="bz-stats">
-        <Stat label="ขายเดือนนี้" value={`${monthSales.length} คอร์ส`} sub={`${baht(monthSales.reduce((n, s) => n + s.net, 0))} บาท`} />
-        <Stat label="รับเงินแล้ว (เดือนนี้)" value={`${baht(monthSales.reduce((n, s) => n + paidOf(s), 0))} ฿`} tone="#2f8a52" />
+        <Stat label="ขายเดือนนี้" value={`${monthSales.length} แพ็กเกจ`} sub={`${baht(monthSales.reduce((n, s) => n + s.net, 0))} บาท`} />
+        <Stat label="รับเงินเดือนนี้" value={`${baht(monthSales.reduce((n, s) => n + paidOf(s), 0))} ฿`} tone="#2f8a52" />
         <Stat label="ค้างชำระ" value={`${baht(due.reduce((n, s) => n + s.net - paidOf(s), 0))} ฿`} sub={`${due.length} รายการ`} tone={due.length ? "#c47a12" : undefined} />
         <div className="bz-stat">
           <small>ส่วนลดสมาชิก</small>
@@ -85,7 +85,7 @@ export default function Packages() {
             />{" "}
             %
           </b>
-          <em>ใช้กับทุกแพ็กเกจเมื่อเลือก “สมาชิก”</em>
+          <em>ใช้เมื่อเลือก “สมาชิก”</em>
         </div>
       </div>
 
@@ -99,7 +99,10 @@ export default function Packages() {
               <div className="bz-row__main">
                 <b>{x.name}</b>
                 <small>
-                  {store.serviceById(x.serviceId).name} · {x.sessions} ครั้ง · ใช้ได้ {x.validDays} วัน · ปกติ {baht(store.serviceById(x.serviceId).price * x.sessions)} ฿ (ประหยัด {baht(Math.max(0, store.serviceById(x.serviceId).price * x.sessions - x.price))} ฿)
+                  {store.serviceById(x.serviceId).name} · {x.sessions} ครั้ง / {x.validDays} วัน
+                </small>
+                <small>
+                  ประหยัด {baht(Math.max(0, store.serviceById(x.serviceId).price * x.sessions - x.price))} ฿ จากราคาปกติ {baht(store.serviceById(x.serviceId).price * x.sessions)} ฿
                 </small>
               </div>
               <span className={`bz-chip ${x.active ? "" : "is-muted"}`}>{x.active ? "เปิดขาย" : "ปิดขาย"}</span>
@@ -129,9 +132,12 @@ export default function Packages() {
                       {pt.name} · {s.name}
                     </b>
                     <small>
-                      {s.no} · {thaiDateShort(s.at.slice(0, 10))} · {s.payments.map((x) => `${x.kind === "deposit" ? "มัดจำ" : x.kind === "balance" ? "ชำระคงค้าง" : "ชำระ"} ${baht(x.amount)} (${METHOD_LABEL[x.method]})`).join(" · ") || "ยังไม่ชำระ"}
-                      {s.discount > 0 ? ` · ส่วนลด ${baht(s.discount)}` : ""}
+                      {s.no} · {thaiDateShort(s.at.slice(0, 10))}
                       {s.member ? " · สมาชิก" : ""}
+                    </small>
+                    <small>
+                      {s.payments.map((x) => `${x.kind === "deposit" ? "มัดจำ" : x.kind === "balance" ? "ชำระส่วนที่ค้าง" : "ชำระ"} ${baht(x.amount)} (${METHOD_LABEL[x.method]})`).join(", ") || "ยังไม่ชำระ"}
+                      {s.discount > 0 ? ` · ส่วนลด ${baht(s.discount)}` : ""}
                     </small>
                   </div>
                   <span className={`bz-chip ${left > 0 ? "is-warn" : ""}`}>{left > 0 ? `ค้าง ${baht(left)}` : "ชำระครบ"}</span>
@@ -148,7 +154,7 @@ export default function Packages() {
               );
             })
           ) : (
-            <p className="bz-empty">ยังไม่มียอดขาย · ขายคอร์สได้จากหน้าผู้ป่วย → การ์ดคอร์สการรักษา → “ขายคอร์ส”</p>
+            <p className="bz-empty">ยังไม่มียอดขาย · ขายคอร์สได้จากหน้าผู้ป่วย</p>
           )}
         </div>
       )}
@@ -194,7 +200,7 @@ export default function Packages() {
             <div className="sp__row">
               <span>
                 <b>เปิดขาย</b>
-                <small>ปิดไว้ถ้าไม่ต้องการให้เลือก</small>
+                <small>ปิดเพื่อซ่อนจากตอนขาย</small>
               </span>
               <Switch checked={edit.active} onChange={(v) => setEdit({ ...edit, active: v })} label="เปิดขาย" />
             </div>

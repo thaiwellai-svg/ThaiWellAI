@@ -79,7 +79,7 @@ export function StaffOverview() {
   };
 
   const who = (t: Therapist, sub: string) => (
-    <button type="button" className="so-who" onClick={() => setPerson(t.id)} title="ดูภาพรวม">
+    <button type="button" className="so-who" onClick={() => setPerson(t.id)} title="ดูตารางรายคน">
       <Avatar name={t.name} src={therapistPhoto(t)} size="sm" color={t.color} />
       <span className="so-who__text">
         <b>{t.name}</b>
@@ -127,7 +127,7 @@ export function StaffOverview() {
                   <div key={s.id} className="so-service">
                     <span>
                       <b>{s.name}</b>
-                      <small>{by.length} คนให้บริการ</small>
+                      <small>ผู้บำบัด {by.length} คน</small>
                     </span>
                     <span className="so-faces">
                       {by.map((t) => (
@@ -142,7 +142,7 @@ export function StaffOverview() {
 
           <div className="rail-card">
             <div className="rail-card__head">
-              <b>เจ้าหน้าที่</b>
+              <b>ผู้บำบัด</b>
               {person ? (
                 <button className="rail-clear" onClick={() => setPerson(null)}>
                   ดูทั้งหมด
@@ -226,11 +226,11 @@ export function StaffOverview() {
                   <div
                     className="so-grid so-grid--day"
                     style={{
-                      gridTemplateColumns: `188px repeat(${times.length}, minmax(84px, 1fr))`,
+                      gridTemplateColumns: `var(--so-name-col) repeat(${times.length}, minmax(84px, 1fr))`,
                       gridTemplateRows: `auto repeat(${staff.length}, minmax(84px, auto))`,
                     }}
                   >
-                    <div className="cal-corner so-corner">เจ้าหน้าที่</div>
+                    <div className="cal-corner so-corner">ผู้บำบัด</div>
                     {times.map((s) => (
                       <div key={s} className="cal-head so-time">
                         <span className="cal-head__date">{s}</span>
@@ -288,9 +288,9 @@ export function StaffOverview() {
                   /* ── Week: hours + services per day ── */
                   <div
                     className="so-grid"
-                    style={{ gridTemplateColumns: `188px ${days.map((d) => (closedOn(d) ? "56px" : "minmax(96px, 1fr)")).join(" ")}` }}
+                    style={{ gridTemplateColumns: `var(--so-name-col) ${days.map((d) => (closedOn(d) ? "56px" : "minmax(96px, 1fr)")).join(" ")}` }}
                   >
-                    <div className="cal-corner so-corner">เจ้าหน้าที่</div>
+                    <div className="cal-corner so-corner">ผู้บำบัด</div>
                     {days.map((d) => {
                       const dt = fromISODate(d);
                       return (
@@ -336,7 +336,7 @@ export function StaffOverview() {
                                       <small>
                                         {s.services.map((id, i) => (
                                           <span key={id} className={clsx(hit(id) && "is-hit")}>
-                                            {i > 0 && " · "}
+                                            {i > 0 && ", "}
                                             {svc(id)}
                                           </span>
                                         ))}
@@ -354,7 +354,7 @@ export function StaffOverview() {
                 )}
                 {staff.length === 0 && (
                   <div className="so-empty">
-                    <EmptyState icon={<UserRoundSearch size={24} />} title="ไม่พบเจ้าหน้าที่" description="ลองค้นหาด้วยชื่ออื่น หรือเปลี่ยนตัวกรองบริการ" />
+                    <EmptyState icon={<UserRoundSearch size={24} />} title="ไม่พบผู้บำบัด" description="ลองคำอื่น หรือเปลี่ยนตัวกรอง" />
                   </div>
                 )}
               </motion.div>
@@ -397,10 +397,10 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
           <IconButton label="กลับภาพรวม" variant="soft" size="sm" onClick={onBack}>
             <ArrowLeft size={16} />
           </IconButton>
-          <h2 className="appt__title">ภาพรวมรายบุคคล</h2>
+          <h2 className="appt__title">ตารางรายคน</h2>
         </div>
         <Button size="md" className="so-define" leading={<CalendarCog size={16} />} onClick={onEdit}>
-          กำหนดตาราง
+          แก้ตารางประจำ
         </Button>
       </div>
       <div className="so-person__body scroll-y scroll-y--light">
@@ -446,7 +446,7 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
           <div className="so-exlist__head">
             <b>ปรับเฉพาะวัน</b>
             <Button variant="outline" size="sm" leading={<CalendarX2 size={14} />} onClick={() => onDay(nextOpen)}>
-              ลา / ปรับวัน
+              ลา / ปรับเวลา
             </Button>
           </div>
           {upcoming.length ? (
@@ -455,13 +455,13 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
                 <span className="so-exrow__date">{thaiDateLong(d)}</span>
                 <em className={clsx("so-ex", ex.kind === "leave" && "so-ex--leave")}>{ex.kind === "leave" ? ex.reason ?? "ลา" : "ปรับเวลา"}</em>
                 <span className="so-exrow__what">
-                  {ex.kind === "leave" ? "ไม่เปิดให้จองทั้งวัน" : ex.blocks.map((b) => `${b.start}–${b.end}`).join(" · ")}
+                  {ex.kind === "leave" ? "ไม่เปิดให้จองทั้งวัน" : ex.blocks.map((b) => `${b.start}–${b.end}`).join(", ")}
                   {ex.note && ` · ${ex.note}`}
                 </span>
               </button>
             ))
           ) : (
-            <p className="tw-meta">ไม่มีวันลาหรือวันที่ปรับเวลา · ใช้ตารางประจำทุกวัน</p>
+            <p className="tw-meta">ไม่มีวันลา · ใช้ตารางประจำ</p>
           )}
         </div>
 

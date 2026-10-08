@@ -74,8 +74,8 @@ export default function Inventory() {
             onChange={setTab}
             options={[
               { value: "stock", label: "สต็อก", count: low.length || undefined },
-              { value: "usage", label: "การใช้ต่อบริการ" },
-              { value: "moves", label: "ประวัติเข้า–ออก" },
+              { value: "usage", label: "ใช้ต่อบริการ" },
+              { value: "moves", label: "เข้า–ออก" },
             ]}
           />
           <div className="adp__actions">
@@ -83,17 +83,17 @@ export default function Inventory() {
               เพิ่มสินค้า
             </Button>
             <Button size="md" leading={<PackagePlus size={16} />} onClick={() => setMove({ itemId: items[0]?.id, kind: "receive" })}>
-              รับสินค้าเข้า
+              รับเข้า
             </Button>
           </div>
         </>
       }
     >
       <div className="bz-stats">
-        <Stat label="รายการสินค้า" value={items.length} sub="ใช้ในการนวดและประคบ" />
-        <Stat label="ใกล้หมด / หมด" value={low.length} sub={low.map((i) => i.name).join(", ") || "สต็อกพอทุกรายการ"} tone={low.length ? "#c47a12" : undefined} />
-        <Stat label="มูลค่าคงคลัง" value={`${baht(value)} ฿`} sub="คิดตามราคาทุน" />
-        <Stat label="ใช้ไปเดือนนี้" value={`${monthUse.length} ครั้ง`} sub="ตัดสต็อกอัตโนมัติหลังบันทึกการรักษา" />
+        <Stat label="สินค้า" value={`${items.length} รายการ`} />
+        <Stat label="ใกล้หมด / หมด" value={`${low.length} รายการ`} sub={low.map((i) => i.name).join(", ") || "พอทุกรายการ"} tone={low.length ? "#c47a12" : undefined} />
+        <Stat label="มูลค่าคงคลัง" value={`${baht(value)} ฿`} sub="ตามราคาทุน" />
+        <Stat label="ใช้ไปเดือนนี้" value={`${monthUse.length} ครั้ง`} sub="ตัดอัตโนมัติหลังบันทึกการรักษา" />
       </div>
 
       {tab === "stock" && (
@@ -131,7 +131,7 @@ export default function Inventory() {
 
       {tab === "usage" && (
         <>
-          <p className="adp__muted">กำหนดว่าบริการแต่ละครั้งใช้อะไรเท่าไร ระบบจะตัดสต็อกให้อัตโนมัติเมื่อบันทึกการรักษาเสร็จ</p>
+          <p className="adp__muted">จำนวนที่ใช้ต่อ 1 ครั้ง · ตัดสต็อกเมื่อบันทึกการรักษา</p>
           <table className="bz-table">
             <thead>
               <tr>
@@ -190,7 +190,7 @@ export default function Inventory() {
             <p className="bz-empty">
               <Boxes size={20} />
               <br />
-              ยังไม่มีความเคลื่อนไหว · รับสินค้าเข้า หรือบันทึกการรักษาเพื่อตัดสต็อก
+              ยังไม่มีรายการเข้า–ออก
             </p>
           )}
         </div>
@@ -199,8 +199,8 @@ export default function Inventory() {
       <Dialog
         open={!!move}
         onClose={() => setMove(null)}
-        title={move?.kind === "receive" ? "รับสินค้าเข้าคลัง" : "ปรับยอดคงเหลือ"}
-        subtitle={move?.kind === "adjust" ? "ใส่จำนวนที่นับได้จริง ระบบจะบันทึกส่วนต่าง" : undefined}
+        title={move?.kind === "receive" ? "รับสินค้าเข้า" : "ปรับยอด"}
+        subtitle={move?.kind === "adjust" ? "ใส่จำนวนที่นับได้จริง" : undefined}
         footer={
           <>
             <Button variant="outline" size="md" onClick={() => setMove(null)}>
@@ -223,7 +223,7 @@ export default function Inventory() {
                 ))}
               </Select>
             </Field>
-            <Field label={move.kind === "receive" ? "จำนวนที่รับเข้า" : "จำนวนที่นับได้"}>
+            <Field label={move.kind === "receive" ? "จำนวนรับเข้า" : "จำนวนที่นับได้"}>
               <Input inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value.replace(/[^\d.]/g, ""))} />
             </Field>
             <Field label="หมายเหตุ">
@@ -261,7 +261,7 @@ export default function Inventory() {
           <Field label="แจ้งเตือนเมื่อเหลือ">
             <Input inputMode="numeric" value={draft.min} onChange={(e) => setDraft({ ...draft, min: e.target.value })} />
           </Field>
-          <Field label="ราคาทุนต่อหน่วย (บาท)">
+          <Field label="ทุนต่อหน่วย (บาท)">
             <Input inputMode="decimal" value={draft.cost} onChange={(e) => setDraft({ ...draft, cost: e.target.value })} />
           </Field>
         </div>

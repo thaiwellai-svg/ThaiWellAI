@@ -81,7 +81,7 @@ export function ScreeningAlert({ flags }: { flags: ScreeningFlag[] }) {
         <Check size={16} strokeWidth={2.6} />
         <div>
           <b>ไม่พบข้อห้ามจากแบบคัดกรอง</b>
-          เจ้าหน้าที่ยังต้องวัดความดันและสอบถามซ้ำก่อนเข้านวด
+          วัดความดันและถามซ้ำก่อนนวด
         </div>
       </div>
     );
@@ -90,7 +90,7 @@ export function ScreeningAlert({ flags }: { flags: ScreeningFlag[] }) {
     <div className={clsx("alert", stop ? "alert--stop" : "alert--caution")}>
       <TriangleAlert size={16} strokeWidth={2.4} />
       <div>
-        <b>{stop ? "ควรให้แพทย์แผนไทยประเมินก่อนเข้ารับบริการ" : "มีข้อควรระวังก่อนนวด"}</b>
+        <b>{stop ? "ควรให้แพทย์ประเมินก่อนนวด" : "มีข้อควรระวังก่อนนวด"}</b>
         {flags.map((f) => (
           <div key={f.key}>
             • {f.label} — {f.advice}
@@ -106,7 +106,7 @@ export function CreditPips({ info, adding = 0, name }: { info: CreditInfo; addin
   return (
     <div className="credits">
       <div className="credits__row">
-        <span className="credits__name">{name ?? "เครดิตแผนการรักษา"}</span>
+        <span className="credits__name">{name ?? "คอร์สการรักษา"}</span>
         <span className="credits__left">
           {left} <small>/ {info.total} ครั้งคงเหลือ</small>
         </span>
@@ -146,7 +146,7 @@ export function Sparkline({ points, height = 72 }: { points: { label: string; va
   const d = xs.map((x, i) => `${i ? "L" : "M"}${x},${ys[i]}`).join(" ");
   const area = `${d} L${xs[xs.length - 1]},${height - 14} L${xs[0]},${height - 14} Z`;
   return (
-    <svg className="spark" viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" style={{ height }} role="img" aria-label="แนวโน้ม Pain Score">
+    <svg className="spark" viewBox={`0 0 ${w} ${height}`} preserveAspectRatio="none" style={{ height }} role="img" aria-label="แนวโน้มความปวด">
       <defs>
         <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor="#4c845a" stopOpacity="0.22" />

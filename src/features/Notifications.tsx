@@ -158,7 +158,7 @@ export function NotificationBell() {
                       <BellOff size={22} />
                     </span>
                     <b>ไม่มีการแจ้งเตือน</b>
-                    <small>รายการใหม่จากแอป ThaiWell AI และระบบจะแสดงที่นี่</small>
+                    <small>แจ้งเตือนใหม่จะแสดงที่นี่</small>
                   </div>
                 )}
               </div>

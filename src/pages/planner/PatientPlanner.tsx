@@ -67,7 +67,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
       // already-booked visits stay on the old course, so the new one starts with its full count free
       patch: { course: { ...patient.course, name, total: renewSessions + credits.booked, used: 0, startedOn: today, expiresOn: toISODate(addDays(new Date(), 90)) } },
     });
-    toast({ message: `เปิดคอร์สใหม่ ${renewSessions} ครั้งแล้ว · ให้แพทย์แผนไทยยืนยันแผน` });
+    toast({ message: `เปิดคอร์สใหม่ ${renewSessions} ครั้งแล้ว · ให้แพทย์ยืนยันแผน` });
   };
   const upcoming = useMemo(
     () => store.appointments.filter((a) => a.patientId === patientId && a.date >= today && (a.status === "waiting" || a.status === "active")).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)),
@@ -97,8 +97,8 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
     const d = fromISODate(iso);
     if (iso < today) return "วันที่ผ่านมาแล้ว";
     if (store.settings.closedWeekdays.includes(d.getDay())) return "คลินิกปิดทำการ";
-    if ((dayLoad.get(iso) ?? 0) >= capacity || !firstSlot(iso)) return "ไม่มีรอบว่างสำหรับบริการนี้";
-    if (mine.some((a) => a.date === iso && a.status === "waiting")) return "มีนัดวันนี้อยู่แล้ว";
+    if ((dayLoad.get(iso) ?? 0) >= capacity || !firstSlot(iso)) return "ไม่มีรอบว่าง";
+    if (mine.some((a) => a.date === iso && a.status === "waiting")) return "มีนัดวันนี้แล้ว";
     const near = [...mine.filter((a) => a.date >= today && a.status === "waiting").map((a) => a.date), ...drafts.map((x) => x.date)].find(
       (x) => x !== iso && Math.abs(diffDays(x, iso)) < minGap,
     );
@@ -114,7 +114,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
   };
   const toggle = (iso: string) => {
     if (drafts.some((d) => d.date === iso)) return setDrafts((ds) => ds.filter((d) => d.date !== iso));
-    if (limitReached) return toast({ message: `เลือกได้สูงสุด ${remaining} ครั้งตามเครดิตคงเหลือ`, tone: "danger" });
+    if (limitReached) return toast({ message: `เลือกได้ไม่เกิน ${remaining} ครั้ง`, tone: "danger" });
     add(iso);
   };
 
@@ -159,7 +159,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
         paid: false,
       })),
     });
-    toast({ message: `นัด ${patient.name} ${ok.length} ครั้งแล้ว · แจ้งผู้ป่วยผ่านแอป ThaiWell AI` });
+    toast({ message: `บันทึก ${ok.length} นัดแล้ว · แจ้งผู้ป่วยในแอป ThaiWell` });
     setDrafts([]);
     onClose();
   };
@@ -177,13 +177,12 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
       onClose={onClose}
       wide
       className="pp-dialog"
-      title="จองนัดตามคอร์ส"
-      subtitle="เลือกวันในปฏิทิน หรือกด “แนะนำวัน” ให้ระบบเลือกตามแผน"
+      title="จัดนัด"
+      subtitle="แตะวันในปฏิทิน หรือกด “แนะนำวัน”"
       footer={
         <>
           <span className="pp__foot-note">
-            {drafts.length ? `${drafts.length} ครั้ง · ${store.serviceById(serviceId).name}` : "ยังไม่ได้เลือกวัน"}
-            {invalid && <em> · บางวันยังไม่มีเวลาหรือผู้บำบัด</em>}
+            {invalid ? <em>บางวันยังไม่มีเวลาหรือผู้บำบัด</em> : drafts.length ? `${drafts.length} นัด · ${store.serviceById(serviceId).name}` : "ยังไม่ได้เลือกวัน"}
           </span>
           <Button variant="outline" size="lg" onClick={onClose}>
             ยกเลิก
@@ -200,8 +199,9 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
               <div className="pp__id">
                 <h2>{patient.name}</h2>
                 <p>
-                  {patient.hn} · {patient.gender} {patient.age} ปี · {patient.complaint}
+                  {patient.hn} · {patient.gender} {patient.age} ปี
                 </p>
+                {patient.complaint && <p>{patient.complaint}</p>}
               </div>
               {credits ? (
                 <div className="pp__credit">
@@ -218,9 +218,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                     <i className="n" style={{ width: `${addPct}%` }} />
                   </i>
                   {/* ครั้งแรก (ประเมิน + รักษา) รวมในคอร์สแล้ว → จัดนัดต่อเฉพาะครั้งที่เหลือ */}
-                  <small className="pp__credit-note">
-                    {credits.used > 0 ? `รวมการรักษาครั้งแรกแล้ว · ` : ""}จัดนัดต่ออีก {Math.max(0, credits.remaining - drafts.length)} ครั้งตามคอร์ส
-                  </small>
+                  <small className="pp__credit-note">จัดนัดต่ออีก {Math.max(0, credits.remaining - drafts.length)} ครั้ง</small>
                   <div className="pp__legend">
                     <span className="u">ใช้แล้ว {credits.used}</span>
                     <span className="b">จองไว้ {credits.booked}</span>
@@ -231,15 +229,19 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                 planLeft ? (
                   <div className="pp__credit">
                     <div className="pp__credit-top">
-                      <small>ตามแผนการรักษา {planLeft.total} ครั้ง</small>
+                      <small>แผนการรักษา {planLeft.total} ครั้ง</small>
                       <b>
                         {Math.max(0, planLeft.left - drafts.length)}
                         <span>/{planLeft.total} คงเหลือ</span>
                       </b>
                     </div>
                     <small className="pp__credit-note">
-                      {planLeft.first ? "รวมการรักษาครั้งแรกแล้ว · " : ""}
-                      {planLeft.booked ? `นัดไว้แล้ว ${planLeft.booked} · ` : ""}จัดนัดต่ออีก {Math.max(0, planLeft.left - drafts.length)} ครั้ง
+                      จัดนัดต่ออีก {Math.max(0, planLeft.left - drafts.length)} ครั้ง
+                      {(planLeft.first > 0 || planLeft.booked > 0) && (
+                        <i>
+                          {[planLeft.first ? "นับครั้งแรกแล้ว" : "", planLeft.booked ? `นัดไว้ ${planLeft.booked}` : ""].filter(Boolean).join(" · ")}
+                        </i>
+                      )}
                     </small>
                   </div>
                 ) : (
@@ -289,7 +291,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                             type="button"
                             className={clsx("pp__day", out && "is-out", sel && "is-sel", iso === today && "is-today", own && (own.status === "done" ? "is-done" : "is-booked"))}
                             disabled={!sel && !own && (!!reason || limitReached)}
-                            title={own ? (own.status === "done" ? "รับบริการแล้ว" : `มีนัด ${own.start} น.`) : reason ?? undefined}
+                            title={own ? (own.status === "done" ? "รักษาแล้ว" : `มีนัด ${own.start} น.`) : reason ?? undefined}
                             onClick={() => !own && toggle(iso)}
                           >
                             <b>{d.getDate()}</b>
@@ -314,10 +316,10 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                     <i className="booked" /> มีนัดแล้ว
                   </span>
                   <span>
-                    <i className="done" /> รับบริการแล้ว
+                    <i className="done" /> รักษาแล้ว
                   </span>
                   <span>
-                    <i className="load" /> ความหนาแน่นของคิว
+                    <i className="load" /> คิวแน่น
                   </span>
                 </div>
               </section>
@@ -325,7 +327,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
               {/* drafts */}
               <section className="pp__drafts">
                 <div className="pp__drafts-head">
-                  <h3>รายการที่จะนัด ({drafts.length})</h3>
+                  <h3>นัดที่เลือก ({drafts.length})</h3>
                   <Button variant="outline" size="sm" leading={<Wand2 size={14} />} disabled={limitReached} onClick={suggest}>
                     แนะนำวัน
                   </Button>
@@ -340,8 +342,8 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                     <div>
                       <Info size={16} />
                       <span>
-                        <b>เครดิตคอร์สใช้ครบแล้ว</b>
-                        ใช้ไป {credits.used} · จองไว้ {credits.booked} จาก {credits.total} ครั้ง · เลือกวิธีจองต่อ
+                        <b>คอร์สครบแล้ว</b>
+                        ใช้แล้ว {credits.used} · จองไว้ {credits.booked} จาก {credits.total} ครั้ง
                       </span>
                     </div>
                     <div className="pp__out-acts">
@@ -349,14 +351,14 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                         เปิดคอร์สใหม่ {renewSessions} ครั้ง
                       </Button>
                       <Button variant="outline" size="md" leading={<Wallet size={15} />} onClick={() => setPayPerVisit(true)}>
-                        จองแบบชำระรายครั้ง
+                        จองแบบรายครั้ง
                       </Button>
                     </div>
                   </div>
                 )}
                 {payPerVisit && (
                   <p className="pp__ai pp__ai--pay">
-                    <Wallet size={13} /> จองแบบชำระรายครั้ง · {store.serviceById(serviceId).price} บาท/ครั้ง
+                    <Wallet size={13} /> ชำระรายครั้ง · {store.serviceById(serviceId).price} บาท/ครั้ง
                     <button type="button" onClick={() => (setPayPerVisit(false), setDrafts([]))}>
                       ยกเลิก
                     </button>
@@ -409,7 +411,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                   </AnimatePresence>
                   {drafts.length === 0 && upcoming.length > 0 && (
                     <div className="pp__booked">
-                      <h4>นัดที่จองไว้แล้ว ({upcoming.length})</h4>
+                      <h4>นัดที่มีอยู่ ({upcoming.length})</h4>
                       {upcoming.map((a) => (
                         <div key={a.id}>
                           <b>{thaiDateLong(a.date)}</b>
@@ -425,7 +427,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                       <CalendarPlus size={22} />
                       <p>
                         แตะวันในปฏิทินเพื่อเพิ่มนัด
-                        <small>{credits && !payPerVisit ? `เลือกได้อีก ${credits.remaining} ครั้งตามคอร์ส` : "หรือกด “แนะนำวัน” ให้ระบบเลือกให้"}</small>
+                        <small>{credits && !payPerVisit ? `เลือกได้อีก ${credits.remaining} ครั้ง` : "หรือกด “แนะนำวัน”"}</small>
                       </p>
                     </div>
                   )}

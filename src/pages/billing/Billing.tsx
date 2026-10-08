@@ -22,7 +22,7 @@ type Range = "today" | "7" | "30";
 const ICON: Record<PaymentMethod, typeof Banknote> = { cash: Banknote, promptpay: QrCode, app: Smartphone, credit: Ticket };
 const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
-/** คิดเงิน — bills waiting at the counter, and the payment/receipt history. */
+/** ชำระเงิน — bills waiting at the counter, and the payment/receipt history. */
 export default function Billing() {
   const store = useStore();
   const navigate = useNavigate();
@@ -102,18 +102,18 @@ export default function Billing() {
 
   return (
     <WorkPage
-      eyebrow="คิดเงิน"
-      title="คิดเงิน"
+      eyebrow="การเงิน"
+      title="ชำระเงิน"
       bell={false}
       actions={
         <>
-          <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นหาชื่อ HN หรือเลขที่ใบเสร็จ" shortcut={false} />
+          <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นชื่อ, HN, เลขใบเสร็จ" shortcut={false} />
           <Button variant="white" leading={<BarChart3 size={16} />} onClick={() => setReport(true)}>
             รายงาน
           </Button>
           {tab === "history" && (
             <IconButton
-              label="ส่งออกประวัติเป็น Excel"
+              label="ส่งออก Excel"
               variant="white"
               onClick={() =>
                 downloadCsv(`thaiwell-receipts-${from}-${today}.csv`, [
@@ -179,7 +179,7 @@ export default function Billing() {
                 </span>
                 <span>
                   หักเครดิตคอร์ส
-                  <small>ไม่มีรายรับเงินสด</small>
+                  <small>ไม่นับเป็นรายรับ</small>
                 </span>
                 <b>{byMethod("credit").length} ครั้ง</b>
               </div>
@@ -189,28 +189,28 @@ export default function Billing() {
           {/* back-office tools */}
           <section className="bl2-card">
             <header>
-              <b>เมนูการเงิน</b>
+              <b>งานการเงิน</b>
             </header>
             <div className="bz-menu">
               <button type="button" style={{ ["--mc" as string]: "#2f8a52" }} onClick={() => navigate("/billing/close")}>
                 <span>
                   <Landmark size={16} />
                 </span>
-                <b>ปิดยอดวันนี้</b>
-                {store.biz.closings.some((c) => c.date === today) ? <small>ปิดแล้ว</small> : <em>ยังไม่ปิดยอด</em>}
+                <b>ปิดยอดวัน</b>
+                {store.biz.closings.some((c) => c.date === today) ? <small>ปิดแล้ว</small> : <em>ยังไม่ปิด</em>}
               </button>
               <button type="button" style={{ ["--mc" as string]: "#7c5cc4" }} onClick={() => navigate("/billing/commission")}>
                 <span>
                   <HandCoins size={16} />
                 </span>
                 <b>ค่ามือผู้บำบัด</b>
-                <small>สรุปรายเดือน</small>
+                <small>รายเดือน</small>
               </button>
               <button type="button" style={{ ["--mc" as string]: "#d08a3c" }} onClick={() => navigate("/packages")}>
                 <span>
                   <ShoppingBag size={16} />
                 </span>
-                <b>คอร์ส/แพ็กเกจ</b>
+                <b>แพ็กเกจ</b>
                 <small>{store.biz.packages.filter((x) => x.active).length} แพ็กเกจ</small>
               </button>
               <button type="button" style={{ ["--mc" as string]: "#0f766e" }} onClick={() => navigate("/inventory")}>
@@ -220,7 +220,7 @@ export default function Billing() {
                 <b>คลังสินค้า</b>
                 {(() => {
                   const low = store.biz.items.filter((i) => i.stock <= i.min).length;
-                  return low ? <em>ใกล้หมด {low} รายการ</em> : <small>สต็อกปกติ</small>;
+                  return low ? <em>ใกล้หมด {low} รายการ</em> : <small>ปกติ</small>;
                 })()}
               </button>
             </div>
@@ -262,7 +262,7 @@ export default function Billing() {
                   <Smartphone size={15} />
                 </span>
                 <b>{pendingApp.length}</b>
-                <small>บิลในแอป · {baht(pendingApp.reduce((n, a) => n + a.payment!.amount, 0))} ฿</small>
+                <small>ในแอป · {baht(pendingApp.reduce((n, a) => n + a.payment!.amount, 0))} ฿</small>
               </button>
             </div>
           </section>
@@ -325,7 +325,7 @@ export default function Billing() {
                           <small>
                             {s.name} · {thaiDate(a.date)} {a.start} น.
                           </small>
-                          <em>{pending ? "ส่งบิลเข้าแอปแล้ว · รอผู้ป่วยชำระ" : stageOf(a) === "billing" ? "รักษาเสร็จแล้ว · รอคิดเงิน" : "ค้างชำระ"}</em>
+                          <em>{pending ? "รอชำระในแอป" : stageOf(a) === "billing" ? "รอชำระที่เคาน์เตอร์" : "ค้างชำระ"}</em>
                         </span>
                         <span className="bl2-bill__amt">
                           <b>{baht(a.payment?.amount ?? visitTotal(s, a))}</b>
@@ -338,7 +338,7 @@ export default function Billing() {
                     );
                   })
                 ) : (
-                  <EmptyState icon={<Hourglass size={24} />} title="ไม่มีบิลรอชำระ" description="ผู้ป่วยที่รักษาเสร็จแล้วจะมารอคิดเงินที่นี่" />
+                  <EmptyState icon={<Hourglass size={24} />} title="ไม่มีบิลรอชำระ" description="ผู้ป่วยที่นวดเสร็จจะแสดงที่นี่" />
                 ))}
 
               {tab === "history" &&
@@ -380,7 +380,7 @@ export default function Billing() {
                     </section>
                   ))
                 ) : (
-                  <EmptyState icon={<ReceiptText size={24} />} title="ไม่มีรายการในช่วงนี้" description="ลองเปลี่ยนช่วงเวลาหรือช่องทางการชำระ" />
+                  <EmptyState icon={<ReceiptText size={24} />} title="ไม่มีรายการในช่วงนี้" description="ลองเปลี่ยนช่วงเวลาหรือช่องทาง" />
                 ))}
             </div>
           </div>

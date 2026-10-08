@@ -88,7 +88,7 @@ export function RoomsEditor() {
           setDraft("");
         }}
       >
-        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="ชื่อห้องใหม่ เช่น ห้องอบสมุนไพร" />
+        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="ชื่อห้องใหม่" />
         <button type="submit" disabled={!draft.trim()}>
           <Plus size={14} /> เพิ่มห้อง
         </button>

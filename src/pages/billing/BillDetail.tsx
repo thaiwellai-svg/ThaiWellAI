@@ -31,7 +31,7 @@ export default function BillDetail() {
 
   if (!a)
     return (
-      <WorkPage eyebrow="คิดเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow="คิดเงิน" title="รายละเอียดบิล" onBack={back} />}>
+      <WorkPage eyebrow="ชำระเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow="ชำระเงิน" title="รายละเอียดบิล" onBack={back} />}>
         <div className="sheet ad__none">
           <EmptyState icon={<ReceiptText size={24} />} title="ไม่พบบิลนี้" description="รายการอาจถูกลบไปแล้ว" />
         </div>
@@ -45,16 +45,16 @@ export default function BillDetail() {
   const credits = creditInfo(p, store.appointments);
   const status: { label: string; color: string } =
     a.status === "cancelled"
-      ? { label: "นัดถูกยกเลิก", color: "#8a948d" }
+      ? { label: "ยกเลิกนัดแล้ว", color: "#8a948d" }
       : pay?.status === "paid"
         ? { label: "ชำระแล้ว", color: "#2f9a5b" }
         : pay?.status === "pending"
           ? { label: "รอชำระในแอป", color: "#7c5cc4" }
           : stageOf(a) === "billing"
-            ? { label: "รอคิดเงิน", color: "#d08a3c" }
+            ? { label: "รอชำระ", color: "#d08a3c" }
             : a.status === "done"
               ? { label: "ค้างชำระ", color: "#d23a2a" }
-              : { label: "ยังไม่ถึงขั้นชำระเงิน", color: "#8a948d" };
+              : { label: "ยังไม่ถึงขั้นชำระ", color: "#8a948d" };
   const canPay = !pay || pay.status !== "paid";
   const Ic = pay ? ICON[pay.method] : Wallet;
   const credit = usesCredit(pay);
@@ -66,7 +66,7 @@ export default function BillDetail() {
   const money = (a.log ?? []).filter((l) => /ชำระ|ใบเสร็จ|เครดิต|บิล|สลิป|เงิน/.test(l.label));
 
   return (
-    <WorkPage eyebrow="คิดเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow={`คิดเงิน · ${p.name}`} title="รายละเอียดบิล" onBack={back} />}>
+    <WorkPage eyebrow="ชำระเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow={`ชำระเงิน · ${p.name}`} title="รายละเอียดบิล" onBack={back} />}>
       <div className="adp">
         <div className="adp__bar">
           <span className="adp__status" style={{ ["--sc" as string]: status.color }}>
@@ -89,7 +89,7 @@ export default function BillDetail() {
             )}
             {canPay && a.status !== "cancelled" && (stageOf(a) === "billing" || a.status === "done") && (
               <Button size="md" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
-                {pay?.status === "pending" ? "ดูบิล / รับชำระ" : "รับชำระ"}
+                รับชำระ
               </Button>
             )}
           </div>
@@ -99,7 +99,7 @@ export default function BillDetail() {
           {/* hero: amount + who */}
           <section className="adp__hero bd__hero" style={{ ["--sc" as string]: status.color }}>
             <div className="bd__amount">
-              <small>{pay?.status === "paid" ? "ยอดชำระ" : "ยอดที่ต้องชำระ"}</small>
+              <small>{pay?.status === "paid" ? "ยอดชำระแล้ว" : "ยอดต้องชำระ"}</small>
               <b>
                 {credit ? "1" : baht(total)}
                 <u>{credit ? " ครั้ง" : " บาท"}</u>
@@ -126,7 +126,7 @@ export default function BillDetail() {
                     </a>
                   )}
                   <button type="button" onClick={() => navigate(`/patients?id=${p.id}`)}>
-                    <UserRound size={13} /> ประวัติผู้ป่วย
+                    <UserRound size={13} /> ข้อมูลผู้ป่วย
                   </button>
                 </span>
               </div>
@@ -186,7 +186,7 @@ export default function BillDetail() {
               {/* who / when */}
               <section className="adp__card">
                 <header>
-                  <CalendarDays size={15} /> การรับบริการ
+                  <CalendarDays size={15} /> ข้อมูลนัด
                 </header>
                 <div className="adp__facts">
                   <div>
@@ -197,11 +197,11 @@ export default function BillDetail() {
                     </b>
                   </div>
                   <div>
-                    <small>เวลารับบริการ</small>
+                    <small>เวลานวด</small>
                     <b>{a.startedAt ? `${clock(a.startedAt)}–${a.endedAt ? clock(a.endedAt) : "…"} น.` : `${a.start} น.`}</b>
                   </div>
                   <div>
-                    <small>สลิปเข้าแอป</small>
+                    <small>ส่งสลิปเข้าแอป</small>
                     <b>{pay?.slipSentAt ? `ส่งแล้ว ${clock(pay.slipSentAt)} น.` : "ยังไม่ส่ง"}</b>
                   </div>
                   <div>
@@ -247,14 +247,14 @@ export default function BillDetail() {
                     })}
                   </div>
                 ) : (
-                  <p className="adp__muted">ยังไม่มีใบเสร็จ · กด “รับชำระ” เพื่อออกใบเสร็จ</p>
+                  <p className="adp__muted">ยังไม่มีใบเสร็จ</p>
                 )}
               </section>
 
               {/* money activity */}
               <section className="adp__card">
                 <header>
-                  <History size={15} /> ความเคลื่อนไหวการเงิน
+                  <History size={15} /> ประวัติการเงิน
                 </header>
                 {money.length ? (
                   <ol className="adp__log">
@@ -268,7 +268,7 @@ export default function BillDetail() {
                     ))}
                   </ol>
                 ) : (
-                  <p className="adp__muted">ยังไม่มีความเคลื่อนไหว</p>
+                  <p className="adp__muted">ยังไม่มีประวัติ</p>
                 )}
               </section>
             </div>

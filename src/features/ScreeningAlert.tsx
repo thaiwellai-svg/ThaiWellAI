@@ -23,11 +23,11 @@ export function ScreeningAlert({ p, onAgain }: { p: Patient; /** shows a "คั
       <ShieldAlert size={18} />
       <div>
         <b>
-          {stop ? "พบข้อห้ามจากการคัดกรอง" : "ข้อควรระวังจากการคัดกรอง"}
+          {stop ? "พบข้อห้าม" : "ข้อควรระวัง"}
           <small>
             {" "}
-            · {thaiDateShort(day)}
-            {old ? " · เกิน 30 วัน ควรคัดกรองใหม่" : ""}
+            · คัดกรอง {thaiDateShort(day)}
+            {old ? " (เกิน 30 วัน ควรคัดกรองใหม่)" : ""}
           </small>
         </b>
         <span>{flags.map((f) => f.label).join(" · ")}</span>
@@ -74,10 +74,10 @@ export function VisitScreening({
       <div className={clsx("vscr", stop.length ? "is-stop" : "is-app")}>
         {stop.length ? <ShieldAlert size={18} /> : <ClipboardCheck size={18} />}
         <div>
-          <b>{stop.length ? `แบบคัดกรองของนัดนี้: ${stop.map((f) => f.label).join(" · ")}` : "ผู้ป่วยประเมิน/คัดกรองสำหรับนัดนี้แล้ว · ผ่าน"}</b>
+          <b>{stop.length ? `ข้อห้ามจากแอป: ${stop.map((f) => f.label).join(", ")}` : "คัดกรองในแอปแล้ว · ผ่าน"}</b>
           <small>
-            {stop.length ? `${stop[0].advice} · ` : warn.length ? `ระวัง: ${warn.map((f) => f.label).join(" · ")} · ` : ""}
-            {when ? `ประเมินในแอป ${when} น. · ` : ""}เหลือวัดความดัน ชีพจร ก่อนเริ่มนวด
+            {stop.length ? `${stop[0].advice} · ` : warn.length ? `ระวัง ${warn.map((f) => f.label).join(", ")} · ` : when ? `ประเมิน ${when} น. · ` : ""}
+            เหลือวัดความดันและชีพจร
           </small>
         </div>
         <button type="button" onClick={onScreen}>
@@ -91,8 +91,8 @@ export function VisitScreening({
       <div className={clsx("vscr", pending && "is-pending")}>
         <ClipboardCheck size={18} />
         <div>
-          <b>{pending ? "ผู้ป่วยยังไม่ได้ประเมินในแอปสำหรับนัดนี้" : "ยังไม่ได้คัดกรองวันนี้"}</b>
-          <small>วัดความดัน ชีพจร และถามอาการก่อนเริ่มนวด</small>
+          <b>ยังไม่ได้คัดกรองวันนี้</b>
+          <small>{pending ? "ผู้ป่วยยังไม่ประเมินในแอป · วัดความดันก่อนนวด" : "วัดความดัน ชีพจร และถามอาการก่อนนวด"}</small>
         </div>
         <button type="button" onClick={onScreen}>
           <span>คัดกรองก่อนนวด</span>
@@ -101,15 +101,14 @@ export function VisitScreening({
     );
   if (screeningFlags(s, settings.bpThreshold).length) return <ScreeningAlert p={p} onAgain={onScreen} />;
   const t = new Date(s.at);
+  const vit = [s.bpSys ? `ความดัน ${s.bpSys}/${s.bpDia ?? "—"}` : "", s.pulse ? `ชีพจร ${s.pulse}` : "", s.pain != null ? `ปวด ${s.pain}/10` : ""].filter(Boolean).join(", ");
   return (
     <div className="vscr is-ok">
       <ShieldCheck size={18} />
       <div>
         <b>ผ่านการคัดกรองวันนี้</b>
         <small>
-          {String(t.getHours()).padStart(2, "0")}:{String(t.getMinutes()).padStart(2, "0")} น.{s.bpSys ? ` · ความดัน ${s.bpSys}/${s.bpDia ?? "—"}` : ""}
-          {s.pulse ? ` · ชีพจร ${s.pulse}` : ""}
-          {s.pain != null ? ` · ปวด ${s.pain}/10` : ""}
+          {String(t.getHours()).padStart(2, "0")}:{String(t.getMinutes()).padStart(2, "0")} น.{vit ? ` · ${vit}` : ""}
         </small>
       </div>
       <button type="button" onClick={onScreen}>

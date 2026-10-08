@@ -10,8 +10,8 @@ const hm = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2
 /** ปวดก่อนนวดของครั้งนั้น มาจากไหน: แอป (ประเมินก่อนมา) · เคาน์เตอร์ (คัดกรองวันนั้น) · นัด (ตอนจอง) */
 function before(a: Appointment, p: Patient) {
   const r = a.assessRounds?.[a.assessRounds.length - 1];
-  if (r) return { pain: r.pain, from: `แอป · ${a.assessRounds!.length > 1 ? `${a.assessRounds!.length} รอบ · ` : ""}${hm(r.at)} น.`, app: true };
-  if (p.screening?.at?.slice(0, 10) === a.date && p.screening.pain != null) return { pain: p.screening.pain, from: "คัดกรองที่เคาน์เตอร์", app: false };
+  if (r) return { pain: r.pain, from: `แอป ${hm(r.at)} น.${a.assessRounds!.length > 1 ? ` (${a.assessRounds!.length} รอบ)` : ""}`, app: true };
+  if (p.screening?.at?.slice(0, 10) === a.date && p.screening.pain != null) return { pain: p.screening.pain, from: "เคาน์เตอร์", app: false };
   return { pain: a.painBefore, from: a.date >= new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10) && !a.endedAt ? "ยังไม่ได้ประเมิน" : "ตอนจอง", app: false };
 }
 
@@ -44,7 +44,7 @@ export function VisitAssessments({ p, onOpen }: { p: Patient; onOpen?: (id: stri
         <span>ครั้งที่</span>
         <span>วันที่</span>
         <span>ปวดก่อนนวด</span>
-        <span>หลังนวด</span>
+        <span>ปวดหลังนวด</span>
         <span>สถานะ</span>
       </div>
       {rows.map((a) => {

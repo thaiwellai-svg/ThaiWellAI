@@ -11,14 +11,14 @@ import type { Appointment, Payment, PaymentMethod, Service } from "../data/types
 export const METHOD_LABEL: Record<PaymentMethod, string> = {
   cash: "เงินสด",
   promptpay: "QR พร้อมเพย์",
-  app: "บิลในแอป ThaiWell AI",
+  app: "บิลในแอป ThaiWell",
   credit: "หักเครดิตคอร์ส",
 };
 
 const METHODS: { key: PaymentMethod; label: string; desc: string; icon: typeof Banknote }[] = [
   { key: "cash", label: "เงินสด", desc: "รับที่เคาน์เตอร์", icon: Banknote },
-  { key: "promptpay", label: "QR พร้อมเพย์", desc: "สแกนจ่ายที่เคาน์เตอร์", icon: QrCode },
-  { key: "app", label: "ส่งบิลเข้าแอป", desc: "จ่ายผ่าน ThaiWell AI", icon: Smartphone },
+  { key: "promptpay", label: "QR พร้อมเพย์", desc: "ผู้ป่วยสแกนจ่าย", icon: QrCode },
+  { key: "app", label: "ส่งบิลเข้าแอป", desc: "ผู้ป่วยจ่ายในแอป", icon: Smartphone },
 ];
 
 /** หนึ่งบรรทัดในบิล */
@@ -68,7 +68,7 @@ export function PromptPayQR({ amount, size = 180 }: { amount: number; size?: num
       .then(setSrc)
       .catch(() => setSrc(""));
   }, [amount, id, size]);
-  if (!id) return <span className="vs__qr-ph" style={{ width: size, height: size, display: "grid", placeItems: "center", textAlign: "center", fontSize: 13, padding: 12 }}>ยังไม่ได้ตั้งเลขพร้อมเพย์ · ตั้งได้ที่ ตั้งค่า</span>;
+  if (!id) return <span className="vs__qr-ph" style={{ width: size, height: size, display: "grid", placeItems: "center", textAlign: "center", fontSize: 13, padding: 12 }}>ยังไม่ได้ตั้งเลขพร้อมเพย์ (ตั้งได้ที่ ตั้งค่า)</span>;
   return src ? <img src={src} alt="QR พร้อมเพย์" width={size} height={size} /> : <span className="vs__qr-ph" style={{ width: size, height: size }} />;
 }
 
@@ -141,7 +141,9 @@ export function PayPanel(props: {
         </div>
       </div>
       {props.courseNote && <p className="vs__course-note">{props.courseNote}</p>}
-      {!!props.unpriced && <p className="vs__course-note is-warn">มีหัตถการที่คิดเพิ่มแต่ยังไม่ใส่ราคา {props.unpriced} รายการ · ใส่ราคาในบันทึกหัตถการก่อนรับชำระ</p>}
+      {!!props.unpriced && <p className="vs__course-note is-warn">หัตถการยังไม่ใส่ราคา {props.unpriced} รายการ · ใส่ราคาก่อนรับชำระ</p>}
+      {/* หักเครดิตแล้วมีหัตถการเพิ่ม → 2 แถว: แถวบน = ค่าบริการ · แถวล่าง = ค่าหัตถการเพิ่มเท่านั้น */}
+      <p className="vs__methods-head">{payRest ? `จ่ายค่าบริการ ${baht(props.price)} ฿ ด้วย` : "วิธีชำระ"}</p>
       <div className={clsx("vs__methods", options.length === 4 && "is-4")} role="radiogroup" aria-label="วิธีชำระเงิน">
         {options.map((m) => (
           <button key={m.key} type="button" role="radio" aria-checked={current === m.key} onClick={() => pick(m.key)}>
@@ -152,15 +154,18 @@ export function PayPanel(props: {
         ))}
       </div>
       {payRest && (
-        <div className="vs__methods" role="radiogroup" aria-label={`ชำระค่าหัตถการเพิ่ม ${baht(amount)} บาท`}>
-          {METHODS.map((m) => (
-            <button key={m.key} type="button" role="radio" aria-checked={props.method === m.key} onClick={() => props.setMethod(m.key)}>
-              <m.icon size={18} strokeWidth={1.9} />
-              <b>{m.label}</b>
-              <small>ค่าหัตถการเพิ่ม {baht(amount)} ฿</small>
-            </button>
-          ))}
-        </div>
+        <>
+          <p className="vs__methods-head is-extra">จ่ายค่าหัตถการเพิ่ม {baht(amount)} ฿ ด้วย</p>
+          <div className="vs__methods is-extra" role="radiogroup" aria-label={`จ่ายค่าหัตถการเพิ่ม ${baht(amount)} บาท`}>
+            {METHODS.map((m) => (
+              <button key={m.key} type="button" role="radio" aria-checked={props.method === m.key} onClick={() => props.setMethod(m.key)}>
+                <m.icon size={18} strokeWidth={1.9} />
+                <b>{m.label}</b>
+                <small>{m.desc}</small>
+              </button>
+            ))}
+          </div>
+        </>
       )}
       {amount > 0 && (
         <>
@@ -180,7 +185,7 @@ export function PayPanel(props: {
                     </button>
                   ))}
               </div>
-              <p className={clsx("vs__change", cash >= amount && "is-ok")}>{cash >= amount ? `เงินทอน ${baht(cash - amount)} บาท` : "กรอกจำนวนเงินที่รับ"}</p>
+              <p className={clsx("vs__change", cash >= amount && "is-ok")}>{cash >= amount ? `เงินทอน ${baht(cash - amount)} บาท` : "ใส่จำนวนเงินที่รับ"}</p>
             </div>
           )}
           {props.method === "promptpay" && (
@@ -190,7 +195,7 @@ export function PayPanel(props: {
                 <b>{baht(amount)} บาท</b>
                 <small>พร้อมเพย์ {settings.promptpayId}</small>
                 <small>{settings.clinicName}</small>
-                <small>ให้ผู้ป่วยสแกน แล้วตรวจสลิปก่อนกดยืนยัน</small>
+                <small>ตรวจสลิปก่อนกด “รับชำระ”</small>
               </div>
             </div>
           )}
@@ -198,7 +203,7 @@ export function PayPanel(props: {
             <div className="vs__app">
               <Smartphone size={18} />
               <p>
-                ส่งบิล <b>{baht(amount)} บาท</b> ไปที่แอป ThaiWell AI ของ {props.patientName} · สถานะจะเป็น “รอชำระ” จนกว่าผู้ป่วยจะจ่ายในแอป
+                ส่งบิล <b>{baht(amount)} บาท</b> เข้าแอป ThaiWell ของ {props.patientName} · รอผู้ป่วยจ่ายในแอป
               </p>
             </div>
           )}

@@ -153,9 +153,9 @@ export default function Login() {
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12, delayChildren: 0.9 } } }}
           >
             {[
-              { icon: CalendarCheck2, label: "จัดคิวและตารางนัด", desc: "เช็กเตียง เวร และบริการให้อัตโนมัติ" },
-              { icon: UsersRound, label: "ตารางงานเจ้าหน้าที่", desc: "สล็อตเวลา บริการ วันลา ในที่เดียว" },
-              { icon: Sparkles, label: "เชื่อมแอป ThaiWell AI", desc: "รับคำขอจอง ส่งประวัติถึงผู้ป่วย" },
+              { icon: CalendarCheck2, label: "คิวและตารางนัด", desc: "เช็กเตียงและเวรให้อัตโนมัติ" },
+              { icon: UsersRound, label: "ตารางงานผู้บำบัด", desc: "เวลา บริการ และวันลาในที่เดียว" },
+              { icon: Sparkles, label: "เชื่อมแอป ThaiWell", desc: "รับคำขอจอง ส่งประวัติถึงผู้ป่วย" },
             ].map((f) => (
               <motion.li key={f.label} variants={{ hidden: { opacity: 0, x: -16 }, show: { opacity: 1, x: 0, transition: { duration: 0.5 } } }}>
                 <span className="lg__fi">
@@ -231,7 +231,7 @@ export default function Login() {
             </AnimatePresence>
           </button>
 
-          {DEMO && <p className="lg__note">เวอร์ชันสาธิต · กรอกข้อมูลไว้ให้แล้ว กดเข้าสู่ระบบได้เลย</p>}
+          {DEMO && <p className="lg__note">เวอร์ชันสาธิต · กดเข้าสู่ระบบได้เลย</p>}
         </motion.form>
       </div>
     </motion.div>

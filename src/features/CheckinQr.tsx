@@ -46,7 +46,7 @@ export function CheckinQr({ open, onClose }: { open: boolean; onClose: () => voi
         </span>
       }
       title="QR เช็กอิน"
-      subtitle="ตั้งจอนี้ไว้ที่เคาน์เตอร์ ผู้ป่วยสแกนด้วยแอป ThaiWell AI เพื่อรับเลขคิว"
+      subtitle="ตั้งจอนี้ที่เคาน์เตอร์ ให้ผู้ป่วยสแกนด้วยแอป ThaiWell"
       footer={
         <Button size="lg" onClick={onClose}>
           ปิด
@@ -61,7 +61,11 @@ export function CheckinQr({ open, onClose }: { open: boolean; onClose: () => voi
             <span key={i}>{c}</span>
           ))}
         </div>
-        <p className="cq__hint">เปิดแอป ThaiWell AI → นัดวันนี้ → เช็กอิน → สแกน QR · สแกนไม่ได้ให้พิมพ์รหัสด้านบน</p>
+        <p className="cq__hint">
+          ในแอป: นัดวันนี้ → เช็กอิน → สแกน QR
+          <br />
+          สแกนไม่ได้ ให้พิมพ์รหัสด้านบน
+        </p>
         <div className="cq__timer" style={{ ["--p" as string]: `${(left / 30) * 100}%` }}>
           <i />
           <small>QR ใหม่ใน {left} วินาที · {thaiDateLong(todayISO())}</small>

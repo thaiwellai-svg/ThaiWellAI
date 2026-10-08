@@ -565,38 +565,6 @@
   }
 }
 
-/* compact summary when the rail is hidden (portrait) */
-.in-mini {
-  display: none;
-}
-@media (max-width: 1000px) {
-  .in-mini {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-  }
-  .in-mini > div {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: var(--sage-50);
-  }
-  .in-mini small {
-    font: 600 11px/1.2 var(--font-sans);
-    color: var(--color-text-muted);
-  }
-  .in-mini b {
-    font: 700 17px/1.1 var(--font-sans);
-    font-variant-numeric: tabular-nums;
-    color: var(--color-text);
-  }
-  .in-mini em {
-    font-style: normal;
-    color: #2f8a52;
-  }
-}
 .in-db-scale u {
   text-decoration: none;
   font-size: 13px;

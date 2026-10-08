@@ -43,7 +43,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
 
   const approve = () => {
     store.dispatch({ type: "approve", id: request.id, patch: { date, start, therapistId, serviceId: request.serviceId } });
-    toast({ message: `อนุมัติคิว ${p.name} · ${thaiDate(date)} ${start} น.` });
+    toast({ message: `อนุมัตินัด ${p.name} · ${thaiDate(date)} ${start} น.` });
     onClose();
   };
 
@@ -54,7 +54,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
       onClose={onClose}
       leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />}
       title={p.name}
-      subtitle={`${p.hn} · ${p.gender} ${p.age} ปี · ส่งคำขอผ่านแอป ThaiWell AI ${timeAgo(request.submittedAt)}`}
+      subtitle={`${p.hn} · ขอเมื่อ ${timeAgo(request.submittedAt)}`}
       footer={
         <>
           <Button variant="outline" size="lg" fill onClick={onClose}>
@@ -66,36 +66,19 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
         </>
       }
     >
-      {/* แผน/แนวทางการรักษาที่ผู้ป่วยได้รับในแอป → ดูก่อนอนุมัติ (เลือกบริการ/ผู้บำบัดให้ตรง) */}
-      {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) && !flags.some((f) => f.level === "stop") && (
-        <section className="sec">
-          <div className="sec__head">
-            <h3 className="sec__title">แผนการรักษาที่ผู้ป่วยได้รับในแอป</h3>
+      {request.note && (
+        <div className="alert alert--info">
+          <CircleAlert size={16} />
+          <div>
+            <b>หมายเหตุจากผู้ป่วย</b>
+            {request.note}
           </div>
-          <AppGuideCard guide={request.appGuide} areas={request.intake?.focusAreas} compact />
-        </section>
+        </div>
       )}
       <section className="sec">
         <div className="sec__head">
-          <h3 className="sec__title">อาการที่ผู้ป่วยประเมินในแอป</h3>
-        </div>
-        {/* อาการสำคัญ ระดับความปวด บริเวณที่ปวด (heatmap) และบริเวณห้ามนวด — แสดงในแบบประเมินจากแอปที่เดียว */}
-        <IntakeCard intake={intakeOfRequest(request, p)} sex={p.gender} element={elementProfile(p).birth} compact />
-        {request.note && (
-          <div className="alert alert--info">
-            <CircleAlert size={16} />
-            <div>
-              <b>หมายเหตุจากผู้ป่วย</b>
-              {request.note}
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="sec">
-        <div className="sec__head">
-          <h3 className="sec__title">แบบคัดกรองตนเองก่อนรับบริการ</h3>
-          <span className="tw-caption">ตรวจด้วยกฎที่คลินิกกำหนด</span>
+          <h3 className="sec__title">แบบคัดกรองจากแอป</h3>
+          <span className="tw-caption">ตรวจตามเกณฑ์คลินิก</span>
         </div>
         <ScreeningGrid screening={request.screening} flags={flags} />
         <ScreeningAlert flags={flags} />
@@ -103,7 +86,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
 
       <section className="sec">
         <div className="sec__head">
-          <h3 className="sec__title">เครดิตแผนการรักษา</h3>
+          <h3 className="sec__title">เครดิตคอร์ส</h3>
         </div>
         {credits ? (
           <>
@@ -112,8 +95,8 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
               <div className="alert alert--stop">
                 <CircleAlert size={16} />
                 <div>
-                  <b>เครดิตในแผนการรักษาหมดแล้ว</b>
-                  ต้องพบแพทย์แผนไทยเพื่อประเมินและเปิดแผนใหม่ หรือรับบริการแบบชำระเงินเอง
+                  <b>เครดิตคอร์สหมดแล้ว</b>
+                  ให้แพทย์เปิดคอร์สใหม่ หรือชำระรายครั้ง
                 </div>
               </div>
             )}
@@ -122,8 +105,8 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <div className="alert alert--info">
             <CircleAlert size={16} />
             <div>
-              <b>ไม่มีแผนการรักษา</b>
-              รับบริการนวดผ่อนคลายแบบชำระรายครั้ง
+              <b>ไม่มีคอร์ส</b>
+              ชำระเงินรายครั้ง
             </div>
           </div>
         )}
@@ -131,8 +114,8 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
 
       <section className="sec">
         <div className="sec__head">
-          <h3 className="sec__title">จัดคิว · {s.name} ({s.minutes} นาที)</h3>
-          <span className="tw-caption">เปลี่ยนวัน เวลา หรือผู้บำบัดได้ · เตียงว่างต่อรอบ จากทั้งหมด {store.settings.bedsPerSlot} เตียง</span>
+          <h3 className="sec__title">วันและเวลา · {s.name} {s.minutes} นาที</h3>
+          <span className="tw-caption">มี {store.settings.bedsPerSlot} เตียงต่อรอบ</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Field label="วันที่" hint={date ? thaiDateLong(date) : undefined}>
@@ -157,6 +140,23 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           ))}
         </div>
       </section>
+
+      {/* ข้อมูลอ้างอิงจากแอป (อาการ/แผน) ไว้ท้าย — งานหลักคือคัดกรอง → เครดิต → เลือกเวลา */}
+      <section className="sec">
+        <div className="sec__head">
+          <h3 className="sec__title">อาการจากแอป</h3>
+        </div>
+        {/* อาการสำคัญ ระดับความปวด บริเวณที่ปวด (heatmap) และบริเวณห้ามนวด — แสดงในแบบประเมินจากแอปที่เดียว */}
+        <IntakeCard intake={intakeOfRequest(request, p)} sex={p.gender} element={elementProfile(p).birth} compact />
+      </section>
+      {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) && !flags.some((f) => f.level === "stop") && (
+        <section className="sec">
+          <div className="sec__head">
+            <h3 className="sec__title">แผนการรักษาจากแอป</h3>
+          </div>
+          <AppGuideCard guide={request.appGuide} areas={request.intake?.focusAreas} compact />
+        </section>
+      )}
     </Dialog>
   );
 }
@@ -195,7 +195,7 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
       open={incoming !== null}
       onClose={onClose}
       leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />}
-      title="ปฏิเสธคำขอจองคิว"
+      title="ปฏิเสธคำขอจอง"
       subtitle={`${p.name} · ${thaiDate(request.date)} ${request.start} น.`}
       footer={
         <>
@@ -209,7 +209,7 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
       }
     >
       <section className="sec">
-        <h3 className="sec__title">เหตุผล (แจ้งผู้ป่วยผ่านแอป ThaiWell AI)</h3>
+        <h3 className="sec__title">เหตุผล (แจ้งผู้ป่วยในแอป)</h3>
         <div className="reasons">
           {REASONS.map((r) => (
             <Chip key={r} pressed={reason === r} onClick={() => setReason(r)}>
@@ -217,8 +217,8 @@ export function RejectDialog({ request: incoming, onClose }: { request: BookingR
             </Chip>
           ))}
         </div>
-        <Field label="ข้อความเพิ่มเติม (ไม่บังคับ)">
-          <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น แนะนำช่วงเวลาอื่นที่ยังว่าง" />
+        <Field label="หมายเหตุ (ไม่บังคับ)">
+          <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น แนะนำเวลาอื่นที่ว่าง" />
         </Field>
       </section>
     </Dialog>

@@ -602,3 +602,9 @@
   font: 600 11.5px/1.35 var(--font-sans);
   color: var(--color-brand);
 }
+.pp__credit-note i {
+  display: block;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}

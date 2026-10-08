@@ -25,7 +25,7 @@ export function PhotoSlot({ value, onChange, name = "" }: { value?: string; onCh
   };
   return (
     <div className="pslot">
-      <button type="button" className={value ? "pslot__tile has-photo" : "pslot__tile"} onClick={() => lib.current?.click()} aria-label="เปลี่ยนรูปผู้รับบริการ" title="แตะเพื่อถ่ายหรือเลือกรูป">
+      <button type="button" className={value ? "pslot__tile has-photo" : "pslot__tile"} onClick={() => lib.current?.click()} aria-label="เปลี่ยนรูปผู้ป่วย" title="แตะเพื่อถ่ายหรือเลือกรูป">
         {value ? (
           <img src={value} alt="" />
         ) : (

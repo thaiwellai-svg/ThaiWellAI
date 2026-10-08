@@ -86,6 +86,9 @@ export default function Visits() {
       .sort((a, b) => jobRank(a) - jobRank(b) || a.start.localeCompare(b.start));
   }, [todays, f, query, store]);
   const sel = store.appointments.find((a) => a.id === selected);
+  // narrow screens (tablet portrait): a side box (assistant / health) takes the list's room so nothing gets clipped
+  const sideOpen = !!sel && !solo && ((voice && visitStage(sel) === "assess") || history);
+  const hideList = solo || (narrow && sideOpen);
   const count = (g: F) => (g === "all" ? todays.length : todays.filter((a) => GROUP[stageOf(a)] === g).length);
 
   useEffect(() => {
@@ -116,7 +119,7 @@ export default function Visits() {
             options={[
               { value: "all", label: "ทั้งหมด", count: count("all"), icon: ListFilter },
               { value: "waiting", label: "รอรับบริการ", count: count("waiting"), icon: Hourglass },
-              { value: "progress", label: "กำลังดำเนินการ", count: count("progress"), icon: Play },
+              { value: "progress", label: "กำลังรักษา", count: count("progress"), icon: Play },
               { value: "billing", label: "รอชำระเงิน", count: count("billing"), icon: ReceiptText },
               { value: "done", label: "เสร็จแล้ว / ไม่มา", count: count("done"), icon: CircleCheck },
             ]}
@@ -129,7 +132,7 @@ export default function Visits() {
         storageKey="thaiwell.visits.layout"
         className={clsx("vp", history && sel && !solo && "has-history")}
         panes={[
-          ...(solo ? [] : [{ id: "list", collapsible: true, width: slim ? 96 : 300, min: slim ? 96 : undefined, fixed: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: (
+          ...(hideList ? [] : [{ id: "list", collapsible: true, width: slim ? 96 : 300, min: slim ? 96 : undefined, fixed: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: (
         <aside className={clsx("vp__side", slim && "is-slim")}>
           <div className="vp__list scroll-y">
             {list.map((a) => {
@@ -168,7 +171,7 @@ export default function Visits() {
                 </button>
               );
             })}
-            {list.length === 0 && <EmptyState onGlass icon={<UserX size={24} />} title="ไม่มีรายการ" description={`วันนี้ ${thaiDate(today)}`} />}
+            {list.length === 0 && <EmptyState onGlass icon={<UserX size={24} />} title={f !== "all" || query ? "ไม่พบรายการ" : isToday ? "ยังไม่มีนัดวันนี้" : `ไม่มีนัด ${thaiDate(today)}`} description={f !== "all" || query ? "ลองเปลี่ยนตัวกรองหรือคำค้น" : undefined} />}
           </div>
         </aside>
           ) }]),
@@ -204,7 +207,7 @@ export default function Visits() {
               />
             ) : (
               <div className="vp__none">
-                <EmptyState icon={<ClipboardList size={24} />} title="เลือกผู้รับบริการจากรายการ" description="บันทึกขั้นตอน วินิจฉัย หัตถการ และชำระเงินได้ที่นี่" />
+                <EmptyState icon={<ClipboardList size={24} />} title="เลือกผู้ป่วยจากรายการ" description="ทำทุกขั้นตั้งแต่เรียกคิวถึงชำระเงิน" />
               </div>
             )}
           </div>
@@ -219,7 +222,7 @@ export default function Visits() {
                     <b>
                       <AudioLines size={15} /> ผู้ช่วยบันทึกการรักษา
                     </b>
-                    <small>{store.patientById(sel.patientId).name} · คุยกับ AI แล้วเติมบันทึกให้</small>
+                    <small>{store.patientById(sel.patientId).name} · AI ช่วยกรอกบันทึก</small>
                   </div>
                   <IconButton label="ปิด" variant="soft" size="sm" onClick={() => setVoice(false)}>
                     <X size={15} />

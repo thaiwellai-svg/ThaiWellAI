@@ -3,7 +3,7 @@ import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { ElementIcon } from "./ElementIcon";
 import { ageFrom, thaiBirth } from "./BirthDateField";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House, Printer } from "lucide-react";
+import { CalendarPlus, Check, ChevronDown, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House, Printer } from "lucide-react";
 import { useStore } from "../store/store";
 import { Button, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
@@ -22,62 +22,67 @@ export function ElementCard({ p }: { p: Patient }) {
   const prof = elementProfile(p);
   const info = ELEMENT_INFO[prof.birth];
   return (
-    <section className="pd__card pd__card--wide el2" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
-      <div className="el2__head">
-        <h3 className="pd2__h">
+    <section className="pd__card pd__card--wide pd2 el2" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
+      {/* ใช้เฉพาะตอนแพทย์ประเมิน → พับไว้ หัวการ์ดบอกธาตุไว้แล้ว */}
+      <details className="el2__fold">
+        <summary className="pd2__h">
           <span className="pd2__i" style={{ ["--c" as string]: info.color }}>
             <ElementIcon element={prof.birth} size={15} />
           </span>
           ธาตุเจ้าเรือน
-        </h3>
-        <div className="el2__born">
-          <span>
-            <small>เกิด</small>
-            <b>{p.birthDate ? thaiBirth(p.birthDate) : "ยังไม่ระบุวันเกิด · แก้ได้ที่ “แก้ไขข้อมูล”"}</b>
-            {p.birthDate && <em>อายุ {ageFrom(p.birthDate) ?? p.age} ปี</em>}
-          </span>
-        </div>
-      </div>
-      <div className="el2__body">
-        <div className="el2__hero">
-          <span className="el2__badge">
-            <ElementIcon element={prof.birth} size={30} strokeWidth={2} />
-          </span>
-          <div>
-            <b>ธาตุ{prof.birth}</b>
-            <p>{info.trait}</p>
+          <em className="el2__tag">ธาตุ{prof.birth}</em>
+          <ChevronDown size={16} className="el2__chev" />
+        </summary>
+        <div className="el2__inner">
+          <div className="el2__body">
+            <div className="el2__hero">
+              <span className="el2__badge">
+                <ElementIcon element={prof.birth} size={30} strokeWidth={2} />
+              </span>
+              <div>
+                <b>ธาตุ{prof.birth}</b>
+                <p>{info.trait}</p>
+              </div>
+            </div>
+            <div className="el2__born">
+              <span>
+                <small>เกิด</small>
+                <b>{p.birthDate ? thaiBirth(p.birthDate) : "ยังไม่ระบุวันเกิด"}</b>
+                {p.birthDate && <em>อายุ {ageFrom(p.birthDate) ?? p.age} ปี</em>}
+              </span>
+            </div>
           </div>
+          <div className="el2__kv">
+            <div>
+              <span className="el2__kvi">
+                <TriangleAlert size={14} />
+              </span>
+              <small>มักพบ</small>
+              <p>{info.risk}</p>
+            </div>
+            <div>
+              <span className="el2__kvi">
+                <Leaf size={14} />
+              </span>
+              <small>รสยาที่เหมาะ</small>
+              <p>{info.taste}</p>
+            </div>
+            <div>
+              <span className="el2__kvi">
+                <Hand size={14} />
+              </span>
+              <small>แนวทางนวด</small>
+              <p>{info.care}</p>
+            </div>
+          </div>
+          <SamuthanPanel p={p} />
         </div>
-      </div>
-      <div className="el2__kv">
-        <div>
-          <span className="el2__kvi">
-            <TriangleAlert size={14} />
-          </span>
-          <small>มักพบ</small>
-          <p>{info.risk}</p>
-        </div>
-        <div>
-          <span className="el2__kvi">
-            <Leaf size={14} />
-          </span>
-          <small>รสยาที่เหมาะ</small>
-          <p>{info.taste}</p>
-        </div>
-        <div>
-          <span className="el2__kvi">
-            <Hand size={14} />
-          </span>
-          <small>แนวทางนวด</small>
-          <p>{info.care}</p>
-        </div>
-      </div>
-      <SamuthanPanel p={p} />
+      </details>
     </section>
   );
 }
 
-const STEPS = ["อ่านประวัติและอาการ", "ประเมินธาตุและเส้นประธาน", "เลือกบริการและความถี่", "ตรวจข้อห้ามและข้อควรระวัง"];
+const STEPS = ["อ่านประวัติและอาการ", "ประเมินธาตุและเส้น", "เลือกบริการและความถี่", "ตรวจข้อห้าม"];
 
 /** AI-drafted treatment plan from the patient's history (+ OCR'd referral documents). */
 export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side panel (no card frame) */ panel?: boolean }) {
@@ -101,9 +106,9 @@ export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side pan
         id: p.id,
         patch: { documents: [...(p.documents ?? []), { name: f.name, text, at: new Date().toISOString() }] },
       });
-      toast({ message: `อ่านเอกสาร ${f.name} แล้ว (${text.length.toLocaleString()} ตัวอักษร)` });
+      toast({ message: `อ่านเอกสาร ${f.name} แล้ว` });
     } catch {
-      toast({ message: "อ่านเอกสารไม่สำเร็จ ลองใหม่อีกครั้ง", tone: "danger" });
+      toast({ message: "อ่านเอกสารไม่สำเร็จ ลองใหม่", tone: "danger" });
     } finally {
       setReading(null);
     }
@@ -167,7 +172,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
       };
       store.dispatch({ type: "updatePatient", id: p.id, patch: { aiPlan: clean } });
     } catch (e) {
-      setError(e instanceof Error && e.name === "AbortError" ? "" : "AI ตอบกลับไม่สำเร็จ ลองใหม่อีกครั้ง");
+      setError(e instanceof Error && e.name === "AbortError" ? "" : "AI ตอบไม่สำเร็จ ลองใหม่");
     } finally {
       window.clearInterval(tick);
       setBusy(false);
@@ -205,14 +210,14 @@ ${THAI_MASSAGE_KNOWLEDGE}
     // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
     const booked = store.appointments.filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.date >= todayISO()).length;
     const over = patch.course ? booked - (plan.sessions - patch.course.used) : 0;
-    toast({ message: patch.course ? `อนุมัติแผน · เปิดคอร์ส ${plan.sessions} ครั้งแล้ว${patch.course.used ? ` · รวมการรักษาครั้งแรกเป็นครั้งที่ 1 · นัดต่ออีก ${plan.sessions - patch.course.used} ครั้ง` : ""}${over > 0 ? ` · มีนัดล่วงหน้าเกินคอร์ส ${over} นัด ตรวจที่การ์ดคอร์ส` : ""}` : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
+    toast({ message: patch.course ? (over > 0 ? `อนุมัติแล้ว · นัดเกินคอร์ส ${over} นัด ดูที่การ์ดคอร์ส` : `อนุมัติแล้ว · เปิดคอร์ส ${plan.sessions} ครั้ง${patch.course.used ? " (นับครั้งแรกแล้ว)" : ""}`) : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
   };
 
   return (
     <section className={panel ? "ai-card ai-card--panel" : "pd__card pd__card--wide ai-card"}>
       <div className="pd__card-head">
         <h3 className="ai-title">
-          <Sparkles size={16} /> แผนการรักษาแนะนำโดย AI
+          <Sparkles size={16} /> แผนการรักษา AI
         </h3>
         <div className="ai-actions">
           <input ref={file} type="file" accept="application/pdf,image/*" hidden onChange={(e) => e.target.files?.[0] && attach(e.target.files[0])} />
@@ -220,7 +225,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
             {reading ? "กำลังอ่าน…" : "แนบเอกสาร"}
           </Button>
           <Button size="sm" leading={busy ? <Loader2 size={14} className="spin" /> : plan ? <RefreshCw size={14} /> : <Sparkles size={14} />} disabled={busy} onClick={generate}>
-            {busy ? "กำลังวางแผน…" : plan ? "วางแผนใหม่" : "ให้ AI วางแผน"}
+            {busy ? "กำลังวางแผน…" : plan ? "วางแผนใหม่" : "สร้างแผน"}
           </Button>
         </div>
       </div>
@@ -286,7 +291,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
               <div className="aip-refer">
                 <ShieldAlert size={18} />
                 <div>
-                  <b>ควรให้แพทย์แผนไทยประเมินก่อนเริ่มแผน</b>
+                  <b>ควรให้แพทย์ประเมินก่อนเริ่ม</b>
                   <small>ดูข้อควรระวังด้านล่าง</small>
                 </div>
               </div>
@@ -313,7 +318,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
             {plan.phases.length > 0 && (
               <section className="aip-sec">
                 <h4>
-                  <Route size={14} /> แผนแต่ละระยะ
+                  <Route size={14} /> แต่ละระยะ
                 </h4>
                 <ol className="aip-phases">
                   {plan.phases.map((ph, i) => (
@@ -356,7 +361,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
                       <ElementIcon element={el} size={18} />
                     </span>
                     <div>
-                      <small>มุมมองธาตุ · ธาตุ{el}</small>
+                      <small>ธาตุ{el}</small>
                       <p>{plan.elementNote}</p>
                     </div>
                   </div>
@@ -379,7 +384,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
             {plan.homeCare.length > 0 && (
               <section className="aip-sec">
                 <h4>
-                  <House size={14} /> ดูแลที่บ้าน · ฤาษีดัดตน
+                  <House size={14} /> ดูแลที่บ้าน
                 </h4>
                 <ul className="aip-list">
                   {plan.homeCare.map((h) => (
@@ -404,7 +409,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
 
             <div className="aip-foot">
               <small>
-                <Sparkles size={12} /> ร่างโดย AI · {thaiDate(plan.at.slice(0, 10))} · ต้องให้แพทย์แผนไทยตรวจสอบก่อนใช้
+                <Sparkles size={12} /> ร่างโดย AI {thaiDate(plan.at.slice(0, 10))} · แพทย์ต้องตรวจก่อนใช้
               </small>
               <div>
                 {!plan.approved && (
@@ -417,7 +422,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
                 </Button>
               </div>
               <Button variant="outline" size="md" leading={<Printer size={15} />} onClick={print}>
-                พิมพ์ / บันทึก PDF
+                พิมพ์ / PDF
               </Button>
               {printNode}
             </div>
@@ -426,7 +431,8 @@ ${THAI_MASSAGE_KNOWLEDGE}
           <motion.div key="empty" className="ai-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Sparkles size={22} />
             <p>
-              ยังไม่มีแผนการรักษา · AI จะอ่านอาการ ประวัติ Pain Score ธาตุเจ้าเรือน และเอกสารที่แนบ (ใบส่งตัว ผลตรวจ) แล้วร่างแผนนวด ประคบ สมุนไพร และท่าฤาษีดัดตนให้แพทย์ตรวจสอบ
+              <b>ยังไม่มีแผน</b>
+              AI ร่างแผนจากอาการ ประวัติ ธาตุ และเอกสารที่แนบ
             </p>
             {error && <p className="ai-error">{error}</p>}
           </motion.div>
@@ -444,17 +450,16 @@ export function AIPlanTeaser({ p, open, onOpen }: { p: Patient; open: boolean; o
   return (
     <button type="button" className={"pd__card pd__card--wide ai-teaser" + (open ? " is-open" : "")} onClick={onOpen} aria-expanded={open}>
       <span className="ai-teaser__icon">
-        <Sparkles size={20} />
+        <Sparkles size={15} />
       </span>
       <span className="ai-teaser__text">
-        <b>แผนการรักษาโดย AI</b>
-        <small>
-          {plan
-            ? `${plan.massageType} · ${plan.sessions} ครั้ง · ${plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}`
-            : "ให้ AI อ่านอาการ ประวัติ ธาตุ และเอกสาร แล้วร่างแผนนวด ประคบ สมุนไพร"}
-        </small>
+        <b>
+          แผนการรักษา AI
+          {plan && <i className={plan.approved ? "is-ok" : undefined}>{plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}</i>}
+        </b>
+        <small>{plan ? `${plan.massageType} · ${plan.sessions} ครั้ง` : "AI ร่างแผนจากอาการและประวัติ"}</small>
       </span>
-      <em>{open ? "ซ่อน" : plan ? "เปิดแผน" : "ให้ AI วางแผน"}</em>
+      <em>{open ? "ซ่อน" : plan ? "เปิดแผน" : "สร้างแผน"}</em>
     </button>
   );
 }

@@ -183,8 +183,8 @@ export function ShiftEditor({ id, onClose }: { id: string | null; onClose: () =>
       wide
       className="shift-dialog"
       leading={t ? <Avatar name={t.name} src={therapistPhoto(t)} size="lg" color={t.color} /> : undefined}
-      title={t ? `กำหนดตาราง · ${t.name}` : ""}
-      subtitle="เลือกวัน แล้วกำหนดช่วงเวลาและบริการที่เปิดให้จอง"
+      title={t ? `ตารางงาน · ${t.name}` : ""}
+      subtitle="เลือกวัน แล้วตั้งเวลาและบริการที่เปิดจอง"
       footer={
         <>
           <span className="shift__total">
@@ -237,7 +237,7 @@ export function ShiftEditor({ id, onClose }: { id: string | null; onClose: () =>
             <div className="shift__edit-head">
               <div>
                 <h3>วัน{TH_WEEKDAYS[day]}</h3>
-                <span className="tw-meta">{closedDay ? "คลินิกปิดทำการ" : blocks.length ? `${blocks.length} ช่วง · ${blocks.reduce((h, b) => h + hoursOf(b), 0)} ชม.` : "ไม่เปิดให้จอง"}</span>
+                <span className="tw-meta">{closedDay ? "คลินิกปิด" : blocks.length ? `${blocks.length} ช่วง · ${blocks.reduce((h, b) => h + hoursOf(b), 0)} ชม.` : "ไม่เปิดให้จอง"}</span>
               </div>
               {!closedDay && (
                 <label className="shift__onoff">
@@ -271,9 +271,9 @@ export function ShiftEditor({ id, onClose }: { id: string | null; onClose: () =>
             )}
 
             {closedDay ? (
-              <p className="shift__empty">คลินิกปิดทุกวัน{TH_WEEKDAYS[day]} · เปลี่ยนวันเปิดได้ที่หน้าตั้งค่า</p>
+              <p className="shift__empty">คลินิกปิดทุกวัน{TH_WEEKDAYS[day]} · เปลี่ยนได้ที่ตั้งค่า</p>
             ) : !blocks.length ? (
-              <p className="shift__empty">วันนี้ไม่เปิดให้จอง · เปิดสวิตช์ด้านบนเพื่อเพิ่มช่วงเวลา</p>
+              <p className="shift__empty">ไม่เปิดให้จอง · เปิดสวิตช์เพื่อเพิ่มเวลา</p>
             ) : (
               <BlockEditor blocks={blocks} onChange={(bs) => setDay(day, bs)} fallback={t.services} />
             )}
@@ -283,7 +283,7 @@ export function ShiftEditor({ id, onClose }: { id: string | null; onClose: () =>
               <div className="shift__copy">
                 {copyTo === null ? (
                   <button type="button" className="shift__link" onClick={() => setCopyTo([])}>
-                    <Copy size={14} /> คัดลอกตารางวันนี้ไปวันอื่น
+                    <Copy size={14} /> คัดลอกไปวันอื่น
                   </button>
                 ) : (
                   <>

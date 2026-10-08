@@ -67,7 +67,7 @@ export function DayEditor({ target, onClose }: { target: DayTarget | null; onClo
   }, [store.appointments, t, date, next]);
 
   const valid = mode !== "custom" || (blocks.length > 0 && !dayError(blocks));
-  const fmt = (bs: DayBlock[]) => (bs.length ? bs.map((b) => `${b.start}–${b.end}`).join(" · ") : "หยุด");
+  const fmt = (bs: DayBlock[]) => (bs.length ? bs.map((b) => `${b.start}–${b.end}`).join(", ") : "หยุด");
 
   const save = () => {
     if (!t || !valid) return;
@@ -117,7 +117,7 @@ export function DayEditor({ target, onClose }: { target: DayTarget | null; onClo
       className="dayex-dialog"
       leading={t ? <Avatar name={t.name} src={therapistPhoto(t)} size="lg" color={t.color} /> : undefined}
       title={t ? `ปรับเฉพาะวัน · ${t.name}` : ""}
-      subtitle="เปลี่ยนเฉพาะวันที่เลือก ตารางประจำสัปดาห์ยังเหมือนเดิม"
+      subtitle="เปลี่ยนเฉพาะวันที่เลือก ตารางประจำไม่เปลี่ยน"
       footer={
         <>
           <Button variant="outline" size="lg" onClick={onClose}>
@@ -168,7 +168,7 @@ export function DayEditor({ target, onClose }: { target: DayTarget | null; onClo
             <div className="dayex__compare">
               <span className="dayex__label">ตารางประจำ</span>
               {line(weekly)}
-              <span className="dayex__label dayex__label--now">วันนี้</span>
+              <span className="dayex__label dayex__label--now">วันที่เลือก</span>
               {line(next, mode === "leave" ? "leave" : undefined)}
               <span />
               <div className="shift__ticks">
@@ -180,7 +180,7 @@ export function DayEditor({ target, onClose }: { target: DayTarget | null; onClo
               </div>
             </div>
 
-            {mode === "weekly" && <p className="shift__empty">วันนี้ใช้ตารางประจำสัปดาห์ · เลือก "ลา / หยุด" หรือ "ปรับเวลา" ทางซ้ายเพื่อเปลี่ยนเฉพาะวันนี้</p>}
+            {mode === "weekly" && <p className="shift__empty">ใช้ตารางประจำ · เลือก "ลา / หยุด" หรือ "ปรับเวลา" เพื่อเปลี่ยน</p>}
 
             {mode === "leave" && (
               <div className="tw-field">
@@ -207,8 +207,8 @@ export function DayEditor({ target, onClose }: { target: DayTarget | null; onClo
               <div className="alert alert--caution">
                 <CircleAlert size={16} />
                 <div>
-                  <b>มีคิวที่จองไว้ {affected} รายการอยู่นอกตารางวันนี้</b>
-                  คิวยังอยู่ — ย้ายผู้บำบัดหรือโทรเลื่อนนัดในหน้าตารางนัด
+                  <b>มี {affected} นัดอยู่นอกเวลาใหม่</b>
+                  นัดยังอยู่ · เปลี่ยนผู้บำบัดหรือเลื่อนนัดในตารางนัด
                 </div>
               </div>
             )}

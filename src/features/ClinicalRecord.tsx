@@ -46,7 +46,7 @@ export function FindingsField({ appt, n = 1 }: { appt: Appointment; n?: number }
   };
   const QUICK = ["ตึง", "กดเจ็บ", "ปวดร้าว", "ชา", "ข้อติด", "บวม"];
   return (
-    <RecSection n={n} title="อาการที่ตรวจพบ" hint="ตำแหน่งและลักษณะอาการวันนี้" done={!!(appt.findings ?? "").trim()}>
+    <RecSection n={n} title="ตรวจร่างกาย" hint="อาการที่พบวันนี้" done={!!(appt.findings ?? "").trim()}>
       <textarea className="cr__findings" rows={2} value={v} onChange={(e) => setV(e.target.value)} onBlur={save} placeholder="เช่น บ่าขวาตึง กดเจ็บ ยกแขนลำบาก" aria-label="อาการที่ตรวจพบ" />
       <div className="cr__chips">
         {QUICK.map((q) => (
@@ -155,7 +155,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
       const npr = [...pr];
       for (const x of res.procedures ?? []) if (!npr.some((q) => q.name === x.name)) npr.push(newProc(x.name, npr.length, x.area));
       save({ diagnoses: ndx, procedures: npr }, "AI แนะนำวินิจฉัยและหัตถการ");
-      toast({ message: "AI เติมคำแนะนำแล้ว · ตรวจสอบก่อนยืนยัน" });
+      toast({ message: "AI เติมให้แล้ว ตรวจก่อนบันทึก" });
     } catch {
       toast({ message: "AI แนะนำไม่สำเร็จ ลองใหม่อีกครั้ง", tone: "danger" });
     } finally {
@@ -273,13 +273,13 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
           const toggleArea = (a: string) => setPr(i, { area: (areas.includes(a) ? areas.filter((x) => x !== a) : [...areas, a]).join(", ") });
           // details stay folded once area + time are set
           const open = !locked && (openProc === p.name || !areas.length || !p.minutes || (p.included === false && p.price === undefined));
-          const fee = p.included !== false ? <em className="cr__fee is-in">รวมในค่าบริการ</em> : p.price === undefined ? <em className="cr__fee is-need">ระบุค่าบริการ</em> : <em className="cr__fee">+{baht(p.price)} ฿</em>;
+          const fee = p.included !== false ? <em className="cr__fee is-in">รวมในบริการ</em> : p.price === undefined ? <em className="cr__fee is-need">ใส่ราคา</em> : <em className="cr__fee">+{baht(p.price)} ฿</em>;
           return (
             <motion.div key={p.name} className="cr__proc" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 30 }}>
               <div className="cr__proc-top">
                 <div className="cr__item-main is-compact">
                   <b>{p.name}</b>
-                  <small className="cr__sumline">{[areas.join(", "), p.minutes ? `${p.minutes} นาที` : ""].filter(Boolean).join(" · ") || "ยังไม่ระบุตำแหน่ง / เวลา"}</small>
+                  <small className="cr__sumline">{[areas.join(", "), p.minutes ? `${p.minutes} นาที` : ""].filter(Boolean).join(" · ") || "ยังไม่ใส่ตำแหน่งและเวลา"}</small>
                 </div>
                 {fee}
                 {!locked && (
@@ -317,10 +317,10 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
               </div>
               {/* ค่าบริการ: รวมในบริการที่จอง หรือคิดเพิ่ม (จำราคาไว้ใช้ครั้งต่อไป) */}
               <div className="cr__field">
-                <span>ค่าบริการ</span>
+                <span>ราคา</span>
                 <div className="cr__toggles">
                   <button type="button" aria-pressed={p.included !== false} onClick={() => setPrice(i, undefined, true)}>
-                    รวมในค่าบริการ
+                    รวมในบริการ
                   </button>
                   {[...new Set([100, 200, 300, 500, ...(p.price !== undefined ? [p.price] : [])])].sort((a, b) => a - b).map((v) => (
                     <button key={v} type="button" aria-pressed={p.included === false && p.price === v} onClick={() => setPrice(i, v)}>
@@ -351,7 +351,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
       {!locked && (pr.length && more !== "proc" ? addMore("proc", "+ เพิ่มหัตถการ") : suggestBox("proc"))}
       {locked && !prDone && <p className="cr__empty">ไม่ได้บันทึกหัตถการ</p>}
       {/* ยอดของครั้งนี้: ค่าบริการ + หัตถการเพิ่ม → ไปที่บิล */}
-      {pr.length > 0 && (
+      {pr.length > 0 && !locked && (
         <div className={clsx("cr__charge", unpriced > 0 && "is-need")}>
           <span>
             {s.name} <b>{baht(s.price)} ฿</b>
@@ -362,9 +362,9 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
             </span>
           )}
           <span className="cr__charge-total">
-            รวมค่าบริการ <b>{baht(s.price + extra)} ฿</b>
+            รวม <b>{baht(s.price + extra)} ฿</b>
           </span>
-          {unpriced > 0 && <small>มีหัตถการที่คิดเพิ่มแต่ยังไม่ใส่ราคา {unpriced} รายการ</small>}
+          {unpriced > 0 && <small>ยังไม่ใส่ราคา {unpriced} รายการ</small>}
         </div>
       )}
     </>
@@ -373,10 +373,10 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
   if (embedded)
     return (
       <>
-        <RecSection n={2} title="การวินิจฉัย" done={dxDone}>
+        <RecSection n={2} title="วินิจฉัย" done={dxDone}>
           {dxBlock}
         </RecSection>
-        <RecSection n={3} title="หัตถการ" done={prDone}>
+        <RecSection n={3} title="หัตถการ" hint="ตำแหน่ง เวลา และราคา" done={prDone}>
           {prBlock}
         </RecSection>
       </>
@@ -395,7 +395,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
         </span>
         {aiBtn}
       </div>
-      <RecSection n={1} title="การวินิจฉัย" done={dxDone}>
+      <RecSection n={1} title="วินิจฉัย" done={dxDone}>
         {dxBlock}
       </RecSection>
       <RecSection n={2} title="หัตถการ" done={prDone}>

@@ -73,8 +73,8 @@ export function IntakeCard({ intake: i, compact, sex, element, body = true }: { 
           <Smartphone size={15} />
         </span>
         <div className="ik2__title">
-          <b>แบบประเมินก่อนรับบริการ</b>
-          <small>จากแอป ThaiWell AI · {timeAgo(i.at)}</small>
+          <b>แบบประเมินก่อนนวด</b>
+          <small>จากแอป ThaiWell · {timeAgo(i.at)}</small>
         </div>
         <span className={clsx("ik2__status", alerts.length ? (alerts.some((a) => a.level === "stop") ? "is-stop" : "is-warn") : "is-ok")}>
           {alerts.length ? <ShieldAlert size={13} /> : <ShieldCheck size={13} />}
@@ -108,7 +108,7 @@ export function IntakeCard({ intake: i, compact, sex, element, body = true }: { 
           <span className="ik3__icon">
             <Activity size={14} />
           </span>
-          <small>ความปวด</small>
+          <small>ปวด</small>
           <b>
             {i.pain}
             <i>/10</i>

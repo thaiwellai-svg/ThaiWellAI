@@ -17,7 +17,7 @@ interface SearchFieldProps {
 const isMac = typeof navigator !== "undefined" && /Mac|iPad|iPhone/.test(navigator.platform || navigator.userAgent);
 
 /** Frosted pill · h44 · stroke icon · clear button · keyboard shortcut hint. */
-export function SearchField({ value, onChange, placeholder = "ค้นหา....", tone = "glass", className, autoFocus, shortcut = tone === "glass" }: SearchFieldProps) {
+export function SearchField({ value, onChange, placeholder = "ค้นหา…", tone = "glass", className, autoFocus, shortcut = tone === "glass" }: SearchFieldProps) {
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

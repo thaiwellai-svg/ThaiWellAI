@@ -40,8 +40,8 @@ export function WipeDataDialog({ open, onClose }: { open: boolean; onClose: () =
   }
   const b = store.biz;
   const counts = [
-    { label: "ผู้รับบริการ", n: store.patients.length },
-    { label: "นัดและการรับบริการ", n: store.appointments.length },
+    { label: "ผู้ป่วย", n: store.patients.length },
+    { label: "นัด", n: store.appointments.length },
     { label: "ใบเสร็จ", n: store.appointments.filter((a) => a.payment).length },
     { label: "คำขอจอง", n: store.requests.length + store.decisions.length },
     { label: "การแจ้งเตือน", n: store.notifications.length },
@@ -56,10 +56,10 @@ export function WipeDataDialog({ open, onClose }: { open: boolean; onClose: () =
     try {
       const users = LIVE ? await wipeCloud() : 0;
       store.dispatch({ type: "wipeTestData" });
-      toast({ message: `ล้างข้อมูลทดสอบทั้งหมดแล้ว${users ? ` · แอปผู้ใช้ ${users} บัญชีล้างตาม` : ""}` });
+      toast({ message: `ล้างข้อมูลทดสอบแล้ว${users ? ` · แอป ${users} บัญชีล้างตาม` : ""}` });
       onClose();
     } catch (e) {
-      toast({ message: `ล้างข้อมูลไม่สำเร็จ · ${(e as Error)?.message ?? "ลองใหม่อีกครั้ง"}`, tone: "danger" });
+      toast({ message: `ล้างข้อมูลไม่สำเร็จ: ${(e as Error)?.message ?? "ลองใหม่อีกครั้ง"}`, tone: "danger" });
     } finally {
       setBusy(false);
     }
@@ -75,8 +75,8 @@ export function WipeDataDialog({ open, onClose }: { open: boolean; onClose: () =
           <Trash2 size={20} strokeWidth={1.9} />
         </span>
       }
-      title="รีเซ็ตข้อมูลทั้งระบบ"
-      subtitle="ระบบคลินิก + แอป ThaiWell AI ของผู้ใช้ทุกคน · เริ่มทดสอบใหม่ / เริ่มใช้งานจริง"
+      title="รีเซ็ตทั้งระบบ"
+      subtitle="ล้างข้อมูลในคลินิกและแอป ThaiWell ทุกบัญชี"
       footer={
         <>
           <Button variant="outline" size="lg" fill onClick={onClose}>
@@ -93,7 +93,7 @@ export function WipeDataDialog({ open, onClose }: { open: boolean; onClose: () =
           <TriangleAlert size={18} />
           <span>
             <b>ลบแล้วกู้คืนไม่ได้</b>
-            ถ้าอยากเก็บไว้ ให้กด “สำรองข้อมูล” ด้านบนก่อน
+            ถ้าอยากเก็บไว้ ให้ดาวน์โหลดไฟล์สำรองก่อน
           </span>
         </div>
         <ul className="rp__list">
@@ -105,9 +105,9 @@ export function WipeDataDialog({ open, onClose }: { open: boolean; onClose: () =
           ))}
         </ul>
         <p className="rp__keep">
-          <b>ยังเก็บไว้:</b> ข้อมูลคลินิก (ชื่อ ที่อยู่ ตำแหน่ง โลโก้) · ผู้บำบัดและตารางงาน · บริการและราคา · แพ็กเกจ · สินค้าในคลัง · การตั้งค่าทั้งหมด · บัญชีเข้าระบบ
+          <b>ยังเก็บไว้:</b> ข้อมูลคลินิก ผู้บำบัด บริการ แพ็กเกจ สินค้า การตั้งค่า และบัญชีเข้าระบบ
         </p>
-        <p className="rp__app">นัด ประวัติ คอร์ส บิล และแจ้งเตือนในแอป ThaiWell AI ของผู้ใช้ทุกคนจะถูกล้างตาม · บัญชีแอปของผู้ใช้ยังอยู่ (จองใหม่แล้วได้ HN ใหม่)</p>
+        <p className="rp__app">ข้อมูลในแอป ThaiWell ของผู้ป่วยทุกคนจะถูกล้างตาม · บัญชีแอปยังอยู่</p>
         <label className="rp__type">
           <span>
             พิมพ์ <b>{CONFIRM}</b> เพื่อยืนยัน

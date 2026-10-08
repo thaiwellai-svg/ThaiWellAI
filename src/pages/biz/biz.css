@@ -32,7 +32,7 @@
 }
 .bz-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
 }
 .bz-stat {
@@ -45,7 +45,10 @@
   background: var(--sage-50);
 }
 .bz-stat small {
-  font: 600 12px/1 var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 12px/1.2 var(--font-sans);
   color: var(--color-text-muted);
 }
 .bz-stat b {

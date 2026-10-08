@@ -95,7 +95,7 @@ export function PatientPlanner() {
       return;
     }
     if (limitReached) {
-      toast({ message: `เลือกได้สูงสุด ${remaining} ครั้งตามเครดิตคงเหลือ`, tone: "danger" });
+      toast({ message: `เลือกได้สูงสุด ${remaining} ครั้งตามเครดิต`, tone: "danger" });
       return;
     }
     const prefer = drafts[drafts.length - 1]?.start ?? "09:00";
@@ -138,7 +138,7 @@ export function PatientPlanner() {
         paid: false,
       })),
     });
-    toast({ message: `บันทึกตารางงาน ${drafts.length} ครั้งให้ ${patient.name} แล้ว` });
+    toast({ message: `บันทึก ${drafts.length} นัดให้ ${patient.name} แล้ว` });
     setDrafts([]);
   };
 
@@ -146,14 +146,14 @@ export function PatientPlanner() {
   const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
 
   return (
-    <WorkPage eyebrow="ผู้มารับบริการ" title="วางแผนนัดตามคอร์ส" bell={false}>
+    <WorkPage eyebrow="ผู้ป่วย" title="วางแผนนัดตามคอร์ส" bell={false}>
       <div className="planner">
         {/* Patient picker */}
         <div className="panel picker">
           <SearchField value={query} onChange={setQuery} placeholder="ค้นหาผู้ป่วย / HN" />
           <div style={{ display: "flex", gap: 6 }}>
             <Chip tone="glass" pressed={onlyCourse} onClick={() => setOnlyCourse(true)}>
-              มีแผนการรักษา
+              มีคอร์ส
             </Chip>
             <Chip tone="glass" pressed={!onlyCourse} onClick={() => setOnlyCourse(false)}>
               ทั้งหมด
@@ -175,7 +175,7 @@ export function PatientPlanner() {
                     {p.name}
                   </span>
                   <span className="tw-meta">
-                    {p.hn} · {p.course ? p.course.name : "ไม่มีแผนการรักษา"}
+                    {p.hn} · {p.course ? p.course.name : "ไม่มีคอร์ส"}
                   </span>
                 </span>
                 {c && (
@@ -219,8 +219,8 @@ export function PatientPlanner() {
                 <div className="alert alert--info">
                   <Info size={16} />
                   <div>
-                    <b>ผู้ป่วยไม่มีแผนการรักษา</b>
-                    ทุกครั้งที่จองจะเป็นการรับบริการแบบชำระเงินรายครั้ง
+                    <b>ไม่มีคอร์ส</b>
+                    ชำระเงินรายครั้ง
                   </div>
                 </div>
               )}
@@ -263,7 +263,7 @@ export function PatientPlanner() {
                         type="button"
                         className={clsx("mp__day", out && "mp__day--out", sel && "mp__day--selected", iso === today && "mp__day--today")}
                         disabled={!sel && (!!reason || limitReached) && !own}
-                        title={reason ?? (limitReached && !sel ? "เครดิตคงเหลือครบจำนวนแล้ว" : undefined)}
+                        title={reason ?? (limitReached && !sel ? "เลือกครบตามเครดิตแล้ว" : undefined)}
                         onClick={() => !own && toggle(iso)}
                         whileTap={{ scale: 0.94 }}
                         animate={sel ? { scale: [1, 1.06, 1] } : { scale: 1 }}
@@ -271,7 +271,7 @@ export function PatientPlanner() {
                       >
                         <span className="mp__num">{d.getDate()}</span>
                         {own && !sel && (
-                          <span className={clsx("mp__mark", own.status === "done" ? "mp__mark--done" : "mp__mark--booked")} title="มีนัดของผู้ป่วยรายนี้">
+                          <span className={clsx("mp__mark", own.status === "done" ? "mp__mark--done" : "mp__mark--booked")} title="มีนัดอยู่แล้ว">
                             ✓
                           </span>
                         )}
@@ -296,7 +296,7 @@ export function PatientPlanner() {
                 <span><i style={{ background: "var(--status-active)" }} />วันที่เลือก</span>
                 <span><i style={{ background: "var(--status-waiting)" }} />มีนัดอยู่แล้ว</span>
                 <span><i style={{ background: "var(--color-brand)" }} />รับบริการแล้ว</span>
-                <span><i style={{ background: "linear-gradient(90deg,var(--green-500),var(--amber-300),var(--red-500))" }} />ความหนาแน่นของคิวทั้งคลินิก</span>
+                <span><i style={{ background: "linear-gradient(90deg,var(--green-500),var(--amber-300),var(--red-500))" }} />ความแน่นของคลินิก</span>
               </div>
             </div>
 
@@ -304,7 +304,7 @@ export function PatientPlanner() {
               <div className="plan__side-head">
                 <p className="sec__title">รายการที่จะนัด ({drafts.length})</p>
                 <Button variant="white" onClick={suggest} disabled={limitReached} leading={<img src={sparkle} alt="" width={12} height={12} style={{ transform: "scaleX(-1)" }} />}>
-                  แนะนำวันอัตโนมัติ
+                  แนะนำวัน
                 </Button>
               </div>
               <div className="plan__side-body scroll-y scroll-y--light">
@@ -367,18 +367,18 @@ export function PatientPlanner() {
                   <EmptyState
                     icon={<CalendarPlus size={24} />}
                     title="ยังไม่ได้เลือกวัน"
-                    description={credits ? `แตะวันที่ในปฏิทิน เลือกได้อีก ${credits.remaining} ครั้งตามแผน` : "แตะวันที่ในปฏิทินเพื่อเพิ่มนัด"}
+                    description={credits ? `แตะวันในปฏิทิน · เลือกได้อีก ${credits.remaining} ครั้ง` : "แตะวันในปฏิทินเพื่อเพิ่มนัด"}
                   />
                 )}
               </div>
               <div className="plan__side-foot">
                 {credits && credits.remaining === 0 && (
                   <Badge tone="danger" size="lg">
-                    เครดิตหมด — ต้องพบแพทย์แผนไทยเพื่อเปิดแผนใหม่
+                    เครดิตหมด · ให้แพทย์เปิดคอร์สใหม่
                   </Badge>
                 )}
                 <Button size="lg" block disabled={drafts.length === 0} onClick={save} leading={<CalendarPlus size={16} />}>
-                  บันทึกตารางงาน {drafts.length > 0 && `(${drafts.length} ครั้ง)`}
+                  บันทึกนัด {drafts.length > 0 && `(${drafts.length} ครั้ง)`}
                 </Button>
               </div>
             </aside>
