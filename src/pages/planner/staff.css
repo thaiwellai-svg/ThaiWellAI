@@ -645,3 +645,213 @@ button.so-track:disabled {
     --so-name-col: 240px;
   }
 }
+
+/* ---------- ตารางรายคน (จัดใหม่) ---------- */
+.so-person__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pv-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.pv-head__who {
+  flex: 1;
+  min-width: 160px;
+}
+.pv-head__who h3 {
+  margin: 0;
+  font: 800 22px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.pv-head__who p {
+  margin: 2px 0 0;
+  font: 500 13px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pv-head__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pv-head__stats span {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 500 12.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pv-head__stats b {
+  font: 800 15px/1 var(--font-sans);
+  color: var(--color-text);
+  margin-right: 2px;
+}
+
+.pv-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.pv-card h4 {
+  margin: 0;
+  font: 700 15px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.pv-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pv-link {
+  border: 0;
+  background: none;
+  font: 600 13px/1 var(--font-sans);
+  color: var(--color-brand);
+  cursor: pointer;
+}
+.pv-svcs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pv-svc {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-tint);
+  font: 600 12.5px/1.2 var(--font-sans);
+  color: var(--color-brand);
+}
+.pv-svc.is-off {
+  background: var(--sage-50);
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.pv-empty {
+  margin: 0;
+  font: 500 13px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* สัปดาห์: วัน | เส้นเวลา | ชั่วโมง */
+.pv-week {
+  --day: 84px;
+  --sum: 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pv-axis,
+.pv-row {
+  display: grid;
+  grid-template-columns: var(--day) minmax(0, 1fr) var(--sum);
+  align-items: center;
+  gap: 12px;
+}
+.pv-axis__ticks {
+  position: relative;
+  height: 16px;
+}
+.pv-axis__ticks i {
+  position: absolute;
+  transform: translateX(-50%);
+  font: 500 10.5px/16px var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pv-axis__ticks i:first-child {
+  transform: none;
+}
+.pv-axis__ticks i:last-child {
+  transform: translateX(-100%);
+}
+.pv-row {
+  min-height: 44px;
+  padding: 4px 0;
+  border-radius: 12px;
+}
+.pv-row.is-today {
+  background: var(--sage-50);
+}
+.pv-row__day {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  font: 600 13.5px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.pv-row__day em {
+  font: 700 10px/1 var(--font-sans);
+  font-style: normal;
+  padding: 3px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  color: var(--white);
+}
+.pv-track {
+  position: relative;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--sage-50);
+}
+.pv-row.is-today .pv-track {
+  background: var(--white);
+}
+.pv-track.is-off {
+  background: repeating-linear-gradient(135deg, transparent 0 6px, var(--sage-100) 6px 7px);
+}
+.pv-track__off {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pv-bar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  min-width: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--c, var(--color-brand));
+  color: var(--white);
+  font: 700 12px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.pv-row__sum {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: 700 13px/1.2 var(--font-sans);
+  color: var(--color-text);
+  text-align: right;
+  padding-right: 8px;
+}
+.pv-row__sum small {
+  font: 500 10.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+@media (max-width: 700px) {
+  .pv-week {
+    --day: 56px;
+    --sum: 48px;
+  }
+}

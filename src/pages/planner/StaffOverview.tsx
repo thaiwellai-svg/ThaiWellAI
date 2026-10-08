@@ -378,10 +378,6 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
   const closed = store.settings.closedWeekdays;
   const offers = [...new Set(t.shifts.flatMap((s) => s.services))];
   const workDays = new Set(t.shifts.flatMap((s) => s.days)).size;
-  const span = (s: { start: string; end: string }) => {
-    const idx = times.map((x, i) => (x >= s.start && x < s.end ? i : -1)).filter((i) => i >= 0);
-    return idx.length ? { from: idx[0] + 2, to: idx[idx.length - 1] + 3 } : null;
-  };
   const today = todayISO();
   const upcoming = Object.entries(t.exceptions ?? {})
     .filter(([d]) => d >= today)
@@ -389,6 +385,12 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
   let nextOpen = today;
   while (closed.includes(fromISODate(nextOpen).getDay())) nextOpen = toISODate(addDays(fromISODate(nextOpen), 1));
   const weekBlocks = (d: number) => t.shifts.filter((s) => s.days.includes(d)).sort((a, b) => a.start.localeCompare(b.start));
+  // เส้นเวลาของคลินิก: เปิดรอบแรก – ปิดหลังรอบสุดท้าย
+  const dayStart = toMinutes(times[0] ?? "08:00");
+  const dayEnd = toMinutes(times[times.length - 1] ?? "21:00") + 60;
+  const pos = (hhmm: string) => Math.max(0, Math.min(100, ((toMinutes(hhmm) - dayStart) / (dayEnd - dayStart)) * 100));
+  const ticks: string[] = [];
+  for (let m = dayStart; m <= dayEnd; m += 120) ticks.push(`${String(Math.floor(m / 60)).padStart(2, "0")}:00`);
 
   return (
     <motion.div className="so-person" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease: ease.out }} key={t.id}>
@@ -404,49 +406,91 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
         </Button>
       </div>
       <div className="so-person__body scroll-y scroll-y--light">
-        <div className="so-person__hero">
-          <Avatar name={t.name} src={therapistPhoto(t)} size="xl" color={t.color} />
-          <div>
+        {/* หัว: รูป ชื่อ ตำแหน่ง + สรุปเป็นป้าย */}
+        <div className="pv-head">
+          <Avatar name={t.name} src={therapistPhoto(t)} size="lg" color={t.color} />
+          <div className="pv-head__who">
             <h3>{t.name}</h3>
-            <p className="tw-meta">{t.role}</p>
+            <p>{t.role}</p>
           </div>
-        </div>
-        <div className="so-person__stats">
-          <div>
-            <small>วันทำงาน</small>
-            <b>
-              {workDays}
-              <span> วัน/สัปดาห์</span>
-            </b>
-          </div>
-          <div>
-            <small>ชั่วโมงทำงาน</small>
-            <b>
-              {weeklyHours(t)}
-              <span> ชม./สัปดาห์</span>
-            </b>
-          </div>
-          <div>
-            <small>บริการ</small>
-            <b>
-              {offers.length}
-              <span> รายการ</span>
-            </b>
-          </div>
-        </div>
-        <div className="so-person__svcs">
-          {store.services.map((s) => (
-            <span key={s.id} className={clsx("so-person__svc", !offers.includes(s.id) && "is-off")}>
-              {s.name}
+          <div className="pv-head__stats">
+            <span>
+              <b>{workDays}</b> วัน/สัปดาห์
             </span>
-          ))}
+            <span>
+              <b>{weeklyHours(t)}</b> ชม./สัปดาห์
+            </span>
+            <span>
+              <b>{offers.length}</b> บริการ
+            </span>
+          </div>
         </div>
 
-        <div className="so-exlist">
-          <div className="so-exlist__head">
-            <b>ปรับเฉพาะวัน</b>
+        <section className="pv-card">
+          <h4>บริการที่รับ</h4>
+          <div className="pv-svcs">
+            {store.services.map((s) => (
+              <span key={s.id} className={clsx("pv-svc", !offers.includes(s.id) && "is-off")}>
+                {s.name}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* ตารางประจำสัปดาห์: แถบเวลาบนเส้นเวลาของคลินิก */}
+        <section className="pv-card">
+          <div className="pv-card__head">
+            <h4>ตารางประจำสัปดาห์</h4>
+            <button type="button" className="pv-link" onClick={onEdit}>
+              แก้ไข
+            </button>
+          </div>
+          <div className="pv-week">
+            <div className="pv-axis">
+              <span />
+              <div className="pv-axis__ticks">
+                {ticks.map((h) => (
+                  <i key={h} style={{ left: `${pos(h)}%` }}>
+                    {h}
+                  </i>
+                ))}
+              </div>
+            </div>
+            {ORDER.map((d) => {
+              const list = closed.includes(d) ? [] : weekBlocks(d);
+              const isToday = fromISODate(today).getDay() === d;
+              const hrs = list.reduce((n, x) => n + hoursOf(x), 0);
+              const svc = [...new Set(list.flatMap((x) => x.services))];
+              const partial = list.length > 0 && svc.length < offers.length;
+              return (
+                <div key={d} className={clsx("pv-row", isToday && "is-today")}>
+                  <span className="pv-row__day">
+                    {TH_WEEKDAYS[d]}
+                    {isToday && <em>วันนี้</em>}
+                  </span>
+                  <div className={clsx("pv-track", !list.length && "is-off")}>
+                    {!list.length && <span className="pv-track__off">{closed.includes(d) ? "คลินิกปิด" : "หยุด"}</span>}
+                    {list.map((x) => (
+                      <button key={x.start} type="button" className="pv-bar" style={{ left: `${pos(x.start)}%`, width: `calc(${pos(x.end) - pos(x.start)}% - 3px)`, ["--c" as string]: t.color }} onClick={onEdit} title={`${x.start}–${x.end}`}>
+                        {x.start}–{x.end}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="pv-row__sum">
+                    {list.length ? `${hrs} ชม.` : "—"}
+                    {partial && <small>{svc.map((id) => store.serviceById(id).short).join(" · ")}</small>}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="pv-card">
+          <div className="pv-card__head">
+            <h4>วันลา / ปรับเวลา</h4>
             <Button variant="outline" size="sm" leading={<CalendarX2 size={14} />} onClick={() => onDay(nextOpen)}>
-              ลา / ปรับเวลา
+              เพิ่ม
             </Button>
           </div>
           {upcoming.length ? (
@@ -461,58 +505,9 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
               </button>
             ))
           ) : (
-            <p className="tw-meta">ไม่มีวันลา · ใช้ตารางประจำ</p>
+            <p className="pv-empty">ไม่มีวันลา · ใช้ตารางประจำ</p>
           )}
-        </div>
-
-        <div
-          className="so-grid so-grid--day so-week-line"
-          style={{
-            gridTemplateColumns: `96px repeat(${times.length}, minmax(76px, 1fr))`,
-            gridTemplateRows: `auto repeat(7, minmax(72px, auto))`,
-          }}
-        >
-          <div className="cal-corner so-corner">วัน</div>
-          {times.map((x) => (
-            <div key={x} className="cal-head so-time">
-              <span className="cal-head__date">{x}</span>
-            </div>
-          ))}
-          {ORDER.map((d, ri) => {
-            const row = ri + 2;
-            const list = closed.includes(d) ? [] : weekBlocks(d);
-            return (
-              <div key={d} style={{ display: "contents" }}>
-                <div className="so-dayname" style={{ gridRow: row, gridColumn: 1 }}>
-                  {TH_WEEKDAYS[d]}
-                </div>
-                <div className="so-track" style={{ gridRow: row, gridColumn: "2 / -1" }}>
-                  {!list.length && <span>{closed.includes(d) ? "คลินิกปิด" : "หยุด"}</span>}
-                </div>
-                {list.map((s) => {
-                  const c = span(s);
-                  if (!c) return null;
-                  return (
-                    <button
-                      key={s.start}
-                      type="button"
-                      className="so-block"
-                      style={{ gridRow: row, gridColumn: `${c.from} / ${c.to}`, ["--c" as string]: t.color }}
-                      onClick={onEdit}
-                    >
-                      <b>{c.to - c.from === 1 ? `${short(s.start)}–${short(s.end)}` : `${s.start}–${s.end}`}</b>
-                      <span className="so-tags">
-                        {s.services.map((id) => (
-                          <i key={id}>{store.serviceById(id).short}</i>
-                        ))}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+        </section>
       </div>
     </motion.div>
   );
