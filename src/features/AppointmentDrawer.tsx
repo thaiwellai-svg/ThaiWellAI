@@ -5,7 +5,7 @@ import { ScanLine, ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, H
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
-import { Avatar, Badge, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
+import { Avatar, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
 import { bedName, bedsInUse, coursePrepaid, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
 import { baht, timeAgo, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
@@ -16,11 +16,14 @@ import { AssessHistory } from "./AssessHistory";
 import { AppGuideCard } from "./AppGuideCard";
 import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "./billing";
 import { ReceiptDialog } from "./Receipt";
+import { VisitSummary } from "./VisitSummary";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit, visitAssessment } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
+
+const hm = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 import { VisitScreening } from "./ScreeningAlert";
 import { CancelDialog } from "./CancelDialog";
 import { deductStock } from "./stock";
@@ -613,33 +616,8 @@ export function AppointmentDrawer({
               )}
               {view === "done" && (
                 <>
-                  <StepHead n={6} title="เสร็จสิ้น" hint={appt.paid ? "ครบทุกขั้นแล้ว" : "รักษาเสร็จแล้ว ยังค้างชำระ"} />
-                  <div className="vs__result">
-                    <span>
-                      <small>ปวดก่อน → หลังนวด</small>
-                      <b>
-                        {appt.painBefore} → {appt.painAfter ?? "–"}
-                      </b>
-                    </span>
-                    <span>
-                      <small>ชำระเงิน</small>
-                      {appt.payment ? (
-                        <Badge tone={appt.payment.status === "paid" ? "success" : "warning"} compact>
-                          {appt.payment.status === "paid" ? METHOD_LABEL[appt.payment.method] : "รอชำระในแอป"}
-                        </Badge>
-                      ) : (
-                        <Badge tone={appt.paid ? "success" : "danger"} compact>
-                          {appt.paid ? "ชำระแล้ว" : "ค้างชำระ"}
-                        </Badge>
-                      )}
-                    </span>
-                    <span>
-                      <small>ยอดชำระ</small>
-                      <b>{baht(appt.payment?.amount ?? s.price + extraSum)} ฿</b>
-                    </span>
-                  </div>
-                  {appt.findings && <p className="vs__advice">ตรวจพบ: {appt.findings}</p>}
-                  {appt.advice && <p className="vs__advice">“{appt.advice}”</p>}
+                  <StepHead n={6} title="สรุปการรักษา" hint={appt.paid ? `ชำระแล้ว${appt.payment?.at ? ` ${hm(appt.payment.at)} น.` : ""}${appt.payment?.no ? ` · ${appt.payment.no}` : ""}` : appt.payment?.status === "pending" ? "รอผู้ป่วยชำระในแอป" : "ยังค้างชำระ"} />
+                  <VisitSummary appt={appt} courseNo={courseNo} courseTotal={credits?.total} courseLeft={credits?.remaining} amount={appt.payment?.amount ?? s.price + extraSum} />
                   {onNext && next && appt.paid && (
                     <button type="button" className="vs__next" onClick={() => onNext(next.id)}>
                       <span>
@@ -656,7 +634,7 @@ export function AppointmentDrawer({
             </motion.section>
           </AnimatePresence>
 
-          {(view === "billing" || view === "done") && <ClinicalRecord appt={appt} locked />}
+          {view === "billing" && <ClinicalRecord appt={appt} locked />}
 
           {/* ขั้นชำระเงิน: เครดิตคอร์สแสดงในตัวเลือกหักเครดิตแล้ว */}
           {credits && !(view === "billing" && coveredByCourse) && <CreditPips info={credits} name={p.course!.name} />}
@@ -709,7 +687,7 @@ export function AppointmentDrawer({
                         </span>
                       )}
                     </div>
-                    {ik ? (
+                    {ik && ik.duration?.trim() && ik.duration.trim() !== "-" ? (
                       <div>
                         <small>เป็นมา</small>
                         <b className="vcc__dur">{ik.duration.replace(/^ประมาณ\s*/, "")}</b>

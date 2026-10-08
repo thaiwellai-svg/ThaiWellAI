@@ -172,23 +172,36 @@
 }
 .credits__row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 .credits__name {
-  font: 600 13px/1.3 var(--font-sans);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 13.5px/1.3 var(--font-sans);
   color: var(--color-text);
 }
+/* เหลือกี่ครั้ง / ครบคอร์ส / เกินคอร์ส — ป้ายสั้น ไม่ใช้ตัวเลขใหญ่ */
 .credits__left {
-  font: 700 20px/1 var(--font-sans);
-  color: var(--color-text);
-  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+  font: 600 12px/1.2 var(--font-sans);
   white-space: nowrap;
 }
-.credits__left small {
-  font: 500 12px/1 var(--font-sans);
+.credits__left.is-full {
+  background: var(--white);
   color: var(--color-text-muted);
+}
+.credits__left.is-over {
+  background: #fdecea;
+  color: var(--color-danger);
 }
 .credits__pips {
   display: flex;

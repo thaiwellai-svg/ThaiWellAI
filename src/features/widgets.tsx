@@ -103,12 +103,15 @@ export function ScreeningAlert({ flags }: { flags: ScreeningFlag[] }) {
 
 export function CreditPips({ info, adding = 0, name }: { info: CreditInfo; adding?: number; name?: string }) {
   const left = Math.max(0, info.remaining - adding);
+  const over = Math.max(0, info.used + info.booked + adding - info.total);
   return (
     <div className="credits">
       <div className="credits__row">
-        <span className="credits__name">{name ?? "คอร์สการรักษา"}</span>
-        <span className="credits__left">
-          {left} <small>/ {info.total} ครั้งคงเหลือ</small>
+        <span className="credits__name" title={name}>
+          {name ?? "คอร์สการรักษา"}
+        </span>
+        <span className={clsx("credits__left", over > 0 && "is-over", over === 0 && left === 0 && "is-full")}>
+          {over > 0 ? `เกิน ${over} นัด` : left > 0 ? `ว่างอีก ${left} ครั้ง` : "ไม่เหลือว่าง"}
         </span>
       </div>
       <div className="credits__pips">
