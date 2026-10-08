@@ -384,28 +384,6 @@ export function AppointmentDrawer({
     );
 
   const stepIdx = STEPS.findIndex((x) => x.key === view);
-  // สถานะตอนนี้ในตั๋วคิว (นับนาทีสด)
-  const minsSince = (iso?: string) => (iso ? Math.max(0, Math.floor((now - Date.parse(iso)) / 60000)) : 0);
-  const liveStatus =
-    view === "checkin"
-      ? "รอผู้ป่วยเช็กอิน"
-      : view === "waiting"
-        ? `รอเรียกคิว${appt.checkedInAt ? ` ${minsSince(appt.checkedInAt)} นาที` : ""}`
-        : view === "called"
-          ? `เรียกคิวแล้ว ${minsSince(appt.calledAt)} นาที`
-          : view === "treating"
-            ? `กำลังนวด ${Math.floor(elapsed / 60)}/${s.minutes} นาที`
-            : view === "assess"
-              ? `นวดเสร็จ ${clock(appt.endedAt)} น. · รอบันทึก`
-              : view === "billing"
-                ? "รอชำระเงิน"
-                : view === "done"
-                  ? appt.paid
-                    ? `เสร็จสิ้น ${clock(appt.payment?.at)} น.`
-                    : appt.payment?.status === "pending"
-                      ? "รอผู้ป่วยชำระในแอป"
-                      : "ค้างชำระ"
-                  : "";
   // when each step happened — shown right under the stepper instead of a separate log
   const stepTime: Partial<Record<Stage, string>> = {
     checkin: appt.checkedInAt,
@@ -428,54 +406,49 @@ export function AppointmentDrawer({
         footer={footer}
       >
         <div className="vs">
-          {/* ตั๋วคิว: เลขคิว · เวลานัด · สถานะตอนนี้ · ปุ่ม */}
-          <section className="vq">
-            <div className={clsx("vq__no", !queueNo && "is-wait")}>
+          <section className="vs__summary">
+            <div className="vs__q">
               <small>คิว</small>
-              <b>{queueNo ?? (view === "checkin" ? "รอ" : "—")}</b>
+              {queueNo ? <b>{queueNo}</b> : <b className="is-wait">{view === "checkin" ? "รอเช็กอิน" : "—"}</b>}
             </div>
-            <div className="vq__body">
-              <b className="vq__time">{timeRange(appt.start, s.minutes)} น.</b>
-              <div className="vq__sub">
-                <small className="vq__date">
-                  {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
-                </small>
-                {liveStatus && <span className={clsx("vq__live", `is-${view}`)}>{liveStatus}</span>}
-              </div>
+            <div className="vs__when">
+              <b>{timeRange(appt.start, s.minutes)} น.</b>
+              <small>
+                {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
+              </small>
             </div>
-            <div className="vq__acts">
-              {p.phone && (
-                <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
-                  <Phone size={16} />
-                </a>
-              )}
-              {(onHistory || onOpenPatient) && (
-                <button
-                  type="button"
-                  className={clsx("vs__hbtn", onHistory && historyOpen && "is-on")}
-                  aria-pressed={!!(onHistory && historyOpen)}
-                  onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
-                  aria-label="ข้อมูลสุขภาพ"
-                  title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
-                >
-                  <HeartPulse size={16} />
-                </button>
-              )}
-            </div>
-          </section>
+            {p.phone && (
+              <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
+                <Phone size={16} />
+              </a>
+            )}
+            {(onHistory || onOpenPatient) && (
+              <button
+                type="button"
+                className={clsx("vs__hbtn", onHistory && historyOpen && "is-on")}
+                aria-pressed={!!(onHistory && historyOpen)}
+                onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
+                aria-label="ข้อมูลสุขภาพ"
+                title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
+              >
+                <HeartPulse size={16} />
+              </button>
+            )}
 
-          <div className="vmeta">
+          </section>
+          <div className="vs__facts">
             <span>
               <small>บริการ</small>
               <b>{s.name}</b>
             </span>
-            <span className="vmeta__who">
+            <span className="vs__who">
               <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
               <span>
                 <small>ผู้บำบัด</small>
                 <b>{t.name}</b>
               </span>
             </span>
+            {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิลด้านล่างแล้ว */}
             {view !== "billing" && view !== "done" && (
               <span>
                 <small>ค่าบริการ</small>
@@ -484,16 +457,15 @@ export function AppointmentDrawer({
             )}
           </div>
 
+
           {/* ขั้นตอน: แท็บเม็ดยาต่อกัน · ผ่านแล้วเขียวเต็ม · ตอนนี้กรอบเขียว */}
           {stepIdx >= 0 && (
-            <ol className="vst">
+            <ol className="vst" style={{ ["--n" as string]: STEPS.length, ["--p" as string]: stepIdx / Math.max(1, STEPS.length - 1) }}>
               {STEPS.map((x, i) => (
                 <li key={x.key} className={clsx(i < stepIdx && "is-done", i === stepIdx && "is-now")} aria-current={i === stepIdx ? "step" : undefined} title={`${x.label}${stepTime[x.key] ? ` ${clock(stepTime[x.key])}` : ""}`}>
-                  {i < stepIdx ? <Check size={13} strokeWidth={3} /> : <x.icon size={13} strokeWidth={2.2} />}
-                  <span>
-                    <small>{x.label}</small>
-                    {stepTime[x.key] && <time>{clock(stepTime[x.key])}</time>}
-                  </span>
+                  <i className="vst__dot">{i < stepIdx ? <Check size={11} strokeWidth={3.2} /> : <x.icon size={11} strokeWidth={2.4} />}</i>
+                  <small>{x.label}</small>
+                  <time>{stepTime[x.key] ? clock(stepTime[x.key]) : "\u00a0"}</time>
                 </li>
               ))}
             </ol>
