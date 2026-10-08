@@ -436,10 +436,12 @@ export function AppointmentDrawer({
             </div>
             <div className="vq__body">
               <b className="vq__time">{timeRange(appt.start, s.minutes)} น.</b>
-              <small className="vq__date">
-                {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
-              </small>
-              {liveStatus && <span className={clsx("vq__live", `is-${view}`)}>{liveStatus}</span>}
+              <div className="vq__sub">
+                <small className="vq__date">
+                  {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
+                </small>
+                {liveStatus && <span className={clsx("vq__live", `is-${view}`)}>{liveStatus}</span>}
+              </div>
             </div>
             <div className="vq__acts">
               {p.phone && (

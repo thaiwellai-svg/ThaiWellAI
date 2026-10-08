@@ -282,3 +282,101 @@
     padding: 0 10px;
   }
 }
+
+/* ---------- กะทัดรัด: ไม่กินพื้นที่ ---------- */
+.vq {
+  gap: 12px;
+  padding: 6px;
+  border-radius: 18px;
+}
+.vq__no {
+  flex-direction: row;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 14px;
+  border-radius: 13px;
+}
+.vq__no small {
+  font-size: 11px;
+}
+.vq__no b {
+  font-size: 20px;
+}
+.vq__no.is-wait b {
+  font-size: 14px;
+}
+.vq__body {
+  gap: 3px;
+  padding: 4px 0;
+}
+.vq__time {
+  font-size: 17px;
+}
+.vq__sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.vq__date {
+  font-size: 12px;
+}
+.vq__live {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+.vq__acts {
+  gap: 6px;
+  padding-right: 4px;
+}
+.vq__acts .vs__call,
+.vq__acts .vs__hbtn {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+}
+.vmeta {
+  gap: 6px 20px;
+}
+.vmeta b {
+  font-size: 13px;
+}
+.vst {
+  padding: 3px;
+  border-radius: 13px;
+}
+.vst li {
+  min-height: 32px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  gap: 5px;
+}
+.vst li > span {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+}
+.vst small {
+  font-size: 11.5px;
+}
+.vst time {
+  font-size: 10.5px;
+}
+@container rec (max-width: 640px) {
+  .vq__sub {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+  .vq__acts {
+    flex-direction: row;
+  }
+}
+@media (max-width: 700px) {
+  .vq__acts {
+    flex-direction: row;
+  }
+}
