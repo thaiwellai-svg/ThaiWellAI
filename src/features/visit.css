@@ -2155,3 +2155,94 @@
   font-weight: 700;
   color: var(--color-brand);
 }
+
+/* ---------- การ์ดขวา: ธีมเดียวกับผลประเมิน (หน้าอนุมัติ) ---------- */
+.vcc__head b {
+  font: 700 14px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+.vcc__head small {
+  font-size: 11.5px;
+}
+.vcc__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+.vcc {
+  padding: 16px;
+  gap: 12px;
+}
+/* กล่องตัวเลข: พื้นขาว ขอบบาง ไอคอนมุมขวา (แบบเดียวกับ ปวด/ความดัน/ชีพจร/แรงนวด) */
+.vcc__facts {
+  gap: 8px;
+}
+.vcc__facts > div {
+  position: relative;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 1px var(--sage-100),
+    0 1px 3px rgb(31 42 34 / 5%);
+}
+.vcc__facts small {
+  font: 600 12px/1.2 var(--font-sans);
+  padding-right: 30px;
+}
+.vcc__facts b {
+  font-size: 19px;
+  line-height: 24px;
+}
+.vcc__facts .vcc__dur {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 24px;
+}
+.vcc__ti {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tc, var(--color-brand)) 14%, white);
+  color: var(--tc, var(--color-brand));
+}
+.vcc__steps {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.vcc__steps em {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--sage-100);
+}
+.vcc__steps em.on {
+  background: var(--pc);
+}
+/* ประวัติของนัด: การ์ดขาวหัวข้อแบบเดียวกัน */
+.vs__log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px !important;
+  border-radius: 18px !important;
+  background: var(--white) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--sage-100),
+    0 4px 14px rgba(0, 0, 0, 0.03) !important;
+}
+.vs__log ol {
+  margin-top: 2px;
+}
+.vs__log li {
+  font-size: 13px;
+}
+.vs__log time {
+  font-variant-numeric: tabular-nums;
+}

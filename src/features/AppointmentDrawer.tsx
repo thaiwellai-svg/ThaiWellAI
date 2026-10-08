@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, Leaf, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, Activity, Hand, History, Leaf, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -700,6 +700,9 @@ export function AppointmentDrawer({
 
                   <div className="vcc__facts">
                     <div style={{ ["--tc" as string]: tc }}>
+                      <span className="vcc__ti">
+                        <Activity size={14} />
+                      </span>
                       <small>ปวดก่อนนวด</small>
                       <b>
                         {pbKnown ? pb : "—"}
@@ -718,8 +721,18 @@ export function AppointmentDrawer({
                     </div>
                     {/* แรงนวดที่ผู้ป่วยต้องการ (ไม่ได้ถาม = ไม่ได้ประเมิน) */}
                     <div style={{ ["--pc" as string]: ik && (!ik.asked || ik.asked.includes("pressure")) ? (ik.pressure === "หนัก" ? "#d8392a" : ik.pressure === "ปานกลาง" ? "#e08a1e" : "#2f9a5b") : "var(--color-text-muted)" }}>
+                      <span className="vcc__ti" style={{ ["--tc" as string]: "var(--pc)" }}>
+                        <Hand size={14} />
+                      </span>
                       <small>แรงนวด</small>
                       <b className="vcc__dur" style={{ color: "var(--pc)" }}>{ik && (!ik.asked || ik.asked.includes("pressure")) ? ik.pressure : "—"}</b>
+                      {ik && (!ik.asked || ik.asked.includes("pressure")) && (
+                        <span className="vcc__steps">
+                          {(["เบา", "ปานกลาง", "หนัก"] as const).map((lv, k) => (
+                            <em key={lv} className={k <= ["เบา", "ปานกลาง", "หนัก"].indexOf(ik.pressure) ? "on" : undefined} />
+                          ))}
+                        </span>
+                      )}
                       {!(ik && (!ik.asked || ik.asked.includes("pressure"))) && <span className="vcc__sub">ไม่ได้ประเมิน</span>}
                     </div>
                   </div>
@@ -784,12 +797,19 @@ export function AppointmentDrawer({
 
           {(appt.log?.length ?? 0) > 0 && (
             <section className="vs__log">
-              <h3 className="sec__title">ประวัติของนัด</h3>
+              <div className="vcc__head">
+                <span className="vcc__icon">
+                  <History size={15} />
+                </span>
+                <b>ประวัติของนัด</b>
+                <small>{appt.log!.length} รายการ</small>
+              </div>
               <ol>
                 {appt.log!.map((l, i) => (
                   <li key={i}>
                     <time>{clock(l.at)}</time>
-                    <span>{l.label}</span>
+                    {/* ข้อความที่แอปสร้างเอง → เหลือเฉพาะสิ่งที่เปลี่ยน */}
+                    <span>{l.label.replace(/^แจ้งจากแอป:\s*ผู้ป่วยอัปเดตผลประเมิน\s*·\s*[^·]+·\s*/, "ประเมินซ้ำในแอป: ").replace(/แอป ThaiWell AI/g, "แอป ThaiWell")}</span>
                   </li>
                 ))}
               </ol>
