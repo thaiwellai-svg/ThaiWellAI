@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, ChevronRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -795,6 +795,21 @@ export function AppointmentDrawer({
                       )}
                     </span>
                   </div>
+                  {/* ดูข้อมูลสุขภาพเพิ่มเติม (ทุกครั้งที่มา) → เปิดกล่องข้อมูลสุขภาพ */}
+                  {(onHistory || onOpenPatient) && (() => {
+                    const done = store.appointments.filter((x) => x.patientId === p.id && x.id !== appt.id && x.status === "done").sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`));
+                    const last = done[0];
+                    return (
+                      <button type="button" className={clsx("vcc__more", onHistory && historyOpen && "is-on")} onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}>
+                        <HeartPulse size={15} />
+                        <span>
+                          <b>{onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพเพิ่มเติม"}</b>
+                          <small>{done.length ? `มาแล้ว ${done.length} ครั้ง · ล่าสุด ${thaiDateShort(last.date)} · ปวด ${last.painBefore}→${last.painAfter ?? "–"}` : "มาครั้งแรก"}</small>
+                        </span>
+                        <ChevronRight size={16} />
+                      </button>
+                    );
+                  })()}
 
                   {(p.allergies?.length ?? 0) > 0 && (
                     <div className="vcc__row">
@@ -818,40 +833,6 @@ export function AppointmentDrawer({
                     </ul>
                   )}
                 </div>
-              );
-            })()}
-            {/* ข้อมูลสุขภาพของผู้ป่วย (ทุกครั้งที่มา) → กดเปิดรายละเอียด */}
-            {(onHistory || onOpenPatient) && (() => {
-              const done = store.appointments.filter((x) => x.patientId === p.id && x.id !== appt.id && x.status === "done").sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`));
-              const last = done[0];
-              return (
-                <button type="button" className={clsx("vhc", onHistory && historyOpen && "is-on")} onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}>
-                  <div className="vcc__head">
-                    <span className="vcc__icon">
-                      <HeartPulse size={15} />
-                    </span>
-                    <b>ข้อมูลสุขภาพ</b>
-                    <small>{onHistory && historyOpen ? "ซ่อน" : "ดูทั้งหมด"} ›</small>
-                  </div>
-                  <div className="vhc__stats">
-                    <span>
-                      <b>{done.length}</b>
-                      <small>ครั้งที่มา</small>
-                    </span>
-                    <span>
-                      <b>{last ? `${last.painBefore}→${last.painAfter ?? "–"}` : "—"}</b>
-                      <small>ปวดล่าสุด</small>
-                    </span>
-                    <span>
-                      <b className="is-txt">{last ? thaiDateShort(last.date) : "ครั้งแรก"}</b>
-                      <small>มาล่าสุด</small>
-                    </span>
-                  </div>
-                  <div className="vcc__row">
-                    <small>แพ้</small>
-                    <span>{p.allergies?.length ? p.allergies.map((x) => <em key={x} className="is-allergy">{x}</em>) : <em>ไม่ได้ระบุ</em>}</span>
-                  </div>
-                </button>
               );
             })()}
           </section>
