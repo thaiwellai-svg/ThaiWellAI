@@ -13,6 +13,7 @@ import { useLatest } from "./useLatest";
 import { IntakeCard } from "./IntakeCard";
 import { AppGuideCard } from "./AppGuideCard";
 import { intakeOfRequest } from "../data/intake";
+import { draftCourse } from "../data/draftPlan";
 import "./approve-dialog.css";
 import { elementProfile } from "../data/elements";
 
@@ -23,6 +24,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   const [date, setDate] = useState("");
   const [start, setStart] = useState("");
   const [therapistId, setTherapistId] = useState("");
+  const [saveDraft, setSaveDraft] = useState(true);
 
   useEffect(() => {
     if (incoming) {
@@ -42,6 +44,8 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   const credits = creditInfo(p, store.appointments);
   const noCredit = credits !== null && credits.remaining === 0;
   const chosen = slots.find((x) => x.time === start);
+  // คอร์สแนะนำจากผลประเมิน (ยังไม่มีคอร์สและไม่มีร่างแผน)
+  const draft = !credits && !p.aiPlan ? draftCourse(intake, s, request.appGuide, flags.some((f) => f.level === "stop")) : null;
   const therapist = therapistId ? store.therapists.find((t) => t.id === therapistId) : undefined;
   // ผู้บำบัดแต่ละคนวันนั้น: เวลาเข้างาน · รอบที่ว่าง (เตียงว่าง + ไม่มีนัด + ทำบริการนี้)
   const staff = store.therapists.map((t) => {
@@ -60,7 +64,13 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
 
   const approve = () => {
     store.dispatch({ type: "approve", id: request.id, patch: { date, start, therapistId, serviceId: request.serviceId } });
-    toast({ message: `อนุมัตินัด ${p.name} · ${thaiDate(date)} ${start} น.` });
+    const keepDraft = !!draft && saveDraft;
+    if (keepDraft) {
+      const { why: _why, ...plan } = draft;
+      void _why;
+      store.dispatch({ type: "updatePatient", id: p.id, patch: { aiPlan: plan } });
+    }
+    toast({ message: `อนุมัตินัด ${p.name} · ${thaiDate(date)} ${start} น.${keepDraft ? ` · บันทึกร่างคอร์ส ${draft.sessions} ครั้ง` : ""}` });
     onClose();
   };
 
@@ -151,6 +161,25 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
                 </div>
               )}
             </>
+          ) : p.aiPlan && !p.aiPlan.approved ? (
+            <p className="apv__none">ยังไม่มีคอร์ส · มีร่างแผนรอแพทย์อนุมัติ ({p.aiPlan.sessions} ครั้ง)</p>
+          ) : draft ? (
+            // คอร์สแนะนำจากผลประเมิน → บันทึกเป็นร่างแผนเมื่ออนุมัติ (คลินิกปรับ + แพทย์อนุมัติที่หน้าผู้ป่วย)
+            <div className="apv__draft">
+              <div className="apv__draft-top">
+                <small>คอร์สแนะนำเบื้องต้น</small>
+                <b>
+                  {s.name} {draft.sessions} ครั้ง
+                </b>
+                <span>
+                  {draft.frequency} · {draft.why.join(" · ")}
+                </span>
+              </div>
+              <label className="apv__draft-save">
+                <input type="checkbox" checked={saveDraft} onChange={(e) => setSaveDraft(e.target.checked)} />
+                <span>บันทึกเป็นร่างแผน · ไปปรับและให้แพทย์อนุมัติที่หน้าผู้ป่วย</span>
+              </label>
+            </div>
           ) : (
             <p className="apv__none">ไม่มีคอร์ส · ชำระรายครั้ง</p>
           )}

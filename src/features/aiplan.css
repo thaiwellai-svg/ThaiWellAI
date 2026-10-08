@@ -683,3 +683,38 @@
   display: block;
   color: var(--color-text);
 }
+
+/* ปรับร่างแผน: จำนวนครั้ง −/+ · ความถี่ */
+.aip-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.aip-step button,
+.aip-freq button {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--white);
+  color: var(--color-text);
+  font: 700 14px/1 var(--font-sans);
+}
+.aip-step button:disabled {
+  opacity: 0.4;
+}
+.aip-freq {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.aip-freq button {
+  font-size: 12px;
+  font-weight: 600;
+}
+.aip-freq button[aria-pressed="true"] {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--white);
+}

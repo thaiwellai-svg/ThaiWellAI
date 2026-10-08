@@ -95,6 +95,8 @@ export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side pan
   const [reading, setReading] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
   const plan = p.aiPlan;
+  /** ปรับร่างแผนก่อนแพทย์อนุมัติ */
+  const editPlan = (patch: Partial<NonNullable<typeof plan>>) => plan && store.dispatch({ type: "updatePatient", id: p.id, patch: { aiPlan: { ...plan, ...patch } } });
   const [print, printNode] = usePatientPrint(p);
 
   const attach = async (f: File) => {
@@ -278,11 +280,34 @@ ${THAI_MASSAGE_KNOWLEDGE}
               <p className="aip-hero__sum">{plan.summary}</p>
               <div className="aip-hero__stats">
                 <div>
-                  <b>{plan.sessions}</b>
+                  {/* ร่างแผน (ยังไม่อนุมัติ) → คลินิกปรับจำนวนครั้ง/ความถี่ให้เหมาะกับผู้ป่วยได้ */}
+                  {plan.approved ? (
+                    <b>{plan.sessions}</b>
+                  ) : (
+                    <span className="aip-step">
+                      <button type="button" aria-label="ลดจำนวนครั้ง" disabled={plan.sessions <= 1} onClick={() => editPlan({ sessions: plan.sessions - 1 })}>
+                        −
+                      </button>
+                      <b>{plan.sessions}</b>
+                      <button type="button" aria-label="เพิ่มจำนวนครั้ง" disabled={plan.sessions >= 20} onClick={() => editPlan({ sessions: plan.sessions + 1 })}>
+                        +
+                      </button>
+                    </span>
+                  )}
                   <small>ครั้ง</small>
                 </div>
                 <div>
-                  <b className="is-txt">{plan.frequency || "—"}</b>
+                  {plan.approved ? (
+                    <b className="is-txt">{plan.frequency || "—"}</b>
+                  ) : (
+                    <span className="aip-freq">
+                      {[1, 2, 3].map((n) => (
+                        <button key={n} type="button" aria-pressed={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} onClick={() => editPlan({ frequency: `สัปดาห์ละ ${n} ครั้ง` })}>
+                          {n}/สัปดาห์
+                        </button>
+                      ))}
+                    </span>
+                  )}
                   <small>ความถี่</small>
                 </div>
                 <div>
