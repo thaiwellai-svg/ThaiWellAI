@@ -869,3 +869,8 @@ button.so-track:disabled {
   padding: 2px 7px;
   font-size: 10px;
 }
+/* วันนี้: ชื่อวันสีเขียว (ไม่มีป้าย) */
+.pv-row.is-today .pv-row__day {
+  color: var(--color-brand);
+  font-weight: 800;
+}

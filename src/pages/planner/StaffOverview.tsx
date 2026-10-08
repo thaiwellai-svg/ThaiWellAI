@@ -466,7 +466,6 @@ function PersonView({ t, times, onBack, onEdit, onDay }: { t: Therapist; times: 
                 <div key={d} className={clsx("pv-row", isToday && "is-today")}>
                   <span className="pv-row__day">
                     {TH_WEEKDAYS[d]}
-                    {isToday && <em>วันนี้</em>}
                   </span>
                   <div className={clsx("pv-track", !list.length && "is-off")}>
                     {!list.length && <span className="pv-track__off">{closed.includes(d) ? "คลินิกปิด" : "หยุด"}</span>}
