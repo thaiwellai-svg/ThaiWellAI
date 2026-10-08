@@ -19,9 +19,7 @@
   gap: 18px;
   padding: 4px 24px 24px;
 }
-.apv__read {
-  border-right: 1px solid var(--sage-100);
-}
+
 .apv__act {
   padding-top: 16px;
 }
@@ -179,6 +177,7 @@
 /* ปุ่มด้านล่าง: ไม่ยืดเต็มหน้าต่าง · ชิดขวาใต้ฝั่งทำงาน */
 .apv .tw-overlay-foot {
   justify-content: flex-end;
+  border-top: 0;
 }
 .apv .tw-overlay-foot > .tw-btn--fill {
   flex: 0 0 auto;
