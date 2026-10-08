@@ -1959,3 +1959,56 @@
 .vs__pre .agc {
   padding: 12px 14px;
 }
+/* ไอคอนการ์ดข้อมูลก่อนนวด: แบบเดียวกัน (30px · มุมมน · พื้นอ่อน · ไอคอนสีเข้ม) */
+.vs__pre .vscr > svg,
+.vs__pre .ah-add__ico,
+.vs__pre .agc__ico {
+  width: 18px;
+  height: 18px;
+  padding: 6px;
+  box-sizing: content-box;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.vs__pre .ah-add__ico,
+.vs__pre .agc__ico {
+  display: grid;
+  place-items: center;
+}
+.vs__pre .ah-add__ico svg,
+.vs__pre .agc__ico svg {
+  width: 18px;
+  height: 18px;
+}
+.vs__pre .ah-add__ico {
+  background: #fdf1d6;
+  color: #b07a00;
+}
+.vs__pre .agc__ico {
+  background: #ece8fb;
+  color: #6a55c8;
+}
+/* การ์ดที่มีปุ่มให้ทำ (คัดกรอง) = พื้นสีตามสถานะ · การ์ดข้อมูล = พื้นขาว */
+.vs__pre .vscr {
+  background: #fdf4e3 !important;
+  box-shadow: none !important;
+}
+.vs__pre .vscr.is-ok {
+  background: #eaf7ef !important;
+}
+.vs__pre .vscr.is-app {
+  background: #eef4fb !important;
+}
+.vs__pre .vscr.is-stop {
+  background: #fdecec !important;
+}
+.vs__pre .vscr > svg {
+  background: var(--white);
+}
+.vs__pre .vscr button:not(.vscr__again) {
+  background: currentColor;
+  box-shadow: none;
+}
+.vs__pre .vscr button:not(.vscr__again) span {
+  color: var(--white);
+}
