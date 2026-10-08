@@ -801,12 +801,27 @@ export function AppointmentDrawer({
                     const last = done[0];
                     return (
                       <button type="button" className={clsx("vcc__more", onHistory && historyOpen && "is-on")} onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}>
-                        <HeartPulse size={15} />
+                        <i className="vcc__more-ico">
+                          <HeartPulse size={17} />
+                        </i>
                         <span>
-                          <b>{onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพเพิ่มเติม"}</b>
-                          <small>{done.length ? `มาแล้ว ${done.length} ครั้ง · ล่าสุด ${thaiDateShort(last.date)} · ปวด ${last.painBefore}→${last.painAfter ?? "–"}` : "มาครั้งแรก"}</small>
+                          <b>{onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ข้อมูลสุขภาพ"}</b>
+                          <small>{done.length ? `${done.length} ครั้ง · ${thaiDateShort(last.date)}` : "มาครั้งแรก"}</small>
                         </span>
-                        <ChevronRight size={16} />
+                        {/* ปวดหลังนวด 6 ครั้งล่าสุด (เก่า → ใหม่) */}
+                        {(() => {
+                          const pts = done.slice(0, 6).reverse().map((x) => x.painAfter ?? x.painBefore);
+                          if (pts.length < 2) return null;
+                          const W = 64, H = 26;
+                          const xy = pts.map((v, k) => [4 + (k * (W - 8)) / (pts.length - 1), 3 + (1 - v / 10) * (H - 6)]);
+                          return (
+                            <svg className="vcc__spark" width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-label="แนวโน้มปวด">
+                              <polyline points={xy.map((q) => q.join(",")).join(" ")} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              <circle cx={xy[xy.length - 1][0]} cy={xy[xy.length - 1][1]} r="3" fill="currentColor" />
+                            </svg>
+                          );
+                        })()}
+                        <ChevronRight size={16} className="vcc__more-go" />
                       </button>
                     );
                   })()}
