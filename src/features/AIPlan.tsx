@@ -446,7 +446,8 @@ ${THAI_MASSAGE_KNOWLEDGE}
                     แพทย์อนุมัติ
                   </Button>
                 )}
-                <Button size="md" leading={<CalendarPlus size={15} />} onClick={() => setPlanFor(p.id)}>
+                {/* นัดลงตามคอร์ส → ต้องอนุมัติแผน (เปิดคอร์ส) ก่อน */}
+                <Button size="md" leading={<CalendarPlus size={15} />} disabled={!plan.approved} title={plan.approved ? undefined : "แพทย์อนุมัติแผนก่อน จึงจองนัดตามคอร์สได้"} onClick={() => setPlanFor(p.id)}>
                   จองนัดตามแผน
                 </Button>
               </div>

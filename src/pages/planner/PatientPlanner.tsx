@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, RotateCcw, Wallet, ChevronLeft, ChevronRight, Info, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { CircleAlert, CalendarPlus, RotateCcw, Wallet, ChevronLeft, ChevronRight, Info, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, Dialog, IconButton, Select, spring, useToast } from "../../design-system";
@@ -57,6 +57,8 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
     return { total: pl.sessions, first, booked, left: Math.max(0, pl.sessions - first - booked) };
   })();
   const remaining = credits && !payPerVisit ? credits.remaining : planLeft ? planLeft.left : Infinity;
+  // นัดตามคอร์ส: ต้องเปิดคอร์สก่อน (แพทย์อนุมัติแผน) · บริการอื่นที่ไม่เกี่ยวกับคอร์ส ลงแยกได้
+  const needCourse = !patient.course && !!patient.aiPlan && !patient.aiPlan.approved && serviceId === (patient.aiPlan.phases[0]?.serviceId ?? serviceId);
   const renewSessions = patient.aiPlan?.sessions ?? patient.course?.total ?? 6;
   const renew = () => {
     if (!patient.course || !credits) return;
@@ -187,12 +189,12 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
       footer={
         <>
           <span className="pp__foot-note">
-            {invalid ? <em>บางวันยังไม่มีเวลาหรือผู้บำบัด</em> : drafts.length ? `${drafts.length} นัด · ${store.serviceById(serviceId).name}` : "ยังไม่ได้เลือกวัน"}
+            {needCourse ? <em>เปิดคอร์สก่อน (แพทย์อนุมัติแผน) · หรือเลือกบริการอื่นเพื่อลงนัดแยก</em> : invalid ? <em>บางวันยังไม่มีเวลาหรือผู้บำบัด</em> : drafts.length ? `${drafts.length} นัด · ${store.serviceById(serviceId).name}` : "ยังไม่ได้เลือกวัน"}
           </span>
           <Button variant="outline" size="lg" onClick={onClose}>
             ยกเลิก
           </Button>
-          <Button size="lg" disabled={!drafts.length || invalid} leading={<CalendarPlus size={16} />} onClick={save}>
+          <Button size="lg" disabled={!drafts.length || invalid || needCourse} leading={<CalendarPlus size={16} />} onClick={save}>
             บันทึกนัด {drafts.length > 0 && `(${drafts.length})`}
           </Button>
         </>
@@ -256,6 +258,15 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
             </header>
 
             <div className="pp__body">
+              {needCourse && (
+                <div className="alert alert--caution pp__need">
+                  <CircleAlert size={16} />
+                  <div>
+                    <b>ยังไม่ได้เปิดคอร์ส</b>
+                    ให้แพทย์อนุมัติแผน {patient.aiPlan!.sessions} ครั้งก่อน แล้วจึงจองนัดตามคอร์ส · การรักษาอื่นเลือกบริการด้านล่างแล้วลงนัดแยกได้
+                  </div>
+                </div>
+              )}
               {/* calendar */}
               <section className="pp__cal">
                 <div className="pp__cal-head">
