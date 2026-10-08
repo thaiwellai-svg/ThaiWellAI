@@ -205,9 +205,15 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await go(p, '/appointments', 1300);
     const before = (await state(p)).appointments.length;
     await p.click('button[aria-label="เพิ่มคิวนัด"]'); await p.waitForTimeout(900);
-    await p.locator('.book__person:not(.book__new)').nth(3).click(); await p.waitForTimeout(400);
+    // ผู้ป่วยที่วันนี้ยังไม่มีนัด (1 คน 1 นัดต่อวัน)
+    for (let k = 3; k < 15; k++) {
+      await p.locator('.book__person:not(.book__new)').nth(k).click(); await p.waitForTimeout(400);
+      if (!(await p.getByText('มีนัดวันนี้แล้ว').count())) break;
+    }
     // late in the day today can be full — then book the next open day
-    for (let i = 0; i < 4 && !(await p.locator('.book__slots .tchip:not([disabled])').count()); i++) {
+    // 1 คน 1 นัดต่อวัน: วันนั้นมีนัดแล้ว หรือเต็ม → เลือกวันถัดไป
+    const blocked = async () => !(await p.locator('.book__slots .tchip:not([disabled])').count()) || (await p.getByText('มีนัดวันนี้แล้ว').count()) > 0;
+    for (let i = 0; i < 6 && (await blocked()); i++) {
       await p.locator('.cpick__day--today ~ .cpick__day:not([disabled])').nth(i).click(); await p.waitForTimeout(400);
     }
     const slot = p.locator('.book__slots .tchip:not([disabled])').first();
@@ -246,7 +252,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await go(p, '/requests', 1500);
     await p.locator('.rq__row', { hasText: 'ต้องพบแพทย์' }).first().click(); await p.waitForTimeout(800);
     ex((await p.locator('.rq2__verdict.is-stop').count()) === 1, 'หน้าคำขอขึ้นแดง "ควรให้แพทย์ประเมิน"');
-    await p.getByRole('button', { name: 'ปฏิเสธ' }).click(); await p.waitForTimeout(600);
+    await p.getByRole('button', { name: 'ปฏิเสธ', exact: true }).click(); await p.waitForTimeout(600);
     await p.getByRole('button', { name: 'ยืนยันการปฏิเสธ' }).click(); await p.waitForTimeout(800);
     let s = await state(p);
     ex(s.decisions.some((d) => d.outcome === 'rejected'), 'บันทึกการปฏิเสธ');
