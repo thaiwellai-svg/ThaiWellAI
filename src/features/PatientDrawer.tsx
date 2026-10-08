@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { CoursePlanDialog } from "../pages/planner/PatientPlanner";
 import { useMemo, useState } from "react";
-import { ChevronRight, ArrowRight, PersonStanding, CalendarDays, CalendarPlus, HeartPulse, History, Phone, Smartphone, Stethoscope, Ticket, TrendingDown, TrendingUp, Check } from "lucide-react";
+import { ChevronRight, ClipboardCheck, ArrowRight, PersonStanding, CalendarDays, CalendarPlus, HeartPulse, History, Phone, Smartphone, Stethoscope, Ticket, TrendingDown, TrendingUp, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -127,57 +127,56 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
     <div className="ph hx" style={{ ["--c" as string]: ei.color, ["--t" as string]: ei.tint }}>
       {/* แบบคัดกรองของนัดนี้ — โฟกัสข้อมูลที่ต้องรักษาครั้งนี้ */}
       {appt && (
-        <section className={clsx("hx-visit", !intake && "is-missing", (round?.previsit?.red || apptFlags.some((f) => f.level === "stop")) && "is-stop")}>
-          <div className="hx-visit__head">
-            <b>แบบคัดกรองของนัดนี้</b>
+        <section className={clsx("hx-visit2", !intake && "is-missing", (round?.previsit?.red || apptFlags.some((f) => f.level === "stop")) && "is-stop")}>
+          <div className="vcc__head">
+            <span className="vcc__icon">
+              <ClipboardCheck size={15} />
+            </span>
+            <b>ประเมินของนัดนี้</b>
             <small>
-              {thaiDateShort(appt.date)} {appt.start} น.{courseNo ? ` · คอร์สครั้งที่ ${courseNo.no}/${courseNo.total}` : ""}
+              {appt.start} น.{courseNo ? ` · คอร์ส ${courseNo.no}/${courseNo.total}` : ""}
             </small>
           </div>
           {intake ? (
             <>
-              <div className="hx-visit__pain">
+              <div className="hx-visit2__pain" style={{ ["--tc" as string]: painTone(round?.pain ?? intake.pain)[1] }}>
+                <b>
+                  {round?.pain ?? intake.pain}
+                  <i>/10</i>
+                </b>
                 <span>
                   <small>ปวดก่อนนวด</small>
-                  <b style={{ color: painTone(intake.pain)[1] }}>
-                    {round?.pain ?? intake.pain}
-                    <i>/10</i>
-                  </b>
+                  <em>ประเมิน {new Date(round?.at ?? intake.at).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })} น.</em>
                 </span>
-                <em>
-                  <Smartphone size={12} /> ประเมินในแอป {new Date(round?.at ?? intake.at).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} น.
-                </em>
               </div>
-              <ul className="hx-visit__qa">
+              <dl className="hx-visit2__rows">
+                <div>
+                  <dt>ผลคัดกรอง</dt>
+                  <dd className={apptFlags.length || round?.previsit?.red ? "is-warn" : "is-ok"}>{round?.previsit?.red ? "ควรพบแพทย์ก่อนนวด" : apptFlags.length ? apptFlags.map((f) => f.label).join(", ") : "ผ่าน"}</dd>
+                </div>
                 {round?.previsit?.adverse && (
-                  <li>
-                    <small>หลังนวดครั้งก่อน</small>
-                    <b className={round.previsit.adverse !== "ไม่มี" ? "is-warn" : undefined}>{round.previsit.adverse}</b>
-                  </li>
+                  <div>
+                    <dt>หลังนวดครั้งก่อน</dt>
+                    <dd className={round.previsit.adverse !== "ไม่มี" ? "is-warn" : undefined}>{round.previsit.adverse}</dd>
+                  </div>
                 )}
                 {round?.previsit?.risk && (
-                  <li>
-                    <small>ข้อห้ามใหม่</small>
-                    <b className={round.previsit.risk !== "ไม่มี" ? "is-warn" : undefined}>{round.previsit.risk}</b>
-                  </li>
+                  <div>
+                    <dt>ข้อห้ามใหม่</dt>
+                    <dd className={round.previsit.risk !== "ไม่มี" ? "is-warn" : undefined}>{round.previsit.risk}</dd>
+                  </div>
                 )}
-                <li>
-                  <small>ผลคัดกรอง</small>
-                  <b className={apptFlags.length || round?.previsit?.red ? "is-warn" : "is-ok"}>
-                    {round?.previsit?.red ? "ควรพบแพทย์ก่อนนวด" : apptFlags.length ? apptFlags.map((f) => f.label).join(", ") : "ผ่าน"}
-                  </b>
-                </li>
                 {appt.addenda?.length ? (
-                  <li>
-                    <small>แจ้งเพิ่มหลังเช็กอิน</small>
-                    <b className="is-warn">{appt.addenda[appt.addenda.length - 1].text}</b>
-                  </li>
+                  <div>
+                    <dt>แจ้งเพิ่ม</dt>
+                    <dd className="is-warn">{appt.addenda[appt.addenda.length - 1].text.replace(/^ผู้ป่วยอัปเดตผลประเมิน\s*·\s*[^·]+·\s*/, "ประเมินซ้ำ: ")}</dd>
+                  </div>
                 ) : null}
-              </ul>
+              </dl>
             </>
           ) : (
             <p className="hx-visit__none">
-              ยังไม่ได้ประเมินในแอป · คัดกรองที่เคาน์เตอร์ก่อนนวด
+              ยังไม่ได้ประเมิน · คัดกรองที่เคาน์เตอร์ก่อนนวด
               {(() => {
                 const prev = visits.find((v) => v.id !== appt.id && v.painAfter !== undefined && `${v.date}${v.start}` < `${appt.date}${appt.start}`);
                 return prev ? <small className="hx-prev hx-prev--line">ปวดหลังนวดครั้งก่อน {prev.painAfter}/10 ({thaiDateShort(prev.date)})</small> : null;
