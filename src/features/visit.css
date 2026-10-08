@@ -2431,3 +2431,7 @@
 .vtl__more {
   padding-left: 64px;
 }
+.vtl__txt small {
+  font-size: 11.5px;
+  line-height: 1.4;
+}
