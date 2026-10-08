@@ -614,3 +614,11 @@
   font-size: 15px !important;
   font-weight: 700 !important;
 }
+/* หน้าอนุมัติ: หุ่นเตี้ยลง · ปัดขึ้นลงบนหุ่น = เลื่อนหน้าจอ (ปัดซ้าย-ขวายังหมุนหุ่น) */
+.ik--merged .b3__stage {
+  height: 300px;
+  touch-action: pan-y;
+}
+.ik--merged .b3__stage canvas {
+  touch-action: pan-y !important;
+}
