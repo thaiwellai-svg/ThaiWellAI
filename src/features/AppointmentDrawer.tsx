@@ -443,27 +443,27 @@ export function AppointmentDrawer({
             </div>
 
 
+            <div className="vs__qmeta">
+              <span>
+                <small>บริการ</small>
+                <b>{s.name}</b>
+              </span>
+              <span className="vs__who">
+                <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
+                <span>
+                  <small>ผู้บำบัด</small>
+                  <b>{t.name}</b>
+                </span>
+              </span>
+              {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิลด้านล่างแล้ว */}
+              {view !== "billing" && view !== "done" && (
+                <span>
+                  <small>ค่าบริการ</small>
+                  <b>{baht(s.price)} ฿</b>
+                </span>
+              )}
+            </div>
           </section>
-          <div className="vs__facts">
-            <span>
-              <small>บริการ</small>
-              <b>{s.name}</b>
-            </span>
-            <span className="vs__who">
-              <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
-              <span>
-                <small>ผู้บำบัด</small>
-                <b>{t.name}</b>
-              </span>
-            </span>
-            {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิลด้านล่างแล้ว */}
-            {view !== "billing" && view !== "done" && (
-              <span>
-                <small>ค่าบริการ</small>
-                <b>{baht(s.price)} ฿</b>
-              </span>
-            )}
-          </div>
 
 
           {/* ขั้นตอน: แท็บเม็ดยาต่อกัน · ผ่านแล้วเขียวเต็ม · ตอนนี้กรอบเขียว */}

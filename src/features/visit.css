@@ -1819,3 +1819,82 @@
   font-size: 12.5px;
   line-height: 1.3;
 }
+
+/* กล่องคิว: คิว · เวลา | บริการ · ผู้บำบัด · ค่าบริการ */
+.vs__summary {
+  align-items: center;
+  gap: 16px;
+}
+.vs__summary .vs__when {
+  flex: 0 0 auto;
+}
+.vs__qmeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-left: 18px;
+  border-left: 1px solid var(--sage-100);
+}
+.vs__qmeta > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.vs__qmeta small {
+  font: 500 11.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vs__qmeta b {
+  font: 600 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vs__qmeta .vs__who {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.vs__qmeta .vs__who > span:not(.tw-avatar) {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+/* แผงแคบ: ข้อมูลบริการลงบรรทัดใหม่ใต้คิว/เวลา */
+@container rec (max-width: 640px) {
+  .vs__summary {
+    flex-wrap: wrap;
+  }
+  .vs__qmeta {
+    flex-basis: 100%;
+    padding: 10px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--sage-100);
+    gap: 16px;
+  }
+}
+/* ส่วนหัวแคบ: ชื่อเต็มบรรทัดบน · ปุ่มลงบรรทัดล่าง (ชื่อไม่ถูกตัด) */
+.vsp {
+  container-type: inline-size;
+  container-name: vsp;
+}
+@container vsp (max-width: 560px) {
+  .vsp__head {
+    flex-wrap: wrap !important;
+  }
+  .vsp__id {
+    flex: 1 1 calc(100% - 80px);
+  }
+  .vsp__actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+  .vsp__actions .tw-btn {
+    flex: 1 1 auto;
+  }
+}
