@@ -580,3 +580,19 @@
   background: var(--sage-100);
   color: var(--color-text-muted);
 }
+/* ผลประเมินรวม: 4 กล่องใช้ขนาดหัวข้อ/ค่าเท่ากัน */
+.ik--merged .ik3__tile small {
+  font: 600 12px/1.2 var(--font-sans);
+}
+.ik--merged .ik3__tile b,
+.ik--merged .ik3__tile b.ik3__none {
+  font: 800 17px/1.2 var(--font-sans) !important;
+  font-style: normal !important;
+  white-space: nowrap;
+}
+.ik--merged .ik3__tile b.ik3__none {
+  color: var(--color-text-muted) !important;
+}
+.ik--merged .ik3__tile b i {
+  font: 600 11px/1 var(--font-sans);
+}
