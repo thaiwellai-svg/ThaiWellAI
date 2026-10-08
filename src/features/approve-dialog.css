@@ -192,3 +192,106 @@
     min-width: 0;
   }
 }
+
+/* ผู้บำบัด: รายชื่อทุกคน */
+.apv__staff {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px;
+}
+.apv__person {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--white);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.apv__person:hover:not(:disabled) {
+  border-color: var(--color-brand);
+}
+.apv__person.is-on {
+  border-color: var(--color-brand);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+  background: var(--color-brand-tint);
+}
+.apv__person.is-off {
+  opacity: 0.5;
+}
+.apv__pname {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.apv__pname b {
+  font: 600 13.5px/1.25 var(--font-sans);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.apv__pname small {
+  font: 500 11.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.apv__pname em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.apv__pname em.is-free {
+  color: var(--color-brand);
+}
+
+/* เวลาที่ผู้บำบัดคนนี้รับไม่ได้ */
+.apv__slots .slot.is-na {
+  background: var(--sage-50);
+  border-color: transparent;
+}
+.apv__slots .slot.is-na .slot__time {
+  color: var(--color-text-muted);
+}
+
+/* การ์ดขอนัด: เด่นสุดของฝั่งซ้าย */
+.apv__req {
+  padding: 16px 18px;
+  background: var(--color-brand);
+  box-shadow: 0 6px 18px rgb(47 107 70 / 22%);
+}
+.apv__req small {
+  color: rgb(255 255 255 / 75%);
+}
+.apv__req b {
+  font-size: 22px;
+  color: var(--white);
+}
+.apv__req > span {
+  color: rgb(255 255 255 / 85%);
+}
+.apv__req .apv__note {
+  border-top-color: rgb(255 255 255 / 25%);
+  color: var(--white);
+}
+.apv__req .apv__note svg {
+  color: rgb(255 255 255 / 75%);
+}
+.apv__slots .slot.is-na[aria-pressed="true"] {
+  background: var(--sage-50);
+  border-color: var(--color-border);
+  border-style: dashed;
+}
+.apv__slots .slot.is-na[aria-pressed="true"] .slot__time,
+.apv__slots .slot.is-na[aria-pressed="true"] .slot__cap {
+  color: var(--color-text-muted);
+}

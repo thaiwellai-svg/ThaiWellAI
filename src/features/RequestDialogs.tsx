@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarCheck2, CircleAlert, MessageSquareText } from "lucide-react";
 import type { BookingRequest } from "../data/types";
 import { useStore } from "../store/store";
-import { Avatar, Button, Chip, Dialog, Field, Input, Select, Textarea, useToast } from "../design-system";
-import { creditInfo, evaluateScreening, sameDayAppt } from "../data/domain";
+import { Avatar, Button, Chip, Dialog, Field, Input, Textarea, useToast } from "../design-system";
+import { creditInfo, evaluateScreening, sameDayAppt, shiftsOn, staffState } from "../data/domain";
 import { thaiDate, thaiDateLong, timeAgo, todayISO } from "../data/thaiDate";
 import { CreditPips } from "./widgets";
 import { slotLoad } from "./slotLoad";
-import { patientPhoto } from "../data/avatars";
+import { patientPhoto, therapistPhoto } from "../data/avatars";
+import { clsx } from "clsx";
 import { useLatest } from "./useLatest";
 import { IntakeCard } from "./IntakeCard";
 import { AppGuideCard } from "./AppGuideCard";
@@ -41,9 +42,21 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   const credits = creditInfo(p, store.appointments);
   const noCredit = credits !== null && credits.remaining === 0;
   const chosen = slots.find((x) => x.time === start);
+  const therapist = therapistId ? store.therapists.find((t) => t.id === therapistId) : undefined;
+  // ผู้บำบัดแต่ละคนวันนั้น: เวลาเข้างาน · รอบที่ว่าง (เตียงว่าง + ไม่มีนัด + ทำบริการนี้)
+  const staff = store.therapists.map((t) => {
+    const blocks = date ? shiftsOn(t, date) : [];
+    const states = slots.map((sl) => (sl.free > 0 ? staffState(t, { date, start: sl.time, serviceId: request.serviceId }, store.appointments) : "busy"));
+    const free = states.filter((x) => x === "free").length;
+    const can = blocks.length > 0 && states.some((x) => x !== "service" && x !== "off");
+    // ช่วงเข้างานวันนั้น (เริ่มแรกสุด–เลิกช้าสุด)
+    const span = blocks.length ? `${blocks.map((b) => b.split("–")[0]).sort()[0]}–${blocks.map((b) => b.split("–")[1]).sort().slice(-1)[0]}` : "";
+    return { t, shift: span || "ไม่เข้างาน", free, can };
+  });
+  const therapistFree = !!therapist && !!start && staffState(therapist, { date, start, serviceId: request.serviceId }, store.appointments) === "free";
   // 1 คน 1 นัดต่อวัน
   const sameDay = sameDayAppt(store.appointments, p.id, date, request.courseVisitId);
-  const canApprove = Boolean(date && start && chosen && chosen.free > 0 && !sameDay);
+  const canApprove = Boolean(date && start && chosen && chosen.free > 0 && !sameDay && therapistFree);
 
   const approve = () => {
     store.dispatch({ type: "approve", id: request.id, patch: { date, start, therapistId, serviceId: request.serviceId } });
@@ -133,33 +146,64 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           )}
         </section>
         <section className="apv__sec">
+          <h3>วันที่</h3>
+          <Field label="" hint={date ? thaiDateLong(date) : undefined}>
+            <Input type="date" value={date} min={todayISO()} onChange={(e) => setDate(e.target.value)} aria-label="วันที่" />
+          </Field>
+        </section>
+
+        {/* ผู้บำบัด: แสดงทุกคน พร้อมเวลาเข้างานและจำนวนรอบที่ว่างของวันนั้น */}
+        <section className="apv__sec">
           <h3>
-            วันและเวลา <small>มี {store.settings.bedsPerSlot} เตียงต่อรอบ</small>
+            ผู้บำบัด <small>{s.name}</small>
           </h3>
-          <div className="apv__fields">
-            <Field label="วันที่" hint={date ? thaiDateLong(date) : undefined}>
-              <Input type="date" value={date} min={todayISO()} onChange={(e) => setDate(e.target.value)} />
-            </Field>
-            <Field label="ผู้บำบัด">
-              <Select value={therapistId} onChange={(e) => setTherapistId(e.target.value)}>
-                {store.therapists.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          </div>
-          <div className="slots apv__slots">
-            {slots.map((sl) => (
-              <button key={sl.time} type="button" className="slot" aria-pressed={start === sl.time} disabled={sl.free === 0} onClick={() => setStart(sl.time)}>
-                <span className="slot__time">{sl.time}</span>
-                <span className="slot__cap">{sl.free === 0 ? "เต็ม" : `ว่าง ${sl.free}`}</span>
-              </button>
+          <ul className="apv__staff">
+            {staff.map(({ t, shift, free, can }) => (
+              <li key={t.id}>
+                <button type="button" className={clsx("apv__person", therapistId === t.id && "is-on", !can && "is-off")} aria-pressed={therapistId === t.id} disabled={!can} onClick={() => setTherapistId(t.id)}>
+                  <Avatar name={t.name} src={therapistPhoto(t)} size="sm" color={t.color} />
+                  <span className="apv__pname">
+                    <b>{t.name}</b>
+                    <small>
+                      {shift !== "ไม่เข้างาน" && <span>{shift} · </span>}
+                      <em className={clsx(can && free ? "is-free" : "is-none")}>{!can ? (shift === "ไม่เข้างาน" ? "หยุดวันนี้" : "ไม่ทำบริการนี้") : free ? `ว่าง ${free} รอบ` : "เต็ม"}</em>
+                    </small>
+                  </span>
+                </button>
+              </li>
             ))}
+          </ul>
+        </section>
+
+        {/* เวลา: ของผู้บำบัดที่เลือก */}
+        <section className="apv__sec">
+          <h3>
+            เวลา <small>{therapist ? therapist.name : "เลือกผู้บำบัดก่อน"}</small>
+          </h3>
+          <div className="slots apv__slots">
+            {slots.map((sl) => {
+              const st = therapist ? staffState(therapist, { date, start: sl.time, serviceId: request.serviceId }, store.appointments) : "free";
+              const ok = st === "free" && sl.free > 0;
+              const why = st === "busy" ? "มีนัด" : st === "off" ? "นอกเวลา" : st === "service" ? "ไม่ทำบริการ" : sl.free === 0 ? "เตียงเต็ม" : `ว่าง ${sl.free} เตียง`;
+              return (
+                <button key={sl.time} type="button" className={clsx("slot", !ok && "is-na")} aria-pressed={start === sl.time} disabled={!ok} onClick={() => setStart(sl.time)}>
+                  <span className="slot__time">{sl.time}</span>
+                  <span className="slot__cap">{why}</span>
+                </button>
+              );
+            })}
           </div>
         </section>
-        {date && start && (
+        {date && start && therapist && !therapistFree && (
+          <div className="alert alert--caution">
+            <CircleAlert size={16} />
+            <div>
+              <b>{start} น. ไม่ว่างกับ{therapist.name}</b>
+              เลือกเวลาอื่น หรือผู้บำบัดคนอื่นที่ว่าง
+            </div>
+          </div>
+        )}
+        {date && start && therapistFree && (
           <div className="apv__sum">
             <small>จะนัดเป็น</small>
             <b>
