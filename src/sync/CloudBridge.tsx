@@ -130,6 +130,7 @@ export function CloudBridge() {
   const planSent = useRef(new Set<string>());
   /** วัน|เวลา|ผู้บำบัด ของนัดที่ยืนยันแล้ว ตามที่อยู่ใน cloud — เปลี่ยนในหลังบ้าน (เลื่อนนัด) → ส่งไปแอป · cloud เปลี่ยน → รับมา */
   const slotSig = useRef(new Map<string, string>());
+  const visitNoSig = useRef(new Map<string, string>());
   /** นัดจากแอปที่กำลังสร้างกลับในเครื่องนี้ (กันซ้ำระหว่าง realtime กับรอบตรวจซ้ำ) */
   const adopting = useRef(new Set<string>());
   /** เลขคิวเช็กอินล่าสุดของแต่ละวัน (กันออกเลขซ้ำเมื่อเช็กอินพร้อมกันหลายคน) */
@@ -509,12 +510,15 @@ export function CloudBridge() {
     // จองหน้าที่รับ/ส่งข้อมูลกับแอป (ใช้งานจริงเปิดหลายเครื่องได้)
     const claim = async () => {
       if (DEMO) return;
-      const { data } = await cloud.from("tw_events").select("payload").eq("id", LEADER_ID).maybeSingle();
+      // อ่านไม่ได้ (เน็ตหลุด/เปลี่ยนหน้า) → คงสถานะเดิม รอบถัดไปลองใหม่
+      const { data, error } = await Promise.resolve(cloud.from("tw_events").select("payload").eq("id", LEADER_ID).maybeSingle()).catch((e: unknown) => ({ data: null, error: e }));
+      if (error) return;
       const cur = (data?.payload ?? null) as { device?: string; at?: string } | null;
       const free = !cur?.device || cur.device === BRIDGE_DEVICE || Date.now() - Date.parse(cur.at ?? "") > LEADER_TTL;
       const was = leader.current;
       if (free && !document.hidden) {
-        await cloud.from("tw_events").upsert({ id: LEADER_ID, source: "system", kind: "bridge.leader", summary: "เครื่องที่รับ/ส่งข้อมูลกับแอป", payload: { device: BRIDGE_DEVICE, at: new Date().toISOString() } });
+        const { error: e } = await Promise.resolve(cloud.from("tw_events").upsert({ id: LEADER_ID, source: "system", kind: "bridge.leader", summary: "เครื่องที่รับ/ส่งข้อมูลกับแอป", payload: { device: BRIDGE_DEVICE, at: new Date().toISOString() } })).catch((x: unknown) => ({ error: x }));
+        if (e) return;
         leader.current = true;
       } else leader.current = false;
       if (leader.current && !was) reloadOpen.current();
@@ -620,6 +624,34 @@ export function CloudBridge() {
       });
     }
   }, [ready, store.appointments]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // นัดที่ส่งไปแอปก่อนเปิดคอร์ส (จองนัดตามแผนก่อนแพทย์อนุมัติ) / คอร์สเปลี่ยน → ใส่ "ครั้งที่ n/ทั้งหมด" ให้นัดในแอปตามจริง
+  // รวมกับ assessment เดิมของแถว (ไม่ทับผลประเมินที่ผู้ป่วยส่งมา)
+  useEffect(() => {
+    if (!ready || DEMO || !leader.current) return;
+    for (const p of store.patients) {
+      const c = p.course;
+      if (!p.cloudId || !c) continue;
+      const mine = store.appointments
+        .filter((x) => x.patientId === p.id && x.serviceId === c.serviceId && x.status !== "cancelled" && x.status !== "absent" && x.date >= c.startedOn)
+        .sort((x, y) => `${x.date}${x.start}`.localeCompare(`${y.date}${y.start}`));
+      mine.forEach((a, i) => {
+        if (!a.cloudId || a.status !== "waiting" || a.startedAt) return;
+        const course = { name: c.name, no: i + 1, total: c.total };
+        const sig = `${course.name}|${course.no}/${course.total}`;
+        if (visitNoSig.current.get(a.cloudId) === sig) return;
+        visitNoSig.current.set(a.cloudId, sig);
+        const id = a.cloudId;
+        void Promise.resolve(cloud.from("tw_appointments").select("assessment").eq("id", id).maybeSingle()).then(({ data, error }) => {
+          if (error || !data) return void visitNoSig.current.delete(id);
+          const as = (data.assessment ?? {}) as Record<string, unknown> & { course?: { name: string; no: number; total: number } };
+          if (as.course && `${as.course.name}|${as.course.no}/${as.course.total}` === sig) return;
+          const next = { ...as, course, ...(as.source === "clinic" ? { summary: `นัดตามคอร์ส ${course.name} ครั้งที่ ${course.no}/${course.total}` } : {}) };
+          void cloud.from("tw_appointments").update({ assessment: next }).eq("id", id);
+        });
+      });
+    }
+  }, [ready, store.patients, store.appointments]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // HN + คอร์สของผู้ป่วยที่ใช้แอป (ชื่อ จำนวนครั้ง ใช้ไป หมดอายุ) → แสดงในแอปของเจ้าของ
   useEffect(() => {
