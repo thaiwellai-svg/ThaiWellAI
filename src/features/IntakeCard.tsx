@@ -24,7 +24,7 @@ export function intakeBody(i: Intake) {
   return { heatmap, avoid };
 }
 
-export function IntakeCard({ intake: i, compact, sex, element, body = true }: { intake: Intake; compact?: boolean; sex?: "ชาย" | "หญิง"; element?: Element; /** show the 3D body (off when the page already shows it) */ body?: boolean }) {
+export function IntakeCard({ intake: i, compact, sex, element, body = true, head = true }: { intake: Intake; compact?: boolean; sex?: "ชาย" | "หญิง"; element?: Element; /** show the 3D body (off when the page already shows it) */ body?: boolean; /** หัวการ์ด (ปิดเมื่อหน้านั้นมีหัวข้อของตัวเองแล้ว) */ head?: boolean }) {
   const { settings } = useStore();
   const [open, setOpen] = useState(!compact);
   const alerts = intakeAlerts(i, settings.bpThreshold);
@@ -68,19 +68,19 @@ export function IntakeCard({ intake: i, compact, sex, element, body = true }: { 
 
   return (
     <section className={clsx("ik ik2", compact && "ik--compact")}>
-      <div className="ik2__head">
+      {head && <div className="ik2__head">
         <span className="ik__icon">
           <Smartphone size={15} />
         </span>
         <div className="ik2__title">
           <b>แบบประเมินก่อนนวด</b>
-          <small>จากแอป ThaiWell · {timeAgo(i.at)}</small>
+          <small>ประเมินเมื่อ {timeAgo(i.at)}</small>
         </div>
         <span className={clsx("ik2__status", alerts.length ? (alerts.some((a) => a.level === "stop") ? "is-stop" : "is-warn") : "is-ok")}>
           {alerts.length ? <ShieldAlert size={13} /> : <ShieldCheck size={13} />}
           {alerts.length ? `ระวัง ${alerts.length} ข้อ` : "ผ่าน"}
         </span>
-      </div>
+      </div>}
 
       {body && <Body3D heatmap={heatmap} avoid={avoid} compact={compact} sex={sex} pain={i.pain} element={element} />}
 

@@ -18,8 +18,8 @@ export function AppGuideCard({ guide: sent, areas, compact }: { guide?: AppGuide
           <Sparkles size={15} />
         </span>
         <span>
-          <b>แนวทางจากแอป</b>
-          <small>{sent ? "ผู้ป่วยเห็นในแอป · ผู้บำบัดปรับได้" : "จากตำแหน่งที่ผู้ป่วยแจ้ง · ผู้บำบัดปรับได้"}</small>
+          <b>แนวทางการรักษา</b>
+          <small>{sent ? "ผู้ป่วยเห็นแนวทางนี้ · ผู้บำบัดปรับได้" : "ตามตำแหน่งที่ผู้ป่วยแจ้ง · ผู้บำบัดปรับได้"}</small>
         </span>
       </header>
       {guide.condition && (

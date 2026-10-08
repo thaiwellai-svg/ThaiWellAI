@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarCheck2, CircleAlert } from "lucide-react";
+import { CalendarCheck2, CircleAlert, MessageSquareText } from "lucide-react";
 import type { BookingRequest } from "../data/types";
 import { useStore } from "../store/store";
 import { Avatar, Button, Chip, Dialog, Field, Input, Select, Textarea, useToast } from "../design-system";
@@ -37,6 +37,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
   const p = store.patientById(request.patientId);
   const s = store.serviceById(request.serviceId);
   const flags = evaluateScreening(request.screening, store.settings);
+  const intake = intakeOfRequest(request, p);
   const credits = creditInfo(p, store.appointments);
   const noCredit = credits !== null && credits.remaining === 0;
   const chosen = slots.find((x) => x.time === start);
@@ -72,6 +73,7 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
     >
       {/* ซ้าย: อ่านข้อมูลประกอบ · ขวา: เลือกวันเวลาแล้วอนุมัติ */}
       <div className="apv__read scroll-y scroll-y--light">
+        {/* คำขอ: วันเวลา · บริการ · ผู้บำบัด · หมายเหตุ */}
         <section className="apv__req">
           <small>ขอนัด</small>
           <b>
@@ -80,38 +82,39 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
           <span>
             {s.name} {s.minutes} นาที · {store.therapistById(request.therapistId).name || "ไม่ระบุผู้บำบัด"}
           </span>
-        </section>
-        {request.note && (
-          <div className="alert alert--info">
-            <CircleAlert size={16} />
-            <div>
-              <b>หมายเหตุจากผู้ป่วย</b>
+          {request.note && (
+            <p className="apv__note">
+              <MessageSquareText size={14} />
               {request.note}
-            </div>
-          </div>
-        )}
+            </p>
+          )}
+        </section>
+
+        {/* ผลประเมินก่อนนวด: คัดกรอง + อาการ + ตำแหน่งที่ปวด (การประเมินครั้งเดียวกัน) */}
         <section className="apv__sec">
-          <h3>แบบคัดกรองจากแอป</h3>
+          <h3>
+            ผลประเมินก่อนนวด <small>{timeAgo(intake.at)}</small>
+          </h3>
           <ScreeningAlert flags={flags} />
           {flags.length ? (
             <ScreeningGrid screening={request.screening} flags={flags} />
           ) : (
             <details className="apv__more">
-              <summary>ดูรายข้อ</summary>
+              <summary>ดูข้อคัดกรอง</summary>
               <ScreeningGrid screening={request.screening} flags={flags} />
             </details>
           )}
+          {intake.complaint && (
+            <div className="apv__sym">
+              <b>“{intake.complaint}”</b>
+              <span>{[intake.duration && `เป็นมา ${intake.duration.replace(/^ประมาณ\s*/, "")}`, `ปวด ${intake.pain}/10`, intake.goal].filter(Boolean).join(" · ")}</span>
+            </div>
+          )}
+          <IntakeCard intake={intake} sex={p.gender} element={elementProfile(p).birth} compact head={false} />
         </section>
-        <section className="apv__sec">
-          <h3>อาการจากแอป</h3>
-          {/* อาการสำคัญ ระดับความปวด บริเวณที่ปวด (heatmap) และบริเวณห้ามนวด */}
-          <IntakeCard intake={intakeOfRequest(request, p)} sex={p.gender} element={elementProfile(p).birth} compact />
-        </section>
+
         {(request.appGuide || !!(request.intake?.focusAreas ?? []).length) && !flags.some((f) => f.level === "stop") && (
-          <section className="apv__sec">
-            <h3>แผนการรักษาจากแอป</h3>
-            <AppGuideCard guide={request.appGuide} areas={request.intake?.focusAreas} compact />
-          </section>
+          <AppGuideCard guide={request.appGuide} areas={request.intake?.focusAreas} compact />
         )}
       </div>
 
