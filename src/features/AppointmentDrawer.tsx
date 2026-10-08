@@ -22,6 +22,7 @@ import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from
 import { intakeAlerts, intakeOfVisit, visitAssessment } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
+import "./visit-head.css";
 
 const hm = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 import { VisitScreening } from "./ScreeningAlert";
@@ -405,68 +406,73 @@ export function AppointmentDrawer({
         footer={footer}
       >
         <div className="vs">
-          <section className="vs__summary">
-            <div className="vs__q">
-              <small>คิว</small>
-              {queueNo ? <b>{queueNo}</b> : <b className="is-wait">{view === "checkin" ? "รอเช็กอิน" : "—"}</b>}
+          {/* หัวนัด: คิว · เวลา · บริการ · ผู้บำบัด · ปุ่ม แล้วแถบขั้นตอนในการ์ดเดียว */}
+          <section className="vhd">
+            <div className="vhd__top">
+              <div className={clsx("vhd__q", !queueNo && "is-wait")}>
+                <small>คิว</small>
+                <b>{queueNo ?? (view === "checkin" ? "รอเช็กอิน" : "—")}</b>
+              </div>
+              <div className="vhd__when">
+                <b>{timeRange(appt.start, s.minutes)} น.</b>
+                <small>
+                  {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
+                </small>
+              </div>
+              <div className="vhd__meta">
+                <span>
+                  <small>บริการ</small>
+                  <b>{s.name}</b>
+                </span>
+                <span className="vhd__who">
+                  <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
+                  <span>
+                    <small>ผู้บำบัด</small>
+                    <b>{t.name}</b>
+                  </span>
+                </span>
+                {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิล/สรุปแล้ว */}
+                {view !== "billing" && view !== "done" && (
+                  <span>
+                    <small>ค่าบริการ</small>
+                    <b>{baht(s.price)} ฿</b>
+                  </span>
+                )}
+              </div>
+              <div className="vhd__acts">
+                {p.phone && (
+                  <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
+                    <Phone size={16} />
+                  </a>
+                )}
+                {(onHistory || onOpenPatient) && (
+                  <button
+                    type="button"
+                    className={clsx("vs__hbtn", onHistory && historyOpen && "is-on")}
+                    aria-pressed={!!(onHistory && historyOpen)}
+                    onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
+                    aria-label="ข้อมูลสุขภาพ"
+                    title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
+                  >
+                    <HeartPulse size={16} />
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="vs__when">
-              <b>{timeRange(appt.start, s.minutes)} น.</b>
-              <small>
-                {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
-              </small>
-            </div>
-            {p.phone && (
-              <a className="vs__call" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`}>
-                <Phone size={16} />
-              </a>
+            {stepIdx >= 0 && (
+              <ol className="vhd__steps" style={{ ["--n" as string]: STEPS.length, ["--p" as string]: stepIdx / Math.max(1, STEPS.length - 1) }}>
+                {STEPS.map((x, i) => (
+                  <li key={x.key} className={clsx(i < stepIdx && "is-done", i === stepIdx && "is-now")}>
+                    <span className="vhd__dot">{i < stepIdx ? <Check size={12} strokeWidth={3} /> : <x.icon size={12} strokeWidth={2.2} />}</span>
+                    <small>{x.label}</small>
+                    <time>{stepTime[x.key] ? clock(stepTime[x.key]) : "\u00a0"}</time>
+                  </li>
+                ))}
+              </ol>
             )}
-            {(onHistory || onOpenPatient) && (
-              <button
-                type="button"
-                className={clsx("vs__hbtn", onHistory && historyOpen && "is-on")}
-                aria-pressed={!!(onHistory && historyOpen)}
-                onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}
-                aria-label="ข้อมูลสุขภาพ"
-                title={onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ดูข้อมูลสุขภาพ"}
-              >
-                <HeartPulse size={16} />
-              </button>
-            )}
-
           </section>
-          <div className="vs__facts">
-            <span>
-              <small>บริการ</small>
-              <b>{s.name}</b>
-            </span>
-            <span className="vs__who">
-              <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
-              <span>
-                <small>ผู้บำบัด</small>
-                <b>{t.name}</b>
-              </span>
-            </span>
-            {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิลด้านล่างแล้ว */}
-            {view !== "billing" && view !== "done" && (
-              <span>
-                <small>ค่าบริการ</small>
-                <b>{baht(s.price)} ฿</b>
-              </span>
-            )}
-          </div>
 
-          {stepIdx >= 0 ? (
-            <ol className="vs__steps">
-              {STEPS.map((x, i) => (
-                <li key={x.key} className={clsx(i < stepIdx && "is-done", i === stepIdx && "is-now")}>
-                  <span className="vs__dot">{i < stepIdx ? <Check size={13} strokeWidth={3} /> : <x.icon size={13} strokeWidth={2.2} />}</span>
-                  <small>{x.label}</small>
-                  {stepTime[x.key] && <time>{clock(stepTime[x.key])}</time>}
-                </li>
-              ))}
-            </ol>
-          ) : (
+          {stepIdx >= 0 ? null : (
             view === "cancelled" ? (
               <div className="cxb">
                 <CalendarX2 size={18} />
