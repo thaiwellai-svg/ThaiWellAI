@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, Banknote, Leaf, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -430,36 +430,47 @@ export function AppointmentDrawer({
         }
       >
         <div className="vs">
-          <section className="vs__summary">
-            <div className="vs__q">
-              <small>คิว</small>
-              {queueNo ? <b>{queueNo}</b> : <b className="is-wait">{view === "checkin" ? "รอเช็กอิน" : "—"}</b>}
+          {/* กล่องคิว: ชั้นบน คิว + เวลา · ชั้นล่าง บริการ | ผู้บำบัด | ค่าบริการ */}
+          <section className="vs__summary vq2">
+            <div className="vq2__top">
+              <div className="vs__q">
+                <small>คิว</small>
+                {queueNo ? <b>{queueNo}</b> : <b className="is-wait">{view === "checkin" ? "รอเช็กอิน" : "—"}</b>}
+              </div>
+              <div className="vs__when">
+                <b>{timeRange(appt.start, s.minutes)} น.</b>
+                <small>
+                  {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"} · {s.minutes} นาที
+                </small>
+              </div>
             </div>
-            <div className="vs__when">
-              <b>{timeRange(appt.start, s.minutes)} น.</b>
-              <small>
-                {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}
-              </small>
-            </div>
-
-
-            <div className="vs__qmeta">
+            <div className="vq2__meta">
               <span>
-                <small>บริการ</small>
-                <b>{s.name}</b>
+                <i className="vq2__ico">
+                  <Leaf size={15} />
+                </i>
+                <span>
+                  <small>บริการ</small>
+                  <b>{s.name}</b>
+                </span>
               </span>
-              <span className="vs__who">
-                <Avatar name={t.name} src={therapistPhoto(t)} size="xs" color={t.color} />
+              <span>
+                {therapistPhoto(t) ? <img className="vq2__photo" src={therapistPhoto(t)} alt="" /> : <i className="vq2__ico">{t.name.replace(/^(นศ\.พท\.|พท\.ป\.?|คุณ)\s*/, "").slice(0, 1)}</i>}
                 <span>
                   <small>ผู้บำบัด</small>
                   <b>{t.name}</b>
                 </span>
               </span>
-              {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิลด้านล่างแล้ว */}
+              {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิล/สรุปแล้ว */}
               {view !== "billing" && view !== "done" && (
                 <span>
-                  <small>ค่าบริการ</small>
-                  <b>{baht(s.price)} ฿</b>
+                  <i className="vq2__ico">
+                    <Banknote size={15} />
+                  </i>
+                  <span>
+                    <small>ค่าบริการ</small>
+                    <b>{baht(s.price)} ฿</b>
+                  </span>
                 </span>
               )}
             </div>
