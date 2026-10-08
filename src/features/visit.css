@@ -2345,3 +2345,32 @@
   color: var(--color-brand);
   cursor: pointer;
 }
+/* รายการไทม์ไลน์ 2 บรรทัด: หัวข้อ / รายละเอียด */
+.vtl__txt {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 1px !important;
+}
+.vtl__txt b {
+  font: 600 12.5px/1.35 var(--font-sans);
+  color: var(--color-text);
+}
+.vtl__txt small {
+  font: 500 11.5px/1.35 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vtl time {
+  padding-top: 2px;
+  font-size: 11px;
+}
+/* ล่าสุดอยู่บน → รายการแรกเด่น */
+.vtl li:last-child .vtl__dot {
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+}
+.vtl li:first-child .vtl__dot {
+  background: var(--color-brand);
+  color: var(--white);
+}

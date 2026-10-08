@@ -388,7 +388,7 @@ export function AppointmentDrawer({
 
   const stepIdx = STEPS.findIndex((x) => x.key === view);
   // ไทม์ไลน์: ตัดข้อความที่ระบบสร้างเอง · รวมเหตุการณ์ซ้ำติดกัน (เช่น เรียกคิวซ้ำ ×5)
-  const timeline: { text: string; at: string; from: string; n: number; Icon: typeof Play }[] = [];
+  const timeline: { text: string; title: string; detail: string; at: string; from: string; n: number; Icon: typeof Play }[] = [];
   for (const l of appt.log ?? []) {
     const text = l.label
       .replace(/^แจ้งจากแอป:\s*ผู้ป่วยอัปเดตผลประเมิน\s*·\s*[^·]+·\s*/, "ประเมินซ้ำในแอป: ")
@@ -401,7 +401,10 @@ export function AppointmentDrawer({
       continue;
     }
     const Icon = /เช็กอิน/.test(text) ? ScanLine : /เรียกคิว/.test(text) ? Megaphone : /เริ่ม/.test(text) ? Play : /บันทึก|วินิจฉัย|หัตถการ/.test(text) ? ClipboardCheck : /ชำระ|บิล|ใบเสร็จ|เครดิต/.test(text) ? ReceiptText : /เลื่อน/.test(text) ? CalendarClock : /ยกเลิก|ไม่มา/.test(text) ? CalendarX2 : /แอป/.test(text) ? Smartphone : /จบ|เสร็จ/.test(text) ? CircleCheck : Hourglass;
-    timeline.push({ text, at: l.at, from: l.at, n: 1, Icon });
+    // 2 บรรทัด: หัวข้อ (เกิดอะไร) · รายละเอียด
+    // คำนำที่รู้จักก่อน · ไม่งั้นแยกที่ ":" (ไม่ใช่เวลา 08:00) หรือ "·" แรก
+    const m = /^(เลื่อนนัด|เรียกคิว|ยกเลิกนัด|เริ่มรับบริการ|จบการรักษา|ส่งบิล|รับชำระ)\s+(.+)$/.exec(text) ?? /^(.+?)\s*(?:(?<!\d):(?!\d)|·)\s*(.+)$/.exec(text);
+    timeline.push({ text, title: m ? m[1].trim() : text, detail: m ? m[2].trim() : "", at: l.at, from: l.at, n: 1, Icon });
   }
   // when each step happened — shown right under the stepper instead of a separate log
   const stepTime: Partial<Record<Stage, string>> = {
@@ -826,14 +829,18 @@ export function AppointmentDrawer({
                 </span>
               </div>
               <ol>
-                {(logAll ? timeline : timeline.slice(-6)).map((l, i) => (
+                {/* ล่าสุดอยู่บน */}
+                {(logAll ? timeline : timeline.slice(-6)).slice().reverse().map((l, i) => (
                   <li key={i}>
                     <i className="vtl__dot">
                       <l.Icon size={13} />
                     </i>
-                    <span>
-                      {l.text}
-                      {l.n > 1 && <em className="vtl__n">×{l.n}</em>}
+                    <span className="vtl__txt">
+                      <b>
+                        {l.title}
+                        {l.n > 1 && <em className="vtl__n">×{l.n}</em>}
+                      </b>
+                      {l.detail && <small>{l.detail}</small>}
                     </span>
                     <time>{l.n > 1 ? `${clock(l.from)}–${clock(l.at)}` : clock(l.at)}</time>
                   </li>
