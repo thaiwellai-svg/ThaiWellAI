@@ -329,7 +329,7 @@ export function ApproveDialog({
         {/* ผู้บำบัด: แสดงทุกคน พร้อมเวลาเข้างานและจำนวนรอบที่ว่างของวันนั้น */}
         <section className="apv__sec">
           <h3>
-            ผู้บำบัด <small>{s.name}</small>
+            ผู้บำบัด
           </h3>
           <ul className="apv__staff">
             {staff.map(({ t, shift, free, can }) => (
