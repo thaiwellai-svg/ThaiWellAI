@@ -994,19 +994,3 @@ html[data-dock="mini"] {
     grid-template-columns: 360px minmax(0, 1fr);
   }
 }
-/* short screens (laptops ~720–900 tall): panels end above the bottom dock so it never covers a footer/save button */
-@media (max-height: 900px) and (min-width: 1001px) {
-  html[data-dock="bar"] .work__body {
-    padding-bottom: calc(var(--dock-height) - 8px);
-  }
-  html[data-dock="bar"] .work__body .scroll-y {
-    padding-bottom: var(--space-4) !important;
-  }
-  html[data-dock="bar"] .work__body .appt__rail {
-    margin-bottom: 0;
-    padding-bottom: var(--space-3) !important;
-  }
-  html[data-dock="bar"] .work__body .plan__side-foot {
-    padding-bottom: var(--space-3);
-  }
-}

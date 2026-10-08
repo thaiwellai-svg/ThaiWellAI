@@ -6,8 +6,15 @@
 }
 .vsum__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* ปวด · ชำระ · คอร์ส อยู่แถวเดียว */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 8px;
+}
+@media (max-width: 560px) {
+  .vsum__stats {
+    grid-auto-flow: row;
+  }
 }
 .vsum__stats > div {
   display: flex;
