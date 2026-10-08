@@ -181,7 +181,11 @@ export function ApproveDialog({ request: incoming, onClose }: { request: Booking
               </label>
             </div>
           ) : (
-            <p className="apv__none">ไม่มีคอร์ส · ชำระรายครั้ง</p>
+            <p className="apv__none">
+              ไม่มีคอร์ส · ชำระรายครั้ง
+              {/* ไม่แนะนำคอร์ส: ผลประเมินปวดน้อย */}
+              <small>ปวด {intake.pain}/10 · ไม่จำเป็นต้องเปิดคอร์ส</small>
+            </p>
           )}
         </section>
         <section className="apv__sec">
