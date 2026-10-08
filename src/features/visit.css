@@ -2374,3 +2374,60 @@
   background: var(--color-brand);
   color: var(--white);
 }
+
+/* ---------- ไทม์ไลน์ (อ่านง่าย): เวลา | หัวข้อ + รายละเอียด · คั่นเส้นบาง ---------- */
+.vtl ol {
+  gap: 0;
+}
+.vtl li {
+  display: grid !important;
+  grid-template-columns: 52px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  padding: 10px 0 !important;
+  border-top: 1px solid var(--sage-100);
+}
+.vtl li:first-child {
+  border-top: 0;
+}
+.vtl li::after {
+  display: none !important;
+}
+.vtl li > time {
+  padding-top: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font: 700 13.5px/1.3 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.vtl li > time small {
+  font: 500 10.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vtl__txt {
+  gap: 3px;
+}
+.vtl__txt b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 14px/1.4 var(--font-sans);
+  color: var(--color-text);
+}
+.vtl__txt b svg {
+  flex-shrink: 0;
+  color: var(--color-brand);
+}
+.vtl__txt small {
+  padding-left: 20px;
+  font: 500 13px/1.45 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vtl li.is-last > time,
+.vtl li.is-last .vtl__txt b {
+  color: var(--color-brand);
+}
+.vtl__more {
+  padding-left: 64px;
+}

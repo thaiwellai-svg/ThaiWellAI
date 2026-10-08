@@ -831,18 +831,19 @@ export function AppointmentDrawer({
               <ol>
                 {/* ล่าสุดอยู่บน */}
                 {(logAll ? timeline : timeline.slice(-6)).slice().reverse().map((l, i) => (
-                  <li key={i}>
-                    <i className="vtl__dot">
-                      <l.Icon size={13} />
-                    </i>
+                  <li key={i} className={i === 0 ? "is-last" : undefined}>
+                    <time>
+                      {clock(l.at)}
+                      {l.n > 1 && <small>ตั้งแต่ {clock(l.from)}</small>}
+                    </time>
                     <span className="vtl__txt">
                       <b>
+                        <l.Icon size={14} />
                         {l.title}
                         {l.n > 1 && <em className="vtl__n">×{l.n}</em>}
                       </b>
                       {l.detail && <small>{l.detail}</small>}
                     </span>
-                    <time>{l.n > 1 ? `${clock(l.from)}–${clock(l.at)}` : clock(l.at)}</time>
                   </li>
                 ))}
               </ol>
