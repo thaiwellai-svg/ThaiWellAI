@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, Banknote, Leaf, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, Leaf, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -461,18 +461,7 @@ export function AppointmentDrawer({
                   <b>{t.name}</b>
                 </span>
               </span>
-              {/* ชำระเงิน/เสร็จสิ้น: ยอดแสดงในบิล/สรุปแล้ว */}
-              {view !== "billing" && view !== "done" && (
-                <span>
-                  <i className="vq2__ico">
-                    <Banknote size={15} />
-                  </i>
-                  <span>
-                    <small>ค่าบริการ</small>
-                    <b>{baht(s.price)} ฿</b>
-                  </span>
-                </span>
-              )}
+              {/* ค่าบริการไม่แสดงจนกว่าจะบันทึกการรักษา (อาจเพิ่มหัตถการ/บริการ) · ยอดจริงอยู่ในขั้นชำระเงิน */}
             </div>
           </section>
 
