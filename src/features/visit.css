@@ -2114,3 +2114,39 @@
   object-fit: cover;
   background: var(--sage-50);
 }
+/* กล่องคิวแถวเดียว: คิว · เวลา | บริการ · ผู้บำบัด */
+.vs__summary.vq2 {
+  padding: 10px 14px 10px 10px;
+}
+.vq2__top {
+  padding: 0;
+  gap: 16px;
+}
+.vq2 .vs__when {
+  flex: 0 0 auto;
+}
+.vq2__top .vq2__meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: 4px;
+  padding: 8px 0;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgb(31 42 34 / 5%);
+}
+.vq2__top .vq2__meta > span {
+  flex: 1 1 0;
+  padding: 0 14px;
+}
+@container rec (max-width: 640px) {
+  .vq2__top {
+    flex-wrap: wrap;
+  }
+  .vq2__top .vq2__meta {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}

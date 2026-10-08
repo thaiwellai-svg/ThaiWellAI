@@ -443,8 +443,7 @@ export function AppointmentDrawer({
                   {thaiDateShort(appt.date)} {Number(appt.date.slice(0, 4)) + 543} · {appt.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"} · {s.minutes} นาที
                 </small>
               </div>
-            </div>
-            <div className="vq2__meta">
+              <div className="vq2__meta">
               <span>
                 <i className="vq2__ico">
                   <Leaf size={15} />
@@ -462,6 +461,7 @@ export function AppointmentDrawer({
                 </span>
               </span>
               {/* ค่าบริการไม่แสดงจนกว่าจะบันทึกการรักษา (อาจเพิ่มหัตถการ/บริการ) · ยอดจริงอยู่ในขั้นชำระเงิน */}
+              </div>
             </div>
           </section>
 
@@ -543,7 +543,8 @@ export function AppointmentDrawer({
               {/* ข้อมูลก่อนนวด (หลังสิ่งที่ต้องทำในขั้นนี้): คัดกรอง · แจ้งเพิ่ม · แนวทางการรักษา — การ์ดแบบเดียวกัน */}
               {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && (
                 <div className="vs__pre">
-                  <VisitScreening p={p} app={vHas("screening") ? va?.screening : undefined} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />
+                  {/* เริ่มนวดแล้ว = คัดกรองเพิ่มไม่ได้ (คัดกรองก่อนเริ่มเท่านั้น) */}
+                  {view !== "treating" && <VisitScreening p={p} app={vHas("screening") ? va?.screening : undefined} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
                   <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />
                   {view !== "checkin" && <AppGuideCard guide={appt.appGuide} areas={appt.intake?.focusAreas} compact />}
                 </div>
