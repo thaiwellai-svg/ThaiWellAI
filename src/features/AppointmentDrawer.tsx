@@ -801,9 +801,7 @@ export function AppointmentDrawer({
                     const last = done[0];
                     return (
                       <button type="button" className={clsx("vcc__more", onHistory && historyOpen && "is-on")} onClick={() => (onHistory ? onHistory() : onOpenPatient!(p.id))}>
-                        <i className="vcc__more-ico">
-                          <HeartPulse size={17} />
-                        </i>
+                        <HeartPulse className="vcc__more-bg" size={96} strokeWidth={1.4} aria-hidden />
                         <span>
                           <b>{onHistory && historyOpen ? "ซ่อนข้อมูลสุขภาพ" : "ข้อมูลสุขภาพ"}</b>
                           <small>{done.length ? `${done.length} ครั้ง · ${thaiDateShort(last.date)}` : "มาครั้งแรก"}</small>

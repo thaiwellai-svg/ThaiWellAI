@@ -2633,3 +2633,41 @@
 .vcc__spark {
   width: 48px;
 }
+/* การ์ดข้อมูลสุขภาพ: พื้นเขียวแบบการ์ดขอนัด · ไอคอนหัวใจจางโผล่จากขอบขวา */
+.vcc__more {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 14px;
+  background: var(--color-brand);
+  color: var(--white);
+  box-shadow: 0 6px 16px rgb(47 107 70 / 22%);
+}
+.vcc__more:hover {
+  box-shadow: 0 8px 20px rgb(47 107 70 / 30%);
+}
+.vcc__more > :not(.vcc__more-bg) {
+  position: relative;
+  z-index: 1;
+}
+.vcc__more-bg {
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-12deg);
+  color: var(--white);
+  opacity: 0.14;
+  pointer-events: none;
+}
+.vcc__more b {
+  color: var(--white);
+}
+.vcc__more small {
+  color: rgb(255 255 255 / 80%);
+}
+.vcc__spark,
+.vcc__more-go {
+  color: var(--white);
+}
+.vcc__more.is-on {
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 60%), 0 6px 16px rgb(47 107 70 / 22%);
+}
