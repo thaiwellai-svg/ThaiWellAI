@@ -15,6 +15,14 @@ import { pushNotify } from "./notify";
 
 type Store = ReturnType<typeof useStore>;
 
+/**
+ * คลินิกเปิดหลายเครื่อง (iPad หลายเครื่อง / เว็บ) → เครื่องเดียวรับข้อมูลจากแอปและส่งกลับ (ไม่ประมวลผลซ้ำ · ไม่ตัดสินจากข้อมูลค้าง)
+ * ใช้แถว tw_events id -2 เป็นตัวจอง: เครื่องที่จองไว้ต่ออายุทุก 5 วินาที · เกิน 15 วินาทีไม่ต่อ (ปิดแอป/พักจอ) → เครื่องอื่นรับแทน
+ */
+const BRIDGE_DEVICE = `cb${Math.random().toString(36).slice(2, 10)}`;
+const LEADER_ID = -2;
+const LEADER_TTL = 15_000;
+
 /* ---------- ประเมินหลายรอบจากแอป (ประเมินซ้ำก่อนเช็กอิน) + แจ้งอาการเพิ่มหลังเช็กอิน ---------- */
 const flagsOf = (sc?: CloudAssessment["screening"]) =>
   [sc?.fever && "มีไข้", sc?.highBP && "ความดันสูง", sc?.pregnant && "ตั้งครรภ์", sc?.recentSurgery && "ผ่าตัดไม่นาน", sc?.contagious && "โรคติดต่อ", sc?.menstruation && "มีประจำเดือน"].filter(Boolean) as string[];
@@ -114,6 +122,9 @@ export function CloudBridge() {
   const toast = useToast();
   const ref = useRef(store);
   ref.current = store;
+  /** เครื่องนี้เป็นเครื่องที่รับ/ส่งข้อมูลกับแอปอยู่ (สาธิต = เครื่องเดียวเสมอ) */
+  const leader = useRef(DEMO);
+  const reloadOpen = useRef<() => void>(() => {});
   // last status each side knows about, so neither side moves a booking backwards or echoes its own change
   const known = useRef(new Map<string, string>());
   const planSent = useRef(new Set<string>());
@@ -278,6 +289,7 @@ export function CloudBridge() {
   };
 
   const inbound = (row: CloudAppt) => {
+    if (!leader.current) return;
     const st = ref.current;
     known.current.set(row.id, row.status);
     if (row.plan?.summary) planSent.current.add(`${row.id}|${row.plan.summary}|${row.plan.course ? `${row.plan.course.used}/${row.plan.course.total}` : ""}`);
@@ -419,7 +431,8 @@ export function CloudBridge() {
     const who = st.patientById(local.patientId).name;
     // เช็กอินต้องสแกน QR ที่เคาน์เตอร์ (เปลี่ยนทุก 30 วินาที = มาถึงคลินิกจริง) · รหัสผิด/หมดอายุ/ไม่ใช่วันนัด → ส่งกลับให้สแกนใหม่
     // (เช็กอินที่เคาน์เตอร์ = เจ้าหน้าที่ออกคิวให้แล้ว → ไม่ต้องตรวจ QR)
-    if (row.status === "checked_in" && !DEMO && !local.checkinQueue && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
+    // (มีเลขคิวแล้ว = คลินิกออกคิวให้แล้ว ไม่ใช่การเช็กอินจากแอปที่ต้องตรวจ QR)
+    if (row.status === "checked_in" && !DEMO && !row.queue_no && !local.checkinQueue && !local.log?.some((l) => l.label.startsWith("เช็กอินจากแอป"))) {
       const token = /^checkin:([A-Za-z0-9]+)/.exec(row.note ?? "")?.[1]?.toUpperCase();
       const secret = st.settings.checkinSecret;
       const reason = local.date !== todayISO() ? "นัดนี้ไม่ใช่วันนี้" : !token ? "ต้องสแกน QR เช็กอินที่เคาน์เตอร์" : !secret || !validCheckinCode(secret, token) ? "รหัส QR หมดอายุหรือไม่ถูกต้อง" : null;
@@ -477,16 +490,37 @@ export function CloudBridge() {
     // ข้อมูลสาธิต (เฉพาะโหมดสาธิต/ทดสอบ) · ใช้งานจริงไม่แตะ cloud
     void (!DEMO ? Promise.resolve() : takeDemoReseed() ? resetDemoCloud(ref.current) : ensureDemoCloud(ref.current))
       .catch(() => undefined)
-      .then(() => cloud
-      .from("tw_appointments")
-      .select(join)
-      .not("status", "in", "(closed,rejected,cancelled)")
-      .order("created_at")
-      .then(({ data }) => {
-        if (!alive) return;
-        (data as CloudAppt[] | null)?.forEach(inbound);
-        setReady(true);
-      }));
+      .then(() => {
+        // โหลดนัดที่ยังไม่จบทั้งหมด (ตอนเปิด และตอนเครื่องนี้ได้รับหน้าที่แทนเครื่องอื่น)
+        reloadOpen.current = () =>
+          void cloud
+            .from("tw_appointments")
+            .select(join)
+            .not("status", "in", "(closed,rejected,cancelled)")
+            .order("created_at")
+            .then(({ data }) => {
+              if (!alive) return;
+              (data as CloudAppt[] | null)?.forEach(inbound);
+              setReady(true);
+            });
+        if (leader.current) reloadOpen.current();
+        else setReady(true);
+      });
+    // จองหน้าที่รับ/ส่งข้อมูลกับแอป (ใช้งานจริงเปิดหลายเครื่องได้)
+    const claim = async () => {
+      if (DEMO) return;
+      const { data } = await cloud.from("tw_events").select("payload").eq("id", LEADER_ID).maybeSingle();
+      const cur = (data?.payload ?? null) as { device?: string; at?: string } | null;
+      const free = !cur?.device || cur.device === BRIDGE_DEVICE || Date.now() - Date.parse(cur.at ?? "") > LEADER_TTL;
+      const was = leader.current;
+      if (free && !document.hidden) {
+        await cloud.from("tw_events").upsert({ id: LEADER_ID, source: "system", kind: "bridge.leader", summary: "เครื่องที่รับ/ส่งข้อมูลกับแอป", payload: { device: BRIDGE_DEVICE, at: new Date().toISOString() } });
+        leader.current = true;
+      } else leader.current = false;
+      if (leader.current && !was) reloadOpen.current();
+    };
+    void claim();
+    const lead = window.setInterval(() => void claim(), 5000);
     // เวลาว่างจริงของคลินิก → แอปบนมือถือใช้จองรอบที่ว่างจริง
     const avail = window.setInterval(() => {
       try {
@@ -501,7 +535,7 @@ export function CloudBridge() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "tw_patients" }, (ev) => {
         const cp = ev.new as NonNullable<CloudAppt["tw_patients"]>;
         const p = ref.current.patients.find((x) => x.cloudId === cp?.id);
-        if (p) syncPhoto(p, cp);
+        if (p && leader.current) syncPhoto(p, cp);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "tw_appointments" }, async (ev) => {
         const id = (ev.new as CloudAppt)?.id;
@@ -513,7 +547,7 @@ export function CloudBridge() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "tw_events", filter: "kind=eq.app.note" }, (ev) => {
         const row = ev.new as CloudEvent;
         const p = (row.payload ?? {}) as { title?: string; body?: string; patientId?: string };
-        if (row.source !== "app" || !p.title) return;
+        if (row.source !== "app" || !p.title || !leader.current) return;
         const local = p.patientId ? ref.current.patients.find((x) => x.cloudId === p.patientId) : undefined;
         ref.current.dispatch({ type: "bridgeIn", event: { id: `ev${row.id}`, at: row.at, type: "note", title: p.title, body: p.body ?? row.summary ?? "", patientId: local?.id } });
         void pushNotify(p.title, p.body ?? row.summary ?? "", local ? "/patients" : undefined);
@@ -523,6 +557,7 @@ export function CloudBridge() {
       .subscribe();
     // สำรอง: realtime หลุดได้ (iPad พักหน้าจอ / Wi-Fi) → ตรวจการจองที่ยังไม่จบทุก 5 วินาที
     const poll = window.setInterval(async () => {
+      if (!leader.current) return;
       const open = [...known.current].filter(([, st]) => !["paid", "closed", "rejected", "cancelled", "no_show"].includes(st)).map(([id]) => id);
       // บันทึกโดยข้ามคะแนนหลังนวด (14 วันล่าสุด) → รอผู้ป่วยประเมินหลังนวดในแอป
       const since = new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10);
@@ -535,6 +570,7 @@ export function CloudBridge() {
     }, 5000);
     return () => {
       alive = false;
+      window.clearInterval(lead);
       window.clearInterval(poll);
       window.clearInterval(avail);
       void cloud.removeChannel(ch);
@@ -544,7 +580,7 @@ export function CloudBridge() {
   // นัดที่คลินิกลงเอง (นัดตามคอร์ส / จัดตารางนัด / นัดหน้าร้าน) ของผู้ป่วยที่ใช้แอป → ส่งไปแสดงในแอปของเจ้าของ
   // เป็นแถวใน cloud แบบเดียวกับนัดจากแอป → เช็กอิน เรียกคิว ผลการรักษา บิล ไปถึงแอปทางเดิมทั้งหมด
   useEffect(() => {
-    if (!ready || DEMO) return;
+    if (!ready || DEMO || !leader.current) return;
     const today = todayISO();
     for (const a of store.appointments) {
       if (a.cloudId || a.status !== "waiting" || a.startedAt || a.date < today) continue;
@@ -587,7 +623,7 @@ export function CloudBridge() {
 
   // HN + คอร์สของผู้ป่วยที่ใช้แอป (ชื่อ จำนวนครั้ง ใช้ไป หมดอายุ) → แสดงในแอปของเจ้าของ
   useEffect(() => {
-    if (!ready || DEMO) return;
+    if (!ready || DEMO || !leader.current) return;
     for (const p of store.patients) {
       if (!p.cloudId) continue;
       const c = p.course;
@@ -629,7 +665,7 @@ export function CloudBridge() {
 
   // clinic → app: push every forward step of a linked booking
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !leader.current) return;
     for (const a of store.appointments) {
       if (!a.cloudId) continue;
       const was = known.current.get(a.cloudId);
