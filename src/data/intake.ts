@@ -88,7 +88,16 @@ export const SAMPLE_INTAKE: Omit<Intake, "at"> = {
 /** the assessment that came with a booking request (or its demo stand-in) */
 /** ผลประเมินจากแอปที่รับไว้ก่อนมีรายการข้อที่ตอบ → แอปถามแค่อาการ ปวด ตำแหน่ง โรคประจำตัว แรงนวด (คัดกรอง = มีข้อที่ตอบว่ามี) */
 const legacyAsked = (i: Intake, sc?: { [k: string]: unknown }): Intake =>
-  i.asked ? i : { ...i, asked: ["complaint", "pain", "focusAreas", "avoidAreas", "conditions", "pressure", ...(Object.values(sc ?? {}).some((v) => v === true) ? ["screening"] : [])] };
+  // มีรายการข้อที่ตอบแล้ว (แอปรุ่นใหม่ หรือกติกาใหม่) → ใช้ตามนั้น · รายการแบบเก่า (ก่อนรู้ว่าแอปถามรวมกลุ่ม) → คิดใหม่
+  i.asked && (i.asked.includes("screening") || i.asked.includes("bloodThinner") || !(i.focusAreas ?? []).length)
+    ? i
+    : {
+        ...i,
+        // มาจากแบบประเมิน (มีตำแหน่งที่ปวด) → แบบประเมินถามรวมกลุ่ม: โรคประจำตัว/ยาละลายลิ่มเลือด · ข้อห้าม (ไข้ ตั้งครรภ์ ผ่าตัด บาดเจ็บ แผล) · แรงนวด
+        asked: (i.focusAreas ?? []).length
+          ? ["complaint", "pain", "focusAreas", "avoidAreas", "conditions", "bloodThinner", "pressure", "screening", "skin", "injury", "surgery"]
+          : ["complaint", "pain", ...(Object.values(sc ?? {}).some((v) => v === true) ? ["screening"] : [])],
+      };
 
 export function intakeOfRequest(r: BookingRequest, p: Patient): Intake {
   if (r.intake) return r.cloudId ? legacyAsked(r.intake, r.screening as unknown as Record<string, unknown>) : r.intake;

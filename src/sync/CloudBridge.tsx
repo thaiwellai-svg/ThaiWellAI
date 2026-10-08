@@ -44,27 +44,35 @@ const roundsOf = (row: CloudAppt): AssessRound[] => {
   return [...(as.rounds ?? []).filter(real).map((r) => roundOf(r, row.created_at)), ...(real(as) ? [roundOf(as, row.created_at)] : [])];
 };
 /** ผู้ป่วยคัดกรองข้อห้ามมาจริง (แอปรุ่นเก่าส่ง "ไม่มี" ทุกข้อแม้ไม่ได้ถาม → ถือว่ายังไม่ได้คัดกรอง เว้นแต่มีข้อที่ตอบว่ามี) */
-const screenedIn = (as?: CloudAssessment | null) => as?.screened === true || Object.values(as?.screening ?? {}).some((v) => v === true);
+// แอปถามข้อห้ามเป็นคำถามรวมข้อเดียวในแบบประเมินทุกครั้ง → มาจากแบบประเมิน (มีตำแหน่งที่ปวด) = ตอบแล้ว แม้แอปรุ่นเก่าไม่ส่ง screened
+const fromAssessment = (as?: CloudAssessment | null) => (as?.areas ?? []).length > 0;
+const screenedIn = (as?: CloudAssessment | null) => as?.screened === true || (as?.screened === undefined && fromAssessment(as)) || Object.values(as?.screening ?? {}).some((v) => v === true);
 const screeningOf = (sc?: CloudAssessment["screening"]): Screening => ({ fever: !!sc?.fever, highBP: !!sc?.highBP, bpSystolic: sc?.bpSystolic, menstruation: !!sc?.menstruation, pregnant: !!sc?.pregnant, recentSurgery: !!sc?.recentSurgery, contagious: !!sc?.contagious });
 const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
   const as = row.assessment ?? {};
   return {
     at: as.at ?? row.created_at,
-    // แอปส่งมาแค่นี้ · ข้ออื่น (ยา ผิวหนัง ชา ผ่าตัด แพ้) ไม่ได้ถาม
-    asked: ["complaint", "pain", "focusAreas", "avoidAreas", ...(as.conditions ? ["conditions"] : []), ...(as.pressure ? ["pressure"] : []), ...(screenedIn(as) ? ["screening"] : [])],
+    // ข้อที่ผู้ป่วยตอบจริง: แอปรุ่นใหม่ส่ง answered · รุ่นเก่า = แบบประเมินถามรวมกลุ่ม (เป็นมานาน · โรคประจำตัว/ยาละลายลิ่มเลือด · ข้อห้าม · แรงนวด)
+    asked:
+      as.answered ??
+      (fromAssessment(as)
+        ? ["complaint", "pain", "focusAreas", "avoidAreas", "conditions", "bloodThinner", "pressure", "screening", "skin", "injury", "surgery"]
+        : ["complaint", "pain", ...(screenedIn(as) ? ["screening"] : [])]),
     goal: "บรรเทาอาการ",
     complaint: as.complaint ?? fallbackComplaint,
     pain: as.pain ?? 5,
-    duration: "-",
+    duration: as.duration ?? "-",
     focusAreas: as.areas ?? [],
     avoidAreas: as.avoid ?? [],
     conditions: as.conditions ?? [],
-    medications: [],
-    bloodThinner: false,
-    skin: "ปกติ",
-    numbness: false,
+    medications: as.medications ?? [],
+    bloodThinner: !!as.bloodThinner,
+    skin: as.skin ?? "ปกติ",
+    numbness: !!as.numbness,
     fever: !!as.screening?.fever,
     pregnant: as.screening?.pregnant ?? null,
+    ...(as.injury ? { injury: as.injury } : {}),
+    ...(as.surgery ? { surgery: as.surgery } : as.screening?.recentSurgery ? { surgery: "ผ่าตัดภายใน 1 เดือน" } : {}),
     pressure: (["เบา", "ปานกลาง", "หนัก"].includes(as.pressure ?? "") ? as.pressure : "ปานกลาง") as Intake["pressure"],
   };
 };
