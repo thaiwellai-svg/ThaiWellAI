@@ -152,7 +152,8 @@ function reducer(state: State, action: Action): State {
         painBefore: req.painScore,
         paid: false,
         intake: req.intake,
-        screening: req.screening,
+        // คัดกรองข้อห้ามมาจริงเท่านั้น (แอปส่ง "ไม่มี" ทุกข้อแม้ไม่ได้ถาม → ไม่คัดลอก)
+        screening: !req.cloudId || (req.intake?.asked ? req.intake.asked.includes("screening") : Object.values(req.screening ?? {}).some((v) => v === true)) ? req.screening : undefined,
         assessRounds: req.assessRounds,
         appGuide: req.appGuide,
         ...(req.id.startsWith("app-") ? { bridgeRef: req.id } : {}),

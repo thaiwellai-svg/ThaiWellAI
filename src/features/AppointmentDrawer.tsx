@@ -251,6 +251,9 @@ export function AppointmentDrawer({
   // เหมือน VisitScreening: คัดกรองที่คลินิกวันนี้ก่อน ถ้ายังไม่ได้วัดใช้แบบคัดกรองตนเองจากแอป
   // แบบคัดกรองของนัดนี้ (ประเมินสำหรับนัดนี้เท่านั้น)
   const va = visitAssessment(appt);
+  // ผลประเมินของนัดนี้ (ข้อที่ผู้ป่วยตอบจริง) · คัดกรองข้อห้ามมาจริงไหม
+  const vik = intakeOfVisit(appt, p);
+  const vHas = (f: string) => !vik?.asked || vik.asked.includes(f);
   const stopFlags = (scrToday ? screeningFlags(scrToday, store.settings.bpThreshold) : va?.screening ? evaluateScreening(va.screening, store.settings) : []).filter((f) => f.level === "stop");
   const stopFromApp = !scrToday && stopFlags.length > 0;
   const stopToday = stopFlags.length > 0;
@@ -508,7 +511,7 @@ export function AppointmentDrawer({
           <AnimatePresence mode="wait" initial={false}>
             <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
               {/* คัดกรองก่อนนวด อยู่ในขั้นที่กำลังทำ (ไม่ดันแถบขั้นตอนลงล่างในหน้ารับบริการ) */}
-              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={va?.screening} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
+              {(view === "checkin" || view === "waiting" || view === "called" || view === "treating") && <VisitScreening p={p} app={vHas("screening") ? va?.screening : undefined} assessedAt={va?.at} pending={!va && !!appt.cloudId} date={appt.date} onScreen={() => navigate(`/patients/${p.id}/screen`)} />}
               {/* แจ้งอาการเพิ่มหลังเช็กอิน + ประวัติการประเมินในแอปหลายรอบ */}
               {view !== "done" && <AssessHistory rounds={appt.assessRounds} addenda={appt.addenda} />}
               {/* แนวทางที่แอปแนะนำ: ดูก่อนเริ่ม / ระหว่างรักษา / ตอนบันทึก */}
@@ -676,14 +679,20 @@ export function AppointmentDrawer({
                     <span className="vcc__icon">
                       <Stethoscope size={15} />
                     </span>
-                    <b>อาการสำคัญ</b>
+                    <b>ผลประเมินก่อนนวด</b>
                     {/* ผลประเมินของนัดวันนี้ (ไม่ใช่ข้อมูลรวมของผู้ป่วย) */}
-                    {ik ? <small>ประเมินในแอป {timeAgo(ik.at)}</small> : appt.cloudId ? <small className="vcc__none">ยังไม่ได้ประเมินในแอป</small> : null}
+                    {ik ? <small>{timeAgo(ik.at)}</small> : appt.cloudId ? <small className="vcc__none">ยังไม่ได้ประเมิน</small> : null}
                   </div>
                   <p className="vcc__text">
-                    {ik?.complaint ?? p.complaint}
+                    “{ik?.complaint ?? p.complaint}”
                     {!ik && appt.cloudId && p.complaint ? <small className="vcc__prev"> (จากครั้งก่อน)</small> : null}
                   </p>
+                  {ik && ik.duration?.trim() && ik.duration.trim() !== "-" && (
+                    <span className="vcc__sub vcc__since">
+                      เป็นมา {ik.duration.replace(/^ประมาณ\s*/, "")}
+                      {ik.goal && (!ik.asked || ik.asked.includes("goal")) ? ` · ต้องการ${ik.goal}` : ""}
+                    </span>
+                  )}
 
                   <div className="vcc__facts">
                     <div style={{ ["--tc" as string]: tc }}>
@@ -703,19 +712,12 @@ export function AppointmentDrawer({
                         </span>
                       )}
                     </div>
-                    {ik && ik.duration?.trim() && ik.duration.trim() !== "-" ? (
-                      <div>
-                        <small>เป็นมา</small>
-                        <b className="vcc__dur">{ik.duration.replace(/^ประมาณ\s*/, "")}</b>
-                        <span className="vcc__sub">ต้องการ{ik.goal}</span>
-                      </div>
-                    ) : (
-                      <div>
-                        <small>มาแบบ</small>
-                        <b className="vcc__dur">{appt.type === "booked" ? "นัดล่วงหน้า" : "วอล์กอิน"}</b>
-                        {!appt.cloudId && <span className="vcc__sub">ไม่มีแบบประเมินจากแอป</span>}
-                      </div>
-                    )}
+                    {/* แรงนวดที่ผู้ป่วยต้องการ (ไม่ได้ถาม = ไม่ได้ประเมิน) */}
+                    <div>
+                      <small>แรงนวด</small>
+                      <b className="vcc__dur">{ik && (!ik.asked || ik.asked.includes("pressure")) ? ik.pressure : "—"}</b>
+                      {!(ik && (!ik.asked || ik.asked.includes("pressure"))) && <span className="vcc__sub">ไม่ได้ประเมิน</span>}
+                    </div>
                   </div>
 
                   {ik && (ik.focusAreas.length > 0 || ik.avoidAreas.length > 0) && (

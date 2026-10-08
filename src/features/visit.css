@@ -1772,3 +1772,7 @@
     grid-template-columns: 1fr;
   }
 }
+.vcc__since {
+  display: block;
+  margin-top: -4px;
+}
