@@ -23,6 +23,42 @@ export function ElementCard({ p }: { p: Patient }) {
 
 const STEPS = ["อ่านประวัติและอาการ", "ประเมินธาตุและเส้น", "เลือกบริการและความถี่", "ตรวจข้อห้าม"];
 
+/** แพทย์อนุมัติร่างแผน → เปิดคอร์สตามแผน (ใช้ทั้งในแผงแผนและการ์ดแผนหน้าผู้ป่วย) */
+export function useApprovePlan(p: Patient | undefined) {
+  const store = useStore();
+  const toast = useToast();
+  const plan = p?.aiPlan;
+  return () => {
+    if (!p || !plan) return;
+    const svc = plan.phases[0]?.serviceId ?? "s1";
+    const patch: Partial<Patient> = { aiPlan: { ...plan, approved: true } };
+    // ครั้งแรกที่มารักษา (ประเมินอาการ + รักษา แล้วแพทย์วางแผน) = ครั้งที่ 1 ของคอร์ส → นัดต่อเฉพาะครั้งที่เหลือ
+    //   คอร์สแรก: ครั้งล่าสุดที่รักษาเสร็จ (บริการเดียวกัน · ภายใน 14 วัน) · มีคอร์สเดิมแล้ว: เฉพาะครั้งที่รักษาวันนี้
+    const since = p.course ? todayISO() : addISODays(todayISO(), -14);
+    // ครั้งแรก = ครั้งล่าสุดที่รักษาแล้วในช่วงนั้น → คอร์สเริ่มนับตั้งแต่วันนั้น (ตัวนับคอร์สนับจากนัดจริง)
+    const first = store.appointments
+      .filter((a) => a.patientId === p.id && a.serviceId === svc && a.date >= since && a.date <= todayISO() && (a.status === "done" || !!a.endedAt))
+      .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0];
+    const firstToday = first ? 1 : 0;
+    if (!p.course || p.course.used >= p.course.total)
+      patch.course = {
+        name: `${store.serviceById(svc).name} ${plan.sessions} ครั้ง`,
+        serviceId: svc,
+        total: plan.sessions,
+        used: Math.min(plan.sessions, firstToday),
+        base: 0,
+        startedOn: first ? `${first.date}` : todayISO(),
+        expiresOn: addISODays(todayISO(), 90),
+        // วิธีชำระ (รายครั้ง / ทั้งคอร์สล่วงหน้า) เลือกตอนชำระครั้งแรก
+      };
+    store.dispatch({ type: "updatePatient", id: p.id, patch });
+    // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
+    const booked = store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && (a.status === "waiting" || a.status === "active") && !a.endedAt && a.date >= todayISO()).length;
+    const over = patch.course ? booked - (plan.sessions - patch.course.used) : 0;
+    toast({ message: patch.course ? (over > 0 ? `อนุมัติแล้ว · นัดเกินคอร์ส ${over} นัด ดูที่การ์ดคอร์ส` : `อนุมัติแล้ว · เปิดคอร์ส ${plan.sessions} ครั้ง${patch.course.used ? " (นับครั้งแรกแล้ว)" : ""}`) : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
+  };
+}
+
 /** AI-drafted treatment plan from the patient's history (+ OCR'd referral documents). */
 export function AIPlanCard({ p, panel }: { p: Patient; /** shown as the side panel (no card frame) */ panel?: boolean }) {
   const store = useStore();
@@ -128,35 +164,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
     void generate();
   }, [panel, p.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const approve = () => {
-    if (!plan) return;
-    const svc = plan.phases[0]?.serviceId ?? "s1";
-    const patch: Partial<Patient> = { aiPlan: { ...plan, approved: true } };
-    // ครั้งแรกที่มารักษา (ประเมินอาการ + รักษา แล้วแพทย์วางแผน) = ครั้งที่ 1 ของคอร์ส → นัดต่อเฉพาะครั้งที่เหลือ
-    //   คอร์สแรก: ครั้งล่าสุดที่รักษาเสร็จ (บริการเดียวกัน · ภายใน 14 วัน) · มีคอร์สเดิมแล้ว: เฉพาะครั้งที่รักษาวันนี้
-    const since = p.course ? todayISO() : addISODays(todayISO(), -14);
-    // ครั้งแรก = ครั้งล่าสุดที่รักษาแล้วในช่วงนั้น → คอร์สเริ่มนับตั้งแต่วันนั้น (ตัวนับคอร์สนับจากนัดจริง)
-    const first = store.appointments
-      .filter((a) => a.patientId === p.id && a.serviceId === svc && a.date >= since && a.date <= todayISO() && (a.status === "done" || !!a.endedAt))
-      .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0];
-    const firstToday = first ? 1 : 0;
-    if (!p.course || p.course.used >= p.course.total)
-      patch.course = {
-        name: `${store.serviceById(svc).name} ${plan.sessions} ครั้ง`,
-        serviceId: svc,
-        total: plan.sessions,
-        used: Math.min(plan.sessions, firstToday),
-        base: 0,
-        startedOn: first ? `${first.date}` : todayISO(),
-        expiresOn: addISODays(todayISO(), 90),
-        // วิธีชำระ (รายครั้ง / ทั้งคอร์สล่วงหน้า) เลือกตอนชำระครั้งแรก
-      };
-    store.dispatch({ type: "updatePatient", id: p.id, patch });
-    // มีนัดล่วงหน้าเกินจำนวนครั้งของคอร์สใหม่ → บอกให้ตรวจ (การ์ดคอร์สมีปุ่มเพิ่มครั้ง / ยกเลิกนัดส่วนเกิน)
-    const booked = store.appointments.filter((a) => a.patientId === p.id && a.serviceId === svc && (a.status === "waiting" || a.status === "active") && !a.endedAt && a.date >= todayISO()).length;
-    const over = patch.course ? booked - (plan.sessions - patch.course.used) : 0;
-    toast({ message: patch.course ? (over > 0 ? `อนุมัติแล้ว · นัดเกินคอร์ส ${over} นัด ดูที่การ์ดคอร์ส` : `อนุมัติแล้ว · เปิดคอร์ส ${plan.sessions} ครั้ง${patch.course.used ? " (นับครั้งแรกแล้ว)" : ""}`) : "อนุมัติแผนแล้ว", tone: over > 0 ? "danger" : undefined });
-  };
+  const approve = useApprovePlan(p);
 
   return (
     <section className={panel ? "ai-card ai-card--panel" : "pd__card pd__card--wide ai-card"}>

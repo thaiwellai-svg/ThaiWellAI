@@ -19,7 +19,7 @@ import { patientPhoto } from "../../data/avatars";
 import { thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
-import { AIPlanCard, ElementCard } from "../../features/AIPlan";
+import { AIPlanCard, ElementCard, useApprovePlan } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
 import "../../features/health.css";
 import "../../features/patient-health.css";
@@ -39,6 +39,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const p = id ? store.patients.find((x) => x.id === id) : undefined;
   const today = todayISO();
   const [print, printNode] = usePatientPrint(p ?? null);
+  const approvePlan = useApprovePlan(p);
   const [cancelPlan, setCancelPlan] = useState<Appointment | null>(null);
   const [cancelExtra, setCancelExtra] = useState(false);
   const [doc, setDoc] = useState<DocKind | null>(null);
@@ -370,6 +371,14 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                               </li>
                             ))}
                           </ol>
+                        )}
+                        {!pl.approved && (
+                          <div className="pln__approve">
+                            <span>ตรวจแผนแล้วกดอนุมัติ ระบบจะเปิดคอร์ส {pl.sessions} ครั้งให้ จองนัดตามคอร์สได้ทันที</span>
+                            <Button size="md" leading={<Stethoscope size={15} />} onClick={approvePlan}>
+                              อนุมัติแผน
+                            </Button>
+                          </div>
                         )}
                         {pl.referToDoctor && (
                           <p className="pln__warn">

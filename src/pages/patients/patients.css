@@ -3692,3 +3692,22 @@
   color: var(--color-text-muted);
   text-align: center;
 }
+/* อนุมัติแผนได้จากการ์ดเลย */
+.pln__approve {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fdf4dd;
+}
+.pln__approve span {
+  flex: 1;
+  min-width: 0;
+  font: 500 12.5px/1.4 var(--font-sans);
+  color: #6f4f08;
+}
+.pln__approve .tw-btn {
+  flex-shrink: 0;
+  width: auto;
+}
