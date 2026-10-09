@@ -224,15 +224,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             <div className="pd__col">
               <section className="pd__card pd2">
             <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
-                <Stethoscope size={15} />
-              </span>
-              อาการสำคัญ
-            </h3>
-            <p className="pd2__quote">{p.complaint}</p>
-          </section>
-              <section className="pd__card pd2">
-            <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#6b7a71" }}>
                 <UserRound size={15} />
               </span>
@@ -282,6 +273,15 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                   <dd>{thaiDate(p.registeredOn)}</dd>
                 </div>
               </dl>
+          </section>
+              <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
+                <Stethoscope size={15} />
+              </span>
+              อาการสำคัญ
+            </h3>
+            <p className="pd2__quote">{p.complaint}</p>
           </section>
               <section className="pd__card pd2">
             <h3 className="pd2__h">
