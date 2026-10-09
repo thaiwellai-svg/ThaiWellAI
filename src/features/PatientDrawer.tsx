@@ -115,8 +115,17 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
   // counter screening (body marked at registration) when there is no app intake
   const sc = p.screening;
   const scAreas = (xs: string[]) => xs.map((x) => toArea(x.trim())).filter((x): x is BodyArea => !!x);
-  const fromScreening = !fromIntake && sc && (sc.painAreas?.length || sc.avoid) ? { heatmap: Object.fromEntries(scAreas(sc.painAreas ?? []).map((a) => [a, Math.max(0.35, (sc.pain ?? 6) / 10)])) as Partial<Record<BodyArea, number>>, avoid: scAreas(sc.avoid.split(/[,·]\s*/)) } : null;
-  const fromApp = fromIntake ?? fromScreening;
+  // คัดกรองที่คลินิก: ของวันนัดนี้ (หรือไม่มีแบบประเมินจากแอป) → ใช้จุดปวด/ห้ามนวดที่มาร์กไว้บนหุ่น
+  const scToday = !!sc && (!appt || sc.at?.slice(0, 10) === appt.date);
+  const fromScreening =
+    sc && (scToday || !fromIntake) && (sc.painAreas?.length || sc.avoid)
+      ? { heatmap: Object.fromEntries(scAreas(sc.painAreas ?? []).map((a) => [a, Math.max(0.35, (sc.pain ?? 6) / 10)])) as Partial<Record<BodyArea, number>>, avoid: scAreas((sc.avoid ?? "").split(/[,·]\s*/)) }
+      : null;
+  // รวมแบบประเมินจากแอป + คัดกรองที่คลินิก (แอปไม่ได้มาร์กจุด → ใช้ของคลินิก)
+  const fromApp =
+    fromIntake && fromScreening
+      ? { heatmap: { ...fromScreening.heatmap, ...fromIntake.heatmap }, avoid: [...new Set([...fromIntake.avoid, ...fromScreening.avoid])] }
+      : (fromIntake ?? fromScreening);
   const bodyHeat: Partial<Record<BodyArea, number>> = fromApp && Object.keys(fromApp.heatmap).length ? fromApp.heatmap : Object.fromEntries(treated.map(([a, n]) => [a, 0.3 + (n / maxT) * 0.35]));
   const bodyAvoid = fromApp?.avoid ?? [];
   const focusList = (Object.entries(bodyHeat) as [BodyArea, number][]).sort((a, b) => b[1] - a[1]).map(([a]) => a);
@@ -188,7 +197,7 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
       {/* body overview first: where to treat */}
       <p className="hx-label hx-label--first">
         <PersonStanding size={13} /> จุดที่ควรดูแล
-        <small>{intake ? (appt ? "จากแบบประเมินนัดนี้" : "จากแบบประเมินล่าสุด") : treated.length ? "จากหัตถการเดิม" : ""}</small>
+        <small>{fromScreening && !(fromIntake && Object.keys(fromIntake.heatmap).length) ? "จากคัดกรองที่คลินิก" : intake ? (appt ? "จากแบบประเมินนัดนี้" : "จากแบบประเมินล่าสุด") : treated.length ? "จากหัตถการเดิม" : ""}</small>
       </p>
       <section className="hx-card hx-body">
         <Body3D compact sex={p.gender} heatmap={bodyHeat} avoid={bodyAvoid} />
