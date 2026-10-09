@@ -87,6 +87,16 @@ async function addCourseVisits(p, who) {
     pt.course.total = Math.max(pt.course.total, pt.course.used + 4);
     [3, 5, 7].forEach((n) => s.appointments.push({ id: 'qa-cv' + n, patientId: pt.id, serviceId: pt.course.serviceId, therapistId: t0.therapistId, date: d(n), start: '10:00', status: 'waiting', type: 'booked', painBefore: 5, paid: false, log: [] }));`, { who });
 }
+// ลงทะเบียน = ข้อมูลส่วนตัวอย่างเดียว → กดบันทึก แล้วไปคัดกรองที่หน้า "คัดกรองก่อนนวด"
+async function saveReg(p, ms = 1500) { await p.getByRole('button', { name: 'บันทึก', exact: true }).click(); await p.waitForTimeout(ms); }
+async function screenNewest(p, name, gender) {
+  const s = await state(p);
+  // บัตรตัวอย่างชื่อเดียวกันทุกครั้ง → เลือกคนที่ลงทะเบียนล่าสุด (และเพศตรง)
+  const list = s.patients.filter((x) => x.name.includes(name) && (!gender || x.gender === gender));
+  const pt = list.sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true })).pop();
+  await go(p, `/patients/${pt.id}/screen`, 2500);
+  return pt;
+}
 async function next(p, ms = 1800) { await p.getByRole('button', { name: 'ถัดไป' }).click(); await p.waitForTimeout(ms); }
 async function answer(p, idx, yes) { await p.locator('.ap-qn__row').nth(idx).locator('.ap-qn__opt').nth(yes ? 1 : 0).click(); }
 async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500); }
@@ -96,39 +106,34 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   check.browser = b;
 
   // ===== RECEPTION =====
-  await check('R01', 'reception', 'ผู้ป่วยใหม่ · มีบัตรประชาชน · สุขภาพดี', 'ลงทะเบียนด้วยบัตร + คัดกรองผ่าน + บันทึก', async (p, ex) => {
+  await check('R01', 'reception', 'ผู้ป่วยใหม่ · มีบัตรประชาชน · สุขภาพดี', 'ลงทะเบียนด้วยบัตร (ข้อมูลอย่างเดียว) → คัดกรองก่อนนวด → บันทึก', async (p, ex) => {
     await registerViaCard(p);
     const name = await p.locator('.ap-grid input').nth(1).inputValue();
     ex(name.length > 0, 'กรอกชื่อจากบัตรอัตโนมัติ');
+    ex((await p.locator('.ap-steps').count()) === 0 && (await p.getByRole('button', { name: 'ถัดไป' }).count()) === 0, 'ลงทะเบียนมีแต่ข้อมูลส่วนตัว (ไม่มีขั้นคัดกรอง/สรุป)');
     await p.fill('input[placeholder="081-234-5678"]', '0812345678');
-    await next(p, 2500);
-    const st = await p.locator('.ap-body .b3__stage').boundingBox();
-    await p.mouse.click(st.x + st.width * 0.5, st.y + st.height * 0.3); await p.waitForTimeout(300);
+    await saveReg(p);
+    let s = await state(p);
+    let pt = s.patients.find((x) => x.name.includes(name));
+    ex(!!pt && !pt.screening, 'บันทึกผู้ป่วยลงระบบ (ยังไม่มีผลคัดกรอง)');
+    ex(s.audit.some((a) => a.by === ROLES.reception.staffName && /ลงทะเบียน|เพิ่มผู้/.test(a.text)), 'ประวัติการแก้ไขบันทึกชื่อเจ้าหน้าที่ต้อนรับ');
+    await go(p, `/patients/${pt.id}/screen`, 2500);
     await p.locator('.ap-pain button').nth(4).click();
     await p.fill('input[aria-label="ความดันตัวบน"]', '118'); await p.fill('input[aria-label="ความดันตัวล่าง"]', '76'); await p.fill('input[aria-label="ชีพจร"]', '70');
-    await next(p, 2200);
-    ex((await p.locator('.sm-verdict.is-ok').count()) === 1, 'หน้าสรุปขึ้น "ผ่านการคัดกรอง"');
-    ex((await p.locator('.sm-el').count()) === 1, 'มีการวิเคราะห์ธาตุเจ้าเรือน');
-    await p.getByRole('button', { name: 'บันทึก' }).click(); await p.waitForTimeout(1500);
-    const s = await state(p);
-    const pt = s.patients.find((x) => x.name.includes(name));
-    ex(!!pt, 'บันทึกผู้ป่วยลงระบบ');
-    ex(pt && pt.screening && pt.screening.pain === 4, 'บันทึกผลคัดกรอง + pain 4');
-    ex(pt && pt.painHistory.some((x) => x.score === 4), 'pain เข้ากราฟ Pain Score');
-    ex(s.audit.some((a) => a.by === ROLES.reception.staffName && /ลงทะเบียน|เพิ่มผู้/.test(a.text)), 'ประวัติการแก้ไขบันทึกชื่อเจ้าหน้าที่ต้อนรับ');
+    await p.getByRole('button', { name: 'บันทึกผลคัดกรอง' }).click(); await p.waitForTimeout(1500);
+    pt = (await state(p)).patients.find((x) => x.name.includes(name));
+    ex(pt.screening && pt.screening.pain === 4, 'คัดกรองก่อนนวด: บันทึกผล + pain 4');
+    ex(pt.painHistory.some((x) => x.score === 4), 'pain เข้ากราฟ Pain Score');
   });
 
-  await check('R02', 'reception', 'ผู้ป่วยใหม่ · ไม่มีบัตร · ไม่มีเบอร์โทร', 'กรอกเอง + ข้ามการคัดกรอง', async (p, ex) => {
+  await check('R02', 'reception', 'ผู้ป่วยใหม่ · ไม่มีบัตร · ไม่มีเบอร์โทร', 'กรอกเอง → บันทึก', async (p, ex) => {
     await go(p, '/patients/new', 900);
     await p.fill('.ap-cid', '1234567890121');
     await p.locator('.ap-grid input').nth(1).fill('ทดสอบ'); await p.locator('.ap-grid input').nth(2).fill('ไม่มีเบอร์');
     await p.click('.bdc__field'); await p.waitForTimeout(400);
     await p.locator('.bdc__pop select').nth(1).selectOption({ index: 35 }); await p.locator('.bdc__pop button:has-text("12")').first().click(); await p.waitForTimeout(300);
-    ex(await p.getByRole('button', { name: 'ถัดไป' }).isEnabled(), 'ไม่กรอกเบอร์ก็ไปต่อได้');
-    await next(p, 1500);
-    await p.getByRole('button', { name: 'ข้ามการคัดกรอง' }).click(); await p.waitForTimeout(500);
-    ex((await p.locator('.sm-verdict.is-skip').count()) === 1, 'สรุปบอกว่ายังไม่ได้คัดกรอง');
-    await p.getByRole('button', { name: 'บันทึก' }).click(); await p.waitForTimeout(1500);
+    ex(await p.getByRole('button', { name: 'บันทึก', exact: true }).isEnabled(), 'ไม่กรอกเบอร์ก็บันทึกได้');
+    await saveReg(p);
     ex((await p.locator('.pd__ib[aria-label="ข้อมูลสุขภาพ"]').count()) === 1, 'เปิดหน้าผู้ป่วยใหม่');
     await p.click('.pd__icons button[aria-label="เพิ่มเติม"]'); await p.waitForTimeout(300);
     ex((await p.locator('.more button', { hasText: 'โทร' }).count()) === 0, 'ไม่มีเมนูโทรเมื่อไม่มีเบอร์');
@@ -139,7 +144,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await go(p, '/patients/new', 900);
     await p.fill('.ap-cid', '1101700203450'); await p.waitForTimeout(300);
     ex((await p.locator('.ap-dup').count()) === 1, 'แสดงเตือนเลขบัตรซ้ำ');
-    ex(await p.getByRole('button', { name: 'ถัดไป' }).isDisabled(), 'กดถัดไปไม่ได้');
+    ex(await p.getByRole('button', { name: 'บันทึก', exact: true }).isDisabled(), 'กดบันทึกไม่ได้');
     await p.click('.ap-dup button'); await p.waitForTimeout(1300);
     ex(p.url().endsWith('/patients'), 'ปุ่มเปิดประวัติพาไปหน้าผู้ป่วยเดิม');
   });
@@ -149,30 +154,34 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await p.fill('.ap-cid', '1234567890123'); await p.waitForTimeout(200);
     ex((await p.locator('.ap-cid[aria-invalid="true"]').count()) === 1, 'เลขบัตร checksum ผิดถูกเตือน');
     await p.locator('.ap-grid input').nth(1).fill('ก'); await p.locator('.ap-grid input').nth(2).fill('ข');
-    ex(await p.getByRole('button', { name: 'ถัดไป' }).isDisabled(), 'ไม่มีวันเกิด/เลขบัตรผิด กดถัดไปไม่ได้');
+    ex(await p.getByRole('button', { name: 'บันทึก', exact: true }).isDisabled(), 'ไม่มีวันเกิด/เลขบัตรผิด กดบันทึกไม่ได้');
     await p.fill('.ap-cid', ''); await p.fill('input[placeholder="081-234-5678"]', '12'); await p.waitForTimeout(200);
-    ex(await p.getByRole('button', { name: 'ถัดไป' }).isDisabled(), 'เบอร์โทรผิดรูปแบบกดถัดไปไม่ได้');
+    ex(await p.getByRole('button', { name: 'บันทึก', exact: true }).isDisabled(), 'เบอร์โทรผิดรูปแบบกดบันทึกไม่ได้');
   });
 
-  await check('R05', 'reception', 'หญิงตั้งครรภ์ + ความดันสูง', 'คัดกรองพบข้อห้าม → เตือนทุกจุด', async (p, ex) => {
+  await check('R05', 'reception', 'หญิงตั้งครรภ์ + ความดันสูง', 'คัดกรองก่อนนวดพบข้อห้าม → เตือนทุกจุด', async (p, ex) => {
     await registerViaCard(p);
     await p.locator('.ap-gender button', { hasText: 'หญิง' }).click(); await p.waitForTimeout(200);
-    await next(p, 2500);
+    const nm = await p.locator('.ap-grid input').nth(1).inputValue();
+    await saveReg(p);
+    await screenNewest(p, nm, 'หญิง');
     await p.fill('input[aria-label="ความดันตัวบน"]', '172'); await p.fill('input[aria-label="ความดันตัวล่าง"]', '100');
     const rows = await p.locator('.ap-qn__row').count();
     ex(rows === 6, 'ผู้หญิงมีคำถามตั้งครรภ์ (6 ข้อ)');
     await answer(p, 5, true);
     ex((await p.locator('.ap-vwarn').count()) === 1, 'เตือนความดันสูงทันที');
-    await next(p, 2200);
-    ex((await p.locator('.sm-verdict.is-stop').count()) === 1, 'สรุปขึ้น "พบข้อห้าม"');
-    await p.getByRole('button', { name: 'บันทึก' }).click(); await p.waitForTimeout(1500);
-    ex((await p.locator('.scr-alert.is-stop').count()) === 1, 'หน้าผู้ป่วยมีแถบแดงข้อห้าม');
+    ex((await p.locator('.apg__verdict.is-stop').count()) === 1, 'แถบบนขึ้น "พบข้อห้าม"');
+    await p.getByRole('button', { name: 'บันทึกผลคัดกรอง' }).click(); await p.waitForTimeout(1500);
+    const pt = (await state(p)).patients.filter((x) => x.name.includes(nm) && x.gender === 'หญิง').sort((a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true })).pop();
+    ex(pt.screening && pt.screening.bpSys === 172, 'บันทึกผลคัดกรองที่พบข้อห้าม');
   });
 
   await check('R06', 'reception', 'ผู้ชาย', 'ไม่ถามเรื่องตั้งครรภ์', async (p, ex) => {
     await registerViaCard(p);
     await p.locator('.ap-gender button', { hasText: 'ชาย' }).click(); await p.waitForTimeout(200);
-    await next(p, 2200);
+    const nm = await p.locator('.ap-grid input').nth(1).inputValue();
+    await saveReg(p);
+    await screenNewest(p, nm, 'ชาย');
     ex((await p.locator('.ap-qn__row').count()) === 5, 'ผู้ชายมีคำถาม 5 ข้อ (ไม่มีตั้งครรภ์)');
   });
 
@@ -184,10 +193,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
       await p.locator('.bdc__pop select').nth(1).selectOption({ label: String(y) }).catch(() => {});
       await p.locator('.bdc__pop select').nth(0).selectOption({ index: 0 }).catch(() => {});
       await p.locator('.bdc__pop button:has-text("1")').first().click(); await p.waitForTimeout(300);
-      await next(p, 1500); await p.getByRole('button', { name: 'ข้ามการคัดกรอง' }).click(); await p.waitForTimeout(500);
-      const tags = await p.locator('.sm-tags').innerText().catch(() => '');
-      ex(new RegExp(`อายุ ${age - 1}|อายุ ${age}`).test(tags), `อายุ ${age} คำนวณถูก (${tags.replace(/\n/g, ' ')})`);
-      ex((await p.locator('.sm-el:not(.is-empty)').count()) === 1, `ธาตุเจ้าเรือนคำนวณได้ (อายุ ${age})`);
+      await saveReg(p);
+      const head = await p.locator('.pd-page .tw-panel__id').innerText().catch(() => '');
+      ex(new RegExp(`${age - 1} ปี|${age} ปี`).test(head), `อายุ ${age} คำนวณถูก (${head.replace(/\n/g, ' ')})`);
+      ex((await p.locator('.tm__tags em').count()) >= 1, `ธาตุเจ้าเรือนคำนวณได้ (อายุ ${age})`);
     }
   });
 
@@ -386,6 +395,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   await check('C04', 'cashier', 'ผู้ป่วยจ่ายพร้อมเพย์', 'QR พร้อมเพย์', async (p, ex) => {
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');const pt=s.patients.find(z=>!z.course);a.patientId=pt.id;a.endedAt=new Date().toISOString();a.painAfter=3;a.diagnoses=[{name:'x',kind:'principal'}];a.procedures=[{name:'y'}];s.__id=a.id;");
     await openVisit(p, (await state(p)).__id);
+    // ไม่มีคอร์ส → ขั้นวางแผนการรักษาก่อนชำระ · ข้ามไปชำระครั้งนี้
+    await p.locator('.vs-plan button', { hasText: 'ข้าม' }).click({ timeout: 3000 }).catch(() => {}); await p.waitForTimeout(400);
     await p.locator('button', { hasText: 'QR พร้อมเพย์' }).first().click(); await p.waitForTimeout(600);
     ex((await p.locator('svg, canvas, img').count()) > 0, 'แสดง QR');
     await p.getByRole('button', { name: 'รับชำระ', exact: true }).click(); await p.waitForTimeout(1200);
@@ -467,7 +478,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   await check('A01', 'admin', 'เปลี่ยนเกณฑ์ความดัน', 'เกณฑ์ใหม่มีผลกับการคัดกรอง', async (p, ex) => {
     await mutate(p, "s.settings.bpThreshold=140");
     await registerViaCard(p);
-    await next(p, 2400);
+    const nm = await p.locator('.ap-grid input').nth(1).inputValue();
+    await saveReg(p);
+    await screenNewest(p, nm);
     await p.fill('input[aria-label="ความดันตัวบน"]', '145');
     ex((await p.locator('.ap-vwarn').count()) === 1, 'ความดัน 145 ถูกเตือนเมื่อเกณฑ์ = 140');
   });
@@ -497,8 +510,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await p.locator('.more button', { hasText: 'แก้ไขข้อมูล' }).click(); await p.waitForTimeout(1300);
     ex(p.url().includes('/edit'), 'เปิดหน้าแก้ไข');
     await p.fill('input[type="email"]', 'edit@test.co');
-    await next(p, 1800); await next(p, 1800);
-    await p.getByRole('button', { name: 'บันทึก' }).click(); await p.waitForTimeout(1200);
+    await saveReg(p, 1200);
     const s = await state(p);
     ex(s.patients.some((x) => x.email === 'edit@test.co'), 'บันทึกอีเมลใหม่');
     ex(s.audit.some((a) => a.by === ROLES.reception.staffName && /แก้ไข/.test(a.text)), 'ประวัติการแก้ไขบันทึกการแก้ข้อมูลผู้ป่วย');
@@ -527,6 +539,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');const pt=s.patients.find(z=>!z.course);a.patientId=pt.id;a.endedAt=new Date().toISOString();a.painAfter=3;a.diagnoses=[{name:'x',kind:'principal'}];a.procedures=[{name:'y'}];s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
+    await p.locator('.vs-plan button', { hasText: 'ข้าม' }).click({ timeout: 3000 }).catch(() => {}); await p.waitForTimeout(400);
     await p.locator('button', { hasText: 'บิลเข้าแอป' }).first().click(); await p.waitForTimeout(400);
     await p.getByRole('button', { name: 'ส่งบิลเข้าแอป', exact: true }).click(); await p.waitForTimeout(1200);
     const a = (await state(p)).appointments.find((x) => x.id === id);

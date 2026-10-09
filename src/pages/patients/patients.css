@@ -3721,3 +3721,7 @@
 .pd2__course-acts:empty {
   display: none;
 }
+.apg__title {
+  font: 600 13px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}

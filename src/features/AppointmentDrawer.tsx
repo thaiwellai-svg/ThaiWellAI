@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { QuickRecord } from "./QuickRecord";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { BotMessageSquare, ScanLine, ArrowRight, ChevronRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ClipboardList, BotMessageSquare, ScanLine, ArrowRight, ChevronRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -17,6 +17,7 @@ import { AssessHistory } from "./AssessHistory";
 import { AppGuideCard } from "./AppGuideCard";
 import { PayPanel, METHOD_LABEL, extraLines, makePayment, unpricedProcs } from "./billing";
 import { ReceiptDialog } from "./Receipt";
+import { AIPlanCard } from "./AIPlan";
 import { MoreMenu } from "./MoreMenu";
 import { CoursePayChoice, PrepayCourseDialog } from "./PrepayCourse";
 import { VisitSummary } from "./VisitSummary";
@@ -136,6 +137,9 @@ export function AppointmentDrawer({
   const [method, setMethod] = useState<PaymentMethod>("cash");
   const [useCredit, setUseCredit] = useState(true);
   const [prepayOpen, setPrepayOpen] = useState(false);
+  /** ขั้นวางแผนคอร์สหลังบันทึกการรักษา: ข้ามไปก่อน (ต่อนัด) · เปิดหน้าต่างวางแผน */
+  const [planSkipped, setPlanSkipped] = useState<Record<string, boolean>>({});
+  const [planOpen, setPlanOpen] = useState(false);
   const [logAll, setLogAll] = useState(false);
   // ending far earlier than the service time needs a reason
   const [earlyEnd, setEarlyEnd] = useState<string | null>(null);
@@ -202,6 +206,8 @@ export function AppointmentDrawer({
   // คอร์สที่ยังไม่เลือกวิธีชำระ → เลือกตอนชำระครั้งแรก (รายครั้ง / ทั้งคอร์สล่วงหน้า)
   const payUndecided = LIVE && !!p.course && !p.course.billing && p.course.serviceId === appt.serviceId && courseNo > 0 && courseNo <= (credits?.total ?? 0) && !store.biz.sales.some((x) => x.patientId === p.id && !x.void);
   const payByCredit = coveredByCourse && useCredit;
+  // หลังบันทึกการรักษา (ไม่มีคอร์ส): ขั้นวางแผนการรักษาก่อนชำระ · เปิดชำระจากหน้าการเงิน (payNow) ไม่ต้องผ่านขั้นนี้
+  const planStep = !p.course && !planSkipped[appt.id] && !appt.payment && !payNow;
   // ค่าบริการ + หัตถการที่ทำเพิ่ม · หักเครดิตคอร์ส = หักเฉพาะค่าบริการ (หัตถการเพิ่มยังต้องจ่าย)
   const extras = extraLines(appt);
   const extraSum = extras.reduce((n, l) => n + l.amount, 0);
@@ -356,7 +362,7 @@ export function AppointmentDrawer({
             ไว้ทีหลัง
           </Button>
         )}
-        <Button size="lg" fill disabled={payUndecided || unpriced > 0 || (amount > 0 && method === "cash" && cash < amount)} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
+        <Button size="lg" fill disabled={planStep || payUndecided || unpriced > 0 || (amount > 0 && method === "cash" && cash < amount)} leading={payByCredit ? <Ticket size={16} /> : method === "app" ? <Send size={16} /> : <Check size={16} />} onClick={pay}>
           {payLabel}
         </Button>
       </>
@@ -626,7 +632,33 @@ export function AppointmentDrawer({
                   </div>
                 </>
               )}
-              {view === "billing" && (
+              {view === "billing" && planStep && (
+                // ยังไม่มีคอร์ส → วางแผน/เปิดคอร์สก่อนชำระ (ราคา·วิธีชำระของคอร์สใช้ตั้งแต่ครั้งนี้) หรือข้ามไปชำระครั้งนี้ก่อน
+                <section className="vs-plan">
+                  <StepHead n={5} title="วางแผนการรักษา" hint="ก่อนชำระเงิน · ข้ามได้" />
+                  <div className="vs-plan__card">
+                    <span className="vs-plan__ic">
+                      <ClipboardList size={20} />
+                    </span>
+                    <div>
+                      <b>{p.aiPlan ? (p.aiPlan.approved ? "มีแผนแล้ว · ยังไม่เปิดคอร์ส" : `มีร่างแผน ${p.aiPlan.sessions} ครั้ง · รอแพทย์อนุมัติ`) : "ยังไม่มีแผนการรักษา"}</b>
+                      <small>วางแผนตอนนี้ แพทย์อนุมัติแล้วคอร์สจะเปิดโดยนับครั้งนี้เป็นครั้งที่ 1 และใช้ราคา/วิธีชำระของคอร์สตั้งแต่ครั้งนี้</small>
+                    </div>
+                  </div>
+                  <div className="vs-plan__acts">
+                    <Button variant="outline" size="lg" onClick={() => setPlanSkipped((x) => ({ ...x, [appt.id]: true }))}>
+                      ข้าม · ชำระเงินครั้งนี้ก่อน
+                    </Button>
+                    <Button size="lg" leading={<ClipboardList size={16} />} onClick={() => setPlanOpen(true)}>
+                      {p.aiPlan ? "เปิดแผน" : "วางแผนการรักษา"}
+                    </Button>
+                  </div>
+                  <Dialog open={planOpen} onClose={() => setPlanOpen(false)} className="vs-plan__dlg" title="แผนการรักษา" subtitle={`${p.name} · อนุมัติแล้วเปิดคอร์สทันที`}>
+                    <AIPlanCard p={p} panel />
+                  </Dialog>
+                </section>
+              )}
+              {view === "billing" && !planStep && (
                 <>
                 <StepHead n={5} title="ชำระเงิน" hint={payUndecided ? "เลือกวิธีชำระคอร์สก่อน" : `เลือกวิธีชำระ แล้วกด “${payLabel}”`} />
                 {/* คิดเงินจากอะไร: ค่าบริการครั้งนี้ / ตามคอร์ส (รายครั้ง · หักเครดิต) */}

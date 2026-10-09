@@ -453,7 +453,8 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
   const dup = cidDigits.length === 13 ? store.patients.find((x) => x.citizenId === cidDigits && x.id !== edit?.id) : undefined;
   const valid = f.first.trim() && f.last.trim() && age !== null && age >= 0 && age < 120 && (!f.phone.trim() || /^[0-9-]{9,12}$/.test(f.phone)) && cidOk && !dup;
 
-  const screening: CounterScreening | undefined = skipScr
+  // ลงทะเบียน/แก้ไขข้อมูล = ข้อมูลส่วนตัวอย่างเดียว · คัดกรองทำแยกตอนมารับบริการ (คัดกรองก่อนนวด)
+  const screening: CounterScreening | undefined = !screenOnly || skipScr
     ? edit?.screening
     : {
         at: new Date().toISOString(),
@@ -554,7 +555,6 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
     onCreated(id);
   };
 
-  const STEPS = ["ข้อมูลส่วนตัว", "คัดกรอง", "สรุป"];
   // vital-sign status shown on the tiles
   const sys = Number(scr.bpSys) || 0;
   const bpThreshold = store.settings.bpThreshold ?? 160;
@@ -589,16 +589,7 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
               {flags.some((x) => x.level === "stop") ? "พบข้อห้าม · ต้องให้แพทย์ประเมินก่อนนวด" : flags.length ? `ข้อควรระวัง ${flags.length} ข้อ` : "ยังไม่พบข้อห้าม"}
             </div>
           ) : (
-          <ol className="ap-steps">
-            {STEPS.map((t, i) => (
-              <li key={t} className={i < step ? "is-done" : i === step ? "is-now" : undefined}>
-                <button type="button" disabled={i > step && !valid} onClick={() => setStep(i)}>
-                  <i>{i < step ? <Check size={13} strokeWidth={3} /> : i + 1}</i>
-                  <span>{t}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
+          <div className="apg__title">{edit ? "แก้ไขข้อมูลส่วนตัว" : "ข้อมูลส่วนตัว"} · คัดกรองทำตอนมารับบริการ</div>
           )}
           <div className="apg__actions">
             {screenOnly ? (
@@ -612,37 +603,12 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
               </>
             ) : (
               <>
-                <Button variant="outline" size="md" onClick={() => (step === 0 ? onClose() : setStep(step - 1))}>
-                  {step === 0 ? "ยกเลิก" : "ย้อนกลับ"}
+                <Button variant="outline" size="md" onClick={onClose}>
+                  ยกเลิก
                 </Button>
-                {step === 1 && (
-                  <Button
-                    variant="outline"
-                    size="md"
-                    onClick={() => {
-                      setSkipScr(true);
-                      setStep(2);
-                    }}
-                  >
-                    ข้ามการคัดกรอง
-                  </Button>
-                )}
-                {step < 2 ? (
-                  <Button
-                    size="md"
-                    disabled={step === 0 && !valid}
-                    onClick={() => {
-                      if (step === 1) setSkipScr(false);
-                      setStep(step + 1);
-                    }}
-                  >
-                    ถัดไป
-                  </Button>
-                ) : (
-                  <Button size="md" disabled={!valid} onClick={submit}>
-                    บันทึก
-                  </Button>
-                )}
+                <Button size="md" disabled={!valid} onClick={submit}>
+                  บันทึก
+                </Button>
               </>
             )}
           </div>
