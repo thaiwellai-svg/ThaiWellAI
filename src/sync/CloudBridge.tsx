@@ -171,10 +171,11 @@ export function CloudBridge() {
     const cp = row.tw_patients;
     const digits = cp?.phone?.replace(/\D/g, "") ?? "";
     // ผู้ป่วยเดิมของคลินิก: บัญชีแอปเดียวกัน → เลขบัตรประชาชนตรงกัน → เบอร์โทรตรงกัน
+    //   เบอร์โทรอย่างเดียวไม่พอ ถ้าผู้ป่วยคนนั้นผูกกับบัญชีแอปอื่นอยู่แล้ว (ครอบครัวใช้เบอร์เดียวกัน) → เป็นคนละคน สร้างผู้ป่วยใหม่
     const found =
       st.patients.find((p) => p.cloudId === row.patient_id) ??
       (cp?.citizen_id ? st.patients.find((p) => p.citizenId?.replace(/\D/g, "") === cp.citizen_id) : undefined) ??
-      (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits) : undefined);
+      (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits && !p.cloudId) : undefined);
     if (found) {
       syncPhoto(found, cp);
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
