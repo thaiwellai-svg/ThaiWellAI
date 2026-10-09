@@ -3200,242 +3200,79 @@
   color: var(--color-danger);
 }
 
-/* ---------- การ์ดสรุปด้านบน: รักษาแล้ว · ปวดล่าสุด · นัดถัดไป ---------- */
+/* ---------- การ์ดสรุปด้านบน: แบบเดียวกับกล่องผลประเมิน (ปวด · ความดัน · ชีพจร · แรงนวด) ---------- */
 .pst {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 .pst__c {
   position: relative;
-  overflow: hidden;
   min-width: 0;
-  min-height: 112px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
-  padding: 16px 18px;
-  border-radius: 20px;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 1px var(--sage-100),
+    0 1px 3px rgb(31 42 34 / 5%);
   text-align: left;
   font: inherit;
   color: var(--color-text);
 }
-.pst__c > :not(.pst__bg) {
-  position: relative;
+.pst__c.is-link:not(:disabled) {
+  cursor: pointer;
 }
-.pst__bg {
+.pst__c.is-link:not(:disabled):active {
+  transform: scale(0.98);
+}
+.pst__ico {
   position: absolute;
-  right: -14px;
-  bottom: -18px;
-  transform: rotate(-12deg);
-  opacity: 0.1;
-  pointer-events: none;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tc) 14%, white);
+  color: var(--tc);
 }
 .pst__c > small {
+  padding-right: 30px;
   font: 600 12px/1.2 var(--font-sans);
-  opacity: 0.75;
+  color: var(--color-text-muted);
 }
 .pst__c > b {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  font: 800 30px/1 var(--font-sans);
+  gap: 4px;
+  min-height: 24px;
+  font: 800 19px/24px var(--font-sans);
+  color: var(--tc);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.pst__c > b em {
-  font: 600 13px/1 var(--font-sans);
-  font-style: normal;
-  opacity: 0.7;
-}
-.pst__c > span {
-  font: 500 12px/1.3 var(--font-sans);
-  opacity: 0.75;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* รักษาแล้ว: เขียวอ่อน */
-.pst__c.is-done {
-  background: linear-gradient(135deg, #eef6f0 0%, #e2efe6 100%);
-}
-.pst__c.is-done .pst__bg {
-  color: var(--color-brand);
-}
-.pst__c.is-done > b {
-  color: var(--color-brand);
-}
-
-/* ปวด: ขาว · ก่อน → หลัง */
-.pst__c.is-pain {
-  background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--sage-100);
-}
-.pst__c.is-pain .pst__bg {
-  color: #c4473a;
-  opacity: 0.07;
-}
-.pst__pain {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-}
-.pst__pain > span {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.pst__pain i {
+.pst__c > b i {
   font: 600 11px/1 var(--font-sans);
   font-style: normal;
   color: var(--color-text-muted);
 }
-.pst__pain b {
-  font: 800 30px/1 var(--font-sans);
-  font-variant-numeric: tabular-nums;
-}
 .pst__arrow {
-  margin-bottom: 6px;
-  color: var(--color-text-muted);
-}
-.pst__pain em {
   align-self: center;
-  margin-left: auto;
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
-  font: 700 12px/1 var(--font-sans);
-  font-style: normal;
-}
-.pst__pain em.is-good {
-  background: #e3f4ea;
-  color: #2f8a52;
-}
-.pst__pain em.is-bad {
-  background: #fbeeec;
-  color: #c4473a;
-}
-
-/* นัดถัดไป: เขียวเข้ม แตะเปิดนัด */
-.pst__c.is-next {
-  background: var(--color-brand);
-  color: var(--white);
-  box-shadow: 0 8px 20px rgb(47 107 70 / 22%);
-  cursor: pointer;
-  transition: transform var(--dur-fast) var(--ease-out);
-}
-.pst__c.is-next:active:not(:disabled) {
-  transform: scale(0.98);
-}
-.pst__c.is-next:disabled {
-  background: var(--sage-50);
+  margin: 0 2px;
   color: var(--color-text-muted);
-  box-shadow: none;
-  cursor: default;
 }
-.pst__c.is-next .pst__bg {
-  color: var(--white);
-  opacity: 0.14;
-}
-.pst__c.is-next > b {
-  font-size: 24px;
-}
-.pst__go {
-  position: absolute !important;
-  top: 16px;
-  right: 16px;
-  opacity: 0.8;
+.pst__sub {
+  font: 500 11.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 @media (max-width: 700px) {
   .pst {
     grid-template-columns: 1fr;
   }
-}
-/* กะทัดรัด: 2 บรรทัด ไม่กินพื้นที่ */
-.pst__c {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "lbl lbl"
-    "val sub";
-  align-items: end;
-  gap: 4px 10px;
-  padding: 10px 14px;
-  border-radius: 16px;
-}
-.pst__c > small {
-  grid-area: lbl;
-  font-size: 11.5px;
-}
-.pst__c > b,
-.pst__pain {
-  grid-area: val;
-}
-.pst__c > b,
-.pst__pain b {
-  font-size: 22px;
-}
-.pst__c.is-next > b {
-  font-size: 18px;
-}
-.pst__c > span {
-  grid-area: sub;
-  max-width: 100%;
-  text-align: right;
-  font-size: 11.5px;
-}
-.pst__bg {
-  width: 60px;
-  height: 60px;
-  right: -8px;
-  bottom: -12px;
-}
-.pst__pain {
-  align-items: center;
-  gap: 6px;
-}
-.pst__pain > span {
-  flex-direction: row;
-  align-items: baseline;
-  gap: 4px;
-}
-.pst__arrow {
-  margin: 0;
-  width: 15px;
-  height: 15px;
-}
-.pst__pain em {
-  margin-left: 4px;
-  padding: 3px 8px;
-  font-size: 11px;
-}
-.pst__go {
-  top: 10px;
-  right: 10px;
-  width: 16px;
-  height: 16px;
-}
-/* เรียงปกติ: หัวข้อ · ตัวเลข · รายละเอียด (บนลงล่าง ชิดซ้าย) */
-.pst__c {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  gap: 4px;
-  padding: 12px 16px;
-}
-.pst__c > span {
-  text-align: left;
-}
-.pst__c > b,
-.pst__pain b {
-  font-size: 22px;
-}
-.pst__c.is-next > b {
-  font-size: 20px;
-}
-.pst__bg {
-  width: 72px;
-  height: 72px;
 }
