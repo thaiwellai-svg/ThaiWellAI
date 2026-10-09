@@ -365,7 +365,7 @@ export function CloudBridge() {
       if (vid) req.courseVisitId = vid;
       st.dispatch({ type: "cloudRequest", request: req });
       toast({ message: `คำขอจองใหม่จากแอป · ${p.name}` });
-      void pushNotify("คำขอจองใหม่จากแอป", `${p.name} · ${st.serviceById(req.serviceId).name} ${req.date} ${req.start} น.`, "/requests");
+      void pushNotify("คำขอจองใหม่จากแอป", `${p.name} · ${st.serviceById(req.serviceId).name} ${req.date} ${req.start} น.`, "/requests", `tw-${row.id}`);
       return;
     }
     if (!local) {
@@ -498,7 +498,7 @@ export function CloudBridge() {
     }
     if (row.status === "cancelled" && local.status !== "cancelled" && !local.startedAt) {
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { status: "cancelled", cancel: { at: new Date().toISOString(), by: "patient", reason: row.note ?? "ยกเลิกจากแอป", staff: "แอป ThaiWell" } }, log: "ผู้ป่วยยกเลิกนัดจากแอป" });
-      void pushNotify("ผู้ป่วยยกเลิกนัดจากแอป", `${who} · ${local.date} ${local.start} น.`, "/appointments");
+      void pushNotify("ผู้ป่วยยกเลิกนัดจากแอป", `${who} · ${local.date} ${local.start} น.`, "/appointments", `tw-${row.id}`);
     }
   };
 

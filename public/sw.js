@@ -11,9 +11,7 @@ self.addEventListener("push", (e) => {
   }
   e.waitUntil(
     (async () => {
-      // เปิดหน้าเว็บอยู่และมองเห็น → หน้าเว็บแจ้งเตือนเองแล้ว ไม่ซ้ำ
-      const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      if (wins.some((w) => w.visibilityState === "visible")) return;
+      // แสดงเสมอ (หน้าเว็บที่เปิดอยู่ใช้ tag เดียวกัน → แทนที่กัน ไม่เด้งซ้ำ)
       await self.registration.showNotification(d.title || "ThaiWell", {
         body: d.body || "",
         tag: d.tag,

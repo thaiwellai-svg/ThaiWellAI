@@ -51,14 +51,25 @@ export async function initPush() {
 }
 
 /** show a system notification now; tapping it opens `link` in the back-office */
-export async function pushNotify(title: string, body: string, link?: string) {
+/** tag: เรื่องเดียวกับ Web Push จากเซิร์ฟเวอร์ (tw-<id>) → แทนที่กัน ไม่เด้งซ้ำ */
+export async function pushNotify(title: string, body: string, link?: string, tag?: string) {
   if (!ready) return;
   if (Capacitor.isNativePlatform()) {
     await LocalNotifications.schedule({ notifications: [{ id: ++seq, title, body, sound: "default", extra: { link } }] }).catch(() => undefined);
     return;
   }
+  // มี service worker → แสดงผ่าน service worker (ใช้ได้ทุกเบราว์เซอร์/แอปเว็บบนหน้าจอโฮม)
   try {
-    const n = new Notification(title, { body, tag: `tw-${++seq}` });
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) {
+      await reg.showNotification(title, { body, tag: tag ?? `tw-${++seq}`, icon: "apple-touch-icon.png", data: { link } });
+      return;
+    }
+  } catch {
+    /* fall back to the page notification */
+  }
+  try {
+    const n = new Notification(title, { body, tag: tag ?? `tw-${++seq}` });
     n.onclick = () => {
       window.focus();
       go(link);
