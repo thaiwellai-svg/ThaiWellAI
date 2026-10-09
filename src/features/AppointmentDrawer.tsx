@@ -1087,14 +1087,14 @@ function Frame(props: { inline?: boolean; open: boolean; onClose: () => void; le
   const { inline, children, aside, ...rest } = props;
   if (!inline) return <Drawer {...rest}>{children}</Drawer>;
   return (
-    <div className="vsp">
-      <header className="vsp__head">
+    <div className="tw-panel vsp">
+      <header className="tw-panel__head vsp__head">
         {props.leading}
-        <div className="vsp__id">
+        <div className="tw-panel__id vsp__id">
           <h2>{props.title}</h2>
           <p>{props.subtitle}</p>
         </div>
-        {props.footer && <div className="vsp__actions">{props.footer}</div>}
+        {props.footer && <div className="tw-panel__actions vsp__actions">{props.footer}</div>}
       </header>
       <div className="vsp__main">
         <div className="vsp__body scroll-y scroll-y--light">{children}</div>

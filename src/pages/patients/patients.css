@@ -134,27 +134,6 @@
 .pd--empty {
   justify-content: center;
 }
-.pd__hero {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-.pd__id {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.pd__id h2 {
-  font: 700 22px/1.25 var(--font-sans);
-  color: var(--color-text);
-}
-.pd__id p {
-  font: var(--text-meta);
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
-}
 .pd__actions {
   display: flex;
   flex-direction: column;
@@ -333,9 +312,6 @@
 @media (max-width: 1180px) {
   .pd__actions {
     flex-direction: row;
-  }
-  .pd__hero {
-    flex-wrap: wrap;
   }
 }
 
@@ -2929,9 +2905,6 @@
   }
 }
 @container (max-width: 520px) {
-  .pd__hero {
-    flex-wrap: wrap;
-  }
   .pd__stats {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
@@ -3145,27 +3118,6 @@
 }
 
 /* ---------- หัวผู้ป่วย: แบบเดียวกับหน้ารับบริการ ---------- */
-.pd__hero {
-  gap: 14px;
-  flex-wrap: nowrap;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--sage-100);
-}
-.pd__id {
-  gap: 4px;
-}
-.pd__id h2 {
-  font: 700 19px/1.3 var(--font-sans);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pd__id p {
-  font: 400 12.5px/1.3 var(--font-sans);
-}
-.pd__id .tags {
-  margin-top: 2px;
-}
 .pd__actions.pd__icons {
   flex-direction: row;
   align-items: center;
@@ -3185,11 +3137,6 @@
   box-shadow: 0 6px 14px rgba(76, 132, 90, 0.3);
 }
 /* โรคประจำตัว · แพ้ ต่อท้ายอายุ */
-.pd__id p {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .pd__flag {
   font-weight: 600;
 }
@@ -3755,4 +3702,8 @@
 .hx-draft__foot {
   flex-wrap: wrap;
   gap: 4px 12px;
+}
+/* เนื้อหาใต้หัวตรึง: ระยะขอบเท่าหน้ารับบริการ */
+.pd-page > .pd {
+  padding: 20px 24px calc(var(--dock-height, 72px) + 16px);
 }

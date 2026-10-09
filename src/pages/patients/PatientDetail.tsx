@@ -105,16 +105,16 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     <AnimatePresence mode="wait">
       <motion.div
         key={p.id}
-        className="pd scroll-y scroll-y--light"
+        className="tw-panel pd-page"
         initial={{ opacity: 0, x: 14 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -10, transition: { duration: 0.12 } }}
         transition={{ duration: 0.3, ease: ease.out }}
       >
         {/* Identity: name, HN, and the safety tags (โรคประจำตัว · แพ้) — shown once, here */}
-        <header className="pd__hero">
+        <header className="tw-panel__head">
           <PhotoPicker name={p.name} src={patientPhoto(p)} size="card" onPick={(photo) => store.dispatch({ type: "updatePatient", id: p.id, patch: { photo } })} />
-          <div className="pd__id">
+          <div className="tw-panel__id">
             <h2>{p.name}</h2>
             <p>
               {p.hn} · {p.gender} {p.age} ปี
@@ -132,7 +132,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               {!p.conditions.length && !p.allergies?.length && " · ไม่มีโรคประจำตัว · ไม่แพ้"}
             </p>
           </div>
-          <div className="pd__actions pd__icons">
+          <div className="tw-panel__actions pd__icons">
             {onHealth && (
               <button type="button" className={healthOpen ? "pd__ib is-on" : "pd__ib"} aria-pressed={!!healthOpen} onClick={onHealth} aria-label="ข้อมูลสุขภาพ" title={healthOpen ? "ซ่อนข้อมูลสุขภาพ" : "ข้อมูลสุขภาพ"}>
                 <HeartPulse size={18} />
@@ -167,6 +167,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
           </div>
         </header>
 
+        <div className="tw-panel__body pd scroll-y scroll-y--light">
         <ScreeningAlert p={p} />
 
         <div className="pd__grid">
@@ -576,6 +577,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
 
           {/* ── element (wide, folded) ── */}
           <ElementCard p={p} />
+        </div>
         </div>
       </motion.div>
       <CoursePlanDialog key="cpd" patientId={planFor} onClose={() => setPlanFor(null)} />
