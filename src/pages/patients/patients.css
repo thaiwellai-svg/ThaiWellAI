@@ -3351,3 +3351,68 @@
     grid-template-columns: 1fr;
   }
 }
+/* กะทัดรัด: 2 บรรทัด ไม่กินพื้นที่ */
+.pst__c {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "lbl lbl"
+    "val sub";
+  align-items: end;
+  gap: 4px 10px;
+  padding: 10px 14px;
+  border-radius: 16px;
+}
+.pst__c > small {
+  grid-area: lbl;
+  font-size: 11.5px;
+}
+.pst__c > b,
+.pst__pain {
+  grid-area: val;
+}
+.pst__c > b,
+.pst__pain b {
+  font-size: 22px;
+}
+.pst__c.is-next > b {
+  font-size: 18px;
+}
+.pst__c > span {
+  grid-area: sub;
+  max-width: 100%;
+  text-align: right;
+  font-size: 11.5px;
+}
+.pst__bg {
+  width: 60px;
+  height: 60px;
+  right: -8px;
+  bottom: -12px;
+}
+.pst__pain {
+  align-items: center;
+  gap: 6px;
+}
+.pst__pain > span {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 4px;
+}
+.pst__arrow {
+  margin: 0;
+  width: 15px;
+  height: 15px;
+}
+.pst__pain em {
+  margin-left: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+.pst__go {
+  top: 10px;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+}

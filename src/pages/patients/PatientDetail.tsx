@@ -209,7 +209,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               {doneCount}
               <em>ครั้ง</em>
             </b>
-            <span>{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)} · ${relativeDay(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
+            <span>{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
           </div>
           {/* ปวดล่าสุด: ก่อน → หลัง ของครั้งล่าสุด */}
           <div className="pst__c is-pain">
@@ -250,9 +250,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                   {thaiDateShort(upcoming[0].date)}
                   <em>{upcoming[0].start} น.</em>
                 </b>
-                <span>
-                  {relativeDay(upcoming[0].date)} · {store.serviceById(upcoming[0].serviceId).short}
-                </span>
+                <span>{relativeDay(upcoming[0].date)}</span>
                 <ChevronRight size={18} className="pst__go" />
               </>
             ) : (
