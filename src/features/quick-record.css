@@ -634,3 +634,7 @@ button.qr-card__head {
   margin: 0 -4px;
   padding: 4px 4px 8px;
 }
+/* แถบพิมพ์ไม่ชิดขอบล่างของแผง (มุมแผงโค้งมาก) */
+.qr {
+  padding-bottom: 26px;
+}
