@@ -223,7 +223,7 @@ export default function Requests() {
           <div className="sheet">
             <AnimatePresence mode="wait" initial={false}>
               {req ? (
-                <motion.div key={req.id} className="rq__detail" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.22 }}>
+                <motion.div key={req.id} className="tw-panel rq__detail" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.22 }}>
                   <RequestDetail r={req} />
                   <footer className="rq__foot">
                     <Button variant="outline" size="lg" leading={<X size={16} />} onClick={() => setRejecting(req)}>
@@ -236,7 +236,7 @@ export default function Requests() {
                   </footer>
                 </motion.div>
               ) : dec ? (
-                <motion.div key={dec.id} className="rq__detail" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.22 }}>
+                <motion.div key={dec.id} className="tw-panel rq__detail" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.22 }}>
                   <DecisionDetail d={dec} />
                 </motion.div>
               ) : (
@@ -255,36 +255,38 @@ export default function Requests() {
   );
 }
 
+/** หัวคำขอ: แบบเดียวกับหัวหน้ารับบริการ/ผู้ป่วย (tw-panel) · ตรึงด้านบน */
 function PatientHead({ pid, sub }: { pid: string; sub: React.ReactNode }) {
   const store = useStore();
   const p = store.patientById(pid);
   const el = elementProfile(p);
   const info = ELEMENT_INFO[el.birth];
   return (
-    <header className="rq__hero">
-      <Avatar name={p.name} src={patientPhoto(p)} size="xl" shape="squircle" />
-      <div className="rq__hero-id">
+    <header className="tw-panel__head rq__head">
+      <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" />
+      <div className="tw-panel__id">
         <h2>{p.name}</h2>
         <p>
-          {p.hn} · {p.gender} {p.age} ปี
-        </p>
-        <div className="rq__chips">
-          {sub}
-          <span className="rq__el" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
+          {p.hn} · {p.gender} {p.age} ปี ·{" "}
+          <span className="rq__el-txt" style={{ color: info.color }}>
             ธาตุ{el.birth}
           </span>
           {p.conditions.map((c) => (
-            <Badge key={c} tone="warning" compact>
+            <span key={c} className="pd__flag is-cond">
+              {" · "}
               {c}
-            </Badge>
+            </span>
           ))}
-        </div>
+        </p>
       </div>
-      {p.phone && (
-        <a className="rq__call" href={`tel:${p.phone}`}>
-          <Phone size={16} /> {p.phone}
-        </a>
-      )}
+      <div className="tw-panel__actions">
+        {sub}
+        {p.phone && (
+          <a className="tw-round" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`} title={p.phone}>
+            <Phone size={18} />
+          </a>
+        )}
+      </div>
     </header>
   );
 }
@@ -304,8 +306,9 @@ function RequestDetail({ r }: { r: BookingRequest }) {
   const tone = stop ? "is-stop" : flags.length || clash.length ? "is-warn" : "is-ok";
 
   return (
+    <>
+    <PatientHead pid={r.patientId} sub={<span className="rq__src">ขอเมื่อ {timeAgo(r.submittedAt)}</span>} />
     <div className="rq__body scroll-y scroll-y--light">
-      <PatientHead pid={r.patientId} sub={<span className="rq__src">จากแอป ThaiWell · {timeAgo(r.submittedAt)}</span>} />
 
       {/* ซ้ำกับนัดตามคอร์สวันเดียวกัน (แอปรุ่นเก่าจองใหม่แทนการประเมินก่อนนวด) */}
       {(() => {
@@ -418,6 +421,7 @@ function RequestDetail({ r }: { r: BookingRequest }) {
         </aside>
       </div>
     </div>
+    </>
   );
 }
 
@@ -431,8 +435,9 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
   const moved = ok && (slot.date !== r.date || slot.start !== r.start);
   const t = store.therapistById(slot.therapistId);
   return (
+    <>
+    <PatientHead pid={r.patientId} sub={<Badge tone={ok ? "success" : "danger"} compact dot>{ok ? "อนุมัติแล้ว" : "ปฏิเสธ"}</Badge>} />
     <div className="rq__body scroll-y scroll-y--light">
-      <PatientHead pid={r.patientId} sub={<Badge tone={ok ? "success" : "danger"} compact dot>{ok ? "อนุมัติแล้ว" : "ปฏิเสธ"}</Badge>} />
       <div className={clsx("rq2__verdict", ok ? "is-ok" : "is-stop")}>
         <span className="rq2__vi">{ok ? <CircleCheck size={20} /> : <CircleX size={20} />}</span>
         <div>
@@ -488,6 +493,7 @@ function DecisionDetail({ d }: { d: RequestDecision }) {
         </aside>
       </div>
     </div>
+    </>
   );
 }
 

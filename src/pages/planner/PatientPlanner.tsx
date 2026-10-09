@@ -19,7 +19,7 @@ interface Draft {
   therapistId: string;
 }
 
-/** จองนัดตามคอร์ส (popup) — pick dates for one patient's course; times & therapists follow real availability. */
+/** จัดนัดตามคอร์ส (popup) — pick dates for one patient's course; times & therapists follow real availability. */
 export function CoursePlanDialog({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
   const shownId = useLatest(patientId);
   if (!shownId) return null;
@@ -189,7 +189,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
       footer={
         <>
           <span className="pp__foot-note">
-            {needCourse ? <em>เปิดคอร์สก่อน (แพทย์อนุมัติแผน) · หรือเลือกบริการอื่นเพื่อลงนัดแยก</em> : invalid ? <em>บางวันยังไม่มีเวลาหรือผู้บำบัด</em> : drafts.length ? `${drafts.length} นัด · ${store.serviceById(serviceId).name}` : "ยังไม่ได้เลือกวัน"}
+            {needCourse ? <em>เปิดคอร์สก่อน (แพทย์อนุมัติแผน) · หรือเลือกบริการอื่นเพื่อจัดนัดแยก</em> : invalid ? <em>บางวันยังไม่มีเวลาหรือผู้บำบัด</em> : drafts.length ? `${drafts.length} นัด · ${store.serviceById(serviceId).name}` : "ยังไม่ได้เลือกวัน"}
           </span>
           <Button variant="outline" size="lg" onClick={onClose}>
             ยกเลิก
@@ -263,7 +263,7 @@ function CoursePlanInner({ patientId, open, onClose }: { patientId: string; open
                   <CircleAlert size={16} />
                   <div>
                     <b>ยังไม่ได้เปิดคอร์ส</b>
-                    ให้แพทย์อนุมัติแผน {patient.aiPlan!.sessions} ครั้งก่อน แล้วจึงจองนัดตามคอร์ส · การรักษาอื่นเลือกบริการด้านล่างแล้วลงนัดแยกได้
+                    ให้แพทย์อนุมัติแผน {patient.aiPlan!.sessions} ครั้งก่อน แล้วจึงจัดนัดตามคอร์ส · การรักษาอื่นเลือกบริการด้านล่างแล้วจัดนัดแยกได้
                   </div>
                 </div>
               )}

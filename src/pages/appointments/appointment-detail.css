@@ -952,3 +952,23 @@
   color: var(--vc);
   font-weight: 600;
 }
+/* หัวตรึงแบบกลาง (tw-panel__head) */
+.adp__head .adp__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+.adp__head .adp__status {
+  height: auto;
+  padding: 3px 9px;
+  font: 700 11px/1.3 var(--font-sans);
+}
+.adp__head .tw-panel__actions .tw-btn {
+  width: auto;
+}
+/* hero เหลือแค่วัน · เวลา (ผู้ป่วยอยู่บนหัวแล้ว) */
+.adp__hero .adp__when {
+  border-right: 0;
+}

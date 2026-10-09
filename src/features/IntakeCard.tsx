@@ -56,7 +56,7 @@ export function IntakeCard({
   const yn = (k: string, v: boolean, yesText = "มี"): Row => ({ k, v: v ? yesText : "ไม่มี", yes: v, flag: v });
   const groups: { title: string; icon: typeof HeartPulse; rows: Row[] }[] = [
     {
-      title: "ประวัติสุขภาพ",
+      title: "ข้อมูลสุขภาพ",
       icon: HeartPulse,
       rows: [
         { k: "โรคประจำตัว", v: i.conditions.join(", ") || "ไม่มี", flag: false, yes: i.conditions.length > 0, f: "conditions" },

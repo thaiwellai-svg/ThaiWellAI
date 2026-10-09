@@ -5,6 +5,7 @@ import { MotionConfig } from "framer-motion";
 import "./design-system/base.css";
 import "./design-system/components.css";
 import "./design-system/density.css";
+import "./design-system/system.css";
 import { StoreProvider } from "./store/store";
 import { ToastProvider } from "./design-system";
 import { AppShell } from "./layout/AppShell";

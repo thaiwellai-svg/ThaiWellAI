@@ -14,7 +14,7 @@ const STEPS: { target?: string; title: string; body: string; color?: string; Ico
   { target: '.dock__link[aria-label="หน้าหลัก"]', title: "หน้าหลัก", body: "ภาพรวมวันนี้ · นัด รายได้ และคำขอจองที่รออนุมัติ", color: "#4c845a", Icon: HomeIcon },
   { target: '.dock__link[aria-label="รับบริการ"]', title: "รับบริการ", body: "เรียกคิว → คัดกรอง → นวด → บันทึกการรักษา → รับชำระ", color: "#2f8f9a", Icon: VisitIcon },
   { target: '.dock__link[aria-label="ผู้ป่วย"]', title: "ผู้ป่วย", body: "ลงทะเบียนด้วยบัตรประชาชน · ประวัติ จุดที่ปวด และแผนการรักษา", color: "#3b82c4", Icon: PatientsIcon },
-  { target: '.dock__link[aria-label="ตารางนัด"]', title: "ตารางนัด", body: "ดูนัดรายวัน/รายสัปดาห์ · จองนัดและนัดตามคอร์ส", color: "#d08a3c", Icon: AppointmentsIcon },
+  { target: '.dock__link[aria-label="ตารางนัด"]', title: "ตารางนัด", body: "ดูนัดรายวัน/รายสัปดาห์ · จัดนัดและนัดตามคอร์ส", color: "#d08a3c", Icon: AppointmentsIcon },
   { target: '.dock__link[aria-label="ชำระเงิน"]', title: "ชำระเงิน", body: "รับชำระ ใบเสร็จ พร้อมเพย์ และคืนเงิน · ออกรายงานได้", color: "#b0739a", Icon: BillingIcon },
   { target: '.dock__link[aria-label="จัดตารางงาน"]', title: "จัดตารางงาน", body: "ตารางงานผู้บำบัด ห้อง และเตียง", color: "#7c5cc4", Icon: PlannerIcon },
   { target: '.dock__link[aria-label="ตั้งค่า"]', title: "ตั้งค่า", body: "ข้อมูลคลินิก บริการ กฎคัดกรอง สำรองข้อมูล · เปิดคู่มือได้ที่นี่", color: "#66756b", Icon: SettingsIcon },

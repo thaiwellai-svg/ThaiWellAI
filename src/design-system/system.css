@@ -1,0 +1,202 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ThaiWell UI system — กติกาเดียวทั้งระบบ
+   ทุกหน้าใช้รูปแบบเหล่านี้ (คลาสเดิมของแต่ละหน้าถูกผูกเข้ากับรูปแบบกลางที่นี่)
+   ─ หัวหน้ารายละเอียด  .tw-panel__head   (components.css)
+   ─ ปุ่มวงกลมบนหัว     .tw-round          48px · ขาว · ขอบบาง · ไอคอนเขียว
+   ─ การ์ด              .tw-box            มุม 20 · ขาว · เส้นขอบบาง · ช่องใน 16
+   ─ หัวการ์ด           .tw-box__head      700 14px · ไอคอน 30px มุม 10
+   ─ ปุ่มข้อความในการ์ด  .tw-pill-btn       สูง 30 · 600 12px · เขียว
+   ─ ป้ายสถานะ          .tw-chip (+ is-good / is-warn / is-bad / is-info)
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --radius-card: 20px;
+  --radius-tile: 14px;
+  --hairline: var(--sage-100);
+  --text-panel-title: 700 19px / 1.3 var(--font-sans);
+  --text-card-title: 700 14px / 1.3 var(--font-sans);
+  --tone-good-bg: #e3f4ea;
+  --tone-good: #2f8a52;
+  --tone-warn-bg: #fdf4dd;
+  --tone-warn: #93670a;
+  --tone-bad-bg: #fbeeec;
+  --tone-bad: #c4473a;
+  --tone-info-bg: #eaf2fb;
+  --tone-info: #2f6fb3;
+}
+
+/* ── ปุ่มวงกลมบนหัว (โทร · ข้อมูลสุขภาพ · ⋯ · จัดนัด) ── */
+.tw-round,
+html:root .tw-panel__actions .pd__ib,
+html:root .tw-panel__actions .vs__tool,
+html:root .tw-panel__actions .vs__more {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--white);
+  box-shadow: none;
+  color: var(--color-brand);
+  text-decoration: none;
+  animation: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.tw-round:active,
+html:root .tw-panel__actions .pd__ib:active {
+  transform: scale(0.94);
+}
+.tw-round.is-primary,
+html:root .tw-panel__actions .pd__ib.is-primary {
+  border-color: transparent;
+  background: var(--color-brand);
+  color: var(--white);
+  box-shadow: 0 6px 14px rgb(76 132 90 / 30%);
+}
+.tw-round.is-on,
+html:root .tw-panel__actions .pd__ib.is-on,
+html:root .tw-panel__actions .vs__tool.is-on {
+  border-color: var(--color-brand);
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+}
+
+/* ── การ์ด ── */
+.tw-box,
+html:root .pd__card,
+html:root .vs__panel,
+html:root .vcc,
+html:root .vs__log.vtl,
+html:root .rq__card,
+html:root .rq2__card,
+html:root .adp__card,
+html:root .cp-card,
+html:root .pv-card,
+html:root .st-group__body,
+html:root .hx-card,
+html:root .hx-visit2 {
+  border-radius: var(--radius-card);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+/* ── หัวการ์ด ── */
+.tw-box__head,
+html:root .pd2__h,
+html:root .vcc__head b,
+html:root .vtl__head b,
+html:root .rq__card h3,
+html:root .rq2__card h3,
+html:root .adp__card > header,
+html:root .cp-card > header,
+html:root .pv-card h4,
+html:root .vs__panel > h3,
+html:root .st-group__head h3,
+html:root .ik__head b,
+html:root .ik2__title b {
+  font: var(--text-card-title);
+  color: var(--color-text);
+}
+/* ไอคอนหัวการ์ด 30px มุม 10 */
+html:root .pd2__i,
+html:root .vcc__icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+/* ── ปุ่มข้อความในการ์ด (แก้ไข · เปิดแผน · ดูทั้งหมด) ── */
+.tw-pill-btn,
+html:root .pd2__act,
+html:root .sm-edit,
+html:root .cr__edit,
+html:root .cp-row__edit,
+html:root .pending__more,
+html:root .al__more,
+html:root .ik2__more,
+html:root .vcc__all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-brand);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tw-pill-btn:hover,
+html:root .pd2__act:hover,
+html:root .sm-edit:hover {
+  background: var(--sage-50);
+}
+
+/* ── ป้ายสถานะ ── */
+.tw-chip,
+html:root .pd2__h em,
+html:root .adp__card > header em,
+html:root .cp-card > header em,
+html:root .ph__card h4 em,
+html:root .rs2__head em,
+html:root .hx-draft__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 700 11px/1.3 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  border: 0;
+  box-shadow: none;
+  height: auto;
+}
+.tw-chip.is-good,
+html:root .pd2__h em.is-good,
+html:root .rs2__head em.is-ok,
+html:root .cp-card > header em.is-done {
+  background: var(--tone-good-bg);
+  color: var(--tone-good);
+}
+.tw-chip.is-warn,
+html:root .pd2__h em.is-low,
+html:root .pd2__h em.is-bad,
+html:root .hx-draft__tag,
+html:root .rs2__head em:not(.is-ok),
+html:root .cp-card > header em:not(.is-done) {
+  background: var(--tone-warn-bg);
+  color: var(--tone-warn);
+}
+.tw-chip.is-bad {
+  background: var(--tone-bad-bg);
+  color: var(--tone-bad);
+}
+.tw-chip.is-info {
+  background: var(--tone-info-bg);
+  color: var(--tone-info);
+}
+
+/* ── โรคประจำตัว · แพ้ ต่อท้ายบรรทัดใต้ชื่อ ── */
+.pd__flag {
+  font-weight: 600;
+}
+.pd__flag.is-cond {
+  color: var(--tone-warn);
+}
+.pd__flag.is-allergy {
+  color: var(--color-danger);
+}

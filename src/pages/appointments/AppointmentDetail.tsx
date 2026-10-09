@@ -64,30 +64,47 @@ export default function AppointmentDetail() {
 
   return (
     <WorkPage eyebrow="ตารางนัด" title="รายละเอียดนัด" bell={false} lead={<BackLead eyebrow={`ตารางนัด · ${p.name}`} title="รายละเอียดนัด" onBack={back} />}>
-      <div className="adp">
-        {/* top bar: status + actions (like the other sub-pages) */}
-        <div className="adp__bar">
-          <span className="adp__status" style={{ ["--sc" as string]: meta.color }}>
-            <i /> {meta.label}
-          </span>
-          {sessionNo > 0 && p.course && (
-            <span className="adp__tag">
-              <Ticket size={13} /> ครั้งที่ {sessionNo}/{p.course.total}
-            </span>
-          )}
-          <span className="adp__tag">{a.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}</span>
-          <div className="adp__actions">
+      <div className="adp tw-panel">
+        {/* หัวตรึง: แบบเดียวกับหน้ารับบริการ/ผู้ป่วย (รูป · ชื่อ · สถานะ · ปุ่ม) */}
+        <header className="tw-panel__head adp__head">
+          <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={meta.color} />
+          <div className="tw-panel__id">
+            <h2>{p.name}</h2>
+            <p>
+              {p.hn} · {p.gender} {p.age} ปี
+            </p>
+            <div className="adp__chips">
+              <span className="adp__status" style={{ ["--sc" as string]: meta.color }}>
+                <i /> {meta.label}
+              </span>
+              {sessionNo > 0 && p.course && (
+                <span className="tw-chip">
+                  <Ticket size={12} /> ครั้งที่ {sessionNo}/{p.course.total}
+                </span>
+              )}
+              <span className="tw-chip">{a.type === "walkin" ? "วอล์กอิน" : "นัดล่วงหน้า"}</span>
+            </div>
+          </div>
+          <div className="tw-panel__actions">
+            {p.phone && (
+              <a className="tw-round" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`} title={p.phone}>
+                <Phone size={18} />
+              </a>
+            )}
+            <button type="button" className="tw-round" onClick={() => navigate(`/patients?id=${p.id}`)} aria-label="ข้อมูลผู้ป่วย" title="ข้อมูลผู้ป่วย">
+              <UserRound size={18} />
+            </button>
             {a.payment && (
-              <Button variant="outline" size="md" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
+              <Button variant="outline" size="lg" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
                 ใบเสร็จ
               </Button>
             )}
             {notStarted && (
               <>
-                <Button variant="outline" size="md" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
+                <Button variant="outline" size="lg" leading={<CalendarX2 size={16} />} onClick={() => setCancelling(true)}>
                   ยกเลิกนัด
                 </Button>
-                <Button variant="outline" size="md" leading={<CalendarClock size={16} />} onClick={() => setMoving(true)}>
+                <Button variant="outline" size="lg" leading={<CalendarClock size={16} />} onClick={() => setMoving(true)}>
                   เลื่อนนัด
                 </Button>
               </>
@@ -95,7 +112,7 @@ export default function AppointmentDetail() {
             {a.status === "cancelled" && (
               <Button
                 variant="outline"
-                size="md"
+                size="lg"
                 leading={<Undo2 size={16} />}
                 onClick={() => {
                   // เหมือนปุ่ม "ย้อนกลับ" ในหน้ารับบริการ: บันทึกในประวัติ + เลิกทำได้จาก toast
@@ -108,14 +125,14 @@ export default function AppointmentDetail() {
               </Button>
             )}
             {a.date === todayISO() && a.status !== "cancelled" && (
-              <Button size="md" leading={<Play size={16} />} onClick={() => navigate(`/visits?id=${a.id}`)}>
+              <Button size="lg" leading={<Play size={16} />} onClick={() => navigate(`/visits?id=${a.id}`)}>
                 ไปหน้ารับบริการ
               </Button>
             )}
           </div>
-        </div>
+        </header>
 
-        <div className="adp__body scroll-y scroll-y--light">
+        <div className="adp__body tw-panel__body scroll-y scroll-y--light">
           {/* hero: when + who */}
           <section className={clsx("adp__hero", a.status === "cancelled" && "is-cancelled")} style={{ ["--sc" as string]: meta.color }}>
             <div className="adp__date">
@@ -131,25 +148,6 @@ export default function AppointmentDetail() {
               <p>
                 {s.name} · {s.minutes} นาที
               </p>
-            </div>
-            <div className="adp__who">
-              <Avatar name={p.name} src={patientPhoto(p)} size="lg" shape="squircle" />
-              <div>
-                <b>{p.name}</b>
-                <small>
-                  {p.hn} · {p.gender} {p.age} ปี
-                </small>
-                <span>
-                  {p.phone && (
-                    <a href={`tel:${p.phone}`}>
-                      <Phone size={13} /> {p.phone}
-                    </a>
-                  )}
-                  <button type="button" onClick={() => navigate(`/patients?id=${p.id}`)}>
-                    <UserRound size={13} /> ประวัติผู้ป่วย
-                  </button>
-                </span>
-              </div>
             </div>
           </section>
 

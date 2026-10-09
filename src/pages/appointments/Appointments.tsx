@@ -133,7 +133,7 @@ export default function Appointments() {
     if (booking || !w) return;
     waitFor.current = null;
     if (store.appointments.filter((a) => a.patientId === w.e.patientId).length > w.n)
-      store.dispatch({ type: "biz", cat: "นัดหมาย", patientId: w.e.patientId, log: `จองนัดจากรายการรอคิว · ${store.patientById(w.e.patientId).name}`, update: (b) => ({ ...b, waitlist: b.waitlist.map((x) => (x.id === w.e.id ? { ...x, status: "booked" } : x)) }) });
+      store.dispatch({ type: "biz", cat: "นัดหมาย", patientId: w.e.patientId, log: `จัดนัดจากรายการรอคิว · ${store.patientById(w.e.patientId).name}`, update: (b) => ({ ...b, waitlist: b.waitlist.map((x) => (x.id === w.e.id ? { ...x, status: "booked" } : x)) }) });
   }, [booking, store]);
   const [clashOpen, setClashOpen] = useState(false);
   const { settings } = store;

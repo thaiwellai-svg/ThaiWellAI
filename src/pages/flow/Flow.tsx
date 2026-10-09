@@ -240,7 +240,7 @@ export default function Flow() {
                   {current.bill?.receipt_no ? ` · ใบเสร็จ ${current.bill.receipt_no}` : ""}
                 </p>
                 <Button variant="white" size="md" block leading={<CalendarCheck2 size={15} />} onClick={() => setAgain(true)}>
-                  จองนัดครั้งถัดไป
+                  จัดนัดครั้งถัดไป
                 </Button>
               </>
             )}

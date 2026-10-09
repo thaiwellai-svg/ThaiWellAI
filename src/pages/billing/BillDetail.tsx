@@ -67,36 +67,54 @@ export default function BillDetail() {
 
   return (
     <WorkPage eyebrow="ชำระเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow={`ชำระเงิน · ${p.name}`} title="รายละเอียดบิล" onBack={back} />}>
-      <div className="adp">
-        <div className="adp__bar">
-          <span className="adp__status" style={{ ["--sc" as string]: status.color }}>
-            <i /> {status.label}
-          </span>
-          {pay?.no && <span className="adp__tag">{pay.no}</span>}
-          {pay && (
-            <span className="adp__tag">
-              <Ic size={13} /> {METHOD_LABEL[pay.method]}
-            </span>
-          )}
-          <div className="adp__actions">
-            <Button variant="outline" size="md" leading={<CalendarDays size={16} />} onClick={() => navigate(`/appointments/${a.id}`)}>
-              รายละเอียดนัด
-            </Button>
+      <div className="adp tw-panel">
+        {/* หัวตรึงแบบกลาง: รูป · ชื่อ · สถานะบิล · ปุ่ม */}
+        <header className="tw-panel__head adp__head">
+          <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={status.color} />
+          <div className="tw-panel__id">
+            <h2>{p.name}</h2>
+            <p>
+              {p.hn} · {p.gender} {p.age} ปี
+            </p>
+            <div className="adp__chips">
+              <span className="adp__status" style={{ ["--sc" as string]: status.color }}>
+                <i /> {status.label}
+              </span>
+              {pay?.no && <span className="tw-chip">{pay.no}</span>}
+              {pay && (
+                <span className="tw-chip">
+                  <Ic size={12} /> {METHOD_LABEL[pay.method]}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="tw-panel__actions">
+            {p.phone && (
+              <a className="tw-round" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`} title={p.phone}>
+                <Phone size={18} />
+              </a>
+            )}
+            <button type="button" className="tw-round" onClick={() => navigate(`/patients?id=${p.id}`)} aria-label="ข้อมูลผู้ป่วย" title="ข้อมูลผู้ป่วย">
+              <UserRound size={18} />
+            </button>
+            <button type="button" className="tw-round" onClick={() => navigate(`/appointments/${a.id}`)} aria-label="รายละเอียดนัด" title="รายละเอียดนัด">
+              <CalendarDays size={18} />
+            </button>
             {pay && (
-              <Button variant="outline" size="md" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
+              <Button variant="outline" size="lg" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
                 ใบเสร็จ
               </Button>
             )}
             {canPay && a.status !== "cancelled" && (stageOf(a) === "billing" || a.status === "done") && (
-              <Button size="md" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
+              <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
                 รับชำระ
               </Button>
             )}
           </div>
-        </div>
+        </header>
 
-        <div className="adp__body scroll-y scroll-y--light">
-          {/* hero: amount + who */}
+        <div className="adp__body tw-panel__body scroll-y scroll-y--light">
+          {/* hero: ยอดเงิน */}
           <section className="adp__hero bd__hero" style={{ ["--sc" as string]: status.color }}>
             <div className="bd__amount">
               <small>{pay?.status === "paid" ? "ยอดชำระแล้ว" : "ยอดต้องชำระ"}</small>
@@ -111,25 +129,6 @@ export default function BillDetail() {
                     ? `ส่งบิลเข้าแอปแล้ว · ${thaiDateShort(pay.at.slice(0, 10))} ${clock(pay.at)} น.`
                     : `${s.name} · ${thaiDateShort(a.date)} ${a.start} น.`}
               </p>
-            </div>
-            <div className="adp__who">
-              <Avatar name={p.name} src={patientPhoto(p)} size="lg" shape="squircle" />
-              <div>
-                <b>{p.name}</b>
-                <small>
-                  {p.hn} · {p.gender} {p.age} ปี
-                </small>
-                <span>
-                  {p.phone && (
-                    <a href={`tel:${p.phone}`}>
-                      <Phone size={13} /> {p.phone}
-                    </a>
-                  )}
-                  <button type="button" onClick={() => navigate(`/patients?id=${p.id}`)}>
-                    <UserRound size={13} /> ข้อมูลผู้ป่วย
-                  </button>
-                </span>
-              </div>
             </div>
           </section>
 

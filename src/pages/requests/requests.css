@@ -697,3 +697,15 @@
     margin-inline: auto;
   }
 }
+/* หัวคำขอ = tw-panel__head (ตรึง) */
+.rq__detail > .rq__body {
+  padding-top: 20px !important;
+}
+.rq__head .rq__src {
+  font: 500 12px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.rq__el-txt {
+  font-weight: 600;
+}
