@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Banknote, Check, QrCode, Smartphone, Ticket } from "lucide-react";
 import { clsx } from "clsx";
@@ -18,6 +19,7 @@ const METHODS: { m: PaymentMethod; label: string; Icon: typeof Banknote }[] = [
 export function SellPackageDialog({ patientId, onClose }: { patientId: string | null; onClose: () => void }) {
   const store = useStore();
   const toast = useToast();
+  const navigate = useNavigate();
   const pkgs = store.biz.packages.filter((x) => x.active);
   const [pid, setPid] = useState(pkgs[0]?.id ?? "");
   const [member, setMember] = useState(false);
@@ -76,6 +78,22 @@ export function SellPackageDialog({ patientId, onClose }: { patientId: string | 
         </>
       }
     >
+      {!pkgs.length && (
+        <div className="sp__empty">
+          <Ticket size={22} />
+          <b>ยังไม่มีแพ็กเกจให้เลือก</b>
+          <span>ตั้งแพ็กเกจ (บริการ · จำนวนครั้ง · ราคา) ก่อน แล้วกลับมาขายได้เลย</span>
+          <Button
+            size="md"
+            onClick={() => {
+              onClose();
+              navigate("/packages");
+            }}
+          >
+            ไปตั้งแพ็กเกจ
+          </Button>
+        </div>
+      )}
       <div className="sp__pkgs">
         {pkgs.map((x) => (
           <button key={x.id} type="button" aria-pressed={x.id === pid} onClick={() => setPid(x.id)}>
