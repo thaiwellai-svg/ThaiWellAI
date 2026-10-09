@@ -3364,3 +3364,57 @@
   display: block;
   overflow: visible;
 }
+/* ปวดก่อน → หลังรายครั้ง */
+.pst__c.is-pain > b span {
+  font: inherit;
+}
+.pst__pairs {
+  display: grid;
+  gap: 2px;
+  margin-top: 2px;
+  padding-top: 2px;
+  border-bottom: 1px dashed rgb(47 64 52 / 10%);
+}
+.pst__pair {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.pst__pair svg {
+  display: block;
+  overflow: visible;
+}
+.pst__pair small {
+  font: 500 9.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+  padding-bottom: 3px;
+}
+.pst__c.is-pain .pst__sub em {
+  font-style: normal;
+  font-weight: 700;
+}
+.pst__c.is-pain .pst__sub em.is-good {
+  color: #2f8a52;
+}
+.pst__c.is-pain .pst__sub em.is-bad {
+  color: #c4473a;
+}
+.pst__legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pst__legend i {
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  border-radius: 50%;
+}
+.pst__legend i.is-before {
+  box-shadow: inset 0 0 0 1.6px #9aa59e;
+  background: #fff;
+}
+.pst__legend i.is-after {
+  background: #2f9a5b;
+}

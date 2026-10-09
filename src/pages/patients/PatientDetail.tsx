@@ -9,7 +9,7 @@ import { VisitAssessments } from "../../features/VisitAssessments";
 import { ResetPatientDialog } from "../../features/ResetPatientDialog";
 import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
@@ -210,27 +210,55 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             </b>
             <span className="pst__sub">{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
           </div>
-          {/* ปวด: กราฟแนวโน้ม (ปวดตอนมาแต่ละครั้ง เรียงตามเวลา) */}
+          {/* ปวด ก่อน → หลังนวด ทุกครั้ง (เรียงตามเวลา) → เห็นว่านวดแล้วลดไหม และแต่ละครั้งดีขึ้นไหม */}
           {(() => {
-            const fromVisits = [...visits]
+            const pairs = [...visits]
               .reverse()
-              .filter((v) => v.status !== "cancelled" && v.painBefore !== undefined)
-              .map((v) => v.painBefore!);
-            const series = fromVisits.length >= 2 ? fromVisits.slice(-12) : h.length ? h.slice(-12).map((x) => x.score) : fromVisits;
-            const now = series[series.length - 1];
-            const change = series.length > 1 ? now - series[0] : 0;
+              .filter((v) => v.date <= today && (v.status === "done" || v.status === "active") && v.painBefore !== undefined)
+              .map((v) => ({ id: v.id, date: v.date, before: v.painBefore!, after: v.painAfter }))
+              .slice(-8);
+            const lastP = pairs[pairs.length - 1];
+            const drop = lastP && lastP.after !== undefined ? lastP.before - lastP.after : undefined;
+            const now = lastP ? (lastP.after ?? lastP.before) : last;
+            // เทียบตอนมาครั้งแรกกับครั้งล่าสุด
+            const trend = pairs.length > 1 ? lastP.before - pairs[0].before : 0;
             return (
               <div className="pst__c is-pain" style={{ ["--tc" as string]: now === undefined ? "#6b7a71" : painColor(now) }}>
                 <span className="pst__ico">
                   <Activity size={14} />
                 </span>
-                <small>แนวโน้มปวด</small>
-                <b>
-                  {now ?? "—"}
-                  {now !== undefined && <i>/10 ล่าสุด</i>}
-                  {change !== 0 && <em className={change < 0 ? "is-good" : "is-bad"}>{change < 0 ? `ลดลง ${-change}` : `เพิ่ม ${change}`}</em>}
-                </b>
-                {series.length > 1 ? <PainSpark points={series} /> : <span className="pst__sub">{now === undefined ? "ยังไม่ได้ประเมิน" : "ประเมินครั้งเดียว"}</span>}
+                <small className="pst__legend">
+                  ปวด <i className="is-before" /> ก่อน <i className="is-after" /> หลังนวด
+                </small>
+                {lastP ? (
+                  <b>
+                    <span style={{ color: painColor(lastP.before) }}>{lastP.before}</span>
+                    <i>→</i>
+                    <span style={{ color: lastP.after !== undefined ? painColor(lastP.after) : undefined }}>{lastP.after ?? "—"}</span>
+                    <i>ครั้งล่าสุด</i>
+                  </b>
+                ) : (
+                  <b>
+                    {last ?? "—"}
+                    {last !== undefined && <i>/10</i>}
+                  </b>
+                )}
+                {pairs.length > 0 ? (
+                  <>
+                    <PainPairs pairs={pairs} />
+                    <span className="pst__sub">
+                      {drop !== undefined ? (drop > 0 ? `นวดแล้วลด ${drop}` : drop < 0 ? `นวดแล้วเพิ่ม ${-drop}` : "นวดแล้วเท่าเดิม") : "ยังไม่ประเมินหลังนวด"}
+                      {pairs.length > 1 && (
+                        <em className={trend < 0 ? "is-good" : trend > 0 ? "is-bad" : undefined}>
+                          {" · "}
+                          {trend < 0 ? `ดีขึ้นจากครั้งแรก ${-trend}` : trend > 0 ? `แย่ลงจากครั้งแรก ${trend}` : "เท่าครั้งแรก"}
+                        </em>
+                      )}
+                    </span>
+                  </>
+                ) : (
+                  <span className="pst__sub">{last === undefined ? "ยังไม่ได้ประเมิน" : "จากการประเมิน"}</span>
+                )}
               </div>
             );
           })()}
@@ -605,50 +633,30 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   );
 }
 
-/** กราฟแนวโน้มปวด: เส้นโค้งนุ่ม · พื้นไล่สี · จุดล่าสุด (วาดตามความกว้างจริง ไม่ยืด) */
-function PainSpark({ points }: { points: number[] }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [W, setW] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  const H = 40;
+/** ปวดก่อน → หลังนวด รายครั้ง: จุดเทา = ก่อน · จุดสี = หลัง · เส้นเขียว = ลด / แดง = เพิ่ม */
+function PainPairs({ pairs }: { pairs: { id: string; date: string; before: number; after?: number }[] }) {
+  const H = 64;
   const pad = 5;
-  const x = (i: number) => pad + (i / (points.length - 1)) * (W - pad * 2);
   const y = (v: number) => pad + (1 - v / 10) * (H - pad * 2);
-  const pts = points.map((v, i) => [x(i), y(v)] as const);
-  // โค้งแบบ monotone (ไม่เกินจุดจริง)
-  let d = `M${pts[0][0]},${pts[0][1]}`;
-  for (let i = 1; i < pts.length; i++) {
-    const [x0, y0] = pts[i - 1];
-    const [x1, y1] = pts[i];
-    const mx = (x0 + x1) / 2;
-    d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
-  }
-  const last = pts[pts.length - 1];
-  const c = painColor(points[points.length - 1]);
-  const gid = `pst-g-${points.join("")}`;
   return (
-    <div ref={ref} className="pst__spark">
-      {W > 0 && (
-        <svg width={W} height={H} aria-hidden>
-          <defs>
-            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor={c} stopOpacity="0.25" />
-              <stop offset="1" stopColor={c} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <line x1={pad} x2={W - pad} y1={H - pad} y2={H - pad} stroke="rgb(47 64 52 / 8%)" strokeDasharray="2 3" />
-          <path d={`${d} L${last[0]},${H} L${pts[0][0]},${H} Z`} fill={`url(#${gid})`} />
-          <path d={d} fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" />
-          <circle cx={last[0]} cy={last[1]} r="6" fill={c} opacity="0.18" />
-          <circle cx={last[0]} cy={last[1]} r="3.2" fill="#fff" stroke={c} strokeWidth="2" />
-        </svg>
-      )}
+    <div className="pst__pairs" style={{ gridTemplateColumns: `repeat(${Math.max(pairs.length, 4)}, minmax(0, 1fr))` }}>
+      {pairs.map((p) => {
+        const a = p.after;
+        const tone = a === undefined ? "#b9c2bc" : a < p.before ? "#2f9a5b" : a > p.before ? "#d8392a" : "#8a948d";
+        return (
+          <div key={p.id} className="pst__pair" title={`${thaiDateShort(p.date)} · ก่อน ${p.before} → หลัง ${a ?? "—"}`}>
+            <svg width="100%" height={H} aria-hidden>
+              {[0, 5, 10].map((g) => (
+                <line key={g} x1="0" x2="100%" y1={y(g)} y2={y(g)} stroke="rgb(47 64 52 / 7%)" strokeDasharray={g ? "2 3" : undefined} />
+              ))}
+              {a !== undefined && <line x1="50%" x2="50%" y1={y(p.before)} y2={y(a)} stroke={tone} strokeWidth="4" strokeLinecap="round" opacity="0.4" />}
+              <circle cx="50%" cy={y(p.before)} r="4" fill="#fff" stroke="#9aa59e" strokeWidth="1.6" />
+              {a !== undefined && <circle cx="50%" cy={y(a)} r="4.5" fill={tone} />}
+            </svg>
+            <small>{Number(p.date.slice(8))}</small>
+          </div>
+        );
+      })}
     </div>
   );
 }
