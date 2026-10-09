@@ -463,3 +463,20 @@
     flex: 1 0 0;
   }
 }
+/* ฝั่งซ้ายยาวลงถึงขอบล่าง · ปุ่มอยู่ใต้ฝั่งขวาเท่านั้น */
+@media (min-width: 901px) {
+  .tw-dialog.apv {
+    position: relative;
+  }
+  .apv .tw-overlay-foot {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: calc(100% * 1.2 / 2.2);
+    background: var(--white);
+    border-bottom-right-radius: inherit;
+  }
+  .apv__act {
+    padding-bottom: 96px;
+  }
+}
