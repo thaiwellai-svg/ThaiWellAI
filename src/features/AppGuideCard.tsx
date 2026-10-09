@@ -23,7 +23,7 @@ export function AppGuideCard({ guide: sent, areas, compact }: { guide?: AppGuide
         </span>
       </header>
       {guide.condition && (
-        <div className="agc__row">
+        <div className="agc__cond">
           <small>อาการแผนไทย</small>
           <b>{guide.condition}</b>
         </div>
@@ -31,11 +31,14 @@ export function AppGuideCard({ guide: sent, areas, compact }: { guide?: AppGuide
       {guide.methods.length > 0 && (
         <div className="agc__row">
           <small>วิธีรักษา</small>
-          <ul>
-            {guide.methods.map((m) => (
-              <li key={m}>{m}</li>
+          <ol className="agc__steps">
+            {guide.methods.map((m, k) => (
+              <li key={m}>
+                <i>{k + 1}</i>
+                <span>{m}</span>
+              </li>
             ))}
-          </ul>
+          </ol>
         </div>
       )}
       {guide.points.length > 0 && (
