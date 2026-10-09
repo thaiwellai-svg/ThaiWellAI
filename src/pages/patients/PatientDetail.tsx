@@ -249,32 +249,32 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               </div>
             );
           })()}
-          {/* นัดถัดไป: แบบเดียวกับรายการนัดที่จะถึง */}
-          {upcoming[0] ? (
-            <button type="button" className="hx-next__item is-first pst__next" onClick={() => openAppt(upcoming[0].id)}>
-              <span className="hx-next__date">
-                <small>{thaiDateShort(upcoming[0].date).split(" ")[1]}</small>
-                <b>{Number(upcoming[0].date.slice(8))}</b>
+          {/* นัดถัดไป: หัวข้อบน (แบบเดียวกับอีก 2 ใบ) · ล่างเป็นนัดแบบรายการนัดที่จะถึง */}
+          <button type="button" className="pst__c is-link" style={{ ["--tc" as string]: "#2f6fb3" }} disabled={!upcoming[0]} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
+            <span className="pst__ico">
+              <CalendarDays size={14} />
+            </span>
+            <small>นัดถัดไป{upcoming[0] ? ` · ${relativeDay(upcoming[0].date)}` : ""}</small>
+            {upcoming[0] ? (
+              <span className="pst__appt is-first">
+                <span className="hx-next__date">
+                  <small>{thaiDateShort(upcoming[0].date).split(" ")[1]}</small>
+                  <b>{Number(upcoming[0].date.slice(8))}</b>
+                </span>
+                <span className="pst__appt-body">
+                  <b>
+                    {upcoming[0].start} น. · {store.serviceById(upcoming[0].serviceId).short}
+                  </b>
+                  <small>{store.therapistById(upcoming[0].therapistId).name}</small>
+                </span>
               </span>
-              <span className="hx-next__body">
-                <small className="pst__lbl">นัดถัดไป · {relativeDay(upcoming[0].date)}</small>
-                <b>
-                  {upcoming[0].start} น. · {store.serviceById(upcoming[0].serviceId).short}
-                </b>
-                <small>{store.therapistById(upcoming[0].therapistId).name}</small>
-              </span>
-              <ChevronRight size={15} className="hx-next__go" />
-            </button>
-          ) : (
-            <div className="pst__c" style={{ ["--tc" as string]: "#6b7a71" }}>
-              <span className="pst__ico">
-                <CalendarDays size={14} />
-              </span>
-              <small>นัดถัดไป</small>
-              <b>—</b>
-              <span className="pst__sub">ยังไม่มีนัดล่วงหน้า</span>
-            </div>
-          )}
+            ) : (
+              <>
+                <b>—</b>
+                <span className="pst__sub">ยังไม่มีนัดล่วงหน้า</span>
+              </>
+            )}
+          </button>
         </div>
 
         <div className="pd__grid">
