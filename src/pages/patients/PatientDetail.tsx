@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Target, TriangleAlert, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -328,22 +328,61 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                   )}
                 </h3>
                 {p.aiPlan ? (
-                  <dl className="ptx__stats">
-                    <div>
-                      <dt>ประเภท</dt>
-                      <dd>{p.aiPlan.massageType}</dd>
-                    </div>
-                    <div>
-                      <dt>จำนวน</dt>
-                      <dd>{p.aiPlan.sessions} ครั้ง</dd>
-                    </div>
-                    <div>
-                      <dt>ความถี่</dt>
-                      <dd>{p.aiPlan.frequency}</dd>
-                    </div>
-                  </dl>
+                  (() => {
+                    const pl = p.aiPlan!;
+                    const perWeek = Number(/(\d+)/.exec(pl.frequency)?.[1] ?? 1) || 1;
+                    const weeks = Math.ceil(pl.sessions / perWeek);
+                    return (
+                      <div className="pln">
+                        <div className="pln__hero">
+                          <span className="pln__n">
+                            <b>{pl.sessions}</b>
+                            <small>ครั้ง</small>
+                          </span>
+                          <span className="pln__meta">
+                            <b>{pl.massageType}</b>
+                            <small>
+                              {pl.frequency} · ประมาณ {weeks} สัปดาห์
+                            </small>
+                          </span>
+                        </div>
+                        {pl.goals[0] && (
+                          <p className="pln__row">
+                            <Target size={14} />
+                            <span>
+                              <small>เป้าหมาย</small>
+                              {pl.goals[0]}
+                            </span>
+                          </p>
+                        )}
+                        {pl.phases.length > 0 && (
+                          <ol className="pln__phases">
+                            {pl.phases.slice(0, 3).map((ph, k) => (
+                              <li key={k}>
+                                <i>{k + 1}</i>
+                                <span>
+                                  <b>{ph.title}</b>
+                                  <small>
+                                    สัปดาห์ {ph.weeks}
+                                    {ph.focus ? ` · ${ph.focus}` : ""}
+                                  </small>
+                                </span>
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                        {pl.referToDoctor && (
+                          <p className="pln__warn">
+                            <TriangleAlert size={14} /> ควรให้แพทย์ตรวจก่อนเริ่ม
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()
                 ) : (
-                  <p className="pd2__muted">ให้ AI ร่างแผนจากอาการ แล้วแพทย์อนุมัติ</p>
+                  <div className="pln__empty">
+                    <p>ยังไม่มีแผน · ให้ AI ร่างจากอาการ แล้วแพทย์อนุมัติ</p>
+                  </div>
                 )}
                 {!onAIPlan && <AIPlanCard p={p} />}
               </section>

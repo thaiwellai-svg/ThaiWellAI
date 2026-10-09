@@ -3564,3 +3564,131 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- แผนการรักษา ---------- */
+.pln {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pln__hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--color-brand-tint);
+}
+.pln__n {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: var(--color-brand);
+  color: var(--white);
+}
+.pln__n b {
+  font: 800 22px/1 var(--font-sans);
+}
+.pln__n small {
+  font: 600 10.5px/1.2 var(--font-sans);
+  opacity: 0.85;
+}
+.pln__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pln__meta b {
+  font: 700 15px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.pln__meta small {
+  font: 500 12.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pln__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font: 500 13px/1.45 var(--font-sans);
+  color: var(--color-text);
+}
+.pln__row > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-brand);
+}
+.pln__row small {
+  display: block;
+  font: 600 11px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pln__phases {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pln__phases li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pln__phases i {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--sage-50);
+  color: var(--color-brand);
+  font: 700 11px/1 var(--font-sans);
+  font-style: normal;
+}
+.pln__phases span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.pln__phases b {
+  font: 600 13px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.pln__phases small {
+  font: 500 11.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pln__warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fdf4dd;
+  font: 600 12.5px/1.3 var(--font-sans);
+  color: #93670a;
+}
+.pln__empty p {
+  margin: 0;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--sage-100);
+  font: 500 13px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+  text-align: center;
+}
