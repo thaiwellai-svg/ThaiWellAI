@@ -294,6 +294,25 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(s2.audit.some((x) => x.by === ROLES.therapist.staffName), 'ประวัติการแก้ไขบันทึกชื่อผู้บำบัด');
   });
 
+  await check('T04', 'therapist', 'คัดกรองซ้ำแล้วเปลี่ยนค่า', 'คัดกรองปวด 6 → นัดได้ 6 · เปิดคัดกรองใหม่ยังเป็นค่าที่บันทึก · แก้เป็น 8 → นัดได้ 8', async (p, ex) => {
+    await mutate(p, "const t=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);const a=s.appointments.find(x=>x.date===t&&x.status==='waiting'&&!x.calledAt);a.intake={at:new Date().toISOString(),goal:'',complaint:'ปวดคอ',pain:3,focusAreas:['คอ'],avoidAreas:[],conditions:[],medications:[],allergies:[],pressure:'เบา'};a.painBefore=3;s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id);
+    await p.getByRole('button', { name: 'เรียกคิว', exact: true }).click(); await p.waitForTimeout(1200);
+    await p.click('.vscr button'); await p.waitForTimeout(2500);
+    await p.fill('input[aria-label="ความดันตัวบน"]', '124'); await p.fill('input[aria-label="ความดันตัวล่าง"]', '80'); await p.fill('input[aria-label="ชีพจร"]', '72');
+    await p.locator('.ap-pain button').nth(6).click();
+    await p.getByRole('button', { name: 'บันทึกผลคัดกรอง' }).click(); await p.waitForTimeout(1500);
+    let a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.painBefore === 6 && a.intake?.pain === 6, `นัดได้ปวดก่อนนวดจากคัดกรองที่คลินิก (${a.painBefore})`);
+    await p.click('.vscr button'); await p.waitForTimeout(2500);
+    ex((await p.inputValue('input[aria-label="ความดันตัวบน"]')) === '124', 'เปิดคัดกรองใหม่ ยังเป็นค่าที่บันทึกไว้ (ไม่ถูกเติมทับจากแอป)');
+    await p.locator('.ap-pain button').nth(8).click();
+    await p.getByRole('button', { name: 'บันทึกผลคัดกรอง' }).click(); await p.waitForTimeout(1500);
+    a = (await state(p)).appointments.find((x) => x.id === id);
+    ex(a.painBefore === 8, `แก้ค่าแล้วนัดเปลี่ยนตาม (${a.painBefore})`);
+  });
+
   await check('T02', 'therapist', 'ผู้ป่วยมีไข้วันนี้', 'คัดกรองพบข้อห้าม → ยังเริ่มนวดได้หรือไม่', async (p, ex, notes) => {
     await mutate(p, "const t=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);const a=s.appointments.find(x=>x.date===t&&x.status==='waiting'&&!x.calledAt);s.__id=a.id;");
     const id = (await state(p)).__id;

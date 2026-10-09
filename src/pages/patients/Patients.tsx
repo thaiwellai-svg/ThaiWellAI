@@ -414,7 +414,9 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
     setFromCard(!edit && !!cardIn);
     const sc = edit?.screening;
     // re-screening today: keep body areas and standing answers, measure vitals / fever / skin / pain again
-    if (screenOnly) {
+    // คัดกรองที่คลินิกวันนี้แล้ว → เปิดใหม่แสดงค่าที่บันทึกไว้ทั้งหมด (ไม่เติมทับจากแอป)
+    const screenedToday = !!sc && sc.at?.slice(0, 10) === todayISO();
+    if (screenOnly && !screenedToday) {
       // นัดวันนี้ที่จองผ่านแอป → เติมจากที่ผู้ป่วยประเมินมา (จุดปวด/ห้ามนวดบนหุ่น · คะแนนปวด · ตั้งครรภ์ ผ่าตัด ไข้) เหลือวัดความดัน ชีพจร
       const t = todayISO();
       const visit = edit ? store.appointments.find((a) => a.patientId === edit.id && a.date === t && (a.intake || a.screening)) : undefined;
@@ -495,6 +497,26 @@ function PatientForm({ onClose, onCreated, edit, screenOnly }: { onClose: () => 
           ...(screening?.pain != null ? { painHistory: [...edit.painHistory.filter((x) => x.date !== todayISO()), { date: todayISO(), score: screening.pain }] } : {}),
         },
       });
+      // คัดกรองใหม่ที่คลินิก = ผลล่าสุดของนัดวันนี้ → ปวดก่อนนวด/จุดปวด/ห้ามนวด/แรงนวด ของนัดเปลี่ยนตาม
+      if (screening && !skipScr) {
+        const v = store.appointments.find((a) => a.patientId === edit.id && a.date === todayISO() && a.status !== "cancelled" && a.status !== "absent" && a.status !== "done");
+        if (v) {
+          const pain = screening.pain ?? v.painBefore;
+          const avoid = scr.avoidAreas as string[];
+          store.dispatch({
+            type: "updateAppointment",
+            id: v.id,
+            patch: {
+              painBefore: pain,
+              ...(v.intake ? { intake: { ...v.intake, at: screening.at, pain, focusAreas: scr.painAreas, avoidAreas: avoid, pressure: screening.pressure } } : {}),
+              ...(v.assessRounds?.length
+                ? { assessRounds: [...v.assessRounds, { at: screening.at, pain, complaint: v.assessRounds[v.assessRounds.length - 1].complaint, focusAreas: scr.painAreas, avoidAreas: avoid, summary: "คัดกรองที่คลินิก" }] }
+                : {}),
+            },
+            log: `คัดกรองที่คลินิก · ปวด ${pain}/10`,
+          });
+        }
+      }
       toast({ message: screenOnly ? (flags.some((x) => x.level === "stop") ? "บันทึกผลคัดกรองแล้ว · พบข้อห้าม ให้แพทย์ประเมินก่อนนวด" : "บันทึกผลคัดกรองแล้ว") : "บันทึกแล้ว", tone: screenOnly && flags.some((x) => x.level === "stop") ? "danger" : undefined });
       onClose();
       return;
