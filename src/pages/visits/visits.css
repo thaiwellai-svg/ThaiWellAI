@@ -137,7 +137,6 @@
 }
 .vp__hist {
   min-width: 0;
-  margin-bottom: calc(-1 * var(--space-4) + 0px);
 }
 .vp__hist .hp {
   width: 100%;
@@ -250,7 +249,8 @@
 }
 .vp.ws .vp__hist {
   width: 100%;
-  margin: 0 0 calc(-1 * var(--space-4));
+  /* ขอบล่างเท่ากับกล่องอื่น */
+  margin: 0;
   min-width: 260px;
 }
 .vp.ws .panel.appt__main {
