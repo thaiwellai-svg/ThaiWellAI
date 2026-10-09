@@ -133,3 +133,13 @@
   border-radius: 50%;
   background: #c4473a;
 }
+/* ปัดเปลี่ยนเดือน */
+.mcal__swipe {
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.mcal__week {
+  margin-bottom: -6px;
+}

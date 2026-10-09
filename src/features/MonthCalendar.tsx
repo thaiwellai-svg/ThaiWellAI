@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { TH_WEEKDAYS_SHORT, addDays, fromISODate, startOfWeek, thaiMonthYear, toISODate, todayISO } from "../data/thaiDate";
@@ -33,7 +34,30 @@ export function MonthCalendar({
   const rows = days[35].getMonth() !== month.getMonth() ? 5 : 6;
   const today = todayISO();
   const canPrev = toISODate(new Date(month.getFullYear(), month.getMonth(), 0)) >= min;
-  const go = (n: number) => setMonth(new Date(month.getFullYear(), month.getMonth() + n, 1));
+  const [dir, setDir] = useState(0);
+  const go = (n: number) => {
+    if (n < 0 && !canPrev) return;
+    setDir(n);
+    setMonth(new Date(month.getFullYear(), month.getMonth() + n, 1));
+  };
+  // ปัดซ้าย/ขวาเพื่อเปลี่ยนเดือน (ปัดแล้วไม่นับเป็นการแตะเลือกวัน)
+  const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const swiped = useRef(false);
+  const onDown = (e: React.PointerEvent) => {
+    drag.current = { x: e.clientX, y: e.clientY, moved: false };
+    swiped.current = false;
+  };
+  const onUp = (e: React.PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      swiped.current = true;
+      go(dx < 0 ? 1 : -1);
+    }
+  };
   const weekdays = [1, 2, 3, 4, 5, 6, 0];
   return (
     <div className="mcal">
@@ -46,12 +70,25 @@ export function MonthCalendar({
           <ChevronRight size={16} />
         </button>
       </div>
-      <div className="mcal__grid" role="grid">
+      <div className="mcal__grid mcal__week">
         {weekdays.map((w) => (
           <small key={w} className={clsx("mcal__wd", closedWeekdays.includes(w) && "is-closed")}>
             {TH_WEEKDAYS_SHORT[w]}
           </small>
         ))}
+      </div>
+      <div className="mcal__swipe" onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => (drag.current = null)}>
+        <AnimatePresence initial={false} mode="popLayout" custom={dir}>
+      <motion.div
+        key={toISODate(first)}
+        className="mcal__grid"
+        role="grid"
+        custom={dir}
+        initial={{ x: dir * 60, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: dir * -60, opacity: 0 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      >
         {days.slice(0, rows * 7).map((d) => {
           const iso = toISODate(d);
           const out = d.getMonth() !== month.getMonth();
@@ -65,7 +102,14 @@ export function MonthCalendar({
               disabled={off}
               aria-pressed={iso === value}
               aria-label={iso}
-              onClick={() => onChange(iso)}
+              onClick={() => {
+                if (swiped.current) return;
+                onChange(iso);
+                if (out) {
+                  setDir(d < first ? -1 : 1);
+                  setMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+                }
+              }}
             >
               {d.getDate()}
               {iso === requested && <em>ขอ</em>}
@@ -73,6 +117,8 @@ export function MonthCalendar({
             </button>
           );
         })}
+      </motion.div>
+        </AnimatePresence>
       </div>
       {(requested || marked.length > 0) && (
         <div className="mcal__legend">
