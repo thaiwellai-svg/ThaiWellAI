@@ -1,4 +1,4 @@
-import { BookOpenCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { BookOpenCheck, Leaf, Sparkles, TriangleAlert } from "lucide-react";
 import type { AppGuide } from "../data/types";
 import { guideFor } from "../data/treatmentGuides";
 import "./app-guide.css";
@@ -24,6 +24,7 @@ export function AppGuideCard({ guide: sent, areas, compact }: { guide?: AppGuide
       </header>
       {guide.condition && (
         <div className="agc__cond">
+          <Leaf size={64} className="agc__cond-bg" aria-hidden />
           <small>อาการแผนไทย</small>
           <b>{guide.condition}</b>
         </div>
