@@ -1102,12 +1102,9 @@ button.st-me[aria-pressed="true"] {
     padding: 14px 16px;
   }
 }
-/* wide desktop: roomier menu, content column capped so rows stay readable */
+/* wide desktop: roomier menu · เนื้อหาเต็มความกว้าง (ไม่เหลือที่ว่างด้านขวา) */
 @media (min-width: 1600px) {
   .appt.st-page {
     grid-template-columns: 340px minmax(0, 1fr);
-  }
-  .st-inner {
-    max-width: 960px;
   }
 }
