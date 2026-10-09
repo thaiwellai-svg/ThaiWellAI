@@ -170,12 +170,22 @@ export function CloudBridge() {
     const st = ref.current;
     const cp = row.tw_patients;
     const digits = cp?.phone?.replace(/\D/g, "") ?? "";
-    // ผู้ป่วยเดิมของคลินิก: บัญชีแอปเดียวกัน → เลขบัตรประชาชนตรงกัน → เบอร์โทรตรงกัน
-    //   เบอร์โทรอย่างเดียวไม่พอ ถ้าผู้ป่วยคนนั้นผูกกับบัญชีแอปอื่นอยู่แล้ว (ครอบครัวใช้เบอร์เดียวกัน) → เป็นคนละคน สร้างผู้ป่วยใหม่
+    // ผู้ป่วยเดิมของคลินิก: บัญชีแอปเดียวกัน → เลขบัตรประชาชนตรงกัน → เบอร์โทร + ชื่อตรงกัน
+    //   เบอร์โทรอย่างเดียวไม่พอ (ครอบครัวใช้เบอร์เดียวกัน): ต้องชื่อเดียวกัน และผู้ป่วยคนนั้นยังไม่ผูกกับบัญชีแอปอื่น
+    //   เลขบัตรไม่ตรงกัน = คนละคนแน่นอน
+    const bare = (n?: string | null) => (n ?? "").replace(/^(นางสาว|นาง|นาย|น\.ส\.|ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง)\s*/, "").replace(/\s+/g, "");
     const found =
       st.patients.find((p) => p.cloudId === row.patient_id) ??
       (cp?.citizen_id ? st.patients.find((p) => p.citizenId?.replace(/\D/g, "") === cp.citizen_id) : undefined) ??
-      (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits && !p.cloudId) : undefined);
+      (digits.length >= 9
+        ? st.patients.find(
+            (p) =>
+              p.phone.replace(/\D/g, "") === digits &&
+              !p.cloudId &&
+              bare(p.name) === bare(cp?.name) &&
+              !(p.citizenId && cp?.citizen_id && p.citizenId.replace(/\D/g, "") !== cp.citizen_id),
+          )
+        : undefined);
     if (found) {
       syncPhoto(found, cp);
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
