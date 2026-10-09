@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -19,7 +19,7 @@ import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
-import { AIPlanCard, AIPlanTeaser, ElementCard } from "../../features/AIPlan";
+import { AIPlanCard, ElementCard } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
 import { clsx } from "clsx";
 import "../../features/health.css";
@@ -225,8 +225,10 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         </div>
 
         <div className="pd__grid">
-          {/* ── อาการ | ข้อมูลส่วนตัว ── */}
-          <section className="pd__card pd2">
+          {/* ── 2 คอลัมน์: ผู้ป่วย | การรักษา (แผน → คอร์ส → นัด) ── */}
+          <div className="pd__cols">
+            <div className="pd__col">
+              <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
                 <Stethoscope size={15} />
@@ -235,8 +237,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             </h3>
             <p className="pd2__quote">{p.complaint}</p>
           </section>
-
-          <section className="pd__card pd2">
+              <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#6b7a71" }}>
                 <UserRound size={15} />
@@ -288,39 +289,93 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 </div>
               </dl>
           </section>
-
-          {/* ── ขั้นตอนการรักษา: 1 วางแผน → 2 คอร์ส → 3 นัด ── */}
-          <div className="pd__card pd__card--wide pd-flow">
-            {[
-              { n: 1, t: "แผนการรักษา", v: !p.aiPlan ? "ยังไม่วางแผน" : p.aiPlan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ", ok: !!p.aiPlan?.approved, on: !!p.aiPlan },
-              { n: 2, t: "คอร์ส", v: credits ? `${credits.total} ครั้ง · เหลือ ${credits.remaining}` : "เปิดเมื่ออนุมัติแผน", ok: !!credits, on: !!credits },
-              { n: 3, t: "นัด", v: upcoming.length ? `จองไว้ ${upcoming.length} นัด` : "ยังไม่มีนัด", ok: upcoming.length > 0, on: upcoming.length > 0 },
-            ].map((x) => (
-              <div key={x.n} className={clsx("pd-flow__s", x.ok && "is-ok", x.on && !x.ok && "is-wait")}>
-                <i>{x.ok ? <Check size={13} strokeWidth={3} /> : x.n}</i>
-                <span>
-                  <b>{x.t}</b>
-                  <small>{x.v}</small>
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* ── AI plan (opens the side panel on wide screens) ── */}
-          <div className="pd__card--wide pd-plan">{onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}</div>
-
-          {/* ── คอร์ส | นัด ── */}
-          <section className="pd__card pd2">
+              <section className="pd__card pd2">
             <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#d08a3c" }}>
-                <Ticket size={15} />
+              <span className="pd2__i" style={{ ["--c" as string]: "#c2482b" }}>
+                <Activity size={15} />
               </span>
-              <i className="pd2__step">2</i> คอร์ส
-              {credits && <em className={credits.remaining <= 1 ? "is-low" : undefined}>เหลือ {credits.remaining} ครั้ง</em>}
-              <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
-                <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
-              </button>
+              ความปวด
+              {first !== undefined && last !== undefined && h.length > 1 && (
+                <em className={last < first ? "is-good" : "is-bad"}>
+                  {first} → {last}
+                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
+                </em>
+              )}
             </h3>
+            {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีคะแนนปวด</p>}
+            {/* การประเมินรายครั้ง: แต่ละวันที่มารักษา ผู้ป่วยประเมินอะไรมา */}
+            {assessed > 0 && (
+              <details className="pd2__more">
+                <summary>
+                  <ClipboardList size={14} /> ปวดก่อน–หลังนวด รายครั้ง
+                  <ChevronDown size={14} />
+                </summary>
+                <VisitAssessments p={p} onOpen={openAppt} />
+              </details>
+            )}
+          </section>
+              <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
+                <History size={15} />
+              </span>
+              ประวัติการรักษา
+            </h3>
+            {past.length ? (
+              <ol className="hx-hist">
+                {past.map((v) => (
+                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined} role="button" tabIndex={0} onClick={() => openAppt(v.id)}>
+                    <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
+                    <span className="hx-hist__body">
+                      <b>{store.serviceById(v.serviceId).short}</b>
+                      {v.status === "absent" || (v.status === "waiting" && v.date < todayISO()) ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
+                    </span>
+                    {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="pd2__muted">ยังไม่มีประวัติ</p>
+            )}
+          </section>
+            </div>
+            <div className="pd__col">
+              <section className="pd__card pd2 ptx">
+                <h3 className="pd2__h">
+                  <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
+                    <ClipboardList size={15} />
+                  </span>
+                  การรักษา
+                </h3>
+                <ol className="ptx__steps">
+                  {/* 1 แผนการรักษา */}
+                  <li className={clsx("ptx__s", p.aiPlan?.approved ? "is-ok" : p.aiPlan ? "is-wait" : undefined)}>
+                    <i className="ptx__n">{p.aiPlan?.approved ? <Check size={13} strokeWidth={3} /> : 1}</i>
+                    <div className="ptx__body">
+                      <div className="ptx__head">
+                        <b>แผนการรักษา</b>
+                        <em>{!p.aiPlan ? "ยังไม่วางแผน" : p.aiPlan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}</em>
+                        {onAIPlan && (
+                          <button type="button" className="pd2__act" onClick={onAIPlan}>
+                            {p.aiPlan ? (aiOpen ? "ซ่อนแผน" : "เปิดแผน") : "วางแผน"}
+                          </button>
+                        )}
+                      </div>
+                      {p.aiPlan ? <p className="ptx__sub">{p.aiPlan.massageType} · {p.aiPlan.sessions} ครั้ง · {p.aiPlan.frequency}</p> : <p className="ptx__sub">ให้ AI ร่างแผนจากอาการ แล้วแพทย์อนุมัติ</p>}
+                      {!onAIPlan && <AIPlanCard p={p} />}
+                    </div>
+                  </li>
+                  {/* 2 คอร์ส */}
+                  <li className={clsx("ptx__s", credits ? "is-ok" : p.aiPlan && !p.aiPlan.approved ? "is-wait" : undefined)}>
+                    <i className="ptx__n">{credits ? <Check size={13} strokeWidth={3} /> : 2}</i>
+                    <div className="ptx__body">
+                      <div className="ptx__head">
+                        <b>คอร์ส</b>
+                        {credits && <em className={credits.remaining <= 1 ? "is-low" : undefined}>เหลือ {credits.remaining} ครั้ง</em>}
+                        <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
+                          <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
+                        </button>
+                      </div>
             {credits && p.course ? (
               <>
                 <div className="pd2__course-row">
@@ -452,19 +507,20 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             ) : (
               <p className="pd2__muted">ยังไม่มีคอร์ส</p>
             )}
-          </section>
-
-          <section className="pd__card pd2">
-            <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#3b82c4" }}>
-                <CalendarDays size={15} />
-              </span>
-              <i className="pd2__step">3</i> นัดที่จะถึง
-              {upcoming.length > 0 && <em>{upcoming.length}</em>}
-              <button type="button" className="pd2__act" onClick={() => setPlanFor(p.id)}>
-                <CalendarPlus size={14} /> จัดนัด
-              </button>
-            </h3>
+          
+                    </div>
+                  </li>
+                  {/* 3 นัด */}
+                  <li className={clsx("ptx__s", upcoming.length > 0 && "is-ok")}>
+                    <i className="ptx__n">{upcoming.length > 0 ? <Check size={13} strokeWidth={3} /> : 3}</i>
+                    <div className="ptx__body">
+                      <div className="ptx__head">
+                        <b>นัดที่จะถึง</b>
+                        {upcoming.length > 0 && <em>{upcoming.length} นัด</em>}
+                        <button type="button" className="pd2__act" onClick={() => setPlanFor(p.id)}>
+                          <CalendarPlus size={14} /> จัดนัด
+                        </button>
+                      </div>
             {upcoming.length ? (
               <div className="hx-next">
                 {upcoming.slice(0, 5).map((v, k) => (
@@ -487,59 +543,14 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             ) : (
               <p className="pd2__muted">ยังไม่มีนัด</p>
             )}
-          </section>
-
-          <section className="pd__card pd__card--wide pd2">
-            <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
-                <History size={15} />
-              </span>
-              ประวัติการรักษา
-            </h3>
-            {past.length ? (
-              <ol className="hx-hist">
-                {past.map((v) => (
-                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined} role="button" tabIndex={0} onClick={() => openAppt(v.id)}>
-                    <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
-                    <span className="hx-hist__body">
-                      <b>{store.serviceById(v.serviceId).short}</b>
-                      {v.status === "absent" || (v.status === "waiting" && v.date < todayISO()) ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
-                    </span>
-                    {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
+          
+                    </div>
                   </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="pd2__muted">ยังไม่มีประวัติ</p>
-            )}
-          </section>
+                </ol>
+              </section>
+            </div>
+          </div>
 
-          {/* ── pain: trend chart + per-visit table (folded) ── */}
-          <section className="pd__card pd__card--wide pd2">
-            <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#c2482b" }}>
-                <Activity size={15} />
-              </span>
-              ความปวด
-              {first !== undefined && last !== undefined && h.length > 1 && (
-                <em className={last < first ? "is-good" : "is-bad"}>
-                  {first} → {last}
-                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
-                </em>
-              )}
-            </h3>
-            {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีคะแนนปวด</p>}
-            {/* การประเมินรายครั้ง: แต่ละวันที่มารักษา ผู้ป่วยประเมินอะไรมา */}
-            {assessed > 0 && (
-              <details className="pd2__more">
-                <summary>
-                  <ClipboardList size={14} /> ปวดก่อน–หลังนวด รายครั้ง
-                  <ChevronDown size={14} />
-                </summary>
-                <VisitAssessments p={p} onOpen={openAppt} />
-              </details>
-            )}
-          </section>
 
           {/* ── element (wide, folded) ── */}
           <ElementCard p={p} />
