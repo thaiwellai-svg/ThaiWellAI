@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { AudioLines, Check, CircleHelp, FileAudio, Mic, Pencil, Send, Sparkles, Square, Volume2, VolumeX, X } from "lucide-react";
+import { Activity, AudioLines, Check, CircleCheck, CircleHelp, ClipboardList, FileAudio, Hand, MessageSquareHeart, Mic, Pencil, Send, SkipForward, Sparkles, Square, Stethoscope, Volume2, VolumeX, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
@@ -32,8 +32,29 @@ const FIELDS: { key: Field; label: string; ask: string }[] = [
 ];
 const LABEL = Object.fromEntries(FIELDS.map((f) => [f.key, f.label])) as Record<Field, string>;
 
-type Chip = { label: string; run: () => void; tone?: "primary" | "ghost" };
-type Msg = { id: number; role: "ai" | "me"; text: string; chips?: Chip[]; field?: Field };
+type Chip = { label: string; run: () => void; tone?: "primary" | "ghost"; cls?: string };
+type Msg = {
+  id: number;
+  role: "ai" | "me";
+  text: string;
+  chips?: Chip[];
+  field?: Field;
+  /** การ์ดคำถาม (หัวข้อ · ความคืบหน้า · คำตอบตัวอย่าง · ตอบด้วยเสียง/ข้าม) */
+  q?: boolean;
+  hint?: string;
+  /** คำตอบตัวอย่าง: แตะแล้วเติมลงช่องพิมพ์ (เลือกได้หลายคำ แล้วกดส่ง) */
+  taps?: string[];
+  /** ข้อความยืนยันสั้น ๆ ว่าบันทึกอะไรไปแล้ว */
+  note?: boolean;
+};
+const ICON: Record<Field, typeof Activity> = { finding: Stethoscope, dx: ClipboardList, proc: Hand, pain: Activity, advice: MessageSquareHeart };
+const HINT: Record<Field, string> = {
+  finding: "แตะคำตัวอย่างเพื่อเติม หรือพิมพ์/พูดเอง",
+  dx: "แตะตัวเลือกที่ AI แนะนำ หรือบอกการวินิจฉัยเอง",
+  proc: "แตะตัวเลือก หรือบอกหัตถการ ตำแหน่ง และเวลา",
+  pain: "ถามผู้ป่วย แล้วแตะคะแนน",
+  advice: "ให้ AI ร่างจากการรักษาวันนี้ หรือแตะคำตัวอย่าง",
+};
 type Extract = {
   fixed?: string;
   findings?: string | null;
@@ -116,6 +137,8 @@ export function QuickRecord({ appt }: { appt: Appointment; bare?: boolean }) {
   const [voiceMode, setVoiceMode] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [editing, setEditing] = useState<Field | null>(null);
+  /** การ์ดบันทึก: ย่อเป็นแถบสถานะ (ให้พื้นที่กับคำถาม) · แตะเพื่อดู/แก้ทุกช่อง */
+  const [cardOpen, setCardOpen] = useState(false);
   const [editText, setEditText] = useState("");
   const mic = useRef<MicRec | null>(null);
   const seq = useRef(0);
@@ -155,7 +178,13 @@ export function QuickRecord({ appt }: { appt: Appointment; bare?: boolean }) {
   const has = (f: Field, l = latest.current) =>
     f === "finding" ? !!l.findings.trim() : f === "dx" ? l.dx.length > 0 : f === "proc" ? l.pr.length > 0 : f === "pain" ? l.pain !== undefined || l.skipPain : !!l.advice.trim();
   const stateOf = (f: Field) => (!has(f) ? "empty" : unsure.includes(f) ? "check" : "done");
-  const nextField = (l = latest.current): Field | null => FIELDS.find((f) => has(f.key, l) && l.unsure.includes(f.key))?.key ?? FIELDS.find((f) => !has(f.key, l))?.key ?? null;
+  // ข้ามไว้ → ถามข้อที่ยังไม่ข้ามก่อน แล้วค่อยวนกลับมา
+  const skipped = useRef<Set<Field>>(new Set());
+  const nextField = (l = latest.current): Field | null =>
+    FIELDS.find((f) => has(f.key, l) && l.unsure.includes(f.key))?.key ??
+    FIELDS.find((f) => !has(f.key, l) && !skipped.current.has(f.key))?.key ??
+    FIELDS.find((f) => !has(f.key, l))?.key ??
+    null;
   const doneCount = FIELDS.filter((f) => stateOf(f.key) === "done").length;
 
   const say = (role: Msg["role"], text: string, extra?: Partial<Msg>) => {
@@ -335,6 +364,8 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
   // ── ถามช่องถัดไป (ข้อความตายตัว แม่นและสั้น) ──
   const askField = async (f: Field, prefix = "") => {
     const l = latest.current;
+    if (prefix.trim()) say("ai", prefix.trim(), { note: true });
+    prefix = "";
     if (has(f, l) && l.unsure.includes(f)) {
       const v =
         f === "pain"
@@ -354,7 +385,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     const base = FIELDS.find((x) => x.key === f)!.ask;
     let chips: Chip[] = [];
     if (f === "pain") {
-      chips = [...Array.from({ length: 11 }, (_, n) => ({ label: String(n), run: () => void onUser(`ปวดหลังนวด ${n}`) })), { label: "ข้าม", tone: "ghost" as const, run: () => void onUser("ผู้ป่วยไม่ประเมินปวดหลังนวด") }];
+      chips = [...Array.from({ length: 11 }, (_, n) => ({ label: String(n), cls: n >= 7 ? "is-hi" : n >= 4 ? "is-mid" : "is-lo", run: () => void onUser(`ปวดหลังนวด ${n}`) })), { label: "ผู้ป่วยไม่ประเมิน", tone: "ghost" as const, run: () => void onUser("ผู้ป่วยไม่ประเมินปวดหลังนวด") }];
     } else if (f === "dx" || f === "proc") {
       setThinking(true);
       const items = await suggest(f);
@@ -386,14 +417,28 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
         { label: "ไม่มีคำแนะนำ", tone: "ghost", run: () => (saveAdvice("-"), say("me", "ไม่มีคำแนะนำ"), void next()) },
       ];
     }
-    const q = `${prefix}${base}`;
-    say("ai", q, { field: f, chips });
+    const ik = intakeOfVisit(appt, p);
+    const areas = (ik?.focusAreas ?? []).slice(0, 3);
+    const taps =
+      f === "finding"
+        ? [...areas.flatMap((a) => [`${a}ตึง`, `${a}กดเจ็บ`]), "ขยับได้น้อย", "ชา", "บวม"].slice(0, 7)
+        : f === "advice"
+          ? ["ประคบอุ่นวันละ 15 นาที", "ท่าฤาษีดัดตนวันละ 2 รอบ", "เลี่ยงยกของหนัก", "กลับมาพบถ้าปวดมากขึ้น"]
+          : undefined;
+    const q = base;
+    say("ai", q, { field: f, chips, q: true, hint: HINT[f], taps });
     void voice(q);
+  };
+  const skipField = (f: Field) => {
+    skipped.current.add(f);
+    say("me", `ข้าม${LABEL[f]}`);
+    void next();
   };
   const next = async (prefix = "") => {
     const f = nextField();
     if (f) return askField(f, prefix);
-    const q = `${prefix}ครบทั้ง 5 ช่องแล้วค่ะ ตรวจการ์ดด้านบนแล้วกดบันทึกได้เลย`;
+    if (prefix.trim()) say("ai", prefix.trim(), { note: true });
+    const q = `ครบทั้ง 5 ช่องแล้วค่ะ ตรวจการ์ดด้านบนแล้วกดบันทึกได้เลย`;
     say("ai", q, { chips: [{ label: "บันทึกการรักษา", tone: "primary", run: () => window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_SAVE, { detail: { apptId: appt.id } })) }] });
     void voice(q);
   };
@@ -448,6 +493,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
   // ── แก้ในการ์ด ──
   const openEdit = (f: Field) => {
     const l = latest.current;
+    setCardOpen(true);
     setEditing(f);
     setEditText(f === "finding" ? l.findings : f === "advice" ? (l.advice === "-" ? "" : l.advice) : f === "dx" ? l.dx.map((d) => d.name).join("\n") : f === "proc" ? l.pr.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" ")).join("\n") : String(l.pain ?? ""));
   };
@@ -608,7 +654,9 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
   // เปิดมา: ทักครั้งเดียว บอกว่าพูดรวดเดียวได้
   useEffect(() => {
     if (msgs.length) return;
-    say("ai", `เล่าการรักษาของคุณ${p.name.replace(/^(นางสาว|นาง|นาย)\s*/, "")}รวดเดียวได้เลยค่ะ เช่น “บ่าขวาตึง กดเจ็บ วินิจฉัยลมปลายปัตคาด นวดรักษาบ่าไหล่ 45 นาที ประคบ 15 นาที หลังนวดเหลือปวด 3 แนะนำประคบอุ่นที่บ้าน” แล้วจะแยกใส่ให้ครบ ช่องไหนขาดจะถามต่อค่ะ`);
+    say("ai", `ตอบทีละข้อ หรือเล่ารวดเดียวก็ได้ค่ะ เช่น “บ่าขวาตึง กดเจ็บ ลมปลายปัตคาด นวดรักษา 45 นาที หลังนวดเหลือ 3” ระบบแยกใส่ให้ครบ`, { note: true });
+    const f = nextField();
+    if (f) void askField(f);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── การ์ดบันทึก ──
@@ -648,7 +696,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     <section className="qr" aria-label="ผู้ช่วยบันทึกการรักษา">
       {/* การ์ดบันทึก 5 ช่อง */}
       <div className="qr-card">
-        <div className="qr-card__head">
+        <button type="button" className="qr-card__head" aria-expanded={cardOpen} onClick={() => setCardOpen((v) => !v)}>
           <b>
             <Sparkles size={14} /> บันทึกการรักษา
           </b>
@@ -658,7 +706,22 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
           <small>
             {doneCount}/{FIELDS.length}
           </small>
-        </div>
+          <span className="qr-card__toggle">{cardOpen ? "ย่อ" : "ดู/แก้"}</span>
+        </button>
+        {!cardOpen && (
+          <div className="qr-pills">
+            {FIELDS.map((f) => {
+              const st = stateOf(f.key);
+              return (
+                <button key={f.key} type="button" className={`is-${st}`} onClick={() => setCardOpen(true)}>
+                  {st === "done" ? <Check size={11} strokeWidth={3} /> : st === "check" ? <CircleHelp size={11} /> : <i />}
+                  {f.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {cardOpen && (
         <ol className="qr-rows">
           {FIELDS.map((f) => {
             const st = stateOf(f.key);
@@ -712,30 +775,94 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
             );
           })}
         </ol>
+        )}
       </div>
 
       {/* แชต */}
       <div className="qr-chat scroll-y scroll-y--light" ref={list}>
         {msgs.map((m) => (
-          <div key={m.id} className={clsx("qr-msg", m.role === "ai" ? "is-ai" : "is-me")}>
-            {m.role === "ai" && (
+          <div key={m.id} className={clsx("qr-msg", m.role === "ai" ? "is-ai" : "is-me", m.q && "is-card", m.note && "is-note")}>
+            {m.role === "ai" && !m.q && !m.note && (
               <span className="qr-av">
                 <Sparkles size={12} />
               </span>
             )}
-            <div className="qr-bub">
-              {m.field && <span className="qr-tag">{LABEL[m.field]}</span>}
-              <p>{m.text}</p>
-              {m.chips && m.chips.length > 0 && m === msgs.filter((x) => x.role === "ai").slice(-1)[0] && (
-                <div className={clsx("qr-chips", m.field === "pain" && "is-scale")}>
-                  {m.chips.map((c) => (
-                    <button key={c.label} type="button" className={c.tone ? `is-${c.tone}` : undefined} disabled={thinking} onClick={c.run}>
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            {m.q && m.field ? (
+              (() => {
+                const f = m.field;
+                const Ic = ICON[f];
+                const n = FIELDS.findIndex((x) => x.key === f) + 1;
+                const live = m === msgs.filter((x) => x.role === "ai").slice(-1)[0];
+                return (
+                  <div className={clsx("qr-q", !live && "is-past")}>
+                    <div className="qr-q__head">
+                      <span className="qr-q__ic">
+                        <Ic size={16} />
+                      </span>
+                      <span className="qr-q__t">
+                        <small>
+                          ข้อ {n}/{FIELDS.length}
+                        </small>
+                        <b>{LABEL[f]}</b>
+                      </span>
+                      <span className="qr-q__dots" aria-hidden>
+                        {FIELDS.map((x) => (
+                          <i key={x.key} className={clsx(stateOf(x.key) !== "empty" && "is-done", x.key === f && "is-now")} />
+                        ))}
+                      </span>
+                    </div>
+                    <p className="qr-q__text">{m.text}</p>
+                    {live && (
+                      <>
+                        {m.hint && <small className="qr-q__hint">{m.hint}</small>}
+                        {m.chips && m.chips.length > 0 && (
+                          <div className={clsx("qr-chips", f === "pain" && "is-scale")}>
+                            {m.chips.map((c) => (
+                              <button key={c.label} type="button" className={clsx(c.tone && `is-${c.tone}`, c.cls)} disabled={thinking} onClick={c.run}>
+                                {c.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {m.taps && (
+                          <div className="qr-q__taps">
+                            {m.taps.map((t) => (
+                              <button key={t} type="button" onClick={() => setDraft((d) => (d.includes(t) ? d : d ? `${d} ${t}` : t))}>
+                                + {t}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <div className="qr-q__foot">
+                          {canRecord && (
+                            <button type="button" className="qr-q__mic" disabled={thinking || rec} onClick={() => void listen()}>
+                              <Mic size={15} /> ตอบด้วยเสียง
+                            </button>
+                          )}
+                          <button type="button" className="qr-q__skip" disabled={thinking} onClick={() => skipField(f)}>
+                            ข้ามไปก่อน <SkipForward size={14} />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()
+            ) : (
+              <div className={clsx("qr-bub", m.note && "is-note")}>
+                {m.note && <CircleCheck size={14} className="qr-note-ic" />}
+                <p>{m.text}</p>
+                {m.chips && m.chips.length > 0 && m === msgs.filter((x) => x.role === "ai").slice(-1)[0] && (
+                  <div className="qr-chips">
+                    {m.chips.map((c) => (
+                      <button key={c.label} type="button" className={clsx(c.tone && `is-${c.tone}`, c.cls)} disabled={thinking} onClick={c.run}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
         {(thinking || (rec && live)) && (

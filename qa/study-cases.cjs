@@ -685,6 +685,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];delete a.findings;delete a.painAfter;delete a.advice;s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
+    // การ์ดบันทึกย่ออยู่ → เปิดดูทุกช่อง
+    await p.locator('.qr-card__head').click(); await p.waitForTimeout(200);
     return id;
   };
   const row = (p, label) => p.locator('.qr-row', { hasText: label });
@@ -754,8 +756,8 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await qrSend(p, 'บ่าขวาตึง วินิจฉัยลมปลายปัตคาด นวดรักษา 45 นาที');
     for (let i = 0; i < 4 && (await p.locator('.qr-acts .is-ok').count()); i++) { await p.locator('.qr-acts .is-ok').first().click(); await chatIdle(p); }
     const last = p.locator('.qr-msg.is-ai').last();
-    ex(/ปวดเหลือ/.test(await last.innerText()) && (await last.locator('.qr-chips button').count()) === 12, 'ถามปวดหลังนวดพร้อมแถบ 0–10 และ “ข้าม”');
-    await last.locator('.qr-chips button', { hasText: 'ข้าม' }).click(); await chatIdle(p);
+    ex(/ปวดเหลือ/.test(await last.innerText()) && (await last.locator('.qr-chips button').count()) === 12, 'ถามปวดหลังนวดพร้อมแถบ 0–10 และ “ผู้ป่วยไม่ประเมิน”');
+    await last.locator('.qr-chips button', { hasText: 'ไม่ประเมิน' }).click(); await chatIdle(p);
     ex(/ไม่ประเมิน/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ช่องปวดหลังนวด = ผู้ป่วยไม่ประเมิน');
     ex(/คำแนะนำ/.test(await p.locator('.qr-msg.is-ai').last().innerText()), 'ถามคำแนะนำต่อ ไม่ถามปวดซ้ำ');
   });
