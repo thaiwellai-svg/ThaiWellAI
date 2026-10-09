@@ -3481,3 +3481,12 @@
 .pst__c > small {
   padding-right: 0;
 }
+/* เหลือ 2 การ์ด: รักษาแล้ว (แคบ) · ปวด (กว้าง มีกราฟ) */
+.pst {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+@media (max-width: 700px) {
+  .pst {
+    grid-template-columns: 1fr;
+  }
+}
