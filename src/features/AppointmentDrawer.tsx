@@ -499,7 +499,10 @@ export function AppointmentDrawer({
             </ol>
           )}
 
-          {stepIdx >= 0 ? null : (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+              {/* ยกเลิก / ไม่มา: อยู่คอลัมน์ซ้าย (ฝั่งขวาไม่ถูกดันลง) */}
+              {stepIdx >= 0 ? null : (
             view === "cancelled" ? (
               <div className="cxb">
                 <CalendarX2 size={18} />
@@ -529,8 +532,6 @@ export function AppointmentDrawer({
             )
           )}
 
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.section key={view} className="vs__panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
               {view === "checkin" && (
                 <>
                   <StepHead n={1} title="รอเช็กอิน" hint={appt.date === todayISO() ? "ผู้ป่วยสแกน QR ในแอป หรือกด “เช็กอินที่เคาน์เตอร์”" : "เช็กอินได้ในวันนัด"} />
