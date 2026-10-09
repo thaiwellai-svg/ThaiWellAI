@@ -3276,3 +3276,12 @@
     grid-template-columns: 1fr;
   }
 }
+/* นัดถัดไป = รายการนัดแบบเดียวกับ "นัดที่จะถึง" */
+.pst .pst__next {
+  min-width: 0;
+  height: 100%;
+}
+.pst__next .pst__lbl {
+  font: 600 11px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}

@@ -249,18 +249,32 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               </div>
             );
           })()}
-          {/* นัดถัดไป */}
-          <button type="button" className="pst__c is-link" style={{ ["--tc" as string]: "#2f6fb3" }} disabled={!upcoming[0]} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
-            <span className="pst__ico">
-              <CalendarDays size={14} />
-            </span>
-            <small>นัดถัดไป</small>
-            <b>
-              {upcoming[0] ? thaiDateShort(upcoming[0].date) : "—"}
-              {upcoming[0] && <i>{upcoming[0].start} น.</i>}
-            </b>
-            <span className="pst__sub">{upcoming[0] ? `${relativeDay(upcoming[0].date)} · ${store.serviceById(upcoming[0].serviceId).short}` : "ยังไม่มีนัดล่วงหน้า"}</span>
-          </button>
+          {/* นัดถัดไป: แบบเดียวกับรายการนัดที่จะถึง */}
+          {upcoming[0] ? (
+            <button type="button" className="hx-next__item is-first pst__next" onClick={() => openAppt(upcoming[0].id)}>
+              <span className="hx-next__date">
+                <small>{thaiDateShort(upcoming[0].date).split(" ")[1]}</small>
+                <b>{Number(upcoming[0].date.slice(8))}</b>
+              </span>
+              <span className="hx-next__body">
+                <small className="pst__lbl">นัดถัดไป · {relativeDay(upcoming[0].date)}</small>
+                <b>
+                  {upcoming[0].start} น. · {store.serviceById(upcoming[0].serviceId).short}
+                </b>
+                <small>{store.therapistById(upcoming[0].therapistId).name}</small>
+              </span>
+              <ChevronRight size={15} className="hx-next__go" />
+            </button>
+          ) : (
+            <div className="pst__c" style={{ ["--tc" as string]: "#6b7a71" }}>
+              <span className="pst__ico">
+                <CalendarDays size={14} />
+              </span>
+              <small>นัดถัดไป</small>
+              <b>—</b>
+              <span className="pst__sub">ยังไม่มีนัดล่วงหน้า</span>
+            </div>
+          )}
         </div>
 
         <div className="pd__grid">
