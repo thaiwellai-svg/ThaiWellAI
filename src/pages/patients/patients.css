@@ -3356,3 +3356,11 @@
 .pst__c.is-pain > b {
   padding-right: 0;
 }
+.pst__c.is-pain .pst__spark {
+  height: 40px;
+  overflow: visible;
+}
+.pst__spark svg {
+  display: block;
+  overflow: visible;
+}

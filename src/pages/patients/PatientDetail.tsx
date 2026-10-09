@@ -9,7 +9,7 @@ import { VisitAssessments } from "../../features/VisitAssessments";
 import { ResetPatientDialog } from "../../features/ResetPatientDialog";
 import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
@@ -210,12 +210,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             </b>
             <span className="pst__sub">{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
           </div>
-          {/* ปวด: กราฟแนวโน้ม (ก่อน/หลังนวดทุกครั้ง เรียงตามเวลา) */}
+          {/* ปวด: กราฟแนวโน้ม (ปวดตอนมาแต่ละครั้ง เรียงตามเวลา) */}
           {(() => {
             const fromVisits = [...visits]
               .reverse()
               .filter((v) => v.status !== "cancelled" && v.painBefore !== undefined)
-              .flatMap((v) => (v.painAfter !== undefined ? [v.painBefore!, v.painAfter] : [v.painBefore!]));
+              .map((v) => v.painBefore!);
             const series = fromVisits.length >= 2 ? fromVisits.slice(-12) : h.length ? h.slice(-12).map((x) => x.score) : fromVisits;
             const now = series[series.length - 1];
             const change = series.length > 1 ? now - series[0] : 0;
@@ -605,28 +605,50 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   );
 }
 
-/** กราฟแนวโน้มปวดเล็ก ๆ (คะแนน 0–10 ตามลำดับเวลา) */
+/** กราฟแนวโน้มปวด: เส้นโค้งนุ่ม · พื้นไล่สี · จุดล่าสุด (วาดตามความกว้างจริง ไม่ยืด) */
 function PainSpark({ points }: { points: number[] }) {
-  const W = 100;
-  const H = 30;
-  const x = (i: number) => (points.length === 1 ? W / 2 : (i / (points.length - 1)) * (W - 6) + 3);
-  const y = (v: number) => 3 + (1 - v / 10) * (H - 6);
-  const d = points.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const lastV = points[points.length - 1];
-  const c = painColor(lastV);
+  const ref = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const H = 40;
+  const pad = 5;
+  const x = (i: number) => pad + (i / (points.length - 1)) * (W - pad * 2);
+  const y = (v: number) => pad + (1 - v / 10) * (H - pad * 2);
+  const pts = points.map((v, i) => [x(i), y(v)] as const);
+  // โค้งแบบ monotone (ไม่เกินจุดจริง)
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1];
+    const [x1, y1] = pts[i];
+    const mx = (x0 + x1) / 2;
+    d += ` C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+  }
+  const last = pts[pts.length - 1];
+  const c = painColor(points[points.length - 1]);
+  const gid = `pst-g-${points.join("")}`;
   return (
-    <svg className="pst__spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
-      <defs>
-        <linearGradient id="pst-spark" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={c} stopOpacity="0.22" />
-          <stop offset="1" stopColor={c} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={`${d} L${x(points.length - 1).toFixed(1)},${H} L${x(0).toFixed(1)},${H} Z`} fill="url(#pst-spark)" />
-      <path d={d} fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      {points.map((v, i) => (
-        <circle key={i} cx={x(i)} cy={y(v)} r={i === points.length - 1 ? 3 : 1.8} fill={i === points.length - 1 ? c : "#fff"} stroke={c} strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-      ))}
-    </svg>
+    <div ref={ref} className="pst__spark">
+      {W > 0 && (
+        <svg width={W} height={H} aria-hidden>
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor={c} stopOpacity="0.25" />
+              <stop offset="1" stopColor={c} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <line x1={pad} x2={W - pad} y1={H - pad} y2={H - pad} stroke="rgb(47 64 52 / 8%)" strokeDasharray="2 3" />
+          <path d={`${d} L${last[0]},${H} L${pts[0][0]},${H} Z`} fill={`url(#${gid})`} />
+          <path d={d} fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" />
+          <circle cx={last[0]} cy={last[1]} r="6" fill={c} opacity="0.18" />
+          <circle cx={last[0]} cy={last[1]} r="3.2" fill="#fff" stroke={c} strokeWidth="2" />
+        </svg>
+      )}
+    </div>
   );
 }
