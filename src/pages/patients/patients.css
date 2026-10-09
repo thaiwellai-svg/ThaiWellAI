@@ -3713,3 +3713,11 @@
 .pln__price b {
   color: var(--color-text);
 }
+.pd2__course-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pd2__course-acts:empty {
+  display: none;
+}

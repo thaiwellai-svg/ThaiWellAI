@@ -38,6 +38,7 @@ export function CancelDialog({
   const [note, setNote] = useState("");
   // ids of plan sessions picked for cancelling (any subset of the plan)
   const [picked, setPicked] = useState<string[]>([]);
+  const [closeCourse, setCloseCourse] = useState(true);
   const [notify, setNotify] = useState(true);
   useEffect(() => {
     if (!appt) return;
@@ -82,10 +83,28 @@ export function CancelDialog({
         log: `ยกเลิกนัด ${thaiDateShort(a.date)} ${a.start} น. · ${by === "patient" ? "ผู้ป่วยยกเลิก" : "คลินิกยกเลิก"} · ${why}`,
       });
     }
+    // ยกเลิกทุกนัดที่เหลือของคอร์ส + เลือกปิดคอร์ส → ย้ายคอร์สไปคอร์สที่ผ่านมา (หน้าผู้ป่วยกลับเป็นยังไม่มีคอร์ส)
+    const prevCourse = { course: p.course, aiPlan: p.aiPlan, pastCourses: p.pastCourses };
+    const closing = all && closeCourse && !!p.course;
+    if (closing) {
+      const u = courseUsage(p, store.appointments);
+      const left = u ? Math.max(0, u.total - u.used) : 0;
+      store.dispatch({
+        type: "updatePatient",
+        id: p.id,
+        patch: { course: undefined, aiPlan: undefined, pastCourses: [{ ...p.course!, endedAt: at, reason: `หยุดคอร์ส · ${why}${left ? ` · เหลือ ${left} ครั้ง` : ""}`, plan: p.aiPlan }, ...(p.pastCourses ?? [])] },
+      });
+    }
     const waiting = notifyWaitlist(store, targets.map((a) => ({ date: a.date, start: a.start, patientId: a.patientId })));
     toast({
-      message: (targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว`) + (waiting ? ` · แจ้งคนรอคิว ${waiting} คน` : ""),
-      action: { label: "เลิกทำ", onClick: () => before.forEach((a) => store.dispatch({ type: "restoreAppointment", appointment: a })) },
+      message: (targets.length > 1 ? `ยกเลิก ${targets.length} นัดแล้ว` : `ยกเลิกนัด ${thaiDateShort(targets[0].date)} ${targets[0].start} น. แล้ว`) + (closing ? " · ปิดคอร์สแล้ว" : "") + (waiting ? ` · แจ้งคนรอคิว ${waiting} คน` : ""),
+      action: {
+        label: "เลิกทำ",
+        onClick: () => {
+          before.forEach((a) => store.dispatch({ type: "restoreAppointment", appointment: a }));
+          if (closing) store.dispatch({ type: "updatePatient", id: p.id, patch: prevCourse });
+        },
+      },
     });
     onClose();
     if (onRebook && targets.length === 1 && by === "clinic") onRebook(appt);
@@ -132,6 +151,15 @@ export function CancelDialog({
             </button>
           </div>
           <p className="cx__hint">หรือแตะเลือกทีละวัน · เลือก {targets.length}/{plan.length} นัด</p>
+          {all && (
+            <label className="cx__close">
+              <input type="checkbox" checked={closeCourse} onChange={(e) => setCloseCourse(e.target.checked)} />
+              <span>
+                <b>ปิดคอร์สด้วย</b>
+                <small>หยุดการรักษาตามคอร์สนี้ · คอร์สย้ายไปประวัติ หน้าผู้ป่วยกลับเป็นยังไม่มีคอร์ส</small>
+              </span>
+            </label>
+          )}
           <div className="cx__dates">
             {plan.map((a) => {
               const on = picked.includes(a.id);

@@ -497,8 +497,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await p.getByRole('button', { name: new RegExp(`ยกเลิก ${n} นัด`) }).click(); await p.waitForTimeout(1000);
     const s = await state(p);
     const pt = s.patients.find((x) => x.name === who);
-    const left = s.appointments.filter((a) => a.patientId === pt.id && a.serviceId === pt.course.serviceId && a.status === 'waiting' && !a.calledAt && a.date >= today()).length;
+    const svc = (pt.course ?? pt.pastCourses?.[0])?.serviceId;
+    const left = s.appointments.filter((a) => a.patientId === pt.id && a.serviceId === svc && a.status === 'waiting' && !a.calledAt && a.date >= today()).length;
     ex(left === 0, `ยกเลิกครบ ${n} นัด`);
+    ex(!pt.course && pt.pastCourses?.[0]?.reason.startsWith('หยุดคอร์ส'), 'ปิดคอร์ส (ย้ายไปคอร์สที่ผ่านมา)');
     ex(s.appointments.filter((a) => a.cancel?.by === 'clinic').length === n, 'บันทึกว่าคลินิกเป็นผู้ยกเลิก');
   });
 

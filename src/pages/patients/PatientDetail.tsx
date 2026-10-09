@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Target, TriangleAlert, Ticket, CalendarDays } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, X, Target, TriangleAlert, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid, coursePrice } from "../../data/domain";
@@ -71,6 +71,23 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course, total, ...(p.course.price !== undefined ? { price: Math.round((p.course.price / p.course.total) * total) } : {}), name: p.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) } } });
     toast({ message: `เพิ่มคอร์สเป็น ${total} ครั้งแล้ว · เก็บเงินส่วนเพิ่มด้วย` });
   };
+  /** ปิดคอร์ส: ย้ายคอร์ส + แผนไปไว้ในคอร์สที่ผ่านมา → หน้าผู้ป่วยกลับเป็น "ยังไม่มีคอร์ส" · เลิกทำได้จาก toast */
+  const closeCourse = () => {
+    if (!p.course) return;
+    const prev = { course: p.course, aiPlan: p.aiPlan, pastCourses: p.pastCourses };
+    const u = courseUsage(p, store.appointments);
+    const left = u ? Math.max(0, u.total - u.used) : 0;
+    const reason = left ? `หยุดคอร์ส · เหลือ ${left} ครั้ง` : "ครบคอร์ส";
+    store.dispatch({
+      type: "updatePatient",
+      id: p.id,
+      patch: { course: undefined, aiPlan: undefined, pastCourses: [{ ...p.course, endedAt: new Date().toISOString(), reason, plan: p.aiPlan }, ...(p.pastCourses ?? [])] },
+    });
+    toast({
+      message: `ปิดคอร์ส ${p.course.name} แล้ว${left && coursePrepaid(p, store.biz.sales) ? ` · จ่ายล่วงหน้าไว้ เหลือ ${left} ครั้ง (คืนเงินที่หน้าชำระเงิน)` : ""}`,
+      action: { label: "เลิกทำ", onClick: () => store.dispatch({ type: "updatePatient", id: p.id, patch: prev }) },
+    });
+  };
   // นัดส่วนเกิน = นัดท้ายสุดที่ยังไม่เริ่ม → เปิดหน้าต่างยกเลิกนัดแบบเดียวกับทุกที่ (เลือกไว้ให้ ตรวจ/แก้ได้ก่อนยืนยัน)
   const extraAppts = over
     ? store.appointments
@@ -80,7 +97,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
     : [];
   const upcoming = visits.filter((v) => v.date >= today && (v.status === "waiting" || v.status === "active")).reverse();
   // ล่าสุด 5 ครั้ง (ทุกครั้ง + ปวดก่อน/หลัง อยู่ในการ์ด "ความปวด")
-  const past = visits.filter((v) => !upcoming.includes(v)).slice(0, 5);
+  const past = visits.filter((v) => !upcoming.includes(v) && v.date <= today).slice(0, 5);
   const doneCount = visits.filter((v) => v.status === "done").length;
   const h = [...p.painHistory].sort((a, b) => a.date.localeCompare(b.date));
   const last = h[h.length - 1]?.score;
@@ -502,11 +519,19 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     </div>
                   </div>
                 )}
-                {planNext && (
-                  <button type="button" className="pd2__cancel" onClick={() => setCancelPlan(planNext)}>
-                    <CalendarX2 size={14} /> ยกเลิกนัดตามแผน
-                  </button>
-                )}
+                <div className="pd2__course-acts">
+                  {planNext && (
+                    <button type="button" className="pd2__cancel" onClick={() => setCancelPlan(planNext)}>
+                      <CalendarX2 size={14} /> ยกเลิกนัดตามแผน
+                    </button>
+                  )}
+                  {/* ปิดคอร์ส = หยุดการรักษาตามคอร์สนี้ (นัดที่เหลือต้องยกเลิกก่อน) · เก็บไว้ในคอร์สที่ผ่านมา · เลิกทำได้ */}
+                  {!planNext && (
+                    <button type="button" className="pd2__cancel" onClick={closeCourse}>
+                      <X size={14} /> ปิดคอร์ส
+                    </button>
+                  )}
+                </div>
               </>
             ) : p.aiPlan && !p.aiPlan.approved ? (
               // ร่างแผนรอแพทย์อนุมัติ → คอร์สเปิดเมื่ออนุมัติ

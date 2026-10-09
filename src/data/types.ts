@@ -163,6 +163,8 @@ export interface Patient {
   cloudId?: string;
   /** last AI-drafted treatment plan (needs a Thai traditional doctor's review) */
   aiPlan?: AIPlan;
+  /** คอร์สที่ปิดแล้ว (หยุดการรักษา / ครบแล้ว) เก็บไว้ดูย้อนหลัง */
+  pastCourses?: (Course & { endedAt: string; reason: string; plan?: AIPlan })[];
   /** referral letters / lab reports read by OCR */
   documents?: { name: string; text: string; at: string }[];
 }
