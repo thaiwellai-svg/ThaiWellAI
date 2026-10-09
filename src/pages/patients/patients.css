@@ -3207,92 +3207,144 @@
 }
 .pst__c {
   position: relative;
+  overflow: hidden;
   min-width: 0;
+  min-height: 112px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--sage-100);
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 20px;
   text-align: left;
   font: inherit;
+  color: var(--color-text);
 }
-.pst__c.is-link:not(:disabled) {
-  cursor: pointer;
+.pst__c > :not(.pst__bg) {
+  position: relative;
 }
-.pst__c.is-link:not(:disabled):active {
-  transform: scale(0.99);
+.pst__bg {
+  position: absolute;
+  right: -14px;
+  bottom: -18px;
+  transform: rotate(-12deg);
+  opacity: 0.1;
+  pointer-events: none;
 }
-.pst__b {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.pst__c > small {
+  font: 600 12px/1.2 var(--font-sans);
+  opacity: 0.75;
 }
-.pst__b small {
-  font: 500 11.5px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
-}
-.pst__b b {
+.pst__c > b {
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  font: 800 22px/1.1 var(--font-sans);
-  color: var(--color-text);
+  gap: 6px;
+  font: 800 30px/1 var(--font-sans);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
-.pst__b b em {
-  font: 500 12px/1 var(--font-sans);
+.pst__c > b em {
+  font: 600 13px/1 var(--font-sans);
   font-style: normal;
-  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+.pst__c > span {
+  font: 500 12px/1.3 var(--font-sans);
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* รักษาแล้ว: เขียวอ่อน */
+.pst__c.is-done {
+  background: linear-gradient(135deg, #eef6f0 0%, #e2efe6 100%);
+}
+.pst__c.is-done .pst__bg {
+  color: var(--color-brand);
+}
+.pst__c.is-done > b {
+  color: var(--color-brand);
+}
+
+/* ปวด: ขาว · ก่อน → หลัง */
+.pst__c.is-pain {
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.pst__c.is-pain .pst__bg {
+  color: #c4473a;
+  opacity: 0.07;
 }
 .pst__pain {
-  gap: 8px !important;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.pst__pain > span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .pst__pain i {
-  font: 500 15px/1 var(--font-sans);
+  font: 600 11px/1 var(--font-sans);
   font-style: normal;
   color: var(--color-text-muted);
 }
-.pst__b .pst__text {
-  font: 800 22px/1.1 var(--font-sans);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
+.pst__pain b {
+  font: 800 30px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
 }
-.pst__b > span {
-  font: 400 11.5px/1.3 var(--font-sans);
+.pst__arrow {
+  margin-bottom: 6px;
   color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-.pst__date {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 50px;
-  border-radius: 12px;
+.pst__pain em {
+  align-self: center;
+  margin-left: auto;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  font: 700 12px/1 var(--font-sans);
+  font-style: normal;
+}
+.pst__pain em.is-good {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.pst__pain em.is-bad {
+  background: #fbeeec;
+  color: #c4473a;
+}
+
+/* นัดถัดไป: เขียวเข้ม แตะเปิดนัด */
+.pst__c.is-next {
   background: var(--color-brand);
   color: var(--white);
+  box-shadow: 0 8px 20px rgb(47 107 70 / 22%);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
-.pst__date small {
-  font: 600 10.5px/1 var(--font-sans);
-  opacity: 0.85;
+.pst__c.is-next:active:not(:disabled) {
+  transform: scale(0.98);
 }
-.pst__date b {
-  font: 800 20px/1.1 var(--font-sans);
+.pst__c.is-next:disabled {
+  background: var(--sage-50);
+  color: var(--color-text-muted);
+  box-shadow: none;
+  cursor: default;
+}
+.pst__c.is-next .pst__bg {
+  color: var(--white);
+  opacity: 0.14;
+}
+.pst__c.is-next > b {
+  font-size: 24px;
 }
 .pst__go {
-  align-self: center;
-  flex-shrink: 0;
-  color: var(--color-text-muted);
+  position: absolute !important;
+  top: 16px;
+  right: 16px;
+  opacity: 0.8;
 }
 @media (max-width: 700px) {
   .pst {

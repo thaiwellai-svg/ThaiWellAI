@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, ArrowRight, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -202,65 +202,65 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         {/* Quick stats: ป้าย → ตัวเลข → หน่วย */}
         <div className="pd__stats pst">
           {/* รักษาแล้ว */}
-          <div className="pst__c">
-            <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
-              <Check size={15} strokeWidth={2.5} />
-            </span>
-            <div className="pst__b">
-              <small>รักษาแล้ว</small>
-              <b>
-                {doneCount} <em>ครั้ง</em>
-              </b>
-              <span>{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
-            </div>
+          <div className="pst__c is-done">
+            <HeartPulse size={92} className="pst__bg" aria-hidden />
+            <small>รักษาแล้ว</small>
+            <b>
+              {doneCount}
+              <em>ครั้ง</em>
+            </b>
+            <span>{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)} · ${relativeDay(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
           </div>
           {/* ปวดล่าสุด: ก่อน → หลัง ของครั้งล่าสุด */}
-          <div className="pst__c">
-            <span className="pd2__i" style={{ ["--c" as string]: "#c4473a" }}>
-              <Activity size={15} />
-            </span>
-            <div className="pst__b">
-              <small>ปวดล่าสุด</small>
-              {painVisit ? (
-                <b className="pst__pain">
-                  <span style={{ color: painColor(painVisit.painBefore!) }}>{painVisit.painBefore}</span>
-                  <i>→</i>
-                  <span style={{ color: painVisit.painAfter !== undefined ? painColor(painVisit.painAfter) : undefined }}>{painVisit.painAfter ?? "—"}</span>
-                </b>
-              ) : (
-                <b style={{ color: last !== undefined ? painColor(last) : undefined }}>
-                  {last ?? "—"} {last !== undefined && <em>/10</em>}
-                </b>
-              )}
-              <span>
-                {painVisit
-                  ? painVisit.painAfter !== undefined
-                    ? `ก่อน → หลังนวด · ${painVisit.painAfter < painVisit.painBefore! ? `ลดลง ${painVisit.painBefore! - painVisit.painAfter}` : painVisit.painAfter > painVisit.painBefore! ? `เพิ่ม ${painVisit.painAfter - painVisit.painBefore!}` : "เท่าเดิม"}`
-                    : "ก่อนนวด · ยังไม่ประเมินหลังนวด"
-                  : last === undefined
-                    ? "ยังไม่ได้ประเมิน"
-                    : "จากการประเมิน"}
-              </span>
-            </div>
+          <div className="pst__c is-pain">
+            <Activity size={92} className="pst__bg" aria-hidden />
+            <small>ปวดล่าสุด{painVisit ? ` · ${thaiDateShort(painVisit.date)}` : ""}</small>
+            {painVisit ? (
+              <div className="pst__pain">
+                <span>
+                  <i>ก่อน</i>
+                  <b style={{ color: painColor(painVisit.painBefore!) }}>{painVisit.painBefore}</b>
+                </span>
+                <ArrowRight size={18} className="pst__arrow" />
+                <span>
+                  <i>หลัง</i>
+                  <b style={{ color: painVisit.painAfter !== undefined ? painColor(painVisit.painAfter) : undefined }}>{painVisit.painAfter ?? "—"}</b>
+                </span>
+                {painVisit.painAfter !== undefined && painVisit.painAfter !== painVisit.painBefore && (
+                  <em className={painVisit.painAfter < painVisit.painBefore! ? "is-good" : "is-bad"}>
+                    {painVisit.painAfter < painVisit.painBefore! ? `ลด ${painVisit.painBefore! - painVisit.painAfter}` : `เพิ่ม ${painVisit.painAfter - painVisit.painBefore!}`}
+                  </em>
+                )}
+              </div>
+            ) : (
+              <b style={{ color: last !== undefined ? painColor(last) : undefined }}>
+                {last ?? "—"}
+                {last !== undefined && <em>/10</em>}
+              </b>
+            )}
+            {!painVisit && <span>{last === undefined ? "ยังไม่ได้ประเมิน" : "จากการประเมิน"}</span>}
           </div>
           {/* นัดถัดไป */}
-          <button type="button" className="pst__c is-link" disabled={!upcoming[0]} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
+          <button type="button" className="pst__c is-next" disabled={!upcoming[0]} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
+            <CalendarDays size={92} className="pst__bg" aria-hidden />
+            <small>นัดถัดไป</small>
             {upcoming[0] ? (
-              <span className="pst__date">
-                <small>{thaiDateShort(upcoming[0].date).split(" ")[1]}</small>
-                <b>{Number(upcoming[0].date.slice(8))}</b>
-              </span>
+              <>
+                <b>
+                  {thaiDateShort(upcoming[0].date)}
+                  <em>{upcoming[0].start} น.</em>
+                </b>
+                <span>
+                  {relativeDay(upcoming[0].date)} · {store.serviceById(upcoming[0].serviceId).short}
+                </span>
+                <ChevronRight size={18} className="pst__go" />
+              </>
             ) : (
-              <span className="pd2__i" style={{ ["--c" as string]: "#2f6fb3" }}>
-                <CalendarDays size={15} />
-              </span>
+              <>
+                <b>—</b>
+                <span>ยังไม่มีนัดล่วงหน้า</span>
+              </>
             )}
-            <div className="pst__b">
-              <small>นัดถัดไป</small>
-              <b className="pst__text">{upcoming[0] ? `${upcoming[0].start} น.` : "—"}</b>
-              <span>{upcoming[0] ? `${relativeDay(upcoming[0].date)} · ${store.serviceById(upcoming[0].serviceId).short}` : "ยังไม่มีนัดล่วงหน้า"}</span>
-            </div>
-            {upcoming[0] && <ChevronRight size={16} className="pst__go" />}
           </button>
         </div>
 
