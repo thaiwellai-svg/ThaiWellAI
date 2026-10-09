@@ -405,7 +405,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <Ticket size={15} />
                   </span>
                   คอร์ส
-                  {credits ? <em className={credits.remaining <= 1 ? "is-low" : "is-good"}>เหลือ {credits.remaining} ครั้ง</em> : null}
+                  {credits ? <em className={credits.total - credits.used <= 1 ? "is-low" : "is-good"}>ใช้แล้ว {credits.used}/{credits.total}</em> : null}
                   <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
                     <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
                   </button>

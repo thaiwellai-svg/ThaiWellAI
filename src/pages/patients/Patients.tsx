@@ -196,8 +196,8 @@ export default function Patients() {
                     </small>
                     <span className="prow__chips">
                       {r.c ? (
-                        <Badge tone={r.c.remaining <= 1 ? "danger" : "neutral"} compact>
-                          เหลือ {r.c.remaining}/{r.c.total}
+                        <Badge tone={r.c.total - r.c.used <= 1 ? "danger" : "neutral"} compact>
+                          ใช้แล้ว {r.c.used}/{r.c.total}
                         </Badge>
                       ) : r.p.aiPlan && !r.p.aiPlan.approved ? (
                         <Badge tone="warning" compact>
