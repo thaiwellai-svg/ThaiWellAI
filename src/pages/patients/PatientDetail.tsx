@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, ArrowRight, Ticket, CalendarDays } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -124,9 +124,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const first = h[0]?.score;
   const last = h[h.length - 1]?.score;
   const lastDone = visits.find((v) => v.status === "done");
-  // ครั้งล่าสุดที่มีคะแนนปวดก่อนนวด
-  const painVisit =
-    visits.find((v) => v.painBefore !== undefined && v.painAfter !== undefined) ?? visits.find((v) => v.status !== "cancelled" && v.painBefore !== undefined);
 
   const cid = p.citizenId?.replace(/^(\d)(\d{4})(\d{5})(\d{2})(\d)$/, "$1-$2-$3-$4-$5");
   const assessed = visits.filter((v) => v.status !== "cancelled" && v.status !== "absent").length;
@@ -213,40 +210,27 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             </b>
             <span className="pst__sub">{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
           </div>
-          {/* ปวดล่าสุด: ก่อน → หลัง */}
+          {/* ปวด: กราฟแนวโน้ม (ก่อน/หลังนวดทุกครั้ง เรียงตามเวลา) */}
           {(() => {
-            const after = painVisit?.painAfter;
-            const before = painVisit?.painBefore;
-            const now = after ?? before ?? last;
+            const fromVisits = [...visits]
+              .reverse()
+              .filter((v) => v.status !== "cancelled" && v.painBefore !== undefined)
+              .flatMap((v) => (v.painAfter !== undefined ? [v.painBefore!, v.painAfter] : [v.painBefore!]));
+            const series = fromVisits.length >= 2 ? fromVisits.slice(-12) : h.length ? h.slice(-12).map((x) => x.score) : fromVisits;
+            const now = series[series.length - 1];
+            const change = series.length > 1 ? now - series[0] : 0;
             return (
-              <div className="pst__c" style={{ ["--tc" as string]: now === undefined ? "#6b7a71" : painColor(now) }}>
+              <div className="pst__c is-pain" style={{ ["--tc" as string]: now === undefined ? "#6b7a71" : painColor(now) }}>
                 <span className="pst__ico">
                   <Activity size={14} />
                 </span>
-                <small>ปวดล่าสุด</small>
-                {before !== undefined ? (
-                  <b>
-                    <span style={{ color: painColor(before) }}>{before}</span>
-                    <ArrowRight size={14} className="pst__arrow" />
-                    <span style={{ color: after !== undefined ? painColor(after) : undefined }}>{after ?? "—"}</span>
-                    <i>/10</i>
-                  </b>
-                ) : (
-                  <b>
-                    {last ?? "—"}
-                    {last !== undefined && <i>/10</i>}
-                  </b>
-                )}
-                {h.length > 1 && <PainSpark points={h.slice(-8).map((x) => x.score)} />}
-                <span className="pst__sub">
-                  {before !== undefined
-                    ? after !== undefined
-                      ? `ก่อน → หลังนวด · ${after < before ? `ลดลง ${before - after}` : after > before ? `เพิ่ม ${after - before}` : "เท่าเดิม"}`
-                      : "ก่อนนวด · ยังไม่ประเมินหลัง"
-                    : last === undefined
-                      ? "ยังไม่ได้ประเมิน"
-                      : "จากการประเมิน"}
-                </span>
+                <small>แนวโน้มปวด</small>
+                <b>
+                  {now ?? "—"}
+                  {now !== undefined && <i>/10 ล่าสุด</i>}
+                  {change !== 0 && <em className={change < 0 ? "is-good" : "is-bad"}>{change < 0 ? `ลดลง ${-change}` : `เพิ่ม ${change}`}</em>}
+                </b>
+                {series.length > 1 ? <PainSpark points={series} /> : <span className="pst__sub">{now === undefined ? "ยังไม่ได้ประเมิน" : "ประเมินครั้งเดียว"}</span>}
               </div>
             );
           })()}
@@ -640,7 +624,9 @@ function PainSpark({ points }: { points: number[] }) {
       </defs>
       <path d={`${d} L${x(points.length - 1).toFixed(1)},${H} L${x(0).toFixed(1)},${H} Z`} fill="url(#pst-spark)" />
       <path d={d} fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={x(points.length - 1)} cy={y(lastV)} r="2.6" fill={c} />
+      {points.map((v, i) => (
+        <circle key={i} cx={x(i)} cy={y(v)} r={i === points.length - 1 ? 3 : 1.8} fill={i === points.length - 1 ? c : "#fff"} stroke={c} strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+      ))}
     </svg>
   );
 }

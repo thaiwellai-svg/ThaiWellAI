@@ -3330,3 +3330,29 @@
 .pst__spark + .pst__sub {
   padding-right: 42%;
 }
+/* การ์ดปวด = กราฟแนวโน้มเต็มความกว้าง */
+.pst__c.is-pain .pst__spark {
+  position: static;
+  width: 100%;
+  height: 34px;
+  margin-top: 2px;
+}
+.pst__c > b em {
+  margin-left: auto;
+  align-self: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font: 700 11px/1 var(--font-sans);
+  font-style: normal;
+}
+.pst__c > b em.is-good {
+  background: #e3f4ea;
+  color: #2f8a52;
+}
+.pst__c > b em.is-bad {
+  background: #fbeeec;
+  color: #c4473a;
+}
+.pst__c.is-pain > b {
+  padding-right: 0;
+}
