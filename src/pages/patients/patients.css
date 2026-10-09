@@ -3711,3 +3711,48 @@
   flex-shrink: 0;
   width: auto;
 }
+
+/* ---------- ราคาคอร์ส ---------- */
+.cpr {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cpr__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.cpr__grid > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sage-50);
+}
+.cpr__grid small {
+  font: 500 11.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.cpr__grid b {
+  font: 700 15px/1.2 var(--font-sans);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cpr__grid b.is-wait {
+  color: #93670a;
+}
+.cpr__note {
+  margin: 0;
+  font: 500 12px/1.45 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.hx-draft__foot {
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}

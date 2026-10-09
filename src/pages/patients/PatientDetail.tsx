@@ -16,7 +16,7 @@ import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
-import { thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
+import { baht, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
 import { AIPlanCard, ElementCard } from "../../features/AIPlan";
@@ -442,29 +442,40 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <i /> ว่าง {credits.remaining}
                   </span>
                 </div>
-                {/* วิธีชำระของคอร์ส: ชำระรายครั้ง หรือ ชำระล่วงหน้า (หักเครดิตทุกครั้ง) */}
-                <div className="pd2__bill" role="radiogroup" aria-label="วิธีชำระคอร์ส">
-                  {(
-                    [
-                      ["perVisit", "ชำระรายครั้ง", "จ่ายทุกครั้งที่มา"],
-                      ["prepaid", "ชำระล่วงหน้าแล้ว", "หักเครดิตทุกครั้ง"],
-                    ] as const
-                  ).map(([k, label, sub]) => {
-                    const on = (prepaid ? "prepaid" : "perVisit") === k;
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        onClick={() => !on && store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course!, billing: k } }, })}
-                      >
-                        <b>{label}</b>
-                        <small>{sub}</small>
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* ราคาคอร์ส: ราคาต่อครั้ง × จำนวนครั้ง · วิธีชำระ (เลือกตอนรับชำระครั้งแรก) */}
+                {(() => {
+                  const c = p.course!;
+                  const per = store.serviceById(c.serviceId).price;
+                  const paid = store.biz.sales.filter((x) => x.patientId === p.id && !x.void && x.at.slice(0, 10) >= c.startedOn).reduce((n, x) => n + x.payments.reduce((m, y) => m + y.amount, 0), 0);
+                  const left = Math.max(0, credits.total - credits.used);
+                  return (
+                    <div className="cpr">
+                      <div className="cpr__grid">
+                        <span>
+                          <small>ราคาต่อครั้ง</small>
+                          <b>{baht(prepaid && paid ? Math.round(paid / credits.total) : per)} ฿</b>
+                        </span>
+                        <span>
+                          <small>ทั้งคอร์ส {credits.total} ครั้ง</small>
+                          <b>{baht(prepaid && paid ? paid : per * credits.total)} ฿</b>
+                        </span>
+                        <span>
+                          <small>วิธีชำระ</small>
+                          <b className={prepaid || c.billing ? undefined : "is-wait"}>{prepaid ? "จ่ายล่วงหน้าแล้ว" : c.billing === "perVisit" ? "จ่ายรายครั้ง" : "ยังไม่เลือก"}</b>
+                        </span>
+                      </div>
+                      <p className="cpr__note">
+                        {prepaid
+                          ? paid
+                            ? `รับเงินแล้ว ${baht(paid)} บาท · มาครั้งต่อไปไม่ต้องจ่าย (หัตถการเพิ่มจ่ายตามจริง)`
+                            : "ชำระล่วงหน้าแล้ว · มาครั้งต่อไปไม่ต้องจ่าย"
+                          : c.billing === "perVisit"
+                            ? `จ่ายตอนมาแต่ละครั้ง ${baht(per)} บาท · ยังเหลือ ${left} ครั้ง ${baht(left * per)} บาท`
+                            : `ตอนรับชำระครั้งแรกจะให้เลือก: จ่ายรายครั้ง ${baht(per)} บาท หรือจ่ายทั้งคอร์ส ${baht(left * per)} บาท (ลดได้)`}
+                      </p>
+                    </div>
+                  );
+                })()}
                 {over > 0 && (
                   // ใช้แล้ว + จองไว้ ต้องไม่เกินจำนวนครั้งของคอร์ส → ให้เลือกว่าจะเพิ่มครั้งในคอร์ส หรือยกเลิกนัดส่วนเกิน
                   <div className="pd2__over" role="alert">
@@ -511,6 +522,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                       <span>
                         จองไว้ <b>{n}</b> · ว่าง <b>{Math.max(0, pl.sessions - n)}</b>
                       </span>
+                      {svc && (
+                        <span>
+                          ครั้งละ <b>{baht(store.serviceById(svc).price)}</b> · ทั้งคอร์ส <b>{baht(store.serviceById(svc).price * pl.sessions)} ฿</b>
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
