@@ -199,11 +199,11 @@ export default function Patients() {
                         <Badge tone={r.c.remaining <= 1 ? "danger" : "neutral"} compact>
                           เหลือ {r.c.remaining}/{r.c.total}
                         </Badge>
-                      ) : (
-                        <Badge tone="neutral" compact>
-                          รายครั้ง
+                      ) : r.p.aiPlan && !r.p.aiPlan.approved ? (
+                        <Badge tone="warning" compact>
+                          ร่างคอร์ส
                         </Badge>
-                      )}
+                      ) : null}
                       {r.pain !== undefined && <PainMini score={r.pain} />}
                     </span>
                   </span>

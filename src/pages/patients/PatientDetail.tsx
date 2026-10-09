@@ -22,6 +22,7 @@ import { PainMini } from "../../features/RecordCards";
 import { AIPlanCard, AIPlanTeaser, ElementCard } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
 import "../../features/health.css";
+import "../../features/patient-health.css";
 
 /** Donut showing used / booked / free sessions of a treatment plan. */
 
@@ -213,12 +214,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               {last ?? "—"}
               {delta < 0 ? <TrendingDown size={18} color="var(--green-700)" /> : delta > 0 ? <TrendingUp size={18} color="var(--color-danger)" /> : null}
             </b>
-            <span>{h.length > 1 && delta !== 0 ? `/10 · ${delta < 0 ? "ดีขึ้น" : "แย่ลง"}จาก ${first}` : "/10"}</span>
+            <span>{last === undefined ? "ยังไม่ได้ประเมิน" : h.length > 1 && delta !== 0 ? `/10 · ${delta < 0 ? "ดีขึ้น" : "แย่ลง"}จาก ${first}` : "/10"}</span>
           </div>
           <div className={upcoming[0] ? "pd__stat is-link" : "pd__stat"} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
             <small>นัดถัดไป</small>
             <b className="pd__stat-text">{upcoming[0] ? `${thaiDateShort(upcoming[0].date)} ${upcoming[0].start}` : "—"}</b>
-            <span>{upcoming[0] ? relativeDay(upcoming[0].date) : "ยังไม่มีนัด"}</span>
+            <span>{upcoming[0] ? relativeDay(upcoming[0].date) : "ยังไม่มีนัดล่วงหน้า"}</span>
           </div>
         </div>
 
@@ -393,10 +394,32 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 )}
               </>
             ) : p.aiPlan && !p.aiPlan.approved ? (
-              // ร่างแผนรอแพทย์อนุมัติ → คอร์สเปิดเมื่ออนุมัติ (นับนัดที่จองไว้ตามแผน)
-              <p className="pd2__muted">
-                ร่างคอร์ส {p.aiPlan.sessions} ครั้ง · รอแพทย์อนุมัติแผน · จองไว้ {store.appointments.filter((a) => a.patientId === p.id && a.status === "waiting" && a.date >= todayISO() && (!p.aiPlan!.phases[0]?.serviceId || a.serviceId === p.aiPlan!.phases[0].serviceId)).length} นัด
-              </p>
+              // ร่างแผนรอแพทย์อนุมัติ → คอร์สเปิดเมื่ออนุมัติ
+              (() => {
+                const pl = p.aiPlan!;
+                const svc = pl.phases[0]?.serviceId;
+                const n = store.appointments.filter((a) => a.patientId === p.id && a.status === "waiting" && a.date >= todayISO() && (!svc || a.serviceId === svc)).length;
+                return (
+                  <div className="hx-draft pd2__draft">
+                    <div className="hx-draft__top">
+                      <span className="hx-draft__tag">รอแพทย์อนุมัติ</span>
+                      <small>{pl.frequency}</small>
+                    </div>
+                    <b className="hx-draft__title">ร่างคอร์ส {pl.sessions} ครั้ง</b>
+                    <small className="hx-draft__svc">{svc ? store.serviceById(svc).name : pl.massageType}</small>
+                    <div className="hx-draft__bar" style={{ gridTemplateColumns: `repeat(${pl.sessions}, minmax(0, 1fr))` }}>
+                      {Array.from({ length: pl.sessions }, (_, k) => (
+                        <i key={k} className={k < n ? "is-booked" : undefined} />
+                      ))}
+                    </div>
+                    <div className="hx-draft__foot">
+                      <span>
+                        จองไว้ <b>{n}</b> · ว่าง <b>{Math.max(0, pl.sessions - n)}</b>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()
             ) : (
               <p className="pd2__muted">ยังไม่มีคอร์ส</p>
             )}
@@ -455,7 +478,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
                     <span className="hx-hist__body">
                       <b>{store.serviceById(v.serviceId).short}</b>
-                      {v.status === "absent" ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
+                      {v.status === "absent" || (v.status === "waiting" && v.date < todayISO()) ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
                     </span>
                     {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
                   </li>

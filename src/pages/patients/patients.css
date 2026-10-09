@@ -2986,3 +2986,11 @@
   background: #fdf3d8;
   color: #9a6b00;
 }
+.pd2__draft {
+  padding: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+.pd__stat > span {
+  white-space: nowrap;
+}
