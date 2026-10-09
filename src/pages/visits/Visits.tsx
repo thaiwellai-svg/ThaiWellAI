@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { QuickRecord } from "../../features/QuickRecord";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Workspace } from "../../features/Workspace";
@@ -11,7 +12,6 @@ import { WorkPage } from "../../layout/WorkPage";
 import { ListModeMenu } from "../../features/ListModeMenu";
 import { FilterMenu } from "../../features/FilterMenu";
 import { AppointmentDrawer, queueNumber, stageOf as visitStage } from "../../features/AppointmentDrawer";
-import { VoiceNote } from "../../features/VoiceNote";
 import { tuckDock } from "../../layout/Dock";
 import { PatientHealth } from "../../features/PatientDrawer";
 import { isOverdue, jobRank, stageMeta, stageOf, type Stage } from "../../data/domain";
@@ -231,7 +231,7 @@ export default function Visits() {
                   </IconButton>
                 </div>
                 <div className="vp__hist-body vp__voice-body">
-                  <VoiceNote appt={sel} bare />
+                  <QuickRecord appt={sel} bare />
                 </div>
               </div>
             </div>

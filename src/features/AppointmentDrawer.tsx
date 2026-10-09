@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { QuickRecord } from "./QuickRecord";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ScanLine, ArrowRight, ChevronRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
@@ -20,7 +21,7 @@ import { MoreMenu } from "./MoreMenu";
 import { CoursePayChoice, PrepayCourseDialog } from "./PrepayCourse";
 import { VisitSummary } from "./VisitSummary";
 import { ClinicalRecord, FindingsField, RecSection } from "./ClinicalRecord";
-import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, VoiceNote, type VoiceFill } from "./VoiceNote";
+import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, type VoiceFill } from "./VoiceNote";
 import { intakeAlerts, intakeOfVisit, visitAssessment } from "../data/intake";
 import { DEFAULT_CALL_VOICE, announce, callText } from "./tts";
 import "./visit.css";
@@ -711,7 +712,7 @@ export function AppointmentDrawer({
           {credits && !(view === "billing" && coveredByCourse) && <CreditPips info={credits} name={p.course!.name} />}
 
           <section className="vs__ctx">
-            {view === "assess" && !onVoice && <VoiceNote appt={appt} />}
+            {view === "assess" && !onVoice && <QuickRecord appt={appt} />}
             {(() => {
               const ik = intakeOfVisit(appt, p);
               const al = ik ? intakeAlerts(ik, store.settings.bpThreshold) : [];
