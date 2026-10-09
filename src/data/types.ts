@@ -125,6 +125,8 @@ export interface Course {
   billing?: "prepaid" | "perVisit";
   /** ราคาทั้งคอร์ส (บาท) ตามที่กำหนดในแผนตอนแพทย์อนุมัติ · ไม่มี = ราคาบริการ × จำนวนครั้ง */
   price?: number;
+  /** วิธีชำระตามแผน (full = จ่ายทั้งคอร์สตอนมาครั้งแรก) · ยังไม่ถือว่าจ่ายแล้วจนกว่าจะรับเงินจริง */
+  payPlan?: "full" | "perVisit";
 }
 
 export interface Patient {
@@ -182,6 +184,8 @@ export interface AIPlan {
   approved?: boolean;
   /** ราคาทั้งคอร์สที่กำหนดเอง (บาท) · ไม่มี = ราคาบริการ × จำนวนครั้ง */
   price?: number;
+  /** วิธีชำระตามแผน: full = จ่ายทั้งคอร์สครั้งเดียว · perVisit = จ่ายรายครั้ง · ไม่มี = เลือกตอนจ่ายครั้งแรก */
+  payPlan?: "full" | "perVisit";
 }
 
 export interface Appointment {

@@ -24,13 +24,13 @@ export function CoursePayChoice({ p, left, price, onPrepay }: { p: Patient; /** 
           <small>ชำระครั้งแรกของคอร์ส · เลือกวิธีชำระ</small>
         </span>
       </div>
-      <div className="cpc__opts">
+      <div className={c.payPlan === "full" ? "cpc__opts is-full-first" : "cpc__opts"}>
         <button type="button" onClick={() => store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...c, billing: "perVisit" } } })}>
           <b>จ่ายรายครั้ง</b>
           <span>ครั้งนี้ {baht(price)} ฿ · มาครั้งต่อไปจ่ายตอนมา</span>
         </button>
-        <button type="button" onClick={onPrepay}>
-          <b>จ่ายทั้งคอร์สล่วงหน้า</b>
+        <button type="button" className={c.payPlan === "full" ? "is-plan" : undefined} onClick={onPrepay}>
+          <b>จ่ายทั้งคอร์สล่วงหน้า{c.payPlan === "full" && <em>ตามแผน</em>}</b>
           <span>
             {left} ครั้ง · {baht(left * price)} ฿ · ครั้งต่อไปหักเครดิต
           </span>

@@ -347,7 +347,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                             </small>
                             {pl.phases[0]?.serviceId && (
                               <small className="pln__price">
-                                ราคาคอร์ส <b>{baht(pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions)} บาท</b> · ครั้งละ {baht(Math.round((pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions) / pl.sessions))}
+                                ราคาคอร์ส <b>{baht(pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions)} บาท</b> · {pl.payPlan === "full" ? "จ่ายทั้งคอร์ส" : pl.payPlan === "perVisit" ? `จ่ายรายครั้ง ครั้งละ ${baht(Math.round((pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions) / pl.sessions))}` : `ครั้งละ ${baht(Math.round((pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions) / pl.sessions))}`}
                               </small>
                             )}
                           </span>
@@ -468,7 +468,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                         </span>
                         <span>
                           <small>วิธีชำระ</small>
-                          <b className={prepaid || c.billing ? undefined : "is-wait"}>{prepaid ? "จ่ายล่วงหน้าแล้ว" : c.billing === "perVisit" ? "จ่ายรายครั้ง" : "ยังไม่เลือก"}</b>
+                          <b className={prepaid || c.billing ? undefined : "is-wait"}>{prepaid ? "จ่ายล่วงหน้าแล้ว" : c.billing === "perVisit" ? "จ่ายรายครั้ง" : c.payPlan === "full" ? "จ่ายทั้งคอร์ส" : "ยังไม่เลือก"}</b>
                         </span>
                       </div>
                       <p className="cpr__note">
@@ -478,7 +478,9 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                             : "ชำระล่วงหน้าแล้ว · มาครั้งต่อไปไม่ต้องจ่าย"
                           : c.billing === "perVisit"
                             ? `จ่ายตอนมาแต่ละครั้ง ${baht(per)} บาท · ยังเหลือ ${left} ครั้ง ${baht(left * per)} บาท`
-                            : `ตอนรับชำระครั้งแรกจะให้เลือก: จ่ายรายครั้ง ${baht(per)} บาท หรือจ่ายทั้งคอร์ส ${baht(left * per)} บาท (ลดได้)`}
+                            : c.payPlan === "full"
+                              ? `ตามแผน: จ่ายทั้งคอร์ส ${baht(Math.round((full / Math.max(1, credits.total)) * left))} บาท ตอนมาครั้งแรก`
+                              : `ตอนรับชำระครั้งแรกจะให้เลือก: จ่ายรายครั้ง ${baht(per)} บาท หรือจ่ายทั้งคอร์ส ${baht(left * per)} บาท (ลดได้)`}
                       </p>
                     </div>
                   );

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { ElementIcon } from "./ElementIcon";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House, Printer } from "lucide-react";
+import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Target, House, Printer } from "lucide-react";
 import { useStore } from "../store/store";
 import { Button, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
@@ -51,6 +51,9 @@ export function useApprovePlan(p: Patient | undefined) {
         expiresOn: addISODays(todayISO(), 90),
         // ราคาคอร์สตามแผน (ล็อกไว้ ราคาบริการเปลี่ยนทีหลังไม่กระทบ)
         price: plan.price ?? store.serviceById(svc).price * plan.sessions,
+        // วิธีชำระตามแผน: รายครั้ง = ตั้งเลย · ทั้งคอร์ส = เสนอเป็นตัวเลือกแรกตอนรับเงินครั้งแรก (ยังไม่นับว่าจ่ายจนรับเงินจริง)
+        ...(plan.payPlan === "perVisit" ? { billing: "perVisit" as const } : {}),
+        ...(plan.payPlan ? { payPlan: plan.payPlan } : {}),
         // วิธีชำระ (รายครั้ง / ทั้งคอร์สล่วงหน้า) เลือกตอนชำระครั้งแรก
       };
     store.dispatch({ type: "updatePatient", id: p.id, patch });
@@ -216,107 +219,16 @@ ${THAI_MASSAGE_KNOWLEDGE}
           </motion.div>
         ) : plan ? (
           <motion.div key={plan.at} className="aip" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            {/* overview */}
-            <div className="aip-hero">
+            {/* สรุปบนสุด: สถานะ · ประเภท · สรุปแผน */}
+            <div className="apn-top">
               <div className="aip-hero__tags">
-                <span className={plan.approved ? "aip-status is-ok" : "aip-status"}>
-                  {plan.approved ? <Check size={12} strokeWidth={3} /> : <span className="aip-dot" />}
+                <span className={plan.approved ? "tw-chip is-good" : "tw-chip is-warn"}>
+                  {plan.approved ? <Check size={12} strokeWidth={3} /> : null}
                   {plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}
                 </span>
-                <span className="aip-type">{plan.massageType}</span>
+                <span className="tw-chip">{plan.massageType}</span>
               </div>
-              <p className="aip-hero__sum">{plan.summary}</p>
-              {/* จำนวนครั้ง · ความถี่ · ระยะเวลา — แถวละ 1 เรื่อง (ร่างแผนปรับได้ก่อนแพทย์อนุมัติ) */}
-              <dl className="aip-set">
-                <div>
-                  <dt>จำนวนครั้ง</dt>
-                  <dd>
-                    {plan.approved ? (
-                      <b>{plan.sessions} ครั้ง</b>
-                    ) : (
-                      <span className="aip-step">
-                        <button type="button" aria-label="ลดจำนวนครั้ง" disabled={plan.sessions <= 1} onClick={() => editPlan({ sessions: plan.sessions - 1 })}>
-                          −
-                        </button>
-                        <b>{plan.sessions}</b>
-                        <button type="button" aria-label="เพิ่มจำนวนครั้ง" disabled={plan.sessions >= 20} onClick={() => editPlan({ sessions: plan.sessions + 1 })}>
-                          +
-                        </button>
-                        <small>ครั้ง</small>
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                <div>
-                  <dt>ความถี่ / สัปดาห์</dt>
-                  <dd>
-                    {plan.approved ? (
-                      <b>{plan.frequency || "—"}</b>
-                    ) : (
-                      <span className="aip-freq" role="radiogroup" aria-label="ความถี่">
-                        {[1, 2, 3].map((n) => (
-                          <button key={n} type="button" role="radio" aria-checked={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} aria-pressed={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} onClick={() => editPlan({ frequency: `สัปดาห์ละ ${n} ครั้ง` })}>
-                            {n} ครั้ง
-                          </button>
-                        ))}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-                {(() => {
-                  // ราคาคอร์ส: เริ่มจากราคาบริการ × จำนวนครั้ง · กำหนดเองได้ (ราคาพิเศษ/ส่วนลด) · ล็อกเมื่อแพทย์อนุมัติ
-                  const svcId = plan.phases[0]?.serviceId;
-                  const per = svcId ? store.serviceById(svcId).price : 0;
-                  const auto = per * plan.sessions;
-                  const price = plan.price ?? auto;
-                  return (
-                    <div className="aip-price">
-                      <dt>ราคาคอร์ส</dt>
-                      <dd>
-                        {plan.approved ? (
-                          <b>{baht(price)} บาท</b>
-                        ) : (
-                          <span className="aip-price__in">
-                            <input
-                              inputMode="numeric"
-                              aria-label="ราคาคอร์ส (บาท)"
-                              value={String(price)}
-                              onChange={(e) => {
-                                const v = Number(e.target.value.replace(/\D/g, "")) || 0;
-                                editPlan({ price: v === auto ? undefined : v });
-                              }}
-                            />
-                            <small>บาท</small>
-                          </span>
-                        )}
-                        <small className="aip-price__sub">
-                          เฉลี่ยครั้งละ {baht(Math.round(price / Math.max(1, plan.sessions)))} บาท
-                          {plan.price !== undefined && plan.price !== auto ? ` · ปกติ ${baht(auto)} (${per} × ${plan.sessions})` : ` · ราคาบริการ ${per} × ${plan.sessions} ครั้ง`}
-                          {!plan.approved && plan.price !== undefined && plan.price !== auto && (
-                            <button type="button" onClick={() => editPlan({ price: undefined })}>
-                              ใช้ราคาปกติ
-                            </button>
-                          )}
-                        </small>
-                      </dd>
-                    </div>
-                  );
-                })()}
-                <div>
-                  <dt>ระยะเวลา</dt>
-                  <dd>
-                    {(() => {
-                      const per = Number(/(\d+)/.exec(plan.frequency ?? "")?.[1] ?? 1) || 1;
-                      const weeks = Math.ceil(plan.sessions / per);
-                      return (
-                        <b>
-                          ประมาณ {weeks} สัปดาห์ <small>· {plan.phases.length} ระยะ</small>
-                        </b>
-                      );
-                    })()}
-                  </dd>
-                </div>
-              </dl>
+              <p>{plan.summary}</p>
             </div>
 
             {plan.referToDoctor && (
@@ -324,118 +236,246 @@ ${THAI_MASSAGE_KNOWLEDGE}
                 <ShieldAlert size={18} />
                 <div>
                   <b>ควรให้แพทย์ประเมินก่อนเริ่ม</b>
-                  <small>ดูข้อควรระวังด้านล่าง</small>
+                  <small>ดูข้อควรระวังในข้อ 4</small>
                 </div>
               </div>
             )}
 
-            {plan.goals.length > 0 && (
-              <section className="aip-sec">
-                <h4>
-                  <Target size={14} /> เป้าหมาย
-                </h4>
-                <ul className="aip-goals">
-                  {plan.goals.map((g) => (
-                    <li key={g}>
-                      <i>
-                        <Check size={11} strokeWidth={3} />
-                      </i>
-                      {g}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {plan.phases.length > 0 && (
-              <section className="aip-sec">
-                <h4>
-                  <Route size={14} /> แต่ละระยะ
-                </h4>
-                <ol className="aip-phases">
-                  {plan.phases.map((ph, i) => (
-                    <li key={i}>
-                      <span className="aip-phases__no">{i + 1}</span>
-                      <div className="aip-phases__card">
-                        <div className="aip-phases__head">
-                          <b>{ph.title}</b>
-                          <small>{ph.weeks}</small>
-                        </div>
-                        <span className="aip-svc">{store.serviceById(ph.serviceId).name}</span>
-                        <dl>
-                          <div>
-                            <dt>
-                              <Crosshair size={12} /> เน้น
-                            </dt>
-                            <dd>{ph.focus}</dd>
-                          </div>
-                          <div>
-                            <dt>
-                              <Hand size={12} /> เทคนิค
-                            </dt>
-                            <dd>{ph.technique}</dd>
-                          </div>
-                        </dl>
+            {(() => {
+              const svcId = plan.phases[0]?.serviceId;
+              const svc = svcId ? store.serviceById(svcId) : undefined;
+              const perWeek = Number(/(\d+)/.exec(plan.frequency ?? "")?.[1] ?? 1) || 1;
+              const weeks = Math.ceil(plan.sessions / perWeek);
+              const auto = (svc?.price ?? 0) * plan.sessions;
+              const price = plan.price ?? auto;
+              const avg = Math.round(price / Math.max(1, plan.sessions));
+              const lock = !!plan.approved;
+              const payPlan = plan.payPlan;
+              return (
+                <>
+                  {/* 1 คอร์ส */}
+                  <section className="tw-box apn-sec">
+                    <h4 className="apn-h">
+                      <i>1</i> คอร์ส
+                    </h4>
+                    <dl className="apn-rows">
+                      <div>
+                        <dt>บริการ</dt>
+                        <dd>
+                          <b>{svc?.name ?? "—"}</b>
+                        </dd>
                       </div>
-                    </li>
-                  ))}
-                </ol>
+                      <div>
+                        <dt>จำนวนครั้ง</dt>
+                        <dd>
+                          {lock ? (
+                            <b>{plan.sessions} ครั้ง</b>
+                          ) : (
+                            <span className="aip-step">
+                              <button type="button" aria-label="ลดจำนวนครั้ง" disabled={plan.sessions <= 1} onClick={() => editPlan({ sessions: plan.sessions - 1 })}>
+                                −
+                              </button>
+                              <b>{plan.sessions}</b>
+                              <button type="button" aria-label="เพิ่มจำนวนครั้ง" disabled={plan.sessions >= 20} onClick={() => editPlan({ sessions: plan.sessions + 1 })}>
+                                +
+                              </button>
+                              <small>ครั้ง</small>
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>ความถี่</dt>
+                        <dd>
+                          {lock ? (
+                            <b>{plan.frequency || "—"}</b>
+                          ) : (
+                            <span className="aip-freq" role="radiogroup" aria-label="ความถี่">
+                              {[1, 2, 3].map((n) => (
+                                <button key={n} type="button" role="radio" aria-checked={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} aria-pressed={plan.frequency === `สัปดาห์ละ ${n} ครั้ง`} onClick={() => editPlan({ frequency: `สัปดาห์ละ ${n} ครั้ง` })}>
+                                  {n}/สัปดาห์
+                                </button>
+                              ))}
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>ระยะเวลา</dt>
+                        <dd>
+                          <b>ประมาณ {weeks} สัปดาห์</b>
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
+
+                  {/* 2 ราคาและการชำระ */}
+                  <section className="tw-box apn-sec">
+                    <h4 className="apn-h">
+                      <i>2</i> ราคาและการชำระ
+                    </h4>
+                    <dl className="apn-rows">
+                      <div>
+                        <dt>ราคาคอร์ส</dt>
+                        <dd>
+                          {lock ? (
+                            <b>{baht(price)} บาท</b>
+                          ) : (
+                            <span className="aip-price__in">
+                              <input
+                                inputMode="numeric"
+                                aria-label="ราคาคอร์ส (บาท)"
+                                value={String(price)}
+                                onChange={(e) => {
+                                  const v = Number(e.target.value.replace(/\D/g, "")) || 0;
+                                  editPlan({ price: v === auto ? undefined : v });
+                                }}
+                              />
+                              <small>บาท</small>
+                            </span>
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>เฉลี่ยต่อครั้ง</dt>
+                        <dd>
+                          <b>{baht(avg)} บาท</b>
+                          {plan.price !== undefined && plan.price !== auto ? (
+                            <small className="apn-note">
+                              ปกติ {baht(auto)}
+                              {!lock && (
+                                <button type="button" onClick={() => editPlan({ price: undefined })}>
+                                  ใช้ราคาปกติ
+                                </button>
+                              )}
+                            </small>
+                          ) : (
+                            <small className="apn-note">ราคาบริการ</small>
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                    <div className="apn-pay" role="radiogroup" aria-label="วิธีชำระคอร์ส">
+                      {(
+                        [
+                          ["full", "จ่ายทั้งคอร์ส", `ครั้งเดียว ${baht(price)} บาท`],
+                          ["perVisit", "จ่ายรายครั้ง", `ครั้งละ ${baht(avg)} บาท`],
+                          [undefined, "เลือกตอนจ่าย", "ถามผู้ป่วยตอนชำระครั้งแรก"],
+                        ] as const
+                      ).map(([k, label, sub]) => (
+                        <button key={label} type="button" role="radio" aria-checked={payPlan === k} disabled={lock && payPlan !== k} onClick={() => !lock && editPlan({ payPlan: k })}>
+                          <b>{label}</b>
+                          <small>{sub}</small>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                </>
+              );
+            })()}
+
+            {/* 3 การรักษา */}
+            {(plan.goals.length > 0 || plan.phases.length > 0) && (
+              <section className="tw-box apn-sec">
+                <h4 className="apn-h">
+                  <i>3</i> การรักษา
+                </h4>
+                {plan.goals.length > 0 && (
+                  <div className="apn-block">
+                    <small>เป้าหมาย</small>
+                    <ul className="aip-goals">
+                      {plan.goals.map((g) => (
+                        <li key={g}>
+                          <i>
+                            <Target size={11} />
+                          </i>
+                          {g}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {plan.phases.length > 0 && (
+                  <div className="apn-block">
+                    <small>แต่ละระยะ</small>
+                    <ol className="apn-phases">
+                      {plan.phases.map((ph, i) => (
+                        <li key={i}>
+                          <span>{i + 1}</span>
+                          <div>
+                            <b>
+                              {ph.title} <em>สัปดาห์ {ph.weeks}</em>
+                            </b>
+                            <small>
+                              เน้น {ph.focus} · {ph.technique}
+                            </small>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {plan.elementNote &&
+                  (() => {
+                    const el = elementProfile(p).birth;
+                    const info = ELEMENT_INFO[el];
+                    return (
+                      <div className="aip-el" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
+                        <span>
+                          <ElementIcon element={el} size={18} />
+                        </span>
+                        <div>
+                          <small>ธาตุ{el}</small>
+                          <p>{plan.elementNote}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
               </section>
             )}
 
-            {plan.elementNote &&
-              (() => {
-                const el = elementProfile(p).birth;
-                const info = ELEMENT_INFO[el];
-                return (
-                  <div className="aip-el" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
-                    <span>
-                      <ElementIcon element={el} size={18} />
-                    </span>
-                    <div>
-                      <small>ธาตุ{el}</small>
-                      <p>{plan.elementNote}</p>
+            {/* 4 คำแนะนำ */}
+            {(plan.herbs.length > 0 || plan.homeCare.length > 0 || plan.precautions.length > 0) && (
+              <section className="tw-box apn-sec">
+                <h4 className="apn-h">
+                  <i>4</i> คำแนะนำ
+                </h4>
+                {plan.herbs.length > 0 && (
+                  <div className="apn-block">
+                    <small>
+                      <Leaf size={12} /> สมุนไพร / ลูกประคบ
+                    </small>
+                    <div className="aip-herbs">
+                      {plan.herbs.map((h) => (
+                        <span key={h}>{h}</span>
+                      ))}
                     </div>
                   </div>
-                );
-              })()}
-
-            {plan.herbs.length > 0 && (
-              <section className="aip-sec">
-                <h4>
-                  <Leaf size={14} /> สมุนไพร / ลูกประคบ
-                </h4>
-                <div className="aip-herbs">
-                  {plan.herbs.map((h) => (
-                    <span key={h}>{h}</span>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {plan.homeCare.length > 0 && (
-              <section className="aip-sec">
-                <h4>
-                  <House size={14} /> ดูแลที่บ้าน
-                </h4>
-                <ul className="aip-list">
-                  {plan.homeCare.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {plan.precautions.length > 0 && (
-              <section className="aip-sec aip-warn">
-                <h4>
-                  <TriangleAlert size={14} /> ข้อควรระวัง
-                </h4>
-                <ul className="aip-list">
-                  {plan.precautions.map((h) => (
-                    <li key={h}>{h}</li>
-                  ))}
-                </ul>
+                )}
+                {plan.homeCare.length > 0 && (
+                  <div className="apn-block">
+                    <small>
+                      <House size={12} /> ดูแลที่บ้าน
+                    </small>
+                    <ul className="aip-list">
+                      {plan.homeCare.map((h) => (
+                        <li key={h}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {plan.precautions.length > 0 && (
+                  <div className="apn-block apn-warn">
+                    <small>
+                      <TriangleAlert size={12} /> ข้อควรระวัง
+                    </small>
+                    <ul className="aip-list">
+                      {plan.precautions.map((h) => (
+                        <li key={h}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </section>
             )}
 
