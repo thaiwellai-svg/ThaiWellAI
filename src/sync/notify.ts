@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
+import { ensurePushSubscription, registerPushWorker } from "./webpush";
 
 /**
  * Push-style alerts for the clinic: a system notification (banner + sound) the moment the patient app sends something.
@@ -31,10 +32,18 @@ export async function initPush() {
   }
   if (typeof Notification === "undefined") return;
   ready = Notification.permission === "granted";
+  // Web Push: ลงทะเบียน service worker · อนุญาตแล้ว → สมัครรับ push ของเครื่องนี้ (แจ้งเตือนแม้ปิดแท็บ)
+  void registerPushWorker().then(() => ready && ensurePushSubscription());
+  // แตะการแจ้งเตือน (จาก service worker) ตอนเปิดหน้าเว็บอยู่ → ไปหน้าที่เกี่ยวข้อง
+  navigator.serviceWorker?.addEventListener("message", (e) => {
+    const d = e.data as { type?: string; link?: string } | undefined;
+    if (d?.type === "thaiwell:navigate") go(d.link);
+  });
   if (Notification.permission === "default") {
     const ask = () => {
       void Notification.requestPermission().then((p) => {
         ready = p === "granted";
+        if (ready) void ensurePushSubscription();
       });
     };
     window.addEventListener("pointerdown", ask, { once: true });
@@ -71,6 +80,7 @@ export async function requestWebNotify() {
   if (typeof Notification === "undefined") return "unsupported" as const;
   const p = await Notification.requestPermission();
   ready = p === "granted";
+  if (ready) await ensurePushSubscription();
   if (ready) void pushNotify("เปิดการแจ้งเตือนแล้ว", "คลินิกจะแจ้งทันทีเมื่อมีคำขอจองหรือข้อความจากแอปผู้ป่วย");
   return p;
 }

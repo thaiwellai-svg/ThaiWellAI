@@ -1,0 +1,10 @@
+{
+  "name": "ThaiWell คลินิก",
+  "short_name": "ThaiWell",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#2f4a37",
+  "theme_color": "#4c845a",
+  "icons": [{ "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }]
+}

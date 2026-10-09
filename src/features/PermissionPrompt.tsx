@@ -22,7 +22,9 @@ export function PermissionPrompt() {
     const t = window.setInterval(() => setSt(webNotifyStatus()), 3000);
     return () => window.clearInterval(t);
   }, []);
-  if (hidden || st === "granted" || st === "native" || st === "unsupported") return null;
+  // iPad/iPhone ผ่าน Safari: แจ้งเตือนได้เมื่อเพิ่มไปยังหน้าจอโฮมแล้ว
+  const iosTab = /iPad|iPhone|Macintosh/.test(navigator.userAgent) && "ontouchend" in document && !(navigator as { standalone?: boolean }).standalone && !window.matchMedia("(display-mode: standalone)").matches;
+  if (hidden || st === "granted" || st === "native" || (st === "unsupported" && !iosTab)) return null;
   const close = () => {
     setHidden(true);
     try {
@@ -37,11 +39,13 @@ export function PermissionPrompt() {
         <BellRing size={18} />
       </span>
       <div className="perm__body">
-        <b>{st === "denied" ? "การแจ้งเตือนถูกปิดในเบราว์เซอร์" : "เปิดการแจ้งเตือน"}</b>
+        <b>{st === "unsupported" ? "รับแจ้งเตือนบน iPad" : st === "denied" ? "การแจ้งเตือนถูกปิดในเบราว์เซอร์" : "เปิดการแจ้งเตือน"}</b>
         <small>
-          {st === "denied"
+          {st === "unsupported"
+            ? "กดปุ่มแชร์ ⎙ → “เพิ่มไปยังหน้าจอโฮม” แล้วเปิดจากไอคอนบนหน้าจอโฮม จึงรับแจ้งเตือนได้"
+            : st === "denied"
             ? "กดไอคอนแม่กุญแจหน้าที่อยู่เว็บ → การแจ้งเตือน → อนุญาต แล้วโหลดหน้าใหม่"
-            : "รู้ทันทีเมื่อมีคำขอจองใหม่ หรือผู้ป่วยส่งข้อความจากแอป"}
+            : "รู้ทันทีเมื่อมีคำขอจองใหม่ แม้ปิดหน้าเว็บอยู่"}
         </small>
       </div>
       {st === "default" && (
