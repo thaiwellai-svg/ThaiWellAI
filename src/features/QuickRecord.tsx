@@ -49,11 +49,11 @@ type Msg = {
 };
 const ICON: Record<Field, typeof Activity> = { finding: Stethoscope, dx: ClipboardList, proc: Hand, pain: Activity, advice: MessageSquareHeart };
 const HINT: Record<Field, string> = {
-  finding: "แตะคำตัวอย่างเพื่อเติม หรือพิมพ์/พูดเอง",
+  finding: "แตะเลือกได้หลายข้อ แล้วกดส่ง · หรือพิมพ์/พูดเอง",
   dx: "แตะตัวเลือกที่ AI แนะนำ หรือบอกการวินิจฉัยเอง",
   proc: "แตะตัวเลือก หรือบอกหัตถการ ตำแหน่ง และเวลา",
   pain: "ถามผู้ป่วย แล้วแตะคะแนน",
-  advice: "ให้ AI ร่างจากการรักษาวันนี้ หรือแตะคำตัวอย่าง",
+  advice: "ให้ AI ร่างจากการรักษาวันนี้ หรือแตะเลือกคำแนะนำแล้วกดส่ง",
 };
 type Extract = {
   fixed?: string;
@@ -142,6 +142,8 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
   const [editing, setEditing] = useState<Field | null>(null);
   /** การ์ดบันทึก: ย่อเป็นแถบสถานะ (ให้พื้นที่กับคำถาม) · แตะเพื่อดู/แก้ทุกช่อง */
   const [cardOpen, setCardOpen] = useState(false);
+  /** คำตอบตัวอย่างที่เลือกในการ์ดคำถามข้อปัจจุบัน (แตะเลือกได้หลายคำ แล้วกดส่ง) */
+  const [picked, setPicked] = useState<string[]>([]);
   const [editText, setEditText] = useState("");
   const mic = useRef<MicRec | null>(null);
   const seq = useRef(0);
@@ -445,6 +447,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
           ? ["ประคบอุ่นวันละ 15 นาที", "ท่าฤาษีดัดตนวันละ 2 รอบ", "เลี่ยงยกของหนัก", "กลับมาพบถ้าปวดมากขึ้น"]
           : undefined;
     const q = base;
+    setPicked([]);
     say("ai", q, { field: f, chips, q: true, hint: HINT[f], taps });
     void voice(q);
   };
@@ -969,17 +972,35 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
                         )}
                         {m.taps && (
                           <div className="qr-q__taps">
-                            {m.taps.map((t) => (
-                              <button key={t} type="button" onClick={() => setDraft((d) => (d.includes(t) ? d : d ? `${d} ${t}` : t))}>
-                                + {t}
-                              </button>
-                            ))}
+                            {m.taps.map((t) => {
+                              const on = picked.includes(t);
+                              return (
+                                <button key={t} type="button" className={on ? "is-on" : undefined} aria-pressed={on} onClick={() => setPicked((x) => (on ? x.filter((y) => y !== t) : [...x, t]))}>
+                                  {on ? <Check size={13} strokeWidth={3} /> : "+"} {t}
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
                         <div className="qr-q__foot">
-                          <button type="button" className="qr-q__skip" disabled={thinking} onClick={() => skipField(f)}>
-                            ข้ามไปก่อน <SkipForward size={14} />
-                          </button>
+                          {picked.length ? (
+                            <button
+                              type="button"
+                              className="qr-q__send"
+                              disabled={thinking}
+                              onClick={() => {
+                                const t = picked.join(" ");
+                                setPicked([]);
+                                void onUser(f === "advice" ? `แนะนำ ${t}` : t);
+                              }}
+                            >
+                              <Send size={14} /> ส่ง {picked.length} ข้อ
+                            </button>
+                          ) : (
+                            <button type="button" className="qr-q__skip" disabled={thinking} onClick={() => skipField(f)}>
+                              ข้ามไปก่อน <SkipForward size={14} />
+                            </button>
+                          )}
                         </div>
                       </>
                     )}

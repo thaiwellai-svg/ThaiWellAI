@@ -859,3 +859,27 @@ button.qr-card__head {
   background: var(--white);
   color: var(--color-text-muted);
 }
+/* คำตอบตัวอย่างที่เลือกแล้ว · ปุ่มส่ง */
+.qr-q__taps button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.qr-q__taps button.is-on {
+  background: var(--color-brand);
+  color: var(--white);
+}
+.qr-q__send {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  font: 700 13.5px/1 var(--font-sans);
+  color: var(--white);
+}
+.qr-q__send:disabled {
+  opacity: 0.5;
+}
