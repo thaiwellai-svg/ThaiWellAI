@@ -15,11 +15,6 @@ function before(a: Appointment, p: Patient) {
   return { pain: a.painBefore, from: a.date >= new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10) && !a.endedAt ? "ยังไม่ได้ประเมิน" : "ตอนจอง", app: false };
 }
 
-const STATUS: Record<string, [string, string]> = {
-  done: ["รักษาแล้ว", "is-done"],
-  active: ["กำลังรักษา", "is-active"],
-  waiting: ["นัดไว้", "is-wait"],
-};
 
 /**
  * การประเมินรายครั้ง — แต่ละครั้งที่มารักษา (ตามวัน) ผู้ป่วยประเมินอะไรมา: ปวดก่อนนวด (จากแอป/เคาน์เตอร์) · แจ้งเพิ่มหลังเช็กอิน · ปวดหลังนวด
@@ -27,64 +22,66 @@ const STATUS: Record<string, [string, string]> = {
  */
 export function VisitAssessments({ p, onOpen }: { p: Patient; onOpen?: (id: string) => void }) {
   const store = useStore();
-  const list = store.appointments
+  const today = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
+  // เฉพาะครั้งที่มาแล้ว (นัดล่วงหน้าอยู่ในการ์ด "นัดที่จะถึง")
+  const all = store.appointments
     .filter((a) => a.patientId === p.id && a.status !== "cancelled" && a.status !== "absent")
     .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
-  if (!list.length) return null;
   const c = p.course;
-  const inCourse = c ? list.filter((a) => a.serviceId === c.serviceId && a.date >= c.startedOn) : [];
+  const inCourse = c ? all.filter((a) => a.serviceId === c.serviceId && a.date >= c.startedOn) : [];
   const no = (a: Appointment) => {
     const i = inCourse.findIndex((x) => x.id === a.id);
     return i < 0 ? null : i + 1;
   };
-  const rows = list.slice(-10).reverse();
+  const rows = all.filter((a) => a.date <= today && (a.status === "done" || !!a.startedAt || !!a.endedAt)).slice(-10).reverse();
+  if (!rows.length) return <p className="vas__empty">ยังไม่มีครั้งที่มารักษา</p>;
   return (
-    <div className="vas">
-      <div className="vas__head">
-        <span>ครั้งที่</span>
-        <span>วันที่</span>
-        <span>ปวดก่อนนวด</span>
-        <span>ปวดหลังนวด</span>
-        <span>สถานะ</span>
-      </div>
+    <ol className="vas">
       {rows.map((a) => {
         const b = before(a, p);
         const n = no(a);
-        const st = a.endedAt || a.status === "done" ? STATUS.done : a.startedAt ? STATUS.active : STATUS.waiting;
+        const done = !!a.endedAt || a.status === "done";
+        const d = a.painAfter !== undefined ? b.pain - a.painAfter : undefined;
+        const svc = store.serviceById(a.serviceId);
         return (
-          <button key={a.id} type="button" className="vas__row" onClick={() => onOpen?.(a.id)}>
-            <span className="vas__no">
-              {n ? (
-                <>
-                  <b>{n}</b>
-                  <small>/{c!.total}</small>
-                </>
-              ) : (
-                <small>—</small>
-              )}
-            </span>
-            <span className="vas__date">
-              <b>{thaiDateShort(a.date)}</b>
-              <small>
-                {a.start} · {store.serviceById(a.serviceId).short || store.serviceById(a.serviceId).name}
-              </small>
-            </span>
-            <span className={clsx("vas__pain", b.app && "is-app")}>
-              <b>{b.from === "ยังไม่ได้ประเมิน" ? "—" : `${b.pain}/10`}</b>
-              <small>
-                {b.app ? <Smartphone size={11} /> : <ClipboardCheck size={11} />} {b.from}
-              </small>
-              {a.addenda?.length ? (
-                <em>
-                  <MessageSquareWarning size={11} /> แจ้งเพิ่ม {a.addenda.length}
-                </em>
-              ) : null}
-            </span>
-            <span className="vas__after">{a.painAfter !== undefined ? <b>{a.painAfter}/10</b> : <small>—</small>}</span>
-            <span className={clsx("vas__st", st[1])}>{st[0]}</span>
-          </button>
+          <li key={a.id}>
+            <button type="button" className="vas__row" onClick={() => onOpen?.(a.id)}>
+              <span className="vas__date">
+                <small>{thaiDateShort(a.date).split(" ")[1]}</small>
+                <b>{Number(a.date.slice(8))}</b>
+              </span>
+              <span className="vas__body">
+                <b>
+                  {a.start} น. · {svc.short || svc.name}
+                  {n && c && <em>ครั้งที่ {n}/{c.total}</em>}
+                </b>
+                <small>
+                  {b.app ? <Smartphone size={11} /> : <ClipboardCheck size={11} />} ประเมิน{b.from}
+                  {a.addenda?.length ? (
+                    <i>
+                      <MessageSquareWarning size={11} /> แจ้งเพิ่ม {a.addenda.length}
+                    </i>
+                  ) : null}
+                </small>
+              </span>
+              <span className="vas__pain">
+                <span className="vas__nums">
+                  <b style={{ color: painTone(b.pain) }}>{b.pain}</b>
+                  <i>→</i>
+                  <b style={{ color: a.painAfter !== undefined ? painTone(a.painAfter) : undefined }}>{a.painAfter ?? "—"}</b>
+                </span>
+                {d !== undefined ? (
+                  <em className={clsx(d > 0 ? "is-good" : d < 0 ? "is-bad" : undefined)}>{d > 0 ? `ลด ${d}` : d < 0 ? `เพิ่ม ${-d}` : "เท่าเดิม"}</em>
+                ) : (
+                  <em className="is-info">{done ? "ไม่ได้ประเมิน" : "กำลังรักษา"}</em>
+                )}
+              </span>
+            </button>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
+
+const painTone = (v: number) => (v >= 7 ? "#d8392a" : v >= 4 ? "#e08a1e" : "#2f9a5b");
