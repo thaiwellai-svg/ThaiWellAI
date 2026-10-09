@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { visitPrice } from "../data/domain";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -37,13 +37,19 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
       .then(setQr)
       .catch(() => setQr(""));
   }, [no]);
+  // เล่นแอนิเมชันพิมพ์ใบเสร็จครั้งเดียวต่อการเปิด (ไม่ผูกกับ onClose ที่เปลี่ยนทุกครั้งที่หน้าข้างหลัง render → เคยเล่นวนซ้ำ)
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!id) return;
     setRun((r) => r + 1);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+  }, [id]);
+  useEffect(() => {
+    if (!id) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [id, onClose]);
+  }, [id]);
 
   if (!a) return null;
   const p = store.patientById(a.patientId);
