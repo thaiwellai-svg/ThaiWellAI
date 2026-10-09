@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Target, TriangleAlert, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
-import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
+import { stageMeta, creditInfo, courseUsage, coursePrepaid, coursePrice } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { baht, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
 import { PhotoPicker } from "../../features/PhotoPicker";
@@ -68,7 +68,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const growCourse = () => {
     if (!p?.course || !credits) return;
     const total = credits.used + credits.booked;
-    store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course, total, name: p.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) } } });
+    store.dispatch({ type: "updatePatient", id: p.id, patch: { course: { ...p.course, total, ...(p.course.price !== undefined ? { price: Math.round((p.course.price / p.course.total) * total) } : {}), name: p.course.name.replace(/\d+\s*ครั้ง/, `${total} ครั้ง`) } } });
     toast({ message: `เพิ่มคอร์สเป็น ${total} ครั้งแล้ว · เก็บเงินส่วนเพิ่มด้วย` });
   };
   // นัดส่วนเกิน = นัดท้ายสุดที่ยังไม่เริ่ม → เปิดหน้าต่างยกเลิกนัดแบบเดียวกับทุกที่ (เลือกไว้ให้ ตรวจ/แก้ได้ก่อนยืนยัน)
@@ -345,6 +345,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                             <small>
                               {pl.frequency} · ประมาณ {weeks} สัปดาห์
                             </small>
+                            {pl.phases[0]?.serviceId && (
+                              <small className="pln__price">
+                                ราคาคอร์ส <b>{baht(pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions)} บาท</b> · ครั้งละ {baht(Math.round((pl.price ?? store.serviceById(pl.phases[0].serviceId).price * pl.sessions) / pl.sessions))}
+                              </small>
+                            )}
                           </span>
                         </div>
                         {pl.goals[0] && (
@@ -446,7 +451,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 {/* ราคาคอร์ส: ราคาต่อครั้ง × จำนวนครั้ง · วิธีชำระ (เลือกตอนรับชำระครั้งแรก) */}
                 {(() => {
                   const c = p.course!;
-                  const per = store.serviceById(c.serviceId).price;
+                  const full = coursePrice(c, store.serviceById(c.serviceId).price);
+                  const per = Math.round(full / Math.max(1, credits.total));
                   const paid = store.biz.sales.filter((x) => x.patientId === p.id && !x.void && x.at.slice(0, 10) >= c.startedOn).reduce((n, x) => n + x.payments.reduce((m, y) => m + y.amount, 0), 0);
                   const left = Math.max(0, credits.total - credits.used);
                   return (
@@ -458,7 +464,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                         </span>
                         <span>
                           <small>ทั้งคอร์ส {credits.total} ครั้ง</small>
-                          <b>{baht(prepaid && paid ? paid : per * credits.total)} ฿</b>
+                          <b>{baht(prepaid && paid ? paid : full)} ฿</b>
                         </span>
                         <span>
                           <small>วิธีชำระ</small>
@@ -525,7 +531,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                       </span>
                       {svc && (
                         <span>
-                          ครั้งละ <b>{baht(store.serviceById(svc).price)}</b> · ทั้งคอร์ส <b>{baht(store.serviceById(svc).price * pl.sessions)} ฿</b>
+                          ครั้งละ <b>{baht(Math.round((pl.price ?? store.serviceById(svc).price * pl.sessions) / pl.sessions))}</b> · ทั้งคอร์ส <b>{baht(pl.price ?? store.serviceById(svc).price * pl.sessions)} ฿</b>
                         </span>
                       )}
                     </div>

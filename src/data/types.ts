@@ -123,6 +123,8 @@ export interface Course {
   expiresOn: string;
   /** prepaid = ซื้อแพ็กเกจจ่ายล่วงหน้า (มาแต่ละครั้งหักเครดิต) · perVisit = คอร์สการรักษา ชำระรายครั้ง (ทุกครั้งจ่ายค่าบริการ + หัตถการที่ทำเพิ่ม · คอร์สนับจำนวนครั้ง) */
   billing?: "prepaid" | "perVisit";
+  /** ราคาทั้งคอร์ส (บาท) ตามที่กำหนดในแผนตอนแพทย์อนุมัติ · ไม่มี = ราคาบริการ × จำนวนครั้ง */
+  price?: number;
 }
 
 export interface Patient {
@@ -178,6 +180,8 @@ export interface AIPlan {
   precautions: string[];
   referToDoctor: boolean;
   approved?: boolean;
+  /** ราคาทั้งคอร์สที่กำหนดเอง (บาท) · ไม่มี = ราคาบริการ × จำนวนครั้ง */
+  price?: number;
 }
 
 export interface Appointment {

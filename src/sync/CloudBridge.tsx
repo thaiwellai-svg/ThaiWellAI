@@ -8,7 +8,7 @@ import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
 import { defaultAppAvatar } from "../data/avatars";
 import { validCheckinCode } from "../features/checkinCode";
-import { coursePrepaid, isRecorded } from "../data/domain";
+import { coursePrepaid, isRecorded, visitPrice } from "../data/domain";
 import { ensureDemoCloud, publishCloudAvailability, resetDemoCloud, takeDemoReseed } from "./demo";
 import { cloud, logEvent, rank, updateAppt, type CloudAppt, type CloudAssessment, type CloudEvent, type CloudStatus } from "./cloud";
 import { pushNotify } from "./notify";
@@ -87,7 +87,7 @@ function derive(store: Store, a: Appointment): { status: CloudStatus; patch: Par
   const t = store.therapistById(a.therapistId);
   const pay = a.payment;
   // รายการในบิล: ค่าบริการ + หัตถการเพิ่ม (หักเครดิตคอร์ส = ค่าบริการ 0)
-  const lines = (pay?.items ?? [{ name: s.name, amount: s.price }]).map((l, i) => (i === 0 && pay && (pay.method === "credit" || pay.credit) ? { name: `${l.name} (หักเครดิตคอร์ส)`, amount: 0 } : l));
+  const lines = (pay?.items ?? [{ name: s.name, amount: visitPrice(store.patients.find((x) => x.id === a.patientId), a, s) }]).map((l, i) => (i === 0 && pay && (pay.method === "credit" || pay.credit) ? { name: `${l.name} (หักเครดิตคอร์ส)`, amount: 0 } : l));
   if (a.status === "cancelled") return { status: "cancelled", patch: { note: a.cancel?.reason }, kind: "booking.cancelled", summary: `คลินิกยกเลิกนัด · ${a.cancel?.reason ?? ""}` };
   if (a.status === "absent") return { status: "no_show", patch: {}, kind: "booking.no_show", summary: "บันทึกว่าไม่มาตามนัด" };
   if (pay?.status === "paid")

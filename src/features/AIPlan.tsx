@@ -6,7 +6,7 @@ import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, Shi
 import { useStore } from "../store/store";
 import { Button, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
-import { addISODays, thaiDate, todayISO } from "../data/thaiDate";
+import { addISODays, baht, thaiDate, todayISO } from "../data/thaiDate";
 import type { AIPlan, Patient } from "../data/types";
 import { AI, THAI_MASSAGE_KNOWLEDGE, chatJSON, ocrFile } from "./ai";
 import { CoursePlanDialog } from "../pages/planner/PatientPlanner";
@@ -49,6 +49,8 @@ export function useApprovePlan(p: Patient | undefined) {
         base: 0,
         startedOn: first ? `${first.date}` : todayISO(),
         expiresOn: addISODays(todayISO(), 90),
+        // ราคาคอร์สตามแผน (ล็อกไว้ ราคาบริการเปลี่ยนทีหลังไม่กระทบ)
+        price: plan.price ?? store.serviceById(svc).price * plan.sessions,
         // วิธีชำระ (รายครั้ง / ทั้งคอร์สล่วงหน้า) เลือกตอนชำระครั้งแรก
       };
     store.dispatch({ type: "updatePatient", id: p.id, patch });
@@ -261,6 +263,45 @@ ${THAI_MASSAGE_KNOWLEDGE}
                     )}
                   </dd>
                 </div>
+                {(() => {
+                  // ราคาคอร์ส: เริ่มจากราคาบริการ × จำนวนครั้ง · กำหนดเองได้ (ราคาพิเศษ/ส่วนลด) · ล็อกเมื่อแพทย์อนุมัติ
+                  const svcId = plan.phases[0]?.serviceId;
+                  const per = svcId ? store.serviceById(svcId).price : 0;
+                  const auto = per * plan.sessions;
+                  const price = plan.price ?? auto;
+                  return (
+                    <div className="aip-price">
+                      <dt>ราคาคอร์ส</dt>
+                      <dd>
+                        {plan.approved ? (
+                          <b>{baht(price)} บาท</b>
+                        ) : (
+                          <span className="aip-price__in">
+                            <input
+                              inputMode="numeric"
+                              aria-label="ราคาคอร์ส (บาท)"
+                              value={String(price)}
+                              onChange={(e) => {
+                                const v = Number(e.target.value.replace(/\D/g, "")) || 0;
+                                editPlan({ price: v === auto ? undefined : v });
+                              }}
+                            />
+                            <small>บาท</small>
+                          </span>
+                        )}
+                        <small className="aip-price__sub">
+                          เฉลี่ยครั้งละ {baht(Math.round(price / Math.max(1, plan.sessions)))} บาท
+                          {plan.price !== undefined && plan.price !== auto ? ` · ปกติ ${baht(auto)} (${per} × ${plan.sessions})` : ` · ราคาบริการ ${per} × ${plan.sessions} ครั้ง`}
+                          {!plan.approved && plan.price !== undefined && plan.price !== auto && (
+                            <button type="button" onClick={() => editPlan({ price: undefined })}>
+                              ใช้ราคาปกติ
+                            </button>
+                          )}
+                        </small>
+                      </dd>
+                    </div>
+                  );
+                })()}
                 <div>
                   <dt>ระยะเวลา</dt>
                   <dd>

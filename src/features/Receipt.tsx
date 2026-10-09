@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { visitPrice } from "../data/domain";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import QRCode from "qrcode";
@@ -52,7 +53,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
   const isVoid = pay?.status === "void";
   const at = new Date(pay?.at ?? `${a.date}T${a.start}`);
   const credit = usesCredit(pay);
-  const total = pay?.amount ?? visitTotal(s, a);
+  const total = pay?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a);
   // รายการ: ค่าบริการ + หัตถการเพิ่ม (ตามที่คิดเงินจริงตอนออกใบเสร็จ)
   const extras = pay?.items ? pay.items.slice(1) : extraLines(a);
   const paid = pay ? pay.status === "paid" : a.paid;
@@ -153,7 +154,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                       {s.name}
                       <small>{s.minutes} นาที × 1</small>
                     </span>
-                    <b>{baht(s.price)}</b>
+                    <b>{baht(visitPrice(p, a, s))}</b>
                   </div>
                   {extras.map((l, i) => (
                     <div key={`${l.name}${i}`}>
@@ -170,7 +171,7 @@ export function ReceiptDialog({ id, onClose }: { id: string | null; onClose: () 
                         หักเครดิต {p.course?.name ?? "คอร์ส"}
                         <small>ใช้สิทธิ์ 1 ครั้ง</small>
                       </span>
-                      <b>−{baht(s.price)}</b>
+                      <b>−{baht(visitPrice(p, a, s))}</b>
                     </div>
                   )}
                 </motion.div>

@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { visitPrice } from "../data/domain";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Loader2, Plus, Sparkles, Star, Stethoscope, X } from "lucide-react";
 import { clsx } from "clsx";
@@ -354,7 +355,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
       {pr.length > 0 && !locked && (
         <div className={clsx("cr__charge", unpriced > 0 && "is-need")}>
           <span>
-            {s.name} <b>{baht(s.price)} ฿</b>
+            {s.name} <b>{baht(visitPrice(store.patientById(appt.patientId), appt, s))} ฿</b>
           </span>
           {extra > 0 && (
             <span>
@@ -362,7 +363,7 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
             </span>
           )}
           <span className="cr__charge-total">
-            รวม <b>{baht(s.price + extra)} ฿</b>
+            รวม <b>{baht(visitPrice(store.patientById(appt.patientId), appt, s) + extra)} ฿</b>
           </span>
           {unpriced > 0 && <small>ยังไม่ใส่ราคา {unpriced} รายการ</small>}
         </div>

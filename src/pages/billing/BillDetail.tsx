@@ -9,7 +9,7 @@ import { BackLead } from "../../layout/BackLead";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
 import { ReceiptDialog } from "../../features/Receipt";
 import { METHOD_LABEL, extraLines, usesCredit } from "../../features/billing";
-import { creditInfo } from "../../data/domain";
+import { creditInfo, visitPrice } from "../../data/domain";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
 import { baht, thaiDateLong, thaiDateShort } from "../../data/thaiDate";
 import type { PaymentMethod } from "../../data/types";
@@ -59,8 +59,9 @@ export default function BillDetail() {
   const Ic = pay ? ICON[pay.method] : Wallet;
   const credit = usesCredit(pay);
   const extras = pay?.items ? pay.items.slice(1) : extraLines(a);
-  const full = s.price + extras.reduce((n, l) => n + l.amount, 0);
-  const discount = credit ? s.price : Math.max(0, full - (pay?.amount ?? full));
+  const unit = visitPrice(p, a, s);
+  const full = unit + extras.reduce((n, l) => n + l.amount, 0);
+  const discount = credit ? unit : Math.max(0, full - (pay?.amount ?? full));
   const total = pay?.amount ?? full;
   const receipts = [...(pay ? [{ pay, key: a.id }] : []), ...(a.voidedPayments ?? []).map((x) => ({ pay: x, key: `${a.id}|${x.no}` }))];
   const money = (a.log ?? []).filter((l) => /ชำระ|ใบเสร็จ|เครดิต|บิล|สลิป|เงิน/.test(l.label));
@@ -147,7 +148,7 @@ export default function BillDetail() {
                         {s.minutes} นาที · {thaiDateLong(a.date)} {a.start} น.
                       </small>
                     </span>
-                    <b>{baht(s.price)}</b>
+                    <b>{baht(unit)}</b>
                   </div>
                   {extras.map((l, i) => (
                     <div key={`${l.name}${i}`}>

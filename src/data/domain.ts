@@ -1,4 +1,4 @@
-import type { Appointment, AppointmentStatus, ClinicSettings, DayBlock, Patient, Screening, Therapist } from "./types";
+import type { Appointment, AppointmentStatus, ClinicSettings, Course, DayBlock, Patient, Screening, Therapist } from "./types";
 import { LIVE } from "./mode";
 import type { BadgeTone } from "../design-system";
 import { fromISODate, todayISO } from "./thaiDate";
@@ -120,6 +120,16 @@ export function coursePrepaid(patient: Pick<Patient, "id" | "course">, sales: { 
   if (!c) return false;
   if (c.billing) return c.billing === "prepaid";
   return !LIVE || sales.some((s) => s.patientId === patient.id);
+}
+
+/** ราคาทั้งคอร์ส: ราคาที่กำหนดไว้ หรือราคาบริการ × จำนวนครั้ง */
+export const coursePrice = (c: { price?: number; total: number }, servicePrice: number) => c.price ?? servicePrice * c.total;
+
+/** ราคาต่อครั้งของนัดนี้: นัดของคอร์สที่กำหนดราคาคอร์สไว้ → ราคาคอร์ส ÷ จำนวนครั้ง · นอกนั้นราคาบริการ */
+export function visitPrice(p: { course?: Course } | undefined, a: { serviceId: string; date: string }, s: { price: number }): number {
+  const c = p?.course;
+  if (c && c.price !== undefined && c.serviceId === a.serviceId && a.date >= c.startedOn) return Math.round(c.price / Math.max(1, c.total));
+  return s.price;
 }
 
 /** นัดนี้นับเป็นการใช้คอร์สแล้ว = บันทึกการรักษาแล้ว (หรือเสร็จสิ้น) */

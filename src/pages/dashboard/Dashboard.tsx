@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useStore } from "../../store/store";
 import { AnimatedNumber, Avatar, Card, IconButton, EmptyState, SearchField, fadeUp, listItem, spring } from "../../design-system";
 import { CheckinQr } from "../../features/CheckinQr";
-import { blocksOn, jobRank, stageOf, STATUS_META } from "../../data/domain";
+import { blocksOn, jobRank, stageOf, STATUS_META, visitPrice } from "../../data/domain";
 import { TH_WEEKDAYS_SHORT, addISODays, baht, fromISODate, startOfWeek, thaiDateLong, thaiMonthYear, toISODate, todayISO } from "../../data/thaiDate";
 import { therapistPhoto } from "../../data/avatars";
 import type { AppointmentStatus, BookingRequest } from "../../data/types";
@@ -83,8 +83,8 @@ export default function Dashboard() {
     const bookedDone = booked.filter((a) => a.status === "done").length;
     const billable = todays.filter((a) => a.status !== "absent");
     // ค่าบริการ + หัตถการที่ทำเพิ่ม
-    const revenue = billable.reduce((s, a) => s + visitTotal(store.serviceById(a.serviceId), a), 0);
-    const paid = billable.filter((a) => a.paid).reduce((s, a) => s + visitTotal(store.serviceById(a.serviceId), a), 0);
+    const revenue = billable.reduce((s, a) => s + visitTotal({ price: visitPrice(store.patientById(a.patientId), a, store.serviceById(a.serviceId)) }, a), 0);
+    const paid = billable.filter((a) => a.paid).reduce((s, a) => s + visitTotal({ price: visitPrice(store.patientById(a.patientId), a, store.serviceById(a.serviceId)) }, a), 0);
     const credits = store.patients.reduce((s, p) => s + (p.course ? Math.max(0, p.course.total - p.course.used) : 0), 0);
     const coursed = store.patients.filter((p) => p.course);
     const lowCredit = coursed.filter((p) => p.course!.total - p.course!.used <= 1).length;

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { visitPrice } from "../../data/domain";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { BarChart3, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, ChevronRight, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
@@ -328,7 +329,7 @@ export default function Billing() {
                           <em>{pending ? "รอชำระในแอป" : stageOf(a) === "billing" ? "รอชำระที่เคาน์เตอร์" : "ค้างชำระ"}</em>
                         </span>
                         <span className="bl2-bill__amt">
-                          <b>{baht(a.payment?.amount ?? visitTotal(s, a))}</b>
+                          <b>{baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))}</b>
                           <small>บาท</small>
                         </span>
                         <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={(e) => (e.stopPropagation(), setOpen(a.id))}>

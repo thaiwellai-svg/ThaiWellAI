@@ -3707,3 +3707,9 @@
 .pd-page > .pd {
   padding: 20px 24px calc(var(--dock-height, 72px) + 16px);
 }
+.pln__price {
+  margin-top: 2px;
+}
+.pln__price b {
+  color: var(--color-text);
+}

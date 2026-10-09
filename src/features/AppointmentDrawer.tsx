@@ -6,7 +6,7 @@ import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { Avatar, Button, Dialog, Drawer, Field, Input, Textarea, useToast } from "../design-system";
-import { bedName, bedsInUse, coursePrepaid, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage } from "../data/domain";
+import { bedName, bedsInUse, coursePrepaid, creditInfo, evaluateScreening, stageMeta, stageOf, type Stage, visitPrice } from "../data/domain";
 import { baht, timeAgo, thaiDateShort, timeRange, todayISO } from "../data/thaiDate";
 import type { Appointment, PaymentMethod } from "../data/types";
 import { CreditPips, PainScale } from "./widgets";
@@ -204,7 +204,9 @@ export function AppointmentDrawer({
   // ค่าบริการ + หัตถการที่ทำเพิ่ม · หักเครดิตคอร์ส = หักเฉพาะค่าบริการ (หัตถการเพิ่มยังต้องจ่าย)
   const extras = extraLines(appt);
   const extraSum = extras.reduce((n, l) => n + l.amount, 0);
-  const amount = (payByCredit ? 0 : s.price) + extraSum;
+  // ราคาต่อครั้ง: นัดของคอร์สที่กำหนดราคาไว้ = ราคาคอร์ส ÷ จำนวนครั้ง
+  const unitPrice = visitPrice(p, appt, s);
+  const amount = (payByCredit ? 0 : unitPrice) + extraSum;
   const unpriced = unpricedProcs(appt).length;
   const cash = Number(received) || 0;
 
@@ -239,7 +241,7 @@ export function AppointmentDrawer({
     // เครดิตคอร์สจ่ายค่าบริการ · มีหัตถการเพิ่ม → จ่ายส่วนนั้นด้วยวิธีที่เลือก
     const m: PaymentMethod = payByCredit && !extraSum ? "credit" : method;
     const payment = makePayment(store.appointments, m, amount, m === "cash" ? cash : undefined);
-    payment.items = [{ name: s.name, amount: s.price }, ...extras.map((l) => ({ name: l.name, amount: l.amount }))];
+    payment.items = [{ name: s.name, amount: unitPrice }, ...extras.map((l) => ({ name: l.name, amount: l.amount }))];
     if (payByCredit && extraSum) payment.credit = true;
     if (m !== "app" && store.settings.autoSendSlip) payment.slipSentAt = new Date().toISOString();
     if (m === "app") step({ status: "done", paid: false, payment }, `ส่งบิล ${baht(amount)} บาท เข้าแอป ThaiWell${payment.credit ? " (หักเครดิตค่าบริการแล้ว เก็บเฉพาะหัตถการเพิ่ม)" : ""}`, "ส่งบิลเข้าแอปแล้ว");
@@ -653,13 +655,13 @@ export function AppointmentDrawer({
                 })()}
                 {payUndecided ? (
                   <>
-                    <CoursePayChoice p={p} left={credits!.total - courseNo + 1} price={s.price} onPrepay={() => setPrepayOpen(true)} />
-                    <PrepayCourseDialog p={p} left={credits!.total - courseNo + 1} price={s.price} open={prepayOpen} onClose={() => setPrepayOpen(false)} />
+                    <CoursePayChoice p={p} left={credits!.total - courseNo + 1} price={unitPrice} onPrepay={() => setPrepayOpen(true)} />
+                    <PrepayCourseDialog p={p} left={credits!.total - courseNo + 1} price={unitPrice} open={prepayOpen} onClose={() => setPrepayOpen(false)} />
                   </>
                 ) : (
                 <PayPanel
                   serviceName={s.name}
-                  price={s.price}
+                  price={unitPrice}
                   extras={extras}
                   unpriced={unpriced}
                   course={coveredByCourse ? { name: p.course!.name, left: credits!.total - courseNo + 1, total: credits!.total } : null}
@@ -686,7 +688,7 @@ export function AppointmentDrawer({
               {view === "done" && (
                 <>
                   <StepHead n={6} title="สรุปการรักษา" hint={appt.paid ? `ชำระแล้ว${appt.payment?.at ? ` ${hm(appt.payment.at)} น.` : ""}${appt.payment?.no ? ` · ${appt.payment.no}` : ""}` : appt.payment?.status === "pending" ? "รอผู้ป่วยชำระในแอป" : "ยังค้างชำระ"} />
-                  <VisitSummary appt={appt} courseNo={courseNo} courseTotal={credits?.total} courseLeft={credits?.remaining} amount={appt.payment?.amount ?? s.price + extraSum} />
+                  <VisitSummary appt={appt} courseNo={courseNo} courseTotal={credits?.total} courseLeft={credits?.remaining} amount={appt.payment?.amount ?? unitPrice + extraSum} />
                   {onNext && next && appt.paid && (
                     <button type="button" className="vs__next" onClick={() => onNext(next.id)}>
                       <span>

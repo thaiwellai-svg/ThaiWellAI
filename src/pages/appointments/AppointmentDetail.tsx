@@ -13,7 +13,7 @@ import { BackLead } from "../../layout/BackLead";
 import { CancelDialog } from "../../features/CancelDialog";
 import { ReceiptDialog } from "../../features/Receipt";
 import { slotLoad } from "../../features/slotLoad";
-import { bedName, creditInfo, evaluateScreening, sameDayAppt, stageMeta, staffState } from "../../data/domain";
+import { bedName, creditInfo, evaluateScreening, sameDayAppt, stageMeta, staffState, visitPrice } from "../../data/domain";
 import { VisitScreening } from "../../features/ScreeningAlert";
 import { screeningFlags } from "../../data/counterScreening";
 import { patientPhoto, therapistPhoto } from "../../data/avatars";
@@ -187,7 +187,7 @@ export default function AppointmentDetail() {
                   </div>
                   <div>
                     <small>ค่าบริการ</small>
-                    <b>{a.payment ? `${baht(a.payment.amount)} บาท` : credits ? `หักเครดิตคอร์ส${extraTotal(a) ? ` + หัตถการเพิ่ม ${baht(extraTotal(a))} บาท` : ""}` : `${baht(visitTotal(s, a))} บาท`}</b>
+                    <b>{a.payment ? `${baht(a.payment.amount)} บาท` : credits ? `หักเครดิตคอร์ส${extraTotal(a) ? ` + หัตถการเพิ่ม ${baht(extraTotal(a))} บาท` : ""}` : `${baht(visitTotal({ price: visitPrice(p, a, s) }, a))} บาท`}</b>
                     {a.payment && <em>{a.payment.method === "credit" ? "หักเครดิตแล้ว" : "ชำระแล้ว"}</em>}
                   </div>
                   <div>
