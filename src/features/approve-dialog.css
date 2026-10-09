@@ -395,3 +395,61 @@
   color: var(--color-text-muted);
   opacity: 0.85;
 }
+/* วันที่ (ซ้าย) | ผู้บำบัด (ขวา) */
+.apv__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.apv__pair .apv__staff {
+  grid-template-columns: 1fr;
+  max-height: 266px;
+  overflow-y: auto;
+}
+.apv__pair .apv__sec > h3 small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.apv__pair .mcal {
+  padding: 10px;
+  gap: 6px;
+}
+.apv__pair .mcal__head button {
+  width: 28px;
+  height: 28px;
+}
+.apv__pair .mcal__head b {
+  font-size: 13px;
+}
+.apv__pair .mcal__d {
+  height: 32px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.apv__pair .mcal__d i {
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+}
+.apv__pair .mcal__d em {
+  top: 0;
+  right: 0;
+  padding: 0 3px;
+  font-size: 7.5px;
+}
+.apv__pair .mcal__wd {
+  padding: 2px 0 4px;
+  font-size: 10.5px;
+}
+.apv__pair .mcal__legend {
+  gap: 10px;
+  font-size: 11px;
+}
+@media (max-width: 640px) {
+  .apv__pair {
+    grid-template-columns: 1fr;
+  }
+}

@@ -24,7 +24,7 @@ import {
   shiftsOn,
   staffState,
 } from "../data/domain";
-import { thaiDate, thaiDateLong, timeAgo } from "../data/thaiDate";
+import { thaiDate, timeAgo } from "../data/thaiDate";
 import { CreditPips } from "./widgets";
 import { slotLoad } from "./slotLoad";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
@@ -313,9 +313,10 @@ export function ApproveDialog({
             ) : null}
           </section>
         )}
+        <div className="apv__pair">
         <section className="apv__sec">
           <h3>
-            วันที่ <small>{date ? thaiDateLong(date) : "เลือกวัน"}</small>
+            วันที่ <small>{date ? thaiDate(date) : "เลือกวัน"}</small>
           </h3>
           <MonthCalendar
             value={date}
@@ -373,6 +374,8 @@ export function ApproveDialog({
             ))}
           </ul>
         </section>
+
+        </div>
 
         {/* เวลา: ของผู้บำบัดที่เลือก */}
         <section className="apv__sec">
