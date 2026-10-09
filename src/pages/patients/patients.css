@@ -3318,3 +3318,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* แนวโน้มปวด: มุมขวาล่างของการ์ดปวด */
+.pst__spark {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 38%;
+  height: 30px;
+  overflow: visible;
+}
+.pst__spark + .pst__sub {
+  padding-right: 42%;
+}

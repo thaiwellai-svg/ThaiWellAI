@@ -237,6 +237,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     {last !== undefined && <i>/10</i>}
                   </b>
                 )}
+                {h.length > 1 && <PainSpark points={h.slice(-8).map((x) => x.score)} />}
                 <span className="pst__sub">
                   {before !== undefined
                     ? after !== undefined
@@ -617,5 +618,29 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
       </motion.div>
       <CoursePlanDialog key="cpd" patientId={planFor} onClose={() => setPlanFor(null)} />
     </AnimatePresence>
+  );
+}
+
+/** กราฟแนวโน้มปวดเล็ก ๆ (คะแนน 0–10 ตามลำดับเวลา) */
+function PainSpark({ points }: { points: number[] }) {
+  const W = 100;
+  const H = 30;
+  const x = (i: number) => (points.length === 1 ? W / 2 : (i / (points.length - 1)) * (W - 6) + 3);
+  const y = (v: number) => 3 + (1 - v / 10) * (H - 6);
+  const d = points.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const lastV = points[points.length - 1];
+  const c = painColor(lastV);
+  return (
+    <svg className="pst__spark" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id="pst-spark" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={c} stopOpacity="0.22" />
+          <stop offset="1" stopColor={c} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${d} L${x(points.length - 1).toFixed(1)},${H} L${x(0).toFixed(1)},${H} Z`} fill="url(#pst-spark)" />
+      <path d={d} fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={x(points.length - 1)} cy={y(lastV)} r="2.6" fill={c} />
+    </svg>
   );
 }
