@@ -170,22 +170,18 @@ export function CloudBridge() {
     const st = ref.current;
     const cp = row.tw_patients;
     const digits = cp?.phone?.replace(/\D/g, "") ?? "";
-    // ผู้ป่วยเดิมของคลินิก: บัญชีแอปเดียวกัน → เลขบัตรประชาชนตรงกัน → เบอร์โทร + ชื่อตรงกัน
-    //   เบอร์โทรอย่างเดียวไม่พอ (ครอบครัวใช้เบอร์เดียวกัน): ต้องชื่อเดียวกัน และผู้ป่วยคนนั้นยังไม่ผูกกับบัญชีแอปอื่น
-    //   เลขบัตรไม่ตรงกัน = คนละคนแน่นอน
+    // ผู้ป่วยเดิมของคลินิก (จับคู่ให้แน่ใจว่าเป็นคนเดียวกัน):
+    //   1) บัญชีแอปเดียวกัน
+    //   2) เลขบัตรประชาชน + ชื่อ ตรงกันทั้งคู่
+    //   3) ไม่มีเลขบัตรฝั่งใดฝั่งหนึ่ง → เบอร์โทร + ชื่อ ตรงกัน และผู้ป่วยคนนั้นยังไม่ผูกกับบัญชีแอปอื่น
+    //   ไม่เข้าเงื่อนไข = คนละคน (เช่น ครอบครัวใช้เบอร์เดียวกัน) → สร้างผู้ป่วยใหม่
     const bare = (n?: string | null) => (n ?? "").replace(/^(นางสาว|นาง|นาย|น\.ส\.|ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง)\s*/, "").replace(/\s+/g, "");
+    const cid = cp?.citizen_id?.replace(/\D/g, "") ?? "";
+    const sameName = (p: Patient) => !!bare(cp?.name) && bare(p.name) === bare(cp?.name);
     const found =
       st.patients.find((p) => p.cloudId === row.patient_id) ??
-      (cp?.citizen_id ? st.patients.find((p) => p.citizenId?.replace(/\D/g, "") === cp.citizen_id) : undefined) ??
-      (digits.length >= 9
-        ? st.patients.find(
-            (p) =>
-              p.phone.replace(/\D/g, "") === digits &&
-              !p.cloudId &&
-              bare(p.name) === bare(cp?.name) &&
-              !(p.citizenId && cp?.citizen_id && p.citizenId.replace(/\D/g, "") !== cp.citizen_id),
-          )
-        : undefined);
+      (cid ? st.patients.find((p) => p.citizenId?.replace(/\D/g, "") === cid && sameName(p)) : undefined) ??
+      (digits.length >= 9 ? st.patients.find((p) => p.phone.replace(/\D/g, "") === digits && !p.cloudId && sameName(p) && !(cid && p.citizenId)) : undefined);
     if (found) {
       syncPhoto(found, cp);
       if (!found.cloudId) st.dispatch({ type: "updatePatient", id: found.id, patch: { cloudId: row.patient_id, ...(cp?.citizen_id && !found.citizenId ? { citizenId: cp.citizen_id } : {}) } });
