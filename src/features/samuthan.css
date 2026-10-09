@@ -1,220 +1,335 @@
-.smt {
+/* การแพทย์แผนไทย (หน้าผู้ป่วย): ธาตุเจ้าเรือน | เสี่ยงวันนี้ → สมุฏฐาน → แนวทางวันนี้ → ผลจริงคลินิก */
+.tm__fold > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.tm__fold > summary::-webkit-details-marker {
+  display: none;
+}
+.tm__tags {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px dashed color-mix(in srgb, var(--c) 30%, transparent);
+  gap: 6px;
+  margin-left: auto;
 }
-.smt__head {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.smt__head b {
-  font: 700 14px/1.3 var(--font-sans);
-  color: var(--color-text);
-}
-.smt__head small {
-  font: 500 12px/1.3 var(--font-sans);
-  color: var(--color-text-muted);
-}
-.smt__factors {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 8px;
-}
-.smt__factors > div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  padding: 10px;
-  border-radius: 14px;
-  background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--sage-100);
-}
-.smt__factors > div.is-top {
-  background: var(--ft);
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--fc) 45%, transparent);
-}
-.smt__factors small {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font: 600 11px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
-}
-.smt__factors b {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font: 700 13.5px/1.2 var(--font-sans);
-  color: var(--fc);
-}
-.smt__factors em {
-  font: 500 11px/1.3 var(--font-sans);
-  font-style: normal;
-  color: var(--color-text-muted);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.smt__main {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 12px;
-}
-.smt__bal {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 7px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--sage-100);
-}
-.smt__bal > div {
-  display: grid;
-  grid-template-columns: 54px 1fr 38px;
-  align-items: center;
-  gap: 8px;
-  font: 600 12.5px/1 var(--font-sans);
-  color: var(--color-text-muted);
-}
-.smt__bal span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--bc);
-}
-.smt__bal > div > i {
-  height: 8px;
-  border-radius: 99px;
-  background: #eef1ef;
-  overflow: hidden;
-}
-.smt__bal > div > i > i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--bc) 45%, white);
-  transition: width 0.5s ease;
-}
-.smt__bal > div.is-top > i > i {
-  background: var(--bc);
-}
-.smt__bal b {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text);
-}
-.smt__verdict {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: 14px;
+.tm__tags em {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
   background: var(--t);
+  color: var(--c);
+  font: 700 11px/1.3 var(--font-sans);
+  font-style: normal;
 }
-.smt__badge {
-  display: grid;
-  place-items: center;
+.tm__chev {
   flex-shrink: 0;
-  width: 46px;
-  height: 46px;
+  color: var(--color-text-muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.tm__fold[open] .tm__chev {
+  transform: rotate(180deg);
+}
+.tm__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 14px;
+}
+
+/* ---------- แถวบน 2 กล่อง ---------- */
+.tm__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.tm__box {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.tm__box.is-risk {
+  background: var(--t);
+  box-shadow: none;
+}
+.tm__cap {
+  font: 600 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.tm__hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tm__badge {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--c);
   color: var(--white);
 }
-.smt__verdict small {
-  font: 600 11.5px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
+.tm__hero > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
 }
-.smt__verdict b {
-  display: block;
-  font: 700 18px/1.3 var(--font-sans);
+.tm__hero b {
+  font: 800 18px/1.2 var(--font-sans);
   color: var(--c);
 }
-.smt__verdict p {
-  margin: 2px 0 0;
-  font: 500 12px/1.4 var(--font-sans);
+.tm__hero > div > span {
+  font: 500 12px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.tm__trait {
+  margin: 0;
+  font: 500 13px/1.45 var(--font-sans);
   color: var(--color-text);
 }
-.smt__plan {
+.tm__kv {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sage-100);
+}
+.tm__kv div {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 8px;
+}
+.tm__kv dt {
+  font: 500 12px/1.45 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.tm__kv dd {
+  margin: 0;
+  font: 500 13px/1.45 var(--font-sans);
+  color: var(--color-text);
+}
+
+/* สัดส่วนธาตุ */
+.tm__bal {
+  display: grid;
+  gap: 8px;
+}
+.tm__bal > div {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 10px;
+}
+.tm__bal span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 600 12.5px/1 var(--font-sans);
+  color: var(--bc);
+}
+.tm__bal > div > i {
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(255 255 255 / 80%);
+  overflow: hidden;
+}
+.tm__bal > div > i > i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--bc);
+  opacity: 0.45;
+}
+.tm__bal .is-top > i > i {
+  opacity: 1;
+}
+.tm__bal b {
+  text-align: right;
+  font: 600 12px/1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+.tm__bal .is-top b {
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+/* ---------- หัวข้อย่อย ---------- */
+.tm__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tm__sec > h4 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 13px/1.2 var(--font-sans);
+  color: var(--color-text);
+}
+
+/* สมุฏฐาน 6 ช่องเท่ากัน */
+.tm__factors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.tm__factors li {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sage-50);
+}
+.tm__factors small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 500 11px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm__factors b {
+  font: 700 13.5px/1.2 var(--font-sans);
+  color: var(--fc);
+}
+.tm__factors em {
+  font: 500 11px/1.35 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* แนวทางวันนี้ 4 ช่อง */
+.tm__plan {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
-.smt__plan > div {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 4px 6px;
-  padding: 10px 12px;
+.tm__plan > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
   border-radius: 14px;
   background: var(--white);
   box-shadow: inset 0 0 0 1px var(--sage-100);
-  color: var(--c);
 }
-.smt__plan small {
-  font: 600 11.5px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
+.tm__plan small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 11.5px/1 var(--font-sans);
+  color: var(--color-brand);
 }
-.smt__plan p {
-  grid-column: 1 / -1;
+.tm__plan .is-avoid {
+  background: #fdf4dd;
+  box-shadow: none;
+}
+.tm__plan .is-avoid small {
+  color: #93670a;
+}
+.tm__plan p {
   margin: 0;
-  font: 500 12.5px/1.45 var(--font-sans);
+  font: 500 13px/1.45 var(--font-sans);
   color: var(--color-text);
 }
-.smt__note {
+
+/* ผลจริงของคลินิก */
+.tm__ev {
+  list-style: none;
   margin: 0;
-  font: 500 11px/1.3 var(--font-sans);
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.tm__ev li {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--sage-50);
+}
+.tm__ev li.is-top {
+  background: var(--color-brand-tint);
+}
+.tm__ev i {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  font: 700 11px/1 var(--font-sans);
+  font-style: normal;
+  color: var(--color-brand);
+}
+.tm__ev b {
+  font: 600 12.5px/1.3 var(--font-sans);
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm__ev span {
+  font: 500 11.5px/1.2 var(--font-sans);
   color: var(--color-text-muted);
 }
+.tm__note {
+  margin: 0;
+  font: 500 11.5px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+
+/* ---------- จอแคบ ---------- */
 @media (max-width: 1100px) {
-  .smt__factors {
+  .tm__factors {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .smt__plan {
+  .tm__plan {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 760px) {
+  .tm__top,
+  .tm__ev {
+    grid-template-columns: 1fr;
+  }
+  .tm__factors,
+  .tm__plan {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 700px) {
-  .smt__main {
+  .tm__top,
+  .tm__ev {
     grid-template-columns: 1fr;
   }
-}
-.smt__ev {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-}
-.smt__ev small {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-right: 2px;
-  font: 600 12px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
-}
-.smt__ev span {
-  padding: 6px 10px;
-  border-radius: 99px;
-  background: var(--white);
-  box-shadow: inset 0 0 0 1px var(--sage-100);
-  font: 500 12px/1.2 var(--font-sans);
-  color: var(--color-text-muted);
-}
-.smt__ev span b {
-  font-weight: 700;
-  color: var(--color-text);
-}
-.smt__ev span.is-top {
-  background: #eaf7ef;
-  box-shadow: inset 0 0 0 1px #b9dfc6;
+  .tm__factors,
+  .tm__plan {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

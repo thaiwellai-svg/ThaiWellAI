@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { intakeOfRequest, intakeOfVisit } from "../data/intake";
 import { ElementIcon } from "./ElementIcon";
-import { ageFrom, thaiBirth } from "./BirthDateField";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarPlus, Check, ChevronDown, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House, Printer } from "lucide-react";
+import { CalendarPlus, Check, FileText, Leaf, Loader2, Paperclip, RefreshCw, ShieldAlert, Sparkles, Stethoscope, X, TriangleAlert, Hand, Target, Route, Crosshair, House, Printer } from "lucide-react";
 import { useStore } from "../store/store";
 import { Button, useToast } from "../design-system";
 import { ELEMENT_INFO, TH_MONTH, elementProfile } from "../data/elements";
@@ -13,73 +12,13 @@ import { AI, THAI_MASSAGE_KNOWLEDGE, chatJSON, ocrFile } from "./ai";
 import { CoursePlanDialog } from "../pages/planner/PatientPlanner";
 import "./aiplan.css";
 import { usePatientPrint } from "./PatientPrint";
-import { SamuthanPanel } from "./Samuthan";
+import { ThaiMedCard } from "./Samuthan";
 import { samuthan } from "../data/samuthan";
 import { bestForElement, outcomeRows } from "../data/outcomes";
 
 /** ธาตุเจ้าเรือน · อายุสมุฏฐาน · อุตุสมุฏฐาน of the patient */
 export function ElementCard({ p }: { p: Patient }) {
-  const prof = elementProfile(p);
-  const info = ELEMENT_INFO[prof.birth];
-  return (
-    <section className="pd__card pd__card--wide pd2 el2" style={{ ["--c" as string]: info.color, ["--t" as string]: info.tint }}>
-      {/* ใช้เฉพาะตอนแพทย์ประเมิน → พับไว้ หัวการ์ดบอกธาตุไว้แล้ว */}
-      <details className="el2__fold">
-        <summary className="pd2__h">
-          <span className="pd2__i" style={{ ["--c" as string]: info.color }}>
-            <ElementIcon element={prof.birth} size={15} />
-          </span>
-          ธาตุเจ้าเรือน
-          <em className="el2__tag">ธาตุ{prof.birth}</em>
-          <ChevronDown size={16} className="el2__chev" />
-        </summary>
-        <div className="el2__inner">
-          <div className="el2__body">
-            <div className="el2__hero">
-              <span className="el2__badge">
-                <ElementIcon element={prof.birth} size={30} strokeWidth={2} />
-              </span>
-              <div>
-                <b>ธาตุ{prof.birth}</b>
-                <p>{info.trait}</p>
-              </div>
-            </div>
-            <div className="el2__born">
-              <span>
-                <small>เกิด</small>
-                <b>{p.birthDate ? thaiBirth(p.birthDate) : "ยังไม่ระบุวันเกิด"}</b>
-                {p.birthDate && <em>อายุ {ageFrom(p.birthDate) ?? p.age} ปี</em>}
-              </span>
-            </div>
-          </div>
-          <div className="el2__kv">
-            <div>
-              <span className="el2__kvi">
-                <TriangleAlert size={14} />
-              </span>
-              <small>มักพบ</small>
-              <p>{info.risk}</p>
-            </div>
-            <div>
-              <span className="el2__kvi">
-                <Leaf size={14} />
-              </span>
-              <small>รสยาที่เหมาะ</small>
-              <p>{info.taste}</p>
-            </div>
-            <div>
-              <span className="el2__kvi">
-                <Hand size={14} />
-              </span>
-              <small>แนวทางนวด</small>
-              <p>{info.care}</p>
-            </div>
-          </div>
-          <SamuthanPanel p={p} />
-        </div>
-      </details>
-    </section>
-  );
+  return <ThaiMedCard p={p} />;
 }
 
 const STEPS = ["อ่านประวัติและอาการ", "ประเมินธาตุและเส้น", "เลือกบริการและความถี่", "ตรวจข้อห้าม"];
