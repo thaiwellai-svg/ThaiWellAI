@@ -1027,3 +1027,58 @@
 .aip .aip-freq button {
   white-space: nowrap;
 }
+/* แผงแผน: หัวแถวเดียว (สถานะ · ประเภท | แนบเอกสาร · วางแผนใหม่) + กล่องสรุปแผน · พื้นขาวล้วน */
+.ai-card--panel {
+  background: transparent;
+}
+.ai-card--panel > .pd__card-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.apn-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ai-card--panel .ai-actions {
+  margin-left: auto;
+}
+.apn-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  background: var(--color-brand-tint);
+}
+.apn-top small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 12px/1.2 var(--font-sans);
+  color: var(--color-brand);
+}
+.apn-top p {
+  margin: 0;
+  font: 600 14px/1.5 var(--font-sans);
+  color: var(--color-text);
+}
+.apn-top span {
+  font: 500 11.5px/1.3 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.apn-top__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.apn-top__row > small {
+  margin-right: auto;
+}
+.apn-top__row .tw-chip:not(.is-good):not(.is-warn) {
+  background: var(--white);
+}
+.ai-card--panel > .pd__card-head {
+  justify-content: flex-end;
+}

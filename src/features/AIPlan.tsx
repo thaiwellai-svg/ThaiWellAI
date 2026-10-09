@@ -182,7 +182,7 @@ ${THAI_MASSAGE_KNOWLEDGE}
           <Button variant="outline" size="sm" leading={reading ? <Loader2 size={14} className="spin" /> : <Paperclip size={14} />} disabled={!!reading} onClick={() => file.current?.click()}>
             {reading ? "กำลังอ่าน…" : "แนบเอกสาร"}
           </Button>
-          <Button size="sm" leading={busy ? <Loader2 size={14} className="spin" /> : plan ? <RefreshCw size={14} /> : <Sparkles size={14} />} disabled={busy} onClick={generate}>
+          <Button variant={plan ? "outline" : undefined} size="sm" leading={busy ? <Loader2 size={14} className="spin" /> : plan ? <RefreshCw size={14} /> : <Sparkles size={14} />} disabled={busy} onClick={generate}>
             {busy ? "กำลังวางแผน…" : plan ? "วางแผนใหม่" : "สร้างแผน"}
           </Button>
         </div>
@@ -219,17 +219,21 @@ ${THAI_MASSAGE_KNOWLEDGE}
           </motion.div>
         ) : plan ? (
           <motion.div key={plan.at} className="aip" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            {/* สรุปบนสุด: สถานะ · ประเภท · สรุปแผน */}
-            <div className="apn-top">
-              <div className="aip-hero__tags">
+            {/* สรุปแผน */}
+            <section className="apn-top">
+              <div className="apn-top__row">
+                <small>
+                  <Sparkles size={12} /> สรุปแผน
+                </small>
                 <span className={plan.approved ? "tw-chip is-good" : "tw-chip is-warn"}>
                   {plan.approved ? <Check size={12} strokeWidth={3} /> : null}
-                  {plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}
+                  {plan.approved ? "อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}
                 </span>
                 <span className="tw-chip">{plan.massageType}</span>
               </div>
               <p>{plan.summary}</p>
-            </div>
+              <span>ร่างโดย AI {thaiDate(plan.at.slice(0, 10))} · แพทย์ต้องตรวจก่อนใช้</span>
+            </section>
 
             {plan.referToDoctor && (
               <div className="aip-refer">
@@ -480,9 +484,6 @@ ${THAI_MASSAGE_KNOWLEDGE}
             )}
 
             <div className="aip-foot">
-              <small>
-                <Sparkles size={12} /> ร่างโดย AI {thaiDate(plan.at.slice(0, 10))} · แพทย์ต้องตรวจก่อนใช้
-              </small>
               <div>
                 {!plan.approved && (
                   <Button size="md" leading={<Stethoscope size={15} />} onClick={approve}>
