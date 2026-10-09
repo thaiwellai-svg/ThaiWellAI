@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -123,7 +123,10 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const h = [...p.painHistory].sort((a, b) => a.date.localeCompare(b.date));
   const first = h[0]?.score;
   const last = h[h.length - 1]?.score;
-  const delta = first !== undefined && last !== undefined ? last - first : 0;
+  const lastDone = visits.find((v) => v.status === "done");
+  // ครั้งล่าสุดที่มีคะแนนปวดก่อนนวด
+  const painVisit =
+    visits.find((v) => v.painBefore !== undefined && v.painAfter !== undefined) ?? visits.find((v) => v.status !== "cancelled" && v.painBefore !== undefined);
 
   const cid = p.citizenId?.replace(/^(\d)(\d{4})(\d{5})(\d{2})(\d)$/, "$1-$2-$3-$4-$5");
   const assessed = visits.filter((v) => v.status !== "cancelled" && v.status !== "absent").length;
@@ -197,25 +200,68 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         <ScreeningAlert p={p} />
 
         {/* Quick stats: ป้าย → ตัวเลข → หน่วย */}
-        <div className="pd__stats">
-          <div className="pd__stat">
-            <small>รักษาแล้ว</small>
-            <b>{doneCount}</b>
-            <span>ครั้ง</span>
+        <div className="pd__stats pst">
+          {/* รักษาแล้ว */}
+          <div className="pst__c">
+            <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
+              <Check size={15} strokeWidth={2.5} />
+            </span>
+            <div className="pst__b">
+              <small>รักษาแล้ว</small>
+              <b>
+                {doneCount} <em>ครั้ง</em>
+              </b>
+              <span>{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
+            </div>
           </div>
-          <div className="pd__stat">
-            <small>ปวดล่าสุด</small>
-            <b style={{ color: last !== undefined ? painColor(last) : undefined }}>
-              {last ?? "—"}
-              {delta < 0 ? <TrendingDown size={18} color="var(--green-700)" /> : delta > 0 ? <TrendingUp size={18} color="var(--color-danger)" /> : null}
-            </b>
-            <span>{last === undefined ? "ยังไม่ได้ประเมิน" : h.length > 1 && delta !== 0 ? `/10 · ${delta < 0 ? "ดีขึ้น" : "แย่ลง"}จาก ${first}` : "/10"}</span>
+          {/* ปวดล่าสุด: ก่อน → หลัง ของครั้งล่าสุด */}
+          <div className="pst__c">
+            <span className="pd2__i" style={{ ["--c" as string]: "#c4473a" }}>
+              <Activity size={15} />
+            </span>
+            <div className="pst__b">
+              <small>ปวดล่าสุด</small>
+              {painVisit ? (
+                <b className="pst__pain">
+                  <span style={{ color: painColor(painVisit.painBefore!) }}>{painVisit.painBefore}</span>
+                  <i>→</i>
+                  <span style={{ color: painVisit.painAfter !== undefined ? painColor(painVisit.painAfter) : undefined }}>{painVisit.painAfter ?? "—"}</span>
+                </b>
+              ) : (
+                <b style={{ color: last !== undefined ? painColor(last) : undefined }}>
+                  {last ?? "—"} {last !== undefined && <em>/10</em>}
+                </b>
+              )}
+              <span>
+                {painVisit
+                  ? painVisit.painAfter !== undefined
+                    ? `ก่อน → หลังนวด · ${painVisit.painAfter < painVisit.painBefore! ? `ลดลง ${painVisit.painBefore! - painVisit.painAfter}` : painVisit.painAfter > painVisit.painBefore! ? `เพิ่ม ${painVisit.painAfter - painVisit.painBefore!}` : "เท่าเดิม"}`
+                    : "ก่อนนวด · ยังไม่ประเมินหลังนวด"
+                  : last === undefined
+                    ? "ยังไม่ได้ประเมิน"
+                    : "จากการประเมิน"}
+              </span>
+            </div>
           </div>
-          <div className={upcoming[0] ? "pd__stat is-link" : "pd__stat"} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
-            <small>นัดถัดไป</small>
-            <b className="pd__stat-text">{upcoming[0] ? `${thaiDateShort(upcoming[0].date)} ${upcoming[0].start}` : "—"}</b>
-            <span>{upcoming[0] ? relativeDay(upcoming[0].date) : "ยังไม่มีนัดล่วงหน้า"}</span>
-          </div>
+          {/* นัดถัดไป */}
+          <button type="button" className="pst__c is-link" disabled={!upcoming[0]} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
+            {upcoming[0] ? (
+              <span className="pst__date">
+                <small>{thaiDateShort(upcoming[0].date).split(" ")[1]}</small>
+                <b>{Number(upcoming[0].date.slice(8))}</b>
+              </span>
+            ) : (
+              <span className="pd2__i" style={{ ["--c" as string]: "#2f6fb3" }}>
+                <CalendarDays size={15} />
+              </span>
+            )}
+            <div className="pst__b">
+              <small>นัดถัดไป</small>
+              <b className="pst__text">{upcoming[0] ? `${upcoming[0].start} น.` : "—"}</b>
+              <span>{upcoming[0] ? `${relativeDay(upcoming[0].date)} · ${store.serviceById(upcoming[0].serviceId).short}` : "ยังไม่มีนัดล่วงหน้า"}</span>
+            </div>
+            {upcoming[0] && <ChevronRight size={16} className="pst__go" />}
+          </button>
         </div>
 
         <div className="pd__grid">
