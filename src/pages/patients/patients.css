@@ -3416,3 +3416,26 @@
   width: 16px;
   height: 16px;
 }
+/* เรียงปกติ: หัวข้อ · ตัวเลข · รายละเอียด (บนลงล่าง ชิดซ้าย) */
+.pst__c {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 4px;
+  padding: 12px 16px;
+}
+.pst__c > span {
+  text-align: left;
+}
+.pst__c > b,
+.pst__pain b {
+  font-size: 22px;
+}
+.pst__c.is-next > b {
+  font-size: 20px;
+}
+.pst__bg {
+  width: 72px;
+  height: 72px;
+}
