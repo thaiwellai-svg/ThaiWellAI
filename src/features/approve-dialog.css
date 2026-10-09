@@ -453,3 +453,13 @@
     grid-template-columns: 1fr;
   }
 }
+/* ปุ่ม ปิด · อนุมัติ ขนาดเท่ากัน */
+.apv .tw-overlay-foot > .tw-btn {
+  flex: 0 0 180px;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .apv .tw-overlay-foot > .tw-btn {
+    flex: 1 0 0;
+  }
+}
