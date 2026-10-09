@@ -24,45 +24,7 @@ import { painColor } from "../../features/widgets";
 import "../../features/health.css";
 import "../../features/patient-health.css";
 
-/** Donut showing used / booked / free sessions of a treatment plan. */
 
-/** Pain trend chart with axis, points and value labels. */
-function PainChart({ points }: { points: { date: string; score: number }[] }) {
-  const W = 760;
-  const H = 160;
-  const pad = { l: 26, r: 14, t: 18, b: 26 };
-  const x = (i: number) => pad.l + (i * (W - pad.l - pad.r)) / Math.max(1, points.length - 1);
-  const y = (v: number) => pad.t + (1 - v / 10) * (H - pad.t - pad.b);
-  const d = points.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.score)}`).join(" ");
-  const area = `${d} L${x(points.length - 1)},${H - pad.b} L${x(0)},${H - pad.b} Z`;
-  return (
-    <svg className="pchart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="กราฟความปวด">
-      <defs>
-        <linearGradient id="pc-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#4c845a" stopOpacity="0.2" />
-          <stop offset="1" stopColor="#4c845a" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0, 5, 10].map((v) => (
-        <g key={v}>
-          <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--sage-100)" strokeDasharray={v ? "3 4" : undefined} />
-          <text x={pad.l - 8} y={y(v) + 4} textAnchor="end">{v}</text>
-        </g>
-      ))}
-      <motion.path d={area} fill="url(#pc-fill)" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} />
-      <motion.path d={d} fill="none" stroke="#4c845a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.8, ease: ease.out }} />
-      {points.map((p, i) => (
-        <g key={p.date + i}>
-          <motion.circle cx={x(i)} cy={y(p.score)} r="5" fill="#fff" stroke={painColor(p.score)} strokeWidth="3"
-            initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 + i * 0.06 }} />
-          <text x={x(i)} y={y(p.score) - 11} textAnchor="middle" className="pchart__v">{p.score}</text>
-          <text x={x(i)} y={H - 6} textAnchor="middle">{thaiDateShort(p.date)}</text>
-        </g>
-      ))}
-    </svg>
-  );
-}
 
 export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, healthOpen }: { id: string | null; onAdd: () => void; onEdit?: () => void; /** opens the AI plan side panel (wide layout) */ onAIPlan?: () => void; aiOpen?: boolean; /** opens the health side panel, like on รับบริการ */ onHealth?: () => void; healthOpen?: boolean }) {
   const store = useStore();
@@ -121,9 +83,20 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   const past = visits.filter((v) => !upcoming.includes(v)).slice(0, 5);
   const doneCount = visits.filter((v) => v.status === "done").length;
   const h = [...p.painHistory].sort((a, b) => a.date.localeCompare(b.date));
-  const first = h[0]?.score;
   const last = h[h.length - 1]?.score;
-  const lastDone = visits.find((v) => v.status === "done");
+  // ปวดก่อน → หลังนวด รายครั้ง (เฉพาะครั้งที่มาแล้ว) · เทียบปวดตอนมาครั้งแรกกับครั้งล่าสุด
+  const painPairs = [...visits]
+    .reverse()
+    .filter((v) => v.date <= today && (v.status === "done" || v.status === "active") && v.painBefore !== undefined)
+    .map((v) => ({ id: v.id, date: v.date, before: v.painBefore!, after: v.painAfter }))
+    .slice(-10);
+  const lastP = painPairs[painPairs.length - 1];
+  const painSum = {
+    pairs: painPairs,
+    lastP,
+    drop: lastP && lastP.after !== undefined ? lastP.before - lastP.after : undefined,
+    trend: painPairs.length > 1 ? lastP.before - painPairs[0].before : undefined,
+  };
 
   const cid = p.citizenId?.replace(/^(\d)(\d{4})(\d{5})(\d{2})(\d)$/, "$1-$2-$3-$4-$5");
   const assessed = visits.filter((v) => v.status !== "cancelled" && v.status !== "absent").length;
@@ -196,68 +169,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
 
         <ScreeningAlert p={p} />
 
-        {/* Quick stats: ป้าย → ตัวเลข → หน่วย */}
-        <div className="pd__stats pst">
-          {/* รักษาแล้ว */}
-          <div className="pst__c" style={{ ["--tc" as string]: "#2f8a52" }}>
-            <small>รักษาแล้ว</small>
-            <b>
-              {doneCount}
-              <i>ครั้ง</i>
-            </b>
-            <span className="pst__sub">{lastDone ? `ล่าสุด ${thaiDateShort(lastDone.date)}` : "ยังไม่เคยรักษา"}</span>
-          </div>
-          {/* ปวด ก่อน → หลังนวด ทุกครั้ง (เรียงตามเวลา) → เห็นว่านวดแล้วลดไหม และแต่ละครั้งดีขึ้นไหม */}
-          {(() => {
-            const pairs = [...visits]
-              .reverse()
-              .filter((v) => v.date <= today && (v.status === "done" || v.status === "active") && v.painBefore !== undefined)
-              .map((v) => ({ id: v.id, date: v.date, before: v.painBefore!, after: v.painAfter }))
-              .slice(-8);
-            const lastP = pairs[pairs.length - 1];
-            const drop = lastP && lastP.after !== undefined ? lastP.before - lastP.after : undefined;
-            const now = lastP ? (lastP.after ?? lastP.before) : last;
-            // เทียบตอนมาครั้งแรกกับครั้งล่าสุด
-            const trend = pairs.length > 1 ? lastP.before - pairs[0].before : 0;
-            return (
-              <div className="pst__c is-pain" style={{ ["--tc" as string]: now === undefined ? "#6b7a71" : painColor(now) }}>
-                <small className="pst__legend">
-                  ปวด <i className="is-before" /> ก่อน <i className="is-after" /> หลังนวด
-                </small>
-                {lastP ? (
-                  <b>
-                    <span style={{ color: painColor(lastP.before) }}>{lastP.before}</span>
-                    <i>→</i>
-                    <span style={{ color: lastP.after !== undefined ? painColor(lastP.after) : undefined }}>{lastP.after ?? "—"}</span>
-                    <i>/10</i>
-                  </b>
-                ) : (
-                  <b>
-                    {last ?? "—"}
-                    {last !== undefined && <i>/10</i>}
-                  </b>
-                )}
-                {pairs.length > 0 ? (
-                  <>
-                    <PainPairs pairs={pairs} />
-                    <span className="pst__sub">
-                      {drop !== undefined ? (drop > 0 ? `นวดลด ${drop}` : drop < 0 ? `นวดเพิ่ม ${-drop}` : "นวดเท่าเดิม") : "ยังไม่ประเมินหลัง"}
-                      {pairs.length > 1 && (
-                        <em className={trend < 0 ? "is-good" : trend > 0 ? "is-bad" : undefined}>
-                          {" · "}
-                          {trend < 0 ? `ดีขึ้น ${-trend}` : trend > 0 ? `แย่ลง ${trend}` : "ทรงตัว"}
-                        </em>
-                      )}
-                    </span>
-                  </>
-                ) : (
-                  <span className="pst__sub">{last === undefined ? "ยังไม่ได้ประเมิน" : "จากการประเมิน"}</span>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-
         <div className="pd__grid">
           {/* ── 2 คอลัมน์: ผู้ป่วย | การรักษา (แผน → คอร์ส → นัด) ── */}
           <div className="pd__cols">
@@ -329,14 +240,41 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <Activity size={15} />
               </span>
               ความปวด
-              {first !== undefined && last !== undefined && h.length > 1 && (
-                <em className={last < first ? "is-good" : "is-bad"}>
-                  {first} → {last}
-                  {last < first ? ` · ดีขึ้น ${Math.round(((first - last) / first) * 100)}%` : ""}
-                </em>
+              {painSum.trend !== undefined && painSum.trend !== 0 && (
+                <em className={painSum.trend < 0 ? "is-good" : "is-bad"}>{painSum.trend < 0 ? `ดีขึ้น ${-painSum.trend} จากครั้งแรก` : `แย่ลง ${painSum.trend} จากครั้งแรก`}</em>
               )}
             </h3>
-            {h.length > 1 ? <PainChart points={h} /> : <p className="pd2__muted">ยังไม่มีคะแนนปวด</p>}
+            {painSum.pairs.length ? (
+              <div className="pnc">
+                <div className="pnc__now">
+                  <small>ครั้งล่าสุด · {thaiDateShort(painSum.lastP!.date)}</small>
+                  <b>
+                    <span style={{ color: painColor(painSum.lastP!.before) }}>{painSum.lastP!.before}</span>
+                    <i>→</i>
+                    <span style={{ color: painSum.lastP!.after !== undefined ? painColor(painSum.lastP!.after) : undefined }}>{painSum.lastP!.after ?? "—"}</span>
+                    <i>/10</i>
+                  </b>
+                  <span>{painSum.drop !== undefined ? (painSum.drop > 0 ? `นวดแล้วลด ${painSum.drop}` : painSum.drop < 0 ? `นวดแล้วเพิ่ม ${-painSum.drop}` : "นวดแล้วเท่าเดิม") : "ยังไม่ประเมินหลังนวด"}</span>
+                </div>
+                <div className="pnc__chart">
+                  <PainPairs pairs={painSum.pairs} />
+                  <div className="pnc__legend">
+                    <span>
+                      <i className="is-before" /> ก่อนนวด
+                    </span>
+                    <span>
+                      <i className="is-after" /> หลังนวด
+                    </span>
+                    <span className="pnc__range">
+                      {thaiDateShort(painSum.pairs[0].date)}
+                      {painSum.pairs.length > 1 ? ` – ${thaiDateShort(painSum.lastP!.date)}` : ""}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="pd2__muted">{last === undefined ? "ยังไม่มีคะแนนปวด" : `ปวด ${last}/10 จากการประเมิน`}</p>
+            )}
             {/* การประเมินรายครั้ง: แต่ละวันที่มารักษา ผู้ป่วยประเมินอะไรมา */}
             {assessed > 0 && (
               <details className="pd2__more">
@@ -354,6 +292,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                 <History size={15} />
               </span>
               ประวัติการรักษา
+              <em>{doneCount ? `รักษาแล้ว ${doneCount} ครั้ง` : "ยังไม่เคยรักษา"}</em>
             </h3>
             {past.length ? (
               <ol className="hx-hist">
@@ -612,8 +551,8 @@ function PainPairs({ pairs }: { pairs: { id: string; date: string; before: numbe
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const H = 46;
-  const px = 6;
+  const H = 84;
+  const px = 8;
   const py = 5;
   const n = pairs.length;
   const x = (i: number) => (n === 1 ? W / 2 : px + (i / (n - 1)) * (W - px * 2));
