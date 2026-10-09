@@ -9,7 +9,7 @@
   padding: 0;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
 }
 .apv__read,
 .apv__act {
