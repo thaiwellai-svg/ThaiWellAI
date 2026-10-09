@@ -638,3 +638,7 @@ button.qr-card__head {
 .qr {
   padding-bottom: 26px;
 }
+.qr-q__foot {
+  justify-content: flex-end;
+  padding-top: 6px;
+}

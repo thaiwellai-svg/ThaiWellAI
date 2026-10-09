@@ -834,11 +834,6 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
                           </div>
                         )}
                         <div className="qr-q__foot">
-                          {canRecord && (
-                            <button type="button" className="qr-q__mic" disabled={thinking || rec} onClick={() => void listen()}>
-                              <Mic size={15} /> ตอบด้วยเสียง
-                            </button>
-                          )}
                           <button type="button" className="qr-q__skip" disabled={thinking} onClick={() => skipField(f)}>
                             ข้ามไปก่อน <SkipForward size={14} />
                           </button>
