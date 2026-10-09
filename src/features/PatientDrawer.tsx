@@ -401,31 +401,26 @@ export function PatientHealth({ id, apptId }: { id: string; /** นัดที�
           const svc = plan?.phases[0]?.serviceId;
           const booked = plan ? upcoming.filter((v) => !svc || v.serviceId === svc) : [];
           return plan ? (
-            <section className="hx-card hx-course2 is-draft">
-              <div className="hx-course2__head">
-                <span className="hx-course2__icon">
-                  <Ticket size={16} />
-                </span>
-                <div>
-                  <b>
-                    ร่างคอร์ส {svc ? store.serviceById(svc).name : ""} {plan.sessions} ครั้ง
-                  </b>
-                  <small>
-                    {plan.frequency} · จองไว้ {booked.length} นัด
-                  </small>
-                </div>
-                <em className="hx-course2__days is-soon">รอแพทย์อนุมัติ</em>
+            <section className="hx-card hx-draft">
+              <div className="hx-draft__top">
+                <span className="hx-draft__tag">รอแพทย์อนุมัติ</span>
+                <small>{plan.frequency}</small>
               </div>
-              <div className="hx-tix" style={{ gridTemplateColumns: `repeat(${Math.min(plan.sessions, 10)}, minmax(0, 1fr))` }}>
+              <b className="hx-draft__title">ร่างคอร์ส {plan.sessions} ครั้ง</b>
+              <small className="hx-draft__svc">{svc ? store.serviceById(svc).name : plan.massageType}</small>
+              <div className="hx-draft__bar" style={{ gridTemplateColumns: `repeat(${plan.sessions}, minmax(0, 1fr))` }}>
                 {Array.from({ length: plan.sessions }, (_, k) => (
-                  <span key={k} className={`hx-tix__t is-${k < booked.length ? "booked" : "free"}`}>
-                    {k + 1}
-                  </span>
+                  <i key={k} className={k < booked.length ? "is-booked" : undefined} />
                 ))}
               </div>
-              <button type="button" className="hx-course2__start" onClick={() => navigate(`/patients?id=${p.id}`)}>
-                ไปอนุมัติแผน
-              </button>
+              <div className="hx-draft__foot">
+                <span>
+                  จองไว้ <b>{booked.length}</b> · ว่าง <b>{Math.max(0, plan.sessions - booked.length)}</b>
+                </span>
+                <button type="button" onClick={() => navigate(`/patients?id=${p.id}`)}>
+                  ไปอนุมัติแผน <ChevronRight size={14} />
+                </button>
+              </div>
             </section>
           ) : (
             <section className="hx-card hx-course2 is-empty">

@@ -472,3 +472,78 @@
 .hx-visit2__rows dd.is-warn {
   color: #b4561c;
 }
+
+/* ร่างคอร์ส (รอแพทย์อนุมัติ) */
+.hx-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px !important;
+}
+.hx-draft__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.hx-draft__tag {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: #fdf4dd;
+  color: #93670a;
+  font: 700 11px/1.3 var(--font-sans);
+}
+.hx-draft__top small {
+  font: 500 11.5px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.hx-draft__title {
+  font: 800 17px/1.25 var(--font-sans);
+  color: var(--color-text);
+}
+.hx-draft__svc {
+  font: 500 12px/1.35 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.hx-draft__bar {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 6px;
+}
+.hx-draft__bar i {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.hx-draft__bar i.is-booked {
+  background: var(--status-waiting);
+  box-shadow: none;
+}
+.hx-draft__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hx-draft__foot > span {
+  font: 500 12px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.hx-draft__foot b {
+  color: var(--color-text);
+}
+.hx-draft__foot button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+  font: 700 12.5px/1 var(--font-sans);
+  cursor: pointer;
+}
