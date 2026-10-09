@@ -432,7 +432,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   await check('D03', 'doctor', 'แผนการรักษาโดย AI', 'สร้างแผน (ต้องต่อเน็ต) / แสดงข้อผิดพลาดถ้าไม่สำเร็จ', async (p, ex, notes) => {
     await go(p, '/patients', 1300);
     await p.locator('.prow', { hasText: 'ทองใบ' }).first().click(); await p.waitForTimeout(800);
-    await p.locator('.ptx__s').first().locator('.pd2__act').click(); await p.waitForTimeout(1500);
+    await p.locator('.ptx--plan .pd2__act').click(); await p.waitForTimeout(1500);
     ex((await p.locator('.ai-busy, .aip, .ai-error').count()) > 0, 'กดแล้ว AI เริ่มวิเคราะห์');
     await p.waitForTimeout(45000);
     const done = await p.locator('.aip').count();

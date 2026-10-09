@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -21,7 +21,6 @@ import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
 import { AIPlanCard, ElementCard } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
-import { clsx } from "clsx";
 import "../../features/health.css";
 import "../../features/patient-health.css";
 
@@ -340,42 +339,53 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
           </section>
             </div>
             <div className="pd__col">
-              <section className="pd__card pd2 ptx">
+              {/* 1 แผนการรักษา */}
+              <section className="pd__card pd2 ptx ptx--plan">
                 <h3 className="pd2__h">
                   <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
                     <ClipboardList size={15} />
                   </span>
-                  การรักษา
+                  แผนการรักษา
+                  <em className={p.aiPlan?.approved ? "is-good" : p.aiPlan ? "is-low" : undefined}>{!p.aiPlan ? "ยังไม่วางแผน" : p.aiPlan.approved ? "อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}</em>
+                  {onAIPlan && (
+                    <button type="button" className="pd2__act" onClick={onAIPlan}>
+                      {p.aiPlan ? (aiOpen ? "ซ่อนแผน" : "เปิดแผน") : "วางแผน"}
+                    </button>
+                  )}
                 </h3>
-                <ol className="ptx__steps">
-                  {/* 1 แผนการรักษา */}
-                  <li className={clsx("ptx__s", p.aiPlan?.approved ? "is-ok" : p.aiPlan ? "is-wait" : undefined)}>
-                    <i className="ptx__n">{p.aiPlan?.approved ? <Check size={13} strokeWidth={3} /> : 1}</i>
-                    <div className="ptx__body">
-                      <div className="ptx__head">
-                        <b>แผนการรักษา</b>
-                        <em>{!p.aiPlan ? "ยังไม่วางแผน" : p.aiPlan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}</em>
-                        {onAIPlan && (
-                          <button type="button" className="pd2__act" onClick={onAIPlan}>
-                            {p.aiPlan ? (aiOpen ? "ซ่อนแผน" : "เปิดแผน") : "วางแผน"}
-                          </button>
-                        )}
-                      </div>
-                      {p.aiPlan ? <p className="ptx__sub">{p.aiPlan.massageType} · {p.aiPlan.sessions} ครั้ง · {p.aiPlan.frequency}</p> : <p className="ptx__sub">ให้ AI ร่างแผนจากอาการ แล้วแพทย์อนุมัติ</p>}
-                      {!onAIPlan && <AIPlanCard p={p} />}
+                {p.aiPlan ? (
+                  <dl className="ptx__stats">
+                    <div>
+                      <dt>ประเภท</dt>
+                      <dd>{p.aiPlan.massageType}</dd>
                     </div>
-                  </li>
-                  {/* 2 คอร์ส */}
-                  <li className={clsx("ptx__s", credits ? "is-ok" : p.aiPlan && !p.aiPlan.approved ? "is-wait" : undefined)}>
-                    <i className="ptx__n">{credits ? <Check size={13} strokeWidth={3} /> : 2}</i>
-                    <div className="ptx__body">
-                      <div className="ptx__head">
-                        <b>คอร์ส</b>
-                        {credits && <em className={credits.remaining <= 1 ? "is-low" : undefined}>เหลือ {credits.remaining} ครั้ง</em>}
-                        <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
-                          <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
-                        </button>
-                      </div>
+                    <div>
+                      <dt>จำนวน</dt>
+                      <dd>{p.aiPlan.sessions} ครั้ง</dd>
+                    </div>
+                    <div>
+                      <dt>ความถี่</dt>
+                      <dd>{p.aiPlan.frequency}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="pd2__muted">ให้ AI ร่างแผนจากอาการ แล้วแพทย์อนุมัติ</p>
+                )}
+                {!onAIPlan && <AIPlanCard p={p} />}
+              </section>
+              {/* 2 คอร์ส */}
+              <section className="pd__card pd2 ptx ptx--course">
+                <h3 className="pd2__h">
+                  <span className="pd2__i" style={{ ["--c" as string]: "#7a5bb5" }}>
+                    <Ticket size={15} />
+                  </span>
+                  คอร์ส
+                  {credits ? <em className={credits.remaining <= 1 ? "is-low" : "is-good"}>เหลือ {credits.remaining} ครั้ง</em> : null}
+                  <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
+                    <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
+                  </button>
+                </h3>
+
             {credits && p.course ? (
               <>
                 <div className="pd2__course-row">
@@ -507,20 +517,19 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             ) : (
               <p className="pd2__muted">ยังไม่มีคอร์ส</p>
             )}
-          
-                    </div>
-                  </li>
-                  {/* 3 นัด */}
-                  <li className={clsx("ptx__s", upcoming.length > 0 && "is-ok")}>
-                    <i className="ptx__n">{upcoming.length > 0 ? <Check size={13} strokeWidth={3} /> : 3}</i>
-                    <div className="ptx__body">
-                      <div className="ptx__head">
-                        <b>นัดที่จะถึง</b>
-                        {upcoming.length > 0 && <em>{upcoming.length} นัด</em>}
-                        <button type="button" className="pd2__act" onClick={() => setPlanFor(p.id)}>
-                          <CalendarPlus size={14} /> จัดนัด
-                        </button>
-                      </div>
+              </section>
+              {/* 3 นัด */}
+              <section className="pd__card pd2 ptx ptx--appt">
+                <h3 className="pd2__h">
+                  <span className="pd2__i" style={{ ["--c" as string]: "#2f6fb3" }}>
+                    <CalendarDays size={15} />
+                  </span>
+                  นัดที่จะถึง
+                  {upcoming.length > 0 && <em>{upcoming.length} นัด</em>}
+                  <button type="button" className="pd2__act" onClick={() => setPlanFor(p.id)}>
+                    <CalendarPlus size={14} /> จัดนัด
+                  </button>
+                </h3>
             {upcoming.length ? (
               <div className="hx-next">
                 {upcoming.slice(0, 5).map((v, k) => (
@@ -543,10 +552,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             ) : (
               <p className="pd2__muted">ยังไม่มีนัด</p>
             )}
-          
-                    </div>
-                  </li>
-                </ol>
               </section>
             </div>
           </div>
