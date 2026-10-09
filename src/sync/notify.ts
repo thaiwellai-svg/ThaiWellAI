@@ -62,7 +62,7 @@ export async function pushNotify(title: string, body: string, link?: string, tag
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
     if (reg) {
-      await reg.showNotification(title, { body, tag: tag ?? `tw-${++seq}`, icon: "apple-touch-icon.png", data: { link } });
+      await reg.showNotification(title, { body, tag: tag ?? `tw-${++seq}`, icon: "icon-192.png", data: { link } });
       return;
     }
   } catch {

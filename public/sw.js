@@ -15,8 +15,8 @@ self.addEventListener("push", (e) => {
       await self.registration.showNotification(d.title || "ThaiWell", {
         body: d.body || "",
         tag: d.tag,
-        icon: "apple-touch-icon.png",
-        badge: "apple-touch-icon.png",
+        icon: "icon-192.png",
+        badge: "icon-192.png",
         data: { link: d.link || "/" },
       });
     })(),

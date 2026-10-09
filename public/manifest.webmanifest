@@ -1,10 +1,15 @@
 {
   "name": "ThaiWell คลินิก",
   "short_name": "ThaiWell",
+  "id": "thaiwell-clinic",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "background_color": "#2f4a37",
   "theme_color": "#4c845a",
-  "icons": [{ "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }]
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
 }
