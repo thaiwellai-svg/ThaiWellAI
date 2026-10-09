@@ -140,7 +140,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
       >
         {/* Identity: name, HN, and the safety tags (โรคประจำตัว · แพ้) — shown once, here */}
         <header className="pd__hero">
-          <PhotoPicker name={p.name} src={patientPhoto(p)} size="2xl" onPick={(photo) => store.dispatch({ type: "updatePatient", id: p.id, patch: { photo } })} />
+          <PhotoPicker name={p.name} src={patientPhoto(p)} size="card" onPick={(photo) => store.dispatch({ type: "updatePatient", id: p.id, patch: { photo } })} />
           <div className="pd__id">
             <h2>{p.name}</h2>
             <p>
