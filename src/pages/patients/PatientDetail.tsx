@@ -13,7 +13,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
-import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
+import { Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
 import { patientPhoto } from "../../data/avatars";
 import { relativeDay, thaiDate, thaiDateShort, todayISO } from "../../data/thaiDate";
@@ -145,24 +145,19 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             <h2>{p.name}</h2>
             <p>
               {p.hn} · {p.gender} {p.age} ปี
-            </p>
-            <div className="tags">
               {p.conditions.map((c) => (
-                <Badge key={c} tone="warning" compact>
+                <span key={c} className="pd__flag is-cond">
+                  {" · "}
                   {c}
-                </Badge>
+                </span>
               ))}
-              {p.allergies?.map((a) => (
-                <Badge key={a} tone="danger" compact>
-                  แพ้ {a}
-                </Badge>
+              {p.allergies?.map((x) => (
+                <span key={x} className="pd__flag is-allergy">
+                  {" · "}แพ้ {x}
+                </span>
               ))}
-              {!p.conditions.length && !p.allergies?.length && (
-                <Badge tone="neutral" compact>
-                  ไม่มีโรคประจำตัว · ไม่แพ้
-                </Badge>
-              )}
-            </div>
+              {!p.conditions.length && !p.allergies?.length && " · ไม่มีโรคประจำตัว · ไม่แพ้"}
+            </p>
           </div>
           <div className="pd__actions pd__icons">
             {onHealth && (

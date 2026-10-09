@@ -3184,3 +3184,18 @@
   border-color: transparent;
   box-shadow: 0 6px 14px rgba(76, 132, 90, 0.3);
 }
+/* โรคประจำตัว · แพ้ ต่อท้ายอายุ */
+.pd__id p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pd__flag {
+  font-weight: 600;
+}
+.pd__flag.is-cond {
+  color: #a2620a;
+}
+.pd__flag.is-allergy {
+  color: var(--color-danger);
+}
