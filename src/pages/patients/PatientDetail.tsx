@@ -442,30 +442,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <i /> ว่าง {credits.remaining}
                   </span>
                 </div>
-                {/* นับจากนัดจริง: ครั้งไหนนับแล้ว/จองไว้ (นับเมื่อบันทึกการรักษา) */}
-                {(credits.used > 0 || credits.booked > 0) && (
-                  <details className="pd2__more pd2__visits">
-                    <summary>ดูรายครั้ง</summary>
-                    <ol>
-                      {(p.course.base ?? 0) > 0 && (
-                        <li>
-                          <b>1–{p.course.base}</b>
-                          <span>นับไว้ก่อนใช้ระบบ</span>
-                          <em className="is-used">ใช้แล้ว</em>
-                        </li>
-                      )}
-                      {[...credits.usedVisits, ...credits.bookedVisits].map((v) => (
-                        <li key={v.id}>
-                          <b>{credits.noOf(v.id)}</b>
-                          <span>
-                            {thaiDateShort(v.date)} · {v.start} น.
-                          </span>
-                          <em className={credits.usedVisits.includes(v) ? "is-used" : "is-booked"}>{credits.usedVisits.includes(v) ? "รักษาแล้ว" : "จองไว้"}</em>
-                        </li>
-                      ))}
-                    </ol>
-                  </details>
-                )}
                 {/* วิธีชำระของคอร์ส: ชำระรายครั้ง หรือ ชำระล่วงหน้า (หักเครดิตทุกครั้ง) */}
                 <div className="pd2__bill" role="radiogroup" aria-label="วิธีชำระคอร์ส">
                   {(
