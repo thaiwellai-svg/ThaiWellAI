@@ -6,7 +6,7 @@ set -e
 cd "$(dirname "$0")/.."
 npm run build
 npx cap sync ios
-DEVICE=${DEVICE:-$(xcrun devicectl list devices 2>/dev/null | awk '/iPad/ && /available/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F-]{36}$/) {print $i; exit}}')}
+DEVICE=${DEVICE:-$(xcrun devicectl list devices 2>/dev/null | awk '/iPad/ && /available/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F-]{36}$/ || $i ~ /^[0-9A-F]{8}-[0-9A-F]{16}$/) {print $i; exit}}')}
 [ -n "$DEVICE" ] || { echo "ไม่พบ iPad ที่เชื่อมต่อ (ต่อสายหรือ Wi-Fi เดียวกัน และเปิด Developer Mode)"; exit 1; }
 UDID=$(xcrun devicectl device info details --device "$DEVICE" 2>/dev/null | awk -F': ' '/udid/ {print $2; exit}')
 xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
