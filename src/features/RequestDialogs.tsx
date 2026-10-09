@@ -14,7 +14,6 @@ import {
   Chip,
   Dialog,
   Field,
-  Input,
   Textarea,
   useToast,
 } from "../design-system";
@@ -25,7 +24,7 @@ import {
   shiftsOn,
   staffState,
 } from "../data/domain";
-import { thaiDate, thaiDateLong, timeAgo, todayISO } from "../data/thaiDate";
+import { thaiDate, thaiDateLong, timeAgo } from "../data/thaiDate";
 import { CreditPips } from "./widgets";
 import { slotLoad } from "./slotLoad";
 import { patientPhoto, therapistPhoto } from "../data/avatars";
@@ -33,6 +32,7 @@ import { clsx } from "clsx";
 import { useLatest } from "./useLatest";
 import { IntakeCard } from "./IntakeCard";
 import { AppGuideCard } from "./AppGuideCard";
+import { MonthCalendar } from "./MonthCalendar";
 import { intakeOfRequest } from "../data/intake";
 import { draftCourse } from "../data/draftPlan";
 import "./approve-dialog.css";
@@ -314,16 +314,18 @@ export function ApproveDialog({
           </section>
         )}
         <section className="apv__sec">
-          <h3>วันที่</h3>
-          <Field label="" hint={date ? thaiDateLong(date) : undefined}>
-            <Input
-              type="date"
-              value={date}
-              min={todayISO()}
-              onChange={(e) => setDate(e.target.value)}
-              aria-label="วันที่"
-            />
-          </Field>
+          <h3>
+            วันที่ <small>{date ? thaiDateLong(date) : "เลือกวัน"}</small>
+          </h3>
+          <MonthCalendar
+            value={date}
+            onChange={setDate}
+            closedWeekdays={store.settings.closedWeekdays}
+            requested={request.date}
+            marked={store.appointments
+              .filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.id !== request.courseVisitId)
+              .map((a) => a.date)}
+          />
         </section>
 
         {/* ผู้บำบัด: แสดงทุกคน พร้อมเวลาเข้างานและจำนวนรอบที่ว่างของวันนั้น */}
