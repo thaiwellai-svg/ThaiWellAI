@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { QuickRecord } from "./QuickRecord";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, ArrowRight, ChevronRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, BotMessageSquare, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
+import { ScanLine, ArrowRight, ChevronRight, Activity, CalendarClock, Hand, History, Leaf, Smartphone, Ban, CalendarX2, ShieldAlert, HeartPulse, Stethoscope, TriangleAlert, BellRing, Check, CircleCheck, ClipboardCheck, Hourglass, Megaphone, Phone, Play, ReceiptText, Send, Ticket, Undo2, UserX } from "lucide-react";
 import { LIVE } from "../data/mode";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
@@ -72,7 +72,6 @@ export function AppointmentDrawer({
   onHistory,
   historyOpen,
   onVoice,
-  voiceOpen,
   startPay,
 }: {
   id: string | null;
@@ -161,7 +160,8 @@ export function AppointmentDrawer({
   useEffect(() => {
     if (!onVoice || stage !== "assess" || !appt || autoVoiceFor === appt.id) return;
     setAutoVoiceFor(appt.id);
-    onVoice(true);
+    // ผู้ช่วยบันทึกอยู่ในฟอร์มแล้ว → ปิดแผงด้านข้าง (ถ้าเปิดค้าง)
+    onVoice(false);
   }, [stage, appt, onVoice, autoVoiceFor]);
   const [cancelling, setCancelling] = useState(false);
   // นัดเสร็จแล้วแต่ยังค้างชำระ → เปิดหน้าชำระเงินในหน้านี้ โดยไม่ย้อนสถานะนัด
@@ -579,15 +579,9 @@ export function AppointmentDrawer({
                     n={4}
                     title="บันทึกการรักษา"
                     hint="ใส่วินิจฉัยและหัตถการ แล้วกด “บันทึก”"
-                    action={
-                      onVoice && (
-                        <button type="button" className={clsx("vs__assist", voiceOpen && "is-on")} aria-pressed={!!voiceOpen} onClick={() => onVoice()} title="คุยกับ AI ให้ช่วยกรอก">
-                          <BotMessageSquare size={17} />
-                          ผู้ช่วยบันทึก
-                        </button>
-                      )
-                    }
                   />
+                  {/* ผู้ช่วยบันทึก AI: แถบเดียวในฟอร์ม · พูด/พิมพ์ → กรอกช่องด้านล่างให้ */}
+                  <QuickRecord appt={appt} mode="bar" />
                   <div className="rs-stack">
                     <FindingsField appt={appt} n={1} />
                     <ClinicalRecord appt={appt} embedded />
@@ -712,7 +706,6 @@ export function AppointmentDrawer({
           {credits && !(view === "billing" && coveredByCourse) && <CreditPips info={credits} name={p.course!.name} />}
 
           <section className="vs__ctx">
-            {view === "assess" && !onVoice && <QuickRecord appt={appt} />}
             {(() => {
               const ik = intakeOfVisit(appt, p);
               const al = ik ? intakeAlerts(ik, store.settings.bpThreshold) : [];

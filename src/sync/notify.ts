@@ -59,3 +59,18 @@ export async function pushNotify(title: string, body: string, link?: string) {
     /* notifications blocked */
   }
 }
+
+/** สถานะสิทธิ์แจ้งเตือนในเบราว์เซอร์ (แอป iPad ขอเองตอนเปิด) */
+export function webNotifyStatus(): "granted" | "denied" | "default" | "unsupported" | "native" {
+  if (Capacitor.isNativePlatform()) return "native";
+  if (typeof Notification === "undefined") return "unsupported";
+  return Notification.permission;
+}
+/** ขอสิทธิ์แจ้งเตือนจากปุ่ม (ต้องเกิดจากการแตะของผู้ใช้) */
+export async function requestWebNotify() {
+  if (typeof Notification === "undefined") return "unsupported" as const;
+  const p = await Notification.requestPermission();
+  ready = p === "granted";
+  if (ready) void pushNotify("เปิดการแจ้งเตือนแล้ว", "คลินิกจะแจ้งทันทีเมื่อมีคำขอจองหรือข้อความจากแอปผู้ป่วย");
+  return p;
+}

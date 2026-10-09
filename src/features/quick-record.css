@@ -642,3 +642,220 @@ button.qr-card__head {
   justify-content: flex-end;
   padding-top: 6px;
 }
+
+/* ═════ แถบผู้ช่วยบันทึกในฟอร์ม (โหมด bar) ═════ */
+.qrb {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 14px;
+  padding: 14px;
+  border-radius: var(--radius-card, 20px);
+  background: linear-gradient(135deg, #eef6f0, #f4f8f2);
+  box-shadow: inset 0 0 0 1px #d8e8dc;
+}
+.qrb__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.qrb__mic {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--white);
+  box-shadow: 0 8px 18px rgb(47 107 70 / 30%);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.qrb__mic:active {
+  transform: scale(0.94);
+}
+.qrb__mic:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+}
+.qrb__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.qrb__text b {
+  font: 700 15px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.qrb__text small {
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.qrb__ic {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--color-text-muted);
+  box-shadow: inset 0 0 0 1px var(--hairline, var(--sage-100));
+}
+.qrb__type {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 6px 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--hairline, var(--sage-100));
+}
+.qrb__type input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: 500 13.5px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.qrb__type input:focus {
+  outline: none;
+}
+.qrb__type button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  color: var(--white);
+}
+/* กำลังฟัง */
+.qrb.is-rec {
+  background: var(--white);
+  box-shadow:
+    inset 0 0 0 2px var(--color-brand),
+    0 8px 22px rgb(47 107 70 / 16%);
+}
+.qrb__live {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.qrb__wave {
+  display: flex;
+  justify-content: center;
+}
+.qrb__live p {
+  margin: 0;
+  min-height: 22px;
+  font: 600 14px/1.5 var(--font-sans);
+  color: var(--color-text);
+  text-align: center;
+}
+.qrb__acts {
+  display: flex;
+  gap: 8px;
+}
+.qrb__cancel,
+.qrb__stop {
+  height: 46px;
+  border-radius: var(--radius-pill);
+  font: 700 14px/1 var(--font-sans);
+}
+.qrb__cancel {
+  flex: 0 0 110px;
+  box-shadow: inset 0 0 0 1px var(--color-border);
+  color: var(--color-text);
+}
+.qrb__stop {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--color-brand);
+  color: var(--white);
+}
+/* กำลังกรอก */
+.qrb__busy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+}
+.qrb__busy p {
+  margin: 0;
+  font: 600 14px/1.3 var(--font-sans);
+  color: var(--color-brand);
+}
+.qrb__spin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid var(--color-brand-tint);
+  border-top-color: var(--color-brand);
+  animation: qrb-spin 0.8s linear infinite;
+}
+@keyframes qrb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* ผลลัพธ์ */
+.qrb__res {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.qrb__res p {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font: 600 12.5px/1.4 var(--font-sans);
+}
+.qrb__res .is-ok {
+  color: var(--color-brand);
+}
+.qrb__res .is-none {
+  color: var(--color-text-muted);
+}
+.qrb__res .is-check {
+  color: #93670a;
+}
+.qrb__res .is-miss {
+  color: var(--color-text-muted);
+}
+.qrb__res button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--hairline, var(--sage-100));
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.qrb__res .is-check button {
+  background: #fdf4dd;
+  box-shadow: none;
+  color: #93670a;
+}
+.qrb__perm {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fdf4dd;
+  font: 500 12px/1.45 var(--font-sans);
+  color: #6f4f08;
+}
+.qrb__perm.is-info {
+  background: var(--white);
+  color: var(--color-text-muted);
+}

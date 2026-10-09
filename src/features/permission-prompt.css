@@ -1,0 +1,59 @@
+/* ขออนุญาตแจ้งเตือน (เบราว์เซอร์) */
+.perm {
+  position: fixed;
+  z-index: 60;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 14px;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: 0 12px 32px rgb(31 42 34 / 18%);
+}
+.perm__ic {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+}
+.perm__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.perm__body b {
+  font: 700 14px/1.3 var(--font-sans);
+  color: var(--color-text);
+}
+.perm__body small {
+  font: 500 12px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.perm__ok {
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  font: 700 13px/1 var(--font-sans);
+  color: var(--white);
+}
+.perm__x {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+}

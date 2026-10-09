@@ -21,7 +21,7 @@ let only = process.argv.slice(2);
 async function newPage(b, role) {
   const ctx = await b.newContext({ viewport: { width: 1366, height: 1024 } });
   // โหมดสาธิต/ทดสอบ: ข้อมูลจำลองในเครื่อง ไม่แตะฐานข้อมูลจริง
-  await ctx.addInitScript(() => { try { localStorage.setItem('thaiwell.tour.v2', '1'); localStorage.setItem('thaiwell.demo', '1'); } catch {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem('thaiwell.tour.v2', '1'); localStorage.setItem('thaiwell.demo', '1'); localStorage.setItem('thaiwell.notify.asked', '1'); } catch {} });
   const p = await ctx.newPage();
   p.errs = [];
   p.on('pageerror', (e) => p.errs.push(e.message));
@@ -678,61 +678,45 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     }
   });
 
-  // ผู้ช่วยบันทึกการรักษา (แบบใหม่): พูด/พิมพ์ครั้งเดียว → AI แยกใส่ 5 ช่อง · ถามต่อเฉพาะช่องที่ขาด
-  const chatIdle = async (p) => { await p.waitForTimeout(300); await p.waitForFunction(() => !document.querySelector('.qr-typing'), null, { timeout: 90000 }); await p.waitForTimeout(400); };
-  const qrSend = async (p, t) => { await p.fill('textarea[aria-label="สรุปการรักษา"]', t); await p.getByRole('button', { name: 'ส่งข้อความ' }).click(); await chatIdle(p); };
+  // ผู้ช่วยบันทึกการรักษา: แถบเดียวในฟอร์มบันทึก · พูด/พิมพ์ → AI กรอกฟอร์มให้
+  const chatIdle = async (p) => { await p.waitForTimeout(400); await p.waitForFunction(() => !document.querySelector('.qrb.is-busy'), null, { timeout: 90000 }); await p.waitForTimeout(500); };
+  const qrSend = async (p, t) => { await p.fill('input[aria-label="สรุปการรักษา"]', t); await p.keyboard.press('Enter'); await chatIdle(p); };
   const qrOpen = async (p) => {
     await mutate(p, "const a=s.appointments.find(x=>x.status==='active');a.endedAt=new Date().toISOString();a.diagnoses=[];a.procedures=[];delete a.findings;delete a.painAfter;delete a.advice;s.__id=a.id;");
     const id = (await state(p)).__id;
     await openVisit(p, id);
-    // การ์ดบันทึกย่ออยู่ → เปิดดูทุกช่อง
-    await p.locator('.qr-card__head').click(); await p.waitForTimeout(200);
     return id;
   };
-  const row = (p, label) => p.locator('.qr-row', { hasText: label });
+  const res = async (p) => (await p.locator('.qrb__res').innerText().catch(() => '')).replace(/\s+/g, ' ');
 
-  await check('N03', 'therapist', 'เล่ารวดเดียว AI กรอกให้ครบ', 'พิมพ์ 1 ครั้ง → ตรวจพบ · วินิจฉัย(รหัส) · หัตถการ 45 นาที · ปวดหลัง 3 · คำแนะนำ → บันทึก', async (p, ex) => {
+  await check('N03', 'therapist', 'เล่ารวดเดียว AI กรอกฟอร์มให้', 'พิมพ์ 1 ครั้ง → ตรวจพบ · วินิจฉัย(รหัส) · หัตถการ 45 นาที · ปวดหลัง 3 · คำแนะนำ → บันทึก', async (p, ex) => {
     const id = await qrOpen(p);
-    ex((await p.locator('.vp__voice .qr').count()) === 1, 'ขั้นบันทึกการรักษาเปิดผู้ช่วยบันทึกด้านขวาเอง');
-    ex((await p.locator('.qr-row').count()) === 5, 'การ์ดบันทึก 5 ช่อง');
+    ex((await p.locator('.qrb').count()) === 1 && (await p.locator('.vp__voice').count()) === 0, 'ผู้ช่วยอยู่ในฟอร์มบันทึก (ไม่มีแผงด้านข้าง)');
     await qrSend(p, 'บ่าขวาตึง กดเจ็บ ยกแขนลำบาก วินิจฉัยลมปลายปัตคาด นวดรักษาเส้นอิทาบ่าไหล่ 45 นาที หลังนวดเหลือปวด 3 แนะนำประคบอุ่นที่บ้านวันละ 15 นาที');
     const a = (await state(p)).appointments.find((x) => x.id === id);
     ex(/บ่า/.test(a.findings ?? ''), `เติมสิ่งที่ตรวจพบ (${a.findings})`);
     ex(a.diagnoses?.length > 0 && !!a.diagnoses[0].code, 'เติมวินิจฉัยพร้อมรหัส ICD-10');
     ex(a.procedures?.some((x) => x.minutes === 45), 'เติมหัตถการ 45 นาที');
-    ex(/3/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ปวดหลังนวด = 3');
-    ex((await row(p, 'คำแนะนำ').innerText()).includes('ประคบ'), 'เติมคำแนะนำตามที่พูด');
-    ex((await p.locator('.qr-row.is-done, .qr-row.is-check').count()) === 5, 'ครบ 5 ช่อง');
-    // ยืนยันช่องที่ AI ไม่แน่ใจ (ถ้ามี) แล้วบันทึก
-    for (let i = 0; i < 5 && (await p.locator('.qr-acts .is-ok').count()); i++) { await p.locator('.qr-acts .is-ok').first().click(); await chatIdle(p); }
-    await p.locator('.qr-chips button', { hasText: 'บันทึกการรักษา' }).last().click(); await p.waitForTimeout(1000);
+    ex(/กรอกแล้ว/.test(await res(p)) && !/ยังขาด/.test(await res(p)), `บอกว่ากรอกครบ (${await res(p)})`);
+    await p.getByRole('button', { name: 'บันทึก', exact: true }).first().click(); await p.waitForTimeout(1200);
     const b = (await state(p)).appointments.find((x) => x.id === id);
     ex(b.painAfter === 3 && /ประคบ/.test(b.advice ?? ''), 'กดบันทึก → Pain หลังนวดและคำแนะนำถูกบันทึก');
   });
 
-  await check('N04', 'therapist', 'ผู้บำบัดส่งเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'ไฟล์เสียง → ถอดเสียง → แยกใส่ช่อง', async (p, ex) => {
+  await check('N04', 'therapist', 'ผู้บำบัดส่งเสียงสรุป (ไฟล์เสียงจริงภาษาไทย)', 'ไฟล์เสียง → ถอดเสียง → กรอกฟอร์ม', async (p, ex) => {
     const id = await qrOpen(p);
     await p.locator('input[aria-label="ไฟล์เสียงสรุปการรักษา"]').setInputFiles(path.join(__dirname, 'fixtures/voice-summary-th.m4a'));
-    await p.waitForFunction(() => document.querySelectorAll('.qr-msg.is-me').length > 1, null, { timeout: 90000 });
-    await chatIdle(p);
-    const heard = await p.locator('.qr-msg.is-me').nth(1).innerText();
-    ex(/ปัต/.test(heard) && /ประคบ/.test(heard), 'ถอดเสียงภาษาไทยเป็นข้อความในแชท');
+    await p.waitForFunction(() => !!document.querySelector('.qrb__res'), null, { timeout: 90000 }); await p.waitForTimeout(1200);
     const a = (await state(p)).appointments.find((x) => x.id === id);
-    ex((a.diagnoses?.length ?? 0) + (a.procedures?.length ?? 0) > 0 || !!a.findings, 'เสียงถูกแยกใส่บันทึก');
+    ex((a.diagnoses?.length ?? 0) + (a.procedures?.length ?? 0) > 0 || !!a.findings, `เสียงถูกแยกใส่ฟอร์ม (${await res(p)} · ได้ยิน: ${(await p.locator('.qr-msg').allInnerTexts().catch(() => [])).join(' / ')})`);
   });
 
-  await check('N05', 'therapist', 'AI ถามต่อเฉพาะช่องที่ขาด', 'บอกแค่อาการ → ถามวินิจฉัยพร้อมตัวเลือก → แตะเลือก → ถามหัตถการต่อ', async (p, ex) => {
+  await check('N05', 'therapist', 'ไม่เดาช่องที่ไม่ได้พูด', 'บอกแค่อาการ → กรอกเฉพาะตรวจพบ · บอกว่ายังขาดวินิจฉัย/หัตถการ', async (p, ex) => {
     const id = await qrOpen(p);
     await qrSend(p, 'บ่าขวาตึงมาก กดเจ็บ ยกแขนลำบาก');
-    let a = (await state(p)).appointments.find((x) => x.id === id);
+    const a = (await state(p)).appointments.find((x) => x.id === id);
     ex(/บ่า/.test(a.findings ?? '') && !(a.diagnoses?.length) && !(a.procedures?.length), 'เก็บเฉพาะอาการที่ตรวจพบ ไม่เดาช่องอื่น');
-    const last = p.locator('.qr-msg.is-ai').last();
-    ex(/วินิจฉัย/.test(await last.innerText()), 'ถามวินิจฉัยต่อ');
-    ex((await last.locator('.qr-chips button').count()) > 0, 'มีตัวเลือกวินิจฉัยจาก AI ให้แตะ');
-    await last.locator('.qr-chips button').first().click(); await chatIdle(p);
-    a = (await state(p)).appointments.find((x) => x.id === id);
-    ex(a.diagnoses.length === 1, 'แตะแล้วบันทึกวินิจฉัย 1 ข้อ');
-    ex(/หัตถการ/.test(await p.locator('.qr-msg.is-ai').last().innerText()), 'แล้วถามหัตถการต่อ');
+    ex(/ยังขาด.*วินิจฉัย/.test(await res(p)), 'บอกว่ายังขาดวินิจฉัย');
   });
 
   await check('N06', 'therapist', 'สั่งแก้ด้วยคำพูด', '“เปลี่ยนวินิจฉัยเป็น…” → แทนที่ของเดิม', async (p, ex) => {
@@ -743,32 +727,27 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(a.diagnoses.length === 1 && /จับโปง/.test(a.diagnoses[0].name), `แทนที่วินิจฉัยเดิม (${a.diagnoses.map((d) => d.name).join(', ')})`);
   });
 
-  await check('N07', 'therapist', 'ความแม่นของคะแนนปวด', 'ปวดก่อนนวดไม่ถูกบันทึกเป็นปวดหลังนวด', async (p, ex) => {
-    const id = await qrOpen(p);
-    await qrSend(p, 'ก่อนนวดผู้ป่วยปวด 7 บ่าตึง');
-    ex(!/7/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ไม่เอาปวดก่อนนวดมาใส่ปวดหลังนวด');
-    await qrSend(p, 'หลังนวดเหลือ 2');
-    ex(/2/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ปวดหลังนวด = 2 เมื่อพูดชัด');
-  });
-
-  await check('N09', 'therapist', 'ผู้ป่วยไม่ประเมินปวดหลังนวด', 'ถามปวดหลังนวด → กด “ข้าม” → ไปถามคำแนะนำ ไม่ถามซ้ำ', async (p, ex) => {
+  await check('N07', 'therapist', 'ความแม่นของคะแนนปวด', 'ปวดก่อนนวดไม่ถูกนับเป็นปวดหลังนวด', async (p, ex) => {
     await qrOpen(p);
-    await qrSend(p, 'บ่าขวาตึง วินิจฉัยลมปลายปัตคาด นวดรักษา 45 นาที');
-    for (let i = 0; i < 4 && (await p.locator('.qr-acts .is-ok').count()); i++) { await p.locator('.qr-acts .is-ok').first().click(); await chatIdle(p); }
-    const last = p.locator('.qr-msg.is-ai').last();
-    ex(/ปวดเหลือ/.test(await last.innerText()) && (await last.locator('.qr-chips button').count()) === 12, 'ถามปวดหลังนวดพร้อมแถบ 0–10 และ “ผู้ป่วยไม่ประเมิน”');
-    await last.locator('.qr-chips button', { hasText: 'ไม่ประเมิน' }).click(); await chatIdle(p);
-    ex(/ไม่ประเมิน/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ช่องปวดหลังนวด = ผู้ป่วยไม่ประเมิน');
-    ex(/คำแนะนำ/.test(await p.locator('.qr-msg.is-ai').last().innerText()), 'ถามคำแนะนำต่อ ไม่ถามปวดซ้ำ');
+    await qrSend(p, 'ก่อนนวดผู้ป่วยปวด 7 บ่าตึง');
+    ex(/ยังขาด.*ปวดหลังนวด/.test(await res(p)), 'ไม่เอาปวดก่อนนวดมาใส่ปวดหลังนวด');
+    await qrSend(p, 'หลังนวดเหลือ 2');
+    ex(!/ยังขาด.*ปวดหลังนวด/.test(await res(p)), 'ปวดหลังนวดกรอกแล้วเมื่อพูดชัด');
   });
 
-  await check('N08', 'therapist', 'แก้ในการ์ดบันทึก', 'แตะดินสอที่ช่อง → แก้ข้อความ → บันทึกลงนัด', async (p, ex) => {
-    const id = await qrOpen(p);
-    await row(p, 'ตรวจพบ').locator('button[aria-label="แก้ตรวจพบ"]').click();
-    await row(p, 'ตรวจพบ').locator('textarea').fill('หลังส่วนล่างตึง ก้มลำบาก');
-    await row(p, 'ตรวจพบ').getByRole('button', { name: 'ตกลง' }).click(); await p.waitForTimeout(500);
-    const a = (await state(p)).appointments.find((x) => x.id === id);
-    ex(a.findings === 'หลังส่วนล่างตึง ก้มลำบาก', 'แก้สิ่งที่ตรวจพบในการ์ดได้');
+  await check('N09', 'therapist', 'ผู้ป่วยไม่ประเมินปวดหลังนวด', 'พูดว่าไม่ประเมิน → ช่องปวดหลังนวดถือว่าตอบแล้ว (ข้าม)', async (p, ex) => {
+    await qrOpen(p);
+    await qrSend(p, 'บ่าขวาตึง ผู้ป่วยไม่ประเมินปวดหลังนวด');
+    ex(!/ยังขาด.*ปวดหลังนวด/.test(await res(p)), `ข้ามปวดหลังนวดได้ (${await res(p)})`);
+  });
+
+  await check('N08', 'therapist', 'แตะช่องที่ยังขาด', 'แตะ “คำแนะนำ” ในยังขาด → เลื่อนไปที่ช่องนั้นในฟอร์ม', async (p, ex) => {
+    await qrOpen(p);
+    await qrSend(p, 'บ่าขวาตึง');
+    const before = await p.evaluate(() => document.querySelector('.vsp__body')?.scrollTop ?? 0);
+    await p.locator('.qrb__res .is-miss button', { hasText: 'คำแนะนำ' }).click(); await p.waitForTimeout(900);
+    const after = await p.evaluate(() => document.querySelector('.vsp__body')?.scrollTop ?? 0);
+    ex(after > before, 'เลื่อนไปที่ช่องคำแนะนำ');
   });
 
   // ===== CROSS-CUTTING =====

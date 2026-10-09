@@ -15,6 +15,7 @@ function LiveData({ children }: { children: ReactNode }) {
   return <DbSync fallback={<div className="dbsync-loading">กำลังโหลดข้อมูลคลินิก…</div>}>{children}</DbSync>;
 }
 import { initPush, NAVIGATE } from "../sync/notify";
+import { PermissionPrompt } from "../features/PermissionPrompt";
 import { Tour } from "../features/Tour";
 import { LiveBackdrop } from "./backdrop/LiveBackdrop";
 import { useStore } from "../store/store";
@@ -133,6 +134,8 @@ export function AppShell() {
         </Suspense>
       ) : (
         <LiveData>
+      {/* ใช้ผ่านเบราว์เซอร์: ขออนุญาตแจ้งเตือนชัด ๆ */}
+      <PermissionPrompt />
       <AnimatePresence mode="wait">
         <Suspense fallback={null}>
           <Routes location={location} key={location.pathname}>

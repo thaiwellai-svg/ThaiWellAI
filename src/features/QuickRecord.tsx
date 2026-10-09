@@ -113,7 +113,10 @@ const CORRECT = /เปลี่ยน|แก้เป็น|แก้ไข|ไ
 const shortDx = (n: string) => n.replace(/\s*\(.*\)$/, "");
 const matchPick = (name: string, list: string[]) => list.find((x) => x === name) ?? list.find((x) => shortDx(x) === shortDx(name)) ?? list.find((x) => name.length > 3 && (x.includes(name) || name.includes(shortDx(x))));
 
-export function QuickRecord({ appt }: { appt: Appointment; bare?: boolean }) {
+export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?: boolean; /** bar = แถบเดียวบนฟอร์มบันทึก: พูด/พิมพ์ → กรอกฟอร์มให้เลย ไม่มีแชต */ mode?: "panel" | "bar" }) {
+  const bar = mode === "bar";
+  /** ผลรอบล่าสุด (โหมดแถบ): กรอกอะไรไปแล้ว */
+  const [result, setResult] = useState<{ filled: string[]; heard: string } | null>(null);
   const store = useStore();
   const p = store.patientById(appt.patientId);
   const s = store.serviceById(appt.serviceId);
@@ -149,6 +152,22 @@ export function QuickRecord({ appt }: { appt: Appointment; bare?: boolean }) {
   const latest = useRef({ findings, dx, pr, pain, skipPain, advice, unsure });
   latest.current = { findings, dx, pr, pain, skipPain, advice, unsure };
   const secure = typeof window === "undefined" || window.isSecureContext;
+  /** สิทธิ์ไมโครโฟน (เบราว์เซอร์): denied → บอกวิธีเปิด · ยังไม่ถาม → กดไมค์ครั้งแรกเบราว์เซอร์จะถาม */
+  const [micPerm, setMicPerm] = useState<"granted" | "denied" | "prompt" | "unknown">("unknown");
+  useEffect(() => {
+    let st: PermissionStatus | undefined;
+    navigator.permissions
+      ?.query({ name: "microphone" as PermissionName })
+      .then((x) => {
+        st = x;
+        setMicPerm(x.state as "granted" | "denied" | "prompt");
+        x.onchange = () => setMicPerm(x.state as "granted" | "denied" | "prompt");
+      })
+      .catch(() => setMicPerm("unknown"));
+    return () => {
+      if (st) st.onchange = null;
+    };
+  }, []);
   const canRecord = secure && !!navigator.mediaDevices?.getUserMedia;
 
   const fill = (d: Omit<VoiceFill, "apptId">) => window.dispatchEvent(new CustomEvent<VoiceFill>(VOICE_FILL, { detail: { apptId: appt.id, ...d } }));
@@ -483,6 +502,10 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     }
     if (x.fixed && x.fixed.trim() && x.fixed.trim() !== t) setMsgs((ms) => ms.map((m) => (m.id === me.id ? { ...m, text: x.fixed!.trim() } : m)));
     const filled = apply(x, x.fixed || t, asking);
+    if (bar) {
+      setResult({ filled, heard: (x.fixed || t).trim() });
+      return;
+    }
     if (!filled.length) {
       const q = asking ? `ยังไม่ได้ยินเรื่อง${LABEL[asking]}ค่ะ ` : "ยังไม่พบข้อมูลที่ใช้บันทึกได้ค่ะ ";
       return next(q);
@@ -564,9 +587,11 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
       });
       setLive("");
       setRec(true);
-    } catch {
+    } catch (e) {
       setRec(false);
-      say("ai", "เปิดไมโครโฟนไม่ได้ค่ะ อนุญาตการใช้ไมค์ หรือพิมพ์แทนได้");
+      const denied = (e as { name?: string })?.name === "NotAllowedError";
+      if (denied) setMicPerm("denied");
+      say("ai", denied ? "ไม่ได้รับอนุญาตให้ใช้ไมโครโฟนค่ะ เปิดสิทธิ์ไมค์แล้วลองใหม่ หรือพิมพ์แทนได้" : "เปิดไมโครโฟนไม่ได้ค่ะ ลองใหม่ หรือพิมพ์แทนได้");
     }
   };
   useEffect(() => {
@@ -653,7 +678,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
 
   // เปิดมา: ทักครั้งเดียว บอกว่าพูดรวดเดียวได้
   useEffect(() => {
-    if (msgs.length) return;
+    if (msgs.length || bar) return;
     say("ai", `ตอบทีละข้อ หรือเล่ารวดเดียวก็ได้ค่ะ เช่น “บ่าขวาตึง กดเจ็บ ลมปลายปัตคาด นวดรักษา 45 นาที หลังนวดเหลือ 3” ระบบแยกใส่ให้ครบ`, { note: true });
     const f = nextField();
     if (f) void askField(f);
@@ -691,6 +716,124 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     if (f === "pain") return skipPain ? "ผู้ป่วยไม่ประเมิน" : pain !== undefined ? <b className="qr-pain">{appt.painBefore} → {pain}<small>/10</small></b> : null;
     return advice && advice !== "-" ? <span className="qr-adv">{advice}</span> : advice === "-" ? "ไม่มี" : null;
   };
+
+  if (bar) {
+    const missing = FIELDS.filter((f) => stateOf(f.key) === "empty");
+    const check = FIELDS.filter((f) => stateOf(f.key) === "check");
+    const goTo = (label: string) => {
+      const key = label === "ปวดหลังนวด" ? "ความปวดหลังนวด" : label === "ตรวจพบ" ? "ตรวจร่างกาย" : label;
+      const el = [...document.querySelectorAll<HTMLElement>(".rs-stack h3, .rs-stack h4, .rs-stack b, .rs-stack strong")].find((e) => e.textContent?.trim().startsWith(key));
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+    return (
+      <section className={clsx("qrb", rec && "is-rec", thinking && "is-busy")} aria-label="ผู้ช่วยบันทึกการรักษา">
+        {rec ? (
+          <div className="qrb__live">
+            <div className="qrb__wave">
+              <VoiceWave level={level} height={44} />
+            </div>
+            <p>{live || "กำลังฟัง… พูดสรุปการรักษาได้เลย"}</p>
+            <div className="qrb__acts">
+              <button type="button" className="qrb__cancel" onClick={cancelRec}>
+                ยกเลิก
+              </button>
+              <button type="button" className="qrb__stop" onClick={() => void finish()}>
+                <Square size={14} fill="currentColor" /> หยุด แล้วกรอกให้
+              </button>
+            </div>
+          </div>
+        ) : thinking ? (
+          <div className="qrb__busy">
+            <span className="qrb__spin" />
+            <p>AI กำลังกรอกฟอร์มให้…</p>
+          </div>
+        ) : (
+          <>
+            <div className="qrb__main">
+              <button type="button" className="qrb__mic" disabled={!canRecord} onClick={() => void listen()} title={canRecord ? undefined : "ต้องเปิดผ่าน https จึงใช้ไมค์ได้"}>
+                <Mic size={22} />
+              </button>
+              <div className="qrb__text">
+                <b>{result ? "พูดเพิ่ม หรือแก้ได้" : "แตะไมค์ แล้วเล่าการรักษา"}</b>
+                <small>เช่น “บ่าขวาตึง กดเจ็บ ลมปลายปัตคาด นวดรักษา 45 นาที หลังนวดเหลือ 3” · AI กรอกฟอร์มด้านล่างให้</small>
+              </div>
+              <button type="button" className="qrb__ic" onClick={() => fileIn.current?.click()} aria-label="แนบไฟล์เสียง" title="แนบไฟล์เสียง">
+                <FileAudio size={18} />
+              </button>
+              <input ref={fileIn} type="file" accept="audio/*" hidden aria-label="ไฟล์เสียงสรุปการรักษา" onChange={(e) => e.target.files?.[0] && void onFile(e.target.files[0])} />
+            </div>
+            <div className="qrb__type">
+              <input
+                aria-label="สรุปการรักษา"
+                value={draft}
+                placeholder="หรือพิมพ์สรุปที่นี่ แล้วกด Enter"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && draft.trim()) {
+                    const t = draft;
+                    setDraft("");
+                    void onUser(t);
+                  }
+                }}
+              />
+              {draft.trim() && (
+                <button
+                  type="button"
+                  aria-label="ส่งข้อความ"
+                  onClick={() => {
+                    const t = draft;
+                    setDraft("");
+                    void onUser(t);
+                  }}
+                >
+                  <Send size={15} />
+                </button>
+              )}
+            </div>
+            {(!secure || micPerm === "denied") && (
+              <p className="qrb__perm">
+                {!secure
+                  ? "ไมโครโฟนใช้ได้เฉพาะหน้าเว็บที่เป็น https · พิมพ์สรุปแทนได้"
+                  : "ไมโครโฟนถูกปิดในเบราว์เซอร์ · กดไอคอนแม่กุญแจหน้าที่อยู่เว็บ → ไมโครโฟน → อนุญาต แล้วกดไมค์อีกครั้ง"}
+              </p>
+            )}
+            {micPerm === "prompt" && !result && <p className="qrb__perm is-info">กดไมค์ครั้งแรก เบราว์เซอร์จะถามขอใช้ไมโครโฟน ให้กด “อนุญาต”</p>}
+            {result && (
+              <div className="qrb__res">
+                {result.filled.length ? (
+                  <p className="is-ok">
+                    <Check size={14} strokeWidth={3} /> กรอกแล้ว: {result.filled.map((x) => x.split(" ")[0]).join(" · ")}
+                  </p>
+                ) : (
+                  <p className="is-none">ไม่พบข้อมูลที่ใช้กรอกได้ ลองพูดใหม่อีกครั้ง</p>
+                )}
+                {check.length > 0 && (
+                  <p className="is-check">
+                    <CircleHelp size={14} /> ตรวจดูอีกที:
+                    {check.map((f) => (
+                      <button key={f.key} type="button" onClick={() => (setUns(f.key, false), goTo(f.label))}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </p>
+                )}
+                {missing.length > 0 && (
+                  <p className="is-miss">
+                    ยังขาด:
+                    {missing.map((f) => (
+                      <button key={f.key} type="button" onClick={() => goTo(f.label)}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="qr" aria-label="ผู้ช่วยบันทึกการรักษา">
