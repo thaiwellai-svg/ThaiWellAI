@@ -13,6 +13,7 @@ export function MonthCalendar({
   closedWeekdays = [],
   marked = [],
   requested,
+  isFull,
 }: {
   value: string;
   onChange: (iso: string) => void;
@@ -22,6 +23,8 @@ export function MonthCalendar({
   marked?: string[];
   /** วันที่ผู้ป่วยขอมา */
   requested?: string;
+  /** วันที่คิวเต็ม (ไม่มีรอบว่าง) */
+  isFull?: (iso: string) => boolean;
 }) {
   const [month, setMonth] = useState(() => fromISODate(value || min));
   useEffect(() => {
@@ -93,15 +96,16 @@ export function MonthCalendar({
           const iso = toISODate(d);
           const out = d.getMonth() !== month.getMonth();
           const closed = closedWeekdays.includes(d.getDay());
-          const off = iso < min || closed;
+          const full = !closed && iso >= min && !!isFull?.(iso);
+          const off = iso < min || closed || full;
           return (
             <button
               key={iso}
               type="button"
-              className={clsx("mcal__d", out && "is-out", iso === today && "is-today", iso === value && "is-on", closed && "is-closed")}
+              className={clsx("mcal__d", out && "is-out", iso === today && "is-today", iso === value && "is-on", closed && "is-closed", full && "is-full")}
               disabled={off}
               aria-pressed={iso === value}
-              aria-label={iso}
+              aria-label={full ? `${iso} คิวเต็ม` : iso}
               onClick={() => {
                 if (swiped.current) return;
                 onChange(iso);
@@ -113,14 +117,14 @@ export function MonthCalendar({
             >
               {d.getDate()}
               {iso === requested && <em>ขอ</em>}
-              {marked.includes(iso) && <i />}
+              {full ? <small>เต็ม</small> : marked.includes(iso) && <i />}
             </button>
           );
         })}
       </motion.div>
         </AnimatePresence>
       </div>
-      {(requested || marked.length > 0) && (
+      {(requested || marked.length > 0 || isFull) && (
         <div className="mcal__legend">
           {requested && (
             <span>
@@ -130,6 +134,11 @@ export function MonthCalendar({
           {marked.length > 0 && (
             <span>
               <i /> มีนัดแล้ว
+            </span>
+          )}
+          {isFull && (
+            <span>
+              <small>เต็ม</small> คิวเต็ม
             </span>
           )}
         </div>

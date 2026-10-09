@@ -463,20 +463,30 @@
     flex: 1 0 0;
   }
 }
-/* ฝั่งซ้ายยาวลงถึงขอบล่าง · ปุ่มอยู่ใต้ฝั่งขวาเท่านั้น */
+/* ฝั่งซ้ายยาวลงถึงขอบล่าง · ปุ่มอยู่ใต้ฝั่งขวา (กริดของหน้าต่าง ไม่ลอยทับ → เลื่อนได้ปกติ) */
 @media (min-width: 901px) {
   .tw-dialog.apv {
-    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
-  .apv .tw-overlay-foot {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: calc(100% * 1.2 / 2.2);
-    background: var(--white);
-    border-bottom-right-radius: inherit;
+  .tw-dialog.apv > .tw-overlay-head {
+    grid-column: 1 / -1;
+  }
+  .apv .tw-overlay-body {
+    display: contents;
+  }
+  .apv__read {
+    grid-column: 1;
+    grid-row: 2 / 4;
   }
   .apv__act {
-    padding-bottom: 96px;
+    grid-column: 2;
+    grid-row: 2;
+    padding-bottom: 16px;
+  }
+  .apv .tw-overlay-foot {
+    grid-column: 2;
+    grid-row: 3;
   }
 }

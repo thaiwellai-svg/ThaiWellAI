@@ -143,3 +143,27 @@
 .mcal__week {
   margin-bottom: -6px;
 }
+/* คิวเต็ม */
+.mcal__d.is-full:disabled {
+  opacity: 1;
+  background: #fbeeec;
+  color: #c4473a;
+  padding-bottom: 8px;
+}
+.mcal__d small,
+.mcal__legend small {
+  font: 700 8.5px/1 var(--font-sans);
+  color: #c4473a;
+}
+.mcal__d small {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  text-decoration: none;
+}
+.mcal__legend small {
+  padding: 2px 4px;
+  border-radius: 6px;
+  background: #fbeeec;
+}

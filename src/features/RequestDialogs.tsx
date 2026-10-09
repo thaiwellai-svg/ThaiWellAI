@@ -65,6 +65,23 @@ export function ApproveDialog({
     () => (date ? slotLoad(store.appointments, date, store.settings) : []),
     [store.appointments, store.settings, date],
   );
+  // วันที่คิวเต็มสำหรับบริการนี้: ไม่มีรอบไหนที่เตียงว่าง + มีผู้บำบัดว่างที่ทำบริการนี้ (เก็บผลไว้ต่อวัน)
+  const dayFull = useMemo(() => {
+    const memo = new Map<string, boolean>();
+    const serviceId = incoming?.serviceId;
+    return (iso: string) => {
+      if (!serviceId) return false;
+      let v = memo.get(iso);
+      if (v === undefined) {
+        const open = slotLoad(store.appointments, iso, store.settings).filter((sl) => sl.free > 0);
+        v = !store.therapists.some(
+          (t) => shiftsOn(t, iso).length > 0 && open.some((sl) => staffState(t, { date: iso, start: sl.time, serviceId }, store.appointments) === "free"),
+        );
+        memo.set(iso, v);
+      }
+      return v;
+    };
+  }, [store.appointments, store.settings, store.therapists, incoming?.serviceId]);
   if (!request) return null;
 
   const p = store.patientById(request.patientId);
@@ -323,6 +340,7 @@ export function ApproveDialog({
             onChange={setDate}
             closedWeekdays={store.settings.closedWeekdays}
             requested={request.date}
+            isFull={dayFull}
             marked={store.appointments
               .filter((a) => a.patientId === p.id && (a.status === "waiting" || a.status === "active") && a.id !== request.courseVisitId)
               .map((a) => a.date)}
