@@ -46,12 +46,14 @@ type Msg = {
   taps?: string[];
   /** ข้อความยืนยันสั้น ๆ ว่าบันทึกอะไรไปแล้ว */
   note?: boolean;
+  /** ตัวเลือกหัตถการ (เลือกได้หลายข้อ แล้วกดส่ง) พร้อมที่มา */
+  opts?: { name: string; area?: string | null; minutes?: number | null; src: string }[];
 };
 const ICON: Record<Field, typeof Activity> = { finding: Stethoscope, dx: ClipboardList, proc: Hand, pain: Activity, advice: MessageSquareHeart };
 const HINT: Record<Field, string> = {
   finding: "แตะเลือกได้หลายข้อ แล้วกดส่ง · หรือพิมพ์/พูดเอง",
   dx: "แตะตัวเลือกที่ AI แนะนำ หรือบอกการวินิจฉัยเอง",
-  proc: "แตะตัวเลือก หรือบอกหัตถการ ตำแหน่ง และเวลา",
+  proc: "เลือกได้หลายข้อ แล้วกดส่ง · หรือบอกหัตถการ ตำแหน่ง และเวลาเอง",
   pain: "ถามผู้ป่วย แล้วแตะคะแนน",
   advice: "ให้ AI ร่างจากการรักษาวันนี้ หรือแตะเลือกคำแนะนำแล้วกดส่ง",
 };
@@ -382,6 +384,39 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     }
   };
 
+  /** ตัวเลือกหัตถการ: ตามแผนการรักษา · บริการของนัดนี้ · ครั้งก่อน · AI แนะนำ (ไม่ซ้ำ ชื่อตามรายการของคลินิก) */
+  const procOptions = async (): Promise<NonNullable<Msg["opts"]>> => {
+    const out: NonNullable<Msg["opts"]> = [];
+    const add = (name: string | undefined, src: string, area?: string | null, minutes?: number | null) => {
+      const n = name ? (matchPick(name, PROC_PICK) ?? name) : "";
+      if (!n || out.some((x) => x.name === n)) return;
+      out.push({ name: n, area: area || null, minutes: minutes ?? null, src });
+    };
+    const extrasOf = (text: string) => PROC_PICK.filter((x) => x !== s.name && !x.startsWith("นวด") && PROC_WORDS.some((w) => x.includes(w) && text.includes(w)));
+    // 1) แผนการรักษา (ระยะของแผน: บริการ · จุดที่เน้น · เทคนิค)
+    for (const ph of p.aiPlan?.phases ?? []) {
+      const svc = store.serviceById(ph.serviceId);
+      add(svc.name.replace(/ร่วมประคบสมุนไพร$/, ""), "ตามแผน", ph.focus, svc.minutes);
+      for (const x of extrasOf(`${svc.name} ${ph.technique}`)) add(x, "ตามแผน", ph.focus);
+    }
+    // 2) บริการของนัดนี้
+    add(s.name.replace(/ร่วมประคบสมุนไพร$/, ""), "นัดนี้", intakeOfVisit(appt, p)?.focusAreas?.join(" ") || null, s.minutes);
+    for (const x of extrasOf(s.name)) add(x, "นัดนี้");
+    // 3) ครั้งก่อน
+    const prev = store.appointments
+      .filter((a) => a.patientId === p.id && a.id !== appt.id && a.status === "done" && a.procedures?.length)
+      .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))[0];
+    for (const x of prev?.procedures ?? []) add(x.name, "ครั้งก่อน", x.area, x.minutes);
+    // 4) AI แนะนำ
+    for (const x of await suggest("proc")) add(x.name, "AI แนะนำ", x.area, x.minutes);
+    // 5) ยังน้อย → เติมหัตถการที่คลินิกใช้บ่อย
+    for (const x of PROC_PICK) {
+      if (out.length >= 5) break;
+      add(x, "ใช้บ่อย");
+    }
+    return out.slice(0, 7);
+  };
+
   // ── ถามช่องถัดไป (ข้อความตายตัว แม่นและสั้น) ──
   const askField = async (f: Field, prefix = "") => {
     const l = latest.current;
@@ -405,22 +440,26 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     }
     const base = FIELDS.find((x) => x.key === f)!.ask;
     let chips: Chip[] = [];
+    let opts: Msg["opts"];
     if (f === "pain") {
       chips = [...Array.from({ length: 11 }, (_, n) => ({ label: String(n), cls: n >= 7 ? "is-hi" : n >= 4 ? "is-mid" : "is-lo", run: () => void onUser(`ปวดหลังนวด ${n}`) })), { label: "ผู้ป่วยไม่ประเมิน", tone: "ghost" as const, run: () => void onUser("ผู้ป่วยไม่ประเมินปวดหลังนวด") }];
-    } else if (f === "dx" || f === "proc") {
+    } else if (f === "dx") {
       setThinking(true);
       const items = await suggest(f);
       setThinking(false);
       chips = items.map((x) => ({
-        label: f === "dx" ? shortDx(x.name) : [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" · "),
+        label: shortDx(x.name),
         run: () => {
-          if (f === "dx") saveRecord({ dx: toDx([...latest.current.dx.map((d) => d.name), x.name]) }, `เลือกวินิจฉัย: ${x.name}`);
-          else saveRecord({ pr: toPr([...latest.current.pr, x]) }, `เลือกหัตถการ: ${x.name}`);
+          saveRecord({ dx: toDx([...latest.current.dx.map((d) => d.name), x.name]) }, `เลือกวินิจฉัย: ${x.name}`);
           setUns(f, false);
-          say("me", f === "dx" ? shortDx(x.name) : x.name);
+          say("me", shortDx(x.name));
           void next("บันทึกแล้วค่ะ ");
         },
       }));
+    } else if (f === "proc") {
+      setThinking(true);
+      opts = await procOptions();
+      setThinking(false);
     } else if (f === "advice") {
       chips = [
         {
@@ -448,7 +487,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
           : undefined;
     const q = base;
     setPicked([]);
-    say("ai", q, { field: f, chips, q: true, hint: HINT[f], taps });
+    say("ai", q, { field: f, chips, q: true, hint: HINT[f], taps, opts });
     void voice(q);
   };
   const skipField = (f: Field) => {
@@ -970,6 +1009,23 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
                             ))}
                           </div>
                         )}
+                        {m.opts && m.opts.length > 0 && (
+                          <div className="qr-q__opts">
+                            {m.opts.map((o) => {
+                              const on = picked.includes(o.name);
+                              return (
+                                <button key={o.name} type="button" className={on ? "is-on" : undefined} aria-pressed={on} onClick={() => setPicked((x) => (on ? x.filter((y) => y !== o.name) : [...x, o.name]))}>
+                                  <i>{on ? <Check size={12} strokeWidth={3} /> : null}</i>
+                                  <span>
+                                    <b>{o.name}</b>
+                                    {(o.area || o.minutes) && <small>{[o.area, o.minutes && `${o.minutes} นาที`].filter(Boolean).join(" · ")}</small>}
+                                  </span>
+                                  <em>{o.src}</em>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                         {m.taps && (
                           <div className="qr-q__taps">
                             {m.taps.map((t) => {
@@ -989,6 +1045,15 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
                               className="qr-q__send"
                               disabled={thinking}
                               onClick={() => {
+                                if (m.opts) {
+                                  const sel = m.opts.filter((o) => picked.includes(o.name));
+                                  setPicked([]);
+                                  saveRecord({ pr: toPr([...latest.current.pr, ...sel.filter((o) => !latest.current.pr.some((y) => y.name === o.name))]) }, `เลือกหัตถการ: ${sel.map((o) => o.name).join(", ")}`);
+                                  setUns("proc", false);
+                                  say("me", sel.map((o) => o.name).join(" · "));
+                                  void next("บันทึกแล้วค่ะ ");
+                                  return;
+                                }
                                 const t = picked.join(" ");
                                 setPicked([]);
                                 void onUser(f === "advice" ? `แนะนำ ${t}` : t);
