@@ -88,6 +88,8 @@ export default function Visits() {
   const sel = store.appointments.find((a) => a.id === selected);
   // narrow screens (tablet portrait): a side box (assistant / health) takes the list's room so nothing gets clipped
   const sideOpen = !!sel && !solo && ((voice && visitStage(sel) === "assess") || history);
+  // เปิดแผงที่ 3 (ข้อมูลสุขภาพ / ผู้ช่วยบันทึก) → ย่อรายชื่อเหลือรูปอัตโนมัติ
+  const listSlim = slim || sideOpen;
   const hideList = solo || (narrow && sideOpen);
   const count = (g: F) => (g === "all" ? todays.length : todays.filter((a) => GROUP[stageOf(a)] === g).length);
 
@@ -132,15 +134,15 @@ export default function Visits() {
         storageKey="thaiwell.visits.layout"
         className={clsx("vp", history && sel && !solo && "has-history")}
         panes={[
-          ...(hideList ? [] : [{ id: "list", collapsible: true, width: slim ? 96 : 300, min: slim ? 96 : undefined, fixed: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: (
-        <aside className={clsx("vp__side", slim && "is-slim")}>
+          ...(hideList ? [] : [{ id: "list", collapsible: true, width: listSlim ? 96 : 300, min: listSlim ? 96 : undefined, fixed: true, menu: <ListModeMenu slim={slim} setSlim={setSlim} />, node: (
+        <aside className={clsx("vp__side", listSlim && "is-slim")}>
           <div className="vp__list scroll-y">
             {list.map((a) => {
               const p = store.patientById(a.patientId);
               const st = isOverdue(a) ? { label: "เกินเวลา", tone: "danger", color: "var(--status-absent)" } : stageMeta(a);
               const sel = a.id === selected;
               return (
-                <button key={a.id} type="button" className="vp__row" aria-pressed={sel} title={slim ? `${p.name} · ${st.label}` : undefined} onClick={() => setParams({ id: a.id })}>
+                <button key={a.id} type="button" className="vp__row" aria-pressed={sel} title={listSlim ? `${p.name} · ${st.label}` : undefined} onClick={() => setParams({ id: a.id })}>
                   {sel && <motion.span layoutId="vp-sel" className="vp__sel" transition={spring.snappy} />}
                   <Avatar name={p.name} src={patientPhoto(p)} shape="squircle" ring={st.color} pulse={stageOf(a) === "treating"} />
                   <span className="vp__who">
@@ -162,7 +164,7 @@ export default function Visits() {
                     <b>{a.start}</b>
                     <small>{queueNumber(store.appointments, a) ? `คิว ${queueNumber(store.appointments, a)}` : stageOf(a) === "checkin" ? "รอเช็กอิน" : ""}</small>
                   </span>
-                  {slim && (
+                  {listSlim && (
                     <span className="vp__slim">
                       <b>{firstName(p.name)}</b>
                       <small style={{ color: st.color }}>{a.start}</small>
