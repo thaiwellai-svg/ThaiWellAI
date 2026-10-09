@@ -626,3 +626,11 @@ button.qr-card__head {
   max-height: 55%;
   overflow-y: auto;
 }
+/* ระยะห่างจากขอบแผง (แผงผู้ช่วยไม่มี padding ของตัวเอง) */
+.qr {
+  padding: 12px 16px 16px;
+}
+.qr-chat {
+  margin: 0 -4px;
+  padding: 4px 4px 8px;
+}

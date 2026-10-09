@@ -906,7 +906,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
               aria-label="สรุปการรักษา"
               rows={1}
               value={draft}
-              placeholder="พิมพ์ หรือแตะไมค์เพื่อเล่า…"
+              placeholder="พิมพ์หรือพูด…"
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
