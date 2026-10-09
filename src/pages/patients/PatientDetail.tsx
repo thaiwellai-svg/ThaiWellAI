@@ -200,9 +200,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         <div className="pd__stats pst">
           {/* รักษาแล้ว */}
           <div className="pst__c" style={{ ["--tc" as string]: "#2f8a52" }}>
-            <span className="pst__ico">
-              <Check size={14} strokeWidth={2.5} />
-            </span>
             <small>รักษาแล้ว</small>
             <b>
               {doneCount}
@@ -224,9 +221,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             const trend = pairs.length > 1 ? lastP.before - pairs[0].before : 0;
             return (
               <div className="pst__c is-pain" style={{ ["--tc" as string]: now === undefined ? "#6b7a71" : painColor(now) }}>
-                <span className="pst__ico">
-                  <Activity size={14} />
-                </span>
                 <small className="pst__legend">
                   ปวด <i className="is-before" /> ก่อน <i className="is-after" /> หลังนวด
                 </small>
@@ -264,9 +258,6 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
           })()}
           {/* นัดถัดไป: หัวข้อบน (แบบเดียวกับอีก 2 ใบ) · ล่างเป็นนัดแบบรายการนัดที่จะถึง */}
           <button type="button" className="pst__c is-link" style={{ ["--tc" as string]: "#2f6fb3" }} disabled={!upcoming[0]} onClick={() => upcoming[0] && openAppt(upcoming[0].id)}>
-            <span className="pst__ico">
-              <CalendarDays size={14} />
-            </span>
             <small>นัดถัดไป{upcoming[0] ? ` · ${relativeDay(upcoming[0].date)}` : ""}</small>
             {upcoming[0] ? (
               <span className="pst__appt is-first">

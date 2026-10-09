@@ -3478,3 +3478,6 @@
   margin: 0;
   align-self: end;
 }
+.pst__c > small {
+  padding-right: 0;
+}
