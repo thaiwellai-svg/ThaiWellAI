@@ -220,8 +220,8 @@
 .work__body {
   flex: 1;
   min-height: 0;
-  /* panels run down to the screen edge; the floating dock sits over them */
-  padding-bottom: var(--space-4);
+  /* panels run down near the screen edge; the floating dock sits over them · leave the iPad home-indicator area clear */
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
 }
 /* …so every scroll area leaves room to scroll its last item clear of the dock */
 .work__body .scroll-y {
