@@ -9,7 +9,7 @@ import { VisitAssessments } from "../../features/VisitAssessments";
 import { ResetPatientDialog } from "../../features/ResetPatientDialog";
 import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, RotateCcw, UserX, ClipboardList, UserRound, Ticket, CalendarDays } from "lucide-react";
 import { useStore } from "../../store/store";
@@ -235,7 +235,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                     <span style={{ color: painColor(lastP.before) }}>{lastP.before}</span>
                     <i>→</i>
                     <span style={{ color: lastP.after !== undefined ? painColor(lastP.after) : undefined }}>{lastP.after ?? "—"}</span>
-                    <i>ครั้งล่าสุด</i>
+                    <i>/10</i>
                   </b>
                 ) : (
                   <b>
@@ -247,11 +247,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                   <>
                     <PainPairs pairs={pairs} />
                     <span className="pst__sub">
-                      {drop !== undefined ? (drop > 0 ? `นวดแล้วลด ${drop}` : drop < 0 ? `นวดแล้วเพิ่ม ${-drop}` : "นวดแล้วเท่าเดิม") : "ยังไม่ประเมินหลังนวด"}
+                      {drop !== undefined ? (drop > 0 ? `นวดลด ${drop}` : drop < 0 ? `นวดเพิ่ม ${-drop}` : "นวดเท่าเดิม") : "ยังไม่ประเมินหลัง"}
                       {pairs.length > 1 && (
                         <em className={trend < 0 ? "is-good" : trend > 0 ? "is-bad" : undefined}>
                           {" · "}
-                          {trend < 0 ? `ดีขึ้นจากครั้งแรก ${-trend}` : trend > 0 ? `แย่ลงจากครั้งแรก ${trend}` : "เท่าครั้งแรก"}
+                          {trend < 0 ? `ดีขึ้น ${-trend}` : trend > 0 ? `แย่ลง ${trend}` : "ทรงตัว"}
                         </em>
                       )}
                     </span>
@@ -633,30 +633,64 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
   );
 }
 
-/** ปวดก่อน → หลังนวด รายครั้ง: จุดเทา = ก่อน · จุดสี = หลัง · เส้นเขียว = ลด / แดง = เพิ่ม */
+/** กราฟเส้นปวดรายครั้ง: เส้นเทาประ = ก่อนนวด · เส้นเขียว = หลังนวด · แถบระหว่างเส้น = ที่ลดได้จากการนวด */
 function PainPairs({ pairs }: { pairs: { id: string; date: string; before: number; after?: number }[] }) {
-  const H = 64;
-  const pad = 5;
-  const y = (v: number) => pad + (1 - v / 10) * (H - pad * 2);
+  const ref = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const H = 46;
+  const px = 6;
+  const py = 5;
+  const n = pairs.length;
+  const x = (i: number) => (n === 1 ? W / 2 : px + (i / (n - 1)) * (W - px * 2));
+  const y = (v: number) => py + (1 - v / 10) * (H - py * 2);
+  const curve = (pts: [number, number][]) =>
+    pts.reduce((d, [x1, y1], i) => {
+      if (!i) return `M${x1},${y1}`;
+      const [x0, y0] = pts[i - 1];
+      const mx = (x0 + x1) / 2;
+      return `${d} C${mx},${y0} ${mx},${y1} ${x1},${y1}`;
+    }, "");
+  const bPts = pairs.map((p, i) => [x(i), y(p.before)] as [number, number]);
+  const aPts = pairs.map((p, i) => [x(i), y(p.after ?? p.before)] as [number, number]);
+  const bD = curve(bPts);
+  const aD = curve(aPts);
+  // แถบระหว่างเส้นก่อน–หลัง
+  const band = n > 1 ? `${bD} L${aPts[n - 1][0]},${aPts[n - 1][1]} ${curve([...aPts].reverse()).replace(/^M/, "L")} Z` : "";
+  const lastA = pairs[n - 1].after;
+  const c = lastA !== undefined ? painColor(lastA) : "#2f9a5b";
   return (
-    <div className="pst__pairs" style={{ gridTemplateColumns: `repeat(${Math.max(pairs.length, 4)}, minmax(0, 1fr))` }}>
-      {pairs.map((p) => {
-        const a = p.after;
-        const tone = a === undefined ? "#b9c2bc" : a < p.before ? "#2f9a5b" : a > p.before ? "#d8392a" : "#8a948d";
-        return (
-          <div key={p.id} className="pst__pair" title={`${thaiDateShort(p.date)} · ก่อน ${p.before} → หลัง ${a ?? "—"}`}>
-            <svg width="100%" height={H} aria-hidden>
-              {[0, 5, 10].map((g) => (
-                <line key={g} x1="0" x2="100%" y1={y(g)} y2={y(g)} stroke="rgb(47 64 52 / 7%)" strokeDasharray={g ? "2 3" : undefined} />
-              ))}
-              {a !== undefined && <line x1="50%" x2="50%" y1={y(p.before)} y2={y(a)} stroke={tone} strokeWidth="4" strokeLinecap="round" opacity="0.4" />}
-              <circle cx="50%" cy={y(p.before)} r="4" fill="#fff" stroke="#9aa59e" strokeWidth="1.6" />
-              {a !== undefined && <circle cx="50%" cy={y(a)} r="4.5" fill={tone} />}
-            </svg>
-            <small>{Number(p.date.slice(8))}</small>
-          </div>
-        );
-      })}
+    <div className="pst__line">
+      <div ref={ref} className="pst__plot">
+        {W > 0 && (
+          <svg width={W} height={H} aria-hidden>
+            <defs>
+              <linearGradient id="pst-band" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#2f9a5b" stopOpacity="0.22" />
+                <stop offset="1" stopColor="#2f9a5b" stopOpacity="0.06" />
+              </linearGradient>
+            </defs>
+            <line x1={0} x2={W} y1={y(0)} y2={y(0)} stroke="rgb(47 64 52 / 8%)" />
+            {band && <path d={band} fill="url(#pst-band)" />}
+            <path d={bD} fill="none" stroke="#a7b1aa" strokeWidth="1.8" strokeDasharray="4 3" strokeLinecap="round" />
+            <path d={aD} fill="none" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
+            {n === 1 && <line x1={x(0)} x2={x(0)} y1={bPts[0][1]} y2={aPts[0][1]} stroke="#2f9a5b" strokeWidth="3" opacity="0.3" strokeLinecap="round" />}
+            <circle cx={bPts[n - 1][0]} cy={bPts[n - 1][1]} r="3.2" fill="#fff" stroke="#a7b1aa" strokeWidth="1.6" />
+            {lastA !== undefined && (
+              <>
+                <circle cx={aPts[n - 1][0]} cy={aPts[n - 1][1]} r="7" fill={c} opacity="0.16" />
+                <circle cx={aPts[n - 1][0]} cy={aPts[n - 1][1]} r="3.6" fill="#fff" stroke={c} strokeWidth="2.2" />
+              </>
+            )}
+          </svg>
+        )}
+      </div>
     </div>
   );
 }

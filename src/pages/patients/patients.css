@@ -3418,3 +3418,63 @@
 .pst__legend i.is-after {
   background: #2f9a5b;
 }
+/* กราฟเส้นปวดก่อน/หลัง */
+.pst__line {
+  margin-top: 2px;
+}
+.pst__plot svg {
+  display: block;
+  overflow: visible;
+}
+.pst__days {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 4px 0;
+}
+.pst__days small {
+  font: 500 10px/1 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.pst__days small:only-child {
+  margin: 0 auto;
+}
+.pst__legend i.is-before {
+  width: 12px;
+  height: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-top: 2px dashed #a7b1aa;
+  background: none;
+}
+.pst__legend i.is-after {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+/* การ์ดปวดกะทัดรัด: ตัวเลขซ้าย · กราฟขวา (สูงเท่าการ์ดอื่น) */
+.pst__c.is-pain {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "lbl lbl"
+    "val plot"
+    "sub plot";
+  column-gap: 14px;
+  row-gap: 4px;
+  align-items: end;
+}
+.pst__c.is-pain > small {
+  grid-area: lbl;
+}
+.pst__c.is-pain > b {
+  grid-area: val;
+}
+.pst__c.is-pain > .pst__sub {
+  grid-area: sub;
+  align-self: start;
+}
+.pst__c.is-pain > .pst__line {
+  grid-area: plot;
+  margin: 0;
+  align-self: end;
+}
