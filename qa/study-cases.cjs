@@ -775,9 +775,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await qrSend(p, 'บ่าขวาตึง วินิจฉัยลมปลายปัตคาด นวดรักษา 45 นาที');
     for (let i = 0; i < 4 && (await p.locator('.qr-acts .is-ok').count()); i++) { await p.locator('.qr-acts .is-ok').first().click(); await chatIdle(p); }
     const last = p.locator('.qr-msg.is-ai').last();
-    ex(/ปวดเหลือ/.test(await last.innerText()) && (await last.locator('.qr-chips button').count()) === 12, 'ถามปวดหลังนวดพร้อมแถบ 0–10 และ “ผู้ป่วยไม่ประเมิน”');
-    await last.locator('.qr-chips button', { hasText: 'ไม่ประเมิน' }).click(); await chatIdle(p);
-    ex(/ไม่ประเมิน/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ช่องปวดหลังนวด = ผู้ป่วยไม่ประเมิน');
+    ex(/ปวดเหลือ/.test(await last.innerText()) && (await last.locator('.qr-chips button').count()) === 11, 'ถามปวดหลังนวดพร้อมแถบ 0–10');
+    await last.locator('.qr-q__skip', { hasText: 'ประเมินในแอป' }).click(); await chatIdle(p);
+    ex(/ประเมินในแอป/.test(await row(p, 'ปวดหลังนวด').innerText()), 'ช่องปวดหลังนวด = ให้ผู้ป่วยประเมินในแอป');
     ex(/คำแนะนำ/.test(await p.locator('.qr-msg.is-ai').last().innerText()), 'ถามคำแนะนำต่อ ไม่ถามปวดซ้ำ');
   });
 

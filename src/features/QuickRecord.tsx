@@ -54,7 +54,7 @@ const HINT: Record<Field, string> = {
   finding: "แตะเลือกได้หลายข้อ แล้วกดส่ง · หรือพิมพ์/พูดเอง",
   dx: "แตะตัวเลือกที่ AI แนะนำ หรือบอกการวินิจฉัยเอง",
   proc: "เลือกได้หลายข้อ แล้วกดส่ง · หรือบอกหัตถการ ตำแหน่ง และเวลาเอง",
-  pain: "ถามผู้ป่วย แล้วแตะคะแนน",
+  pain: "ถามผู้ป่วยแล้วแตะคะแนน · หรือให้ผู้ป่วยประเมินเองในแอปทีหลัง",
   advice: "ให้ AI ร่างจากการรักษาวันนี้ หรือแตะเลือกคำแนะนำแล้วกดส่ง",
 };
 type Extract = {
@@ -442,7 +442,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     let chips: Chip[] = [];
     let opts: Msg["opts"];
     if (f === "pain") {
-      chips = [...Array.from({ length: 11 }, (_, n) => ({ label: String(n), cls: n >= 7 ? "is-hi" : n >= 4 ? "is-mid" : "is-lo", run: () => void onUser(`ปวดหลังนวด ${n}`) })), { label: "ผู้ป่วยไม่ประเมิน", tone: "ghost" as const, run: () => void onUser("ผู้ป่วยไม่ประเมินปวดหลังนวด") }];
+      chips = [...Array.from({ length: 11 }, (_, n) => ({ label: String(n), cls: n >= 7 ? "is-hi" : n >= 4 ? "is-mid" : "is-lo", run: () => void onUser(`ปวดหลังนวด ${n}`) }))];
     } else if (f === "dx") {
       setThinking(true);
       const items = await suggest(f);
@@ -755,7 +755,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
           ))}
         </span>
       ) : null;
-    if (f === "pain") return skipPain ? "ผู้ป่วยไม่ประเมิน" : pain !== undefined ? <b className="qr-pain">{appt.painBefore} → {pain}<small>/10</small></b> : null;
+    if (f === "pain") return skipPain ? "ให้ผู้ป่วยประเมินในแอป" : pain !== undefined ? <b className="qr-pain">{appt.painBefore} → {pain}<small>/10</small></b> : null;
     return advice && advice !== "-" ? <span className="qr-adv">{advice}</span> : advice === "-" ? "ไม่มี" : null;
   };
 
@@ -1062,9 +1062,26 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
                               <Send size={14} /> ส่ง {picked.length} ข้อ
                             </button>
                           ) : (
-                            <button type="button" className="qr-q__skip" disabled={thinking} onClick={() => skipField(f)}>
-                              ข้ามไปก่อน <SkipForward size={14} />
-                            </button>
+                            f === "pain" ? (
+                              // ข้ามข้อนี้ = ผู้ป่วยประเมินปวดหลังนวดเองในแอปทีหลัง (นับว่าตอบแล้ว ไม่ถามซ้ำ)
+                              <button
+                                type="button"
+                                className="qr-q__skip"
+                                disabled={thinking}
+                                onClick={() => {
+                                  savePainSkip();
+                                  setUns("pain", false);
+                                  say("me", "ให้ผู้ป่วยประเมินในแอป");
+                                  void next();
+                                }}
+                              >
+                                ให้ผู้ป่วยประเมินในแอป <SkipForward size={14} />
+                              </button>
+                            ) : (
+                              <button type="button" className="qr-q__skip" disabled={thinking} onClick={() => skipField(f)}>
+                                ข้ามไปก่อน <SkipForward size={14} />
+                              </button>
+                            )
                           )}
                         </div>
                       </>
