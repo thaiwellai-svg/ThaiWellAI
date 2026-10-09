@@ -11,7 +11,7 @@ import { SellPackageDialog } from "../../features/SellPackageDialog";
 import { usePatientPrint } from "../../features/PatientPrint";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronRight, CalendarX2, FileHeart, Send, ShoppingBag, Printer, Activity, PenLine, CalendarDays, CalendarPlus, Check, HeartPulse, History, Phone, Stethoscope, Ticket, TrendingDown, TrendingUp, RotateCcw, UserX, ClipboardList, UserRound } from "lucide-react";
 import { useStore } from "../../store/store";
 import { Badge, Button, EmptyState, ease, useToast } from "../../design-system";
 import { stageMeta, creditInfo, courseUsage, coursePrepaid } from "../../data/domain";
@@ -21,6 +21,7 @@ import { PhotoPicker } from "../../features/PhotoPicker";
 import { PainMini } from "../../features/RecordCards";
 import { AIPlanCard, AIPlanTeaser, ElementCard } from "../../features/AIPlan";
 import { painColor } from "../../features/widgets";
+import { clsx } from "clsx";
 import "../../features/health.css";
 import "../../features/patient-health.css";
 
@@ -224,7 +225,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
         </div>
 
         <div className="pd__grid">
-          {/* ── row 1: complaint | course ── */}
+          {/* ── อาการ | ข้อมูลส่วนตัว ── */}
           <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#2f8a52" }}>
@@ -233,13 +234,21 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               อาการสำคัญ
             </h3>
             <p className="pd2__quote">{p.complaint}</p>
-            {/* ข้อมูลส่วนตัว — ไม่ค่อยได้ใช้ระหว่างงาน → พับไว้ */}
-            <details className="pd2__more">
-              <summary>
-                ข้อมูลส่วนตัว
-                <ChevronDown size={14} />
-              </summary>
-              <dl className="pd2__kv">
+          </section>
+
+          <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#6b7a71" }}>
+                <UserRound size={15} />
+              </span>
+              ข้อมูลส่วนตัว
+              {onEdit && (
+                <button type="button" className="pd2__act" onClick={onEdit}>
+                  แก้ไข
+                </button>
+              )}
+            </h3>
+            <dl className="pd2__kv">
                 {p.phone && (
                   <div>
                     <dt>เบอร์โทร</dt>
@@ -278,15 +287,35 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
                   <dd>{thaiDate(p.registeredOn)}</dd>
                 </div>
               </dl>
-            </details>
           </section>
 
+          {/* ── ขั้นตอนการรักษา: 1 วางแผน → 2 คอร์ส → 3 นัด ── */}
+          <div className="pd__card pd__card--wide pd-flow">
+            {[
+              { n: 1, t: "แผนการรักษา", v: !p.aiPlan ? "ยังไม่วางแผน" : p.aiPlan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ", ok: !!p.aiPlan?.approved, on: !!p.aiPlan },
+              { n: 2, t: "คอร์ส", v: credits ? `${credits.total} ครั้ง · เหลือ ${credits.remaining}` : "เปิดเมื่ออนุมัติแผน", ok: !!credits, on: !!credits },
+              { n: 3, t: "นัด", v: upcoming.length ? `จองไว้ ${upcoming.length} นัด` : "ยังไม่มีนัด", ok: upcoming.length > 0, on: upcoming.length > 0 },
+            ].map((x) => (
+              <div key={x.n} className={clsx("pd-flow__s", x.ok && "is-ok", x.on && !x.ok && "is-wait")}>
+                <i>{x.ok ? <Check size={13} strokeWidth={3} /> : x.n}</i>
+                <span>
+                  <b>{x.t}</b>
+                  <small>{x.v}</small>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── AI plan (opens the side panel on wide screens) ── */}
+          <div className="pd__card--wide pd-plan">{onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}</div>
+
+          {/* ── คอร์ส | นัด ── */}
           <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#d08a3c" }}>
                 <Ticket size={15} />
               </span>
-              คอร์ส
+              <i className="pd2__step">2</i> คอร์ส
               {credits && <em className={credits.remaining <= 1 ? "is-low" : undefined}>เหลือ {credits.remaining} ครั้ง</em>}
               <button type="button" className="pd2__sell pd2__act" onClick={() => setSelling(true)}>
                 <ShoppingBag size={14} /> {credits ? "ต่อคอร์ส" : "ขายแพ็กเกจ"}
@@ -425,16 +454,12 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             )}
           </section>
 
-          {/* ── AI plan (opens the side panel on wide screens) ── */}
-          {onAIPlan ? <AIPlanTeaser p={p} open={!!aiOpen} onOpen={onAIPlan} /> : <AIPlanCard p={p} />}
-
-          {/* ── row 2: upcoming | history ── */}
           <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#3b82c4" }}>
                 <CalendarDays size={15} />
               </span>
-              นัดที่จะถึง
+              <i className="pd2__step">3</i> นัดที่จะถึง
               {upcoming.length > 0 && <em>{upcoming.length}</em>}
               <button type="button" className="pd2__act" onClick={() => setPlanFor(p.id)}>
                 <CalendarPlus size={14} /> จัดนัด
@@ -464,7 +489,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
             )}
           </section>
 
-          <section className="pd__card pd2">
+          <section className="pd__card pd__card--wide pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
                 <History size={15} />

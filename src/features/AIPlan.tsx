@@ -499,7 +499,7 @@ export function AIPlanTeaser({ p, open, onOpen }: { p: Patient; open: boolean; o
       </span>
       <span className="ai-teaser__text">
         <b>
-          แผนการรักษา AI
+          <i className="pd2__step">1</i> แผนการรักษา
           {plan && <i className={plan.approved ? "is-ok" : undefined}>{plan.approved ? "แพทย์อนุมัติแล้ว" : "รอแพทย์อนุมัติ"}</i>}
         </b>
         <small>{plan ? `${plan.massageType} · ${plan.sessions} ครั้ง` : "AI ร่างแผนจากอาการและประวัติ"}</small>
