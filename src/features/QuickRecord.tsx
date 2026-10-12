@@ -8,6 +8,7 @@ import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
 import { dxCode, procCode } from "../data/codes";
 import { samuthan } from "../data/samuthan";
 import { intakeOfVisit } from "../data/intake";
+import { MASSAGE_RULES, knowledgeFor, procCautions } from "../data/knowledge";
 import { DEFAULT_CALL_VOICE, speak, stopSpeaking, unlockAudio } from "./tts";
 import { VoiceWave } from "./VoiceWave";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, parseLocal, type VoiceFill } from "./VoiceNote";
@@ -46,6 +47,8 @@ type Msg = {
   taps?: string[];
   /** ข้อความยืนยันสั้น ๆ ว่าบันทึกอะไรไปแล้ว */
   note?: boolean;
+  /** ข้อควรระวังตามแนวทาง (แสดงเป็นแถบเหลือง) */
+  warn?: boolean;
   /** ตัวเลือกหัตถการ (เลือกได้หลายข้อ แล้วกดส่ง) พร้อมที่มา */
   opts?: { name: string; area?: string | null; minutes?: number | null; src: string }[];
 };
@@ -146,6 +149,8 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
   const [cardOpen, setCardOpen] = useState(false);
   /** คำตอบตัวอย่างที่เลือกในการ์ดคำถามข้อปัจจุบัน (แตะเลือกได้หลายคำ แล้วกดส่ง) */
   const [picked, setPicked] = useState<string[]>([]);
+  /** ข้อควรระวังที่แจ้งไปแล้ว (ไม่แจ้งซ้ำ) */
+  const warned = useRef(new Set<string>());
   const [editText, setEditText] = useState("");
   const mic = useRef<MicRec | null>(null);
   const seq = useRef(0);
@@ -252,6 +257,15 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
     const next = { findings: patch.findings ?? l.findings, dx: patch.dx ?? l.dx, pr: patch.pr ?? l.pr };
     latest.current = { ...l, ...next };
     store.dispatch({ type: "updateAppointment", id: appt.id, patch: { findings: next.findings.trim() || undefined, diagnoses: next.dx, procedures: next.pr }, log });
+    // ข้อควรระวังตาม CPG/ตำรา (ตรวจในเครื่อง) เมื่อเลือกหัตถการ
+    if (patch.pr || patch.findings) {
+      const sc = p.screening && p.screening.at?.slice(0, 10) === appt.date ? p.screening : null;
+      const warn = procCautions(`${next.findings} ${intakeOfVisit(appt, p)?.complaint ?? ""}`, next.pr.map((x) => x.name), { bloodThinner: sc?.bloodThinner, diabetes: (p.conditions ?? []).some((c) => c.includes("เบาหวาน")), age: p.age });
+      for (const w of warn.filter((w) => !warned.current.has(w))) {
+        warned.current.add(w);
+        say("ai", `⚠︎ ${w}`, { note: true, warn: true });
+      }
+    }
   };
   const toDx = (names: string[]) => names.map((n, i) => ({ name: n, code: dxCode(n)?.code, kind: (i ? "secondary" : "principal") as "principal" | "secondary" }));
   const toPr = (xs: { name: string; area?: string | null; minutes?: number | null }[]) => xs.map((x, i) => ({ name: x.name, code: procCode(x.name)?.code, area: x.area || undefined, minutes: x.minutes ?? (i === 0 ? s.minutes : undefined) }));
@@ -289,6 +303,8 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
           คอร์ส: p.course ? `${p.course.name} ใช้แล้ว ${p.course.used}/${p.course.total}` : null,
           คัดกรองวันนี้: sc ? { ความดัน: sc.bpSys ? `${sc.bpSys}/${sc.bpDia}` : null, จุดปวด: sc.painAreas ?? [], ห้ามนวด: sc.avoid || null, แรงนวด: sc.pressure, ยาละลายลิ่มเลือด: sc.bloodThinner, ชา: sc.numbness } : null,
           ธาตุที่เสี่ยง: sm.top,
+          // ความรู้จาก CPG 2568 / ตำรา ที่ตรงกับอาการวันนี้ (ใช้ช่วยตีความ/แนะนำ ไม่ใช้เติมช่อง)
+          ความรู้อ้างอิง: knowledgeFor(`${l.findings} ${ik?.complaint ?? ""} ${p.complaint} ${(ik?.focusAreas ?? []).join(" ")}`),
         };
       })(),
       บันทึกตอนนี้: { ตรวจพบ: l.findings, วินิจฉัย: l.dx.map((d) => d.name), หัตถการ: l.pr.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" ")), ปวดหลังนวด: l.pain ?? null, คำแนะนำ: l.advice },
@@ -388,8 +404,8 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     try {
       const r = await chatJSON<{ items: { name: string; area?: string; minutes?: number | null }[] }>(
         f === "dx"
-          ? `คุณเป็นแพทย์แผนไทย เสนอการวินิจฉัยที่น่าจะเป็น 1–3 ข้อ จากสิ่งที่ตรวจพบวันนี้เป็นหลัก ประกอบกับประวัติการรักษาและแผนการรักษา (อาการเดิมต่อเนื่อง → วินิจฉัยเดิมมาก่อน) ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(DX_PICK)} ตอบ JSON {"items":[{"name":""}]}`
-          : `คุณเป็นแพทย์แผนไทย เสนอหัตถการ 1–2 ข้อ ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(PROC_PICK)} พร้อม area สั้น ๆ และ minutes (รวมไม่เกินเวลาบริการ) ให้สอดคล้องกับแผนการรักษาและสิ่งที่ตรวจพบวันนี้ ดูประวัติว่าหัตถการไหนทำแล้วปวดลดได้ดี ห้ามเสนอตำแหน่งที่ไม่ให้นวด/ห้ามนวดจากคัดกรอง ตอบ JSON {"items":[{"name":"","area":"","minutes":0}]}`,
+          ? `คุณเป็นแพทย์แผนไทย เสนอการวินิจฉัยที่น่าจะเป็น 1–3 ข้อ จากสิ่งที่ตรวจพบวันนี้เป็นหลัก เทียบอาการกับ "โรคตามCPGที่อาการใกล้เคียง" ใน ความรู้อ้างอิง ประกอบกับประวัติการรักษาและแผนการรักษา (อาการเดิมต่อเนื่อง → วินิจฉัยเดิมมาก่อน) ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(DX_PICK)} ตอบ JSON {"items":[{"name":""}]}`
+          : `คุณเป็นแพทย์แผนไทย เสนอหัตถการ 1–2 ข้อ ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(PROC_PICK)} พร้อม area สั้น ๆ และ minutes (รวมไม่เกินเวลาบริการ) ให้สอดคล้องกับแผนการรักษาและสิ่งที่ตรวจพบวันนี้ ดูประวัติว่าหัตถการไหนทำแล้วปวดลดได้ดี ห้ามเสนอตำแหน่งที่ไม่ให้นวด/ห้ามนวดจากคัดกรอง และต้องไม่ขัดกับกติกาความปลอดภัยนี้\n${MASSAGE_RULES} ตอบ JSON {"items":[{"name":"","area":"","minutes":0}]}`,
         JSON.stringify(context()),
       );
       const pick = f === "dx" ? DX_PICK : PROC_PICK;
@@ -403,7 +419,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     const sm = samuthan(p, { time: appt.start });
     try {
       const r = await chatJSON<{ advice: string }>(
-        `คุณเป็นแพทย์แผนไทย เขียน "คำแนะนำถึงผู้ป่วย" หลังรับบริการ ภาษาไทยสุภาพ 2–4 ข้อสั้น ๆ ขึ้นบรรทัดใหม่ทีละข้อ ขึ้นต้นด้วย "• " ให้สอดคล้องกับสิ่งที่ตรวจพบ วินิจฉัย หัตถการวันนี้ และแผนการรักษา (เช่น นัดครั้งถัดไป/ท่าฤาษีดัดตนตามแผน) คำนึงถึงโรคประจำตัวและผลคัดกรอง ตอบ JSON {"advice":"..."}\n${THAI_MASSAGE_KNOWLEDGE}`,
+        `คุณเป็นแพทย์แผนไทย เขียน "คำแนะนำถึงผู้ป่วย" หลังรับบริการ ภาษาไทยสุภาพ 2–4 ข้อสั้น ๆ ขึ้นบรรทัดใหม่ทีละข้อ ขึ้นต้นด้วย "• " ให้สอดคล้องกับสิ่งที่ตรวจพบ วินิจฉัย หัตถการวันนี้ และแผนการรักษา (เช่น นัดครั้งถัดไป/ท่าฤาษีดัดตนตามแผน) คำนึงถึงโรคประจำตัวและผลคัดกรอง ใช้ท่ายืดเหยียดจาก "ความรู้อ้างอิง" ถ้ามี (บอกชื่อท่าและจำนวนครั้งตามที่ระบุ ห้ามแต่งจำนวนเอง) และคำแนะนำหลังนวดตามหลักนี้ ตอบ JSON {"advice":"..."}\n${MASSAGE_RULES}\n${THAI_MASSAGE_KNOWLEDGE}`,
         JSON.stringify({ ...context(), ธาตุที่เสี่ยง: sm.top, แนวทางตามธาตุ: sm.plan, ปวดก่อนหลัง: `${appt.painBefore} → ${l.pain ?? "?"}` }),
       );
       return r.advice?.trim() || "";
@@ -1118,8 +1134,8 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
                 );
               })()
             ) : (
-              <div className={clsx("qr-bub", m.note && "is-note")}>
-                {m.note && <CircleCheck size={14} className="qr-note-ic" />}
+              <div className={clsx("qr-bub", m.note && "is-note", m.warn && "is-warn")}>
+                {m.note && !m.warn && <CircleCheck size={14} className="qr-note-ic" />}
                 <p>{m.text}</p>
                 {m.chips && m.chips.length > 0 && m === msgs.filter((x) => x.role === "ai").slice(-1)[0] && (
                   <div className="qr-chips">

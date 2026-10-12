@@ -723,6 +723,16 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   };
   const row = (p, label) => p.locator('.qr-row', { hasText: label });
 
+  await check('N10', 'therapist', 'ข้อควรระวังตาม CPG', 'พิมพ์ เข่าบวม แดง ร้อน + ประคบสมุนไพร → เตือนห้ามประคบช่วงอักเสบ 24 ชม.แรก · ไม่เตือนซ้ำ', async (p, ex) => {
+    await qrOpen(p);
+    await qrSend(p, 'เข่าซ้ายบวม แดง ร้อน งอเข่าลำบาก ประคบสมุนไพรเข่า 20 นาที');
+    const warn = p.locator('.qr-bub.is-warn');
+    ex((await warn.count()) === 1, 'ขึ้นแถบเตือนเรื่องประคบช่วงอักเสบ');
+    ex(/24/.test(await warn.first().innerText().catch(() => '')), 'อ้างอิงกติกา 24 ชม.');
+    await qrSend(p, 'เพิ่มนวดไทยเพื่อการรักษา 30 นาที');
+    ex((await warn.count()) === 1, 'ไม่เตือนซ้ำ');
+  });
+
   await check('N03', 'therapist', 'เล่ารวดเดียว AI กรอกให้ครบ', 'พิมพ์ 1 ครั้ง → ตรวจพบ · วินิจฉัย(รหัส) · หัตถการ 45 นาที · ปวดหลัง 3 · คำแนะนำ → บันทึก', async (p, ex) => {
     const id = await qrOpen(p);
     ex((await p.locator('.vp__voice .qr').count()) === 1, 'ขั้นบันทึกการรักษาเปิดผู้ช่วยบันทึกด้านขวาเอง');

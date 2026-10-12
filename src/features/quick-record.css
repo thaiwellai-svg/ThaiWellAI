@@ -941,3 +941,9 @@ button.qr-card__head {
   font-style: normal;
   color: var(--color-brand);
 }
+/* ข้อควรระวังตามแนวทาง CPG/ตำรา */
+.qr-bub.is-note.is-warn {
+  background: #fdf3df;
+  color: #8a5a12;
+  font-weight: 600;
+}
