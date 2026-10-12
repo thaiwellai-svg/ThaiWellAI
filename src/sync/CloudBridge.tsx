@@ -79,6 +79,16 @@ const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
 /** ลายเซ็นบิล (ไม่ขึ้นกับลำดับคีย์ของ jsonb) */
 const billKey = (b?: CloudAppt["bill"] | null) => (b ? `${b.status}|${b.amount}|${b.receipt_no ?? ""}|${(b.lines ?? []).map((l) => `${l.name}:${l.amount}`).join(",")}` : "");
 /** ลายเซ็นของการประเมิน (เปลี่ยน = มีรอบใหม่ / แจ้งเพิ่ม / ประเมินหลังนวด) */
+/** คำตอบจากแอปที่ยังไม่ได้รับ: ติดตามผลหลังนวด · เตือนนัด (ยืนยัน/ขอเลื่อน) — ใหม่ = เวลาตอบไม่ตรงกับที่เก็บไว้ */
+export function appAnswers(local: Pick<Appointment, "followUp" | "attend">, as?: CloudAppt["assessment"] | null) {
+  const fu = as?.followup;
+  const att = as?.attend;
+  return {
+    followUp: fu && typeof fu.pain === "number" && local.followUp?.at !== fu.at ? { pain: fu.pain, sleep: fu.sleep, issues: Array.isArray(fu.issues) ? fu.issues : [], worse: !!fu.worse, at: fu.at } : undefined,
+    attend: att && (att.answer === "confirm" || att.answer === "reschedule") && local.attend?.at !== att.at ? att : undefined,
+  };
+}
+
 const assessSig = (row: CloudAppt) => `${row.assessment?.rounds?.length ?? 0}|${row.assessment?.at ?? ""}|${row.assessment?.addenda?.length ?? 0}|${row.assessment?.after?.at ?? ""}|${row.assessment?.followup?.at ?? ""}|${row.assessment?.attend?.at ?? ""}`;
 
 /** what the clinic has done with a linked booking, as the shared status + the data the app needs */
@@ -409,16 +419,17 @@ export function CloudBridge() {
       toast({ message: `${st.patientById(local.patientId).name} ประเมินหลังนวดในแอป · ปวด ${after.pain}/10` });
     }
     // ติดตามผลหลังนวด (แอปเตือน 48 ชม.) → รายการติดตามผล · อาการแย่ลง = แจ้งให้โทรกลับ
-    const fu = row.assessment?.followup;
-    if (fu && typeof fu.pain === "number" && local.followUp?.at !== fu.at) {
+    const ans = appAnswers(local, row.assessment);
+    const fu = ans.followUp;
+    if (fu) {
       const who = st.patientById(local.patientId).name;
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { followUp: fu }, log: `ติดตามผลหลังนวดในแอป · ปวด ${fu.pain}/10${fu.issues.length ? ` · ${fu.issues.join(", ")}` : ""}` });
       toast({ message: `${who} ตอบติดตามผล · ปวด ${fu.pain}/10${fu.worse ? " · อาการแย่ลง" : ""}`, tone: fu.worse ? "danger" : undefined });
       if (fu.worse) void pushNotify("ติดตามผล: อาการแย่ลง", `${who} · ปวด ${fu.pain}/10 · ขอให้โทรกลับ`, "/followups");
     }
     // เตือนนัด: ยืนยันมาตามนัด / ขอเลื่อน
-    const att = row.assessment?.attend;
-    if (att && local.attend?.at !== att.at) {
+    const att = ans.attend;
+    if (att) {
       const who = st.patientById(local.patientId).name;
       st.dispatch({ type: "updateAppointment", id: local.id, patch: { attend: att }, log: att.answer === "confirm" ? "ผู้ป่วยยืนยันมาตามนัดในแอป" : `ผู้ป่วยขอเลื่อนนัดในแอป${att.note ? ` · ${att.note}` : ""}` });
       toast({ message: att.answer === "confirm" ? `${who} ยืนยันมาตามนัด ${local.date} ${local.start} น.` : `${who} ขอเลื่อนนัด ${local.date} ${local.start} น. · โทรนัดใหม่`, tone: att.answer === "reschedule" ? "danger" : undefined });

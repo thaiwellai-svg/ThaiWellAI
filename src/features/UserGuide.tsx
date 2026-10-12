@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, ChevronDown, GraduationCap, Lightbulb, MonitorPlay, PlayCircle, Search, Sparkles } from "lucide-react";
+import { Activity, ChevronDown, GraduationCap, Lightbulb, MonitorPlay, PlayCircle, Search, Sparkles, X } from "lucide-react";
+import { createPortal } from "react-dom";
 import { AppointmentsIcon, BillingIcon, HomeIcon, InsightsIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
 import { startTour } from "./Tour";
 import { DEMO } from "../data/mode";
 import "./user-guide.css";
+
+/** แอป iPad (Capacitor) — เปิดแท็บใหม่ไม่ได้ */
+const isNativeApp = () => !!(window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 const AiIcon: Icon = (p) => <Sparkles {...(p as object)} />;
@@ -156,6 +160,14 @@ const CHAPTERS: { id: string; title: string; color: string; Icon: Icon; intro: s
 export function UserGuide() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>("visits:0");
+  const [manual, setManual] = useState(false);
+  // "กลับเข้าระบบ" ในคู่มือ (ซ้อนในแอป) → ปิดคู่มือ
+  useEffect(() => {
+    if (!manual) return;
+    const on = (e: MessageEvent) => e.data === "tw-close-manual" && setManual(false);
+    window.addEventListener("message", on);
+    return () => window.removeEventListener("message", on);
+  }, [manual]);
   const needle = q.trim().toLowerCase();
   const chapters = CHAPTERS.map((c) => ({
     ...c,
@@ -173,7 +185,19 @@ export function UserGuide() {
           <small>วิธีใช้ทุกเมนูทีละขั้น</small>
         </div>
         <div className="ug-hero__btns">
-          <a className="is-main" href={`${import.meta.env.BASE_URL}tutorial/`} target="_blank" rel="noopener">
+          <a
+            className="is-main"
+            href={`${import.meta.env.BASE_URL}tutorial/`}
+            target="_blank"
+            rel="noopener"
+            onClick={(e) => {
+              // แอป iPad (Capacitor) เปิดแท็บใหม่ไม่ได้ → เปิดคู่มือเต็มจอในแอปแทน
+              if (isNativeApp()) {
+                e.preventDefault();
+                setManual(true);
+              }
+            }}
+          >
             <MonitorPlay size={16} /> ดูคู่มือฉบับเต็ม
           </a>
           <button type="button" onClick={startTour}>
@@ -235,6 +259,17 @@ export function UserGuide() {
           </div>
         </section>
       ))}
+      {/* คู่มือฉบับเต็มในแอป iPad: เต็มจอ ปิดได้ (เว็บเปิดแท็บใหม่ตามเดิม) */}
+      {manual &&
+        createPortal(
+          <div className="ug-manual" role="dialog" aria-label="คู่มือฉบับเต็ม">
+            <iframe src={`${import.meta.env.BASE_URL}tutorial/index.html`} title="คู่มือการใช้งาน ThaiWell" />
+            <button type="button" className="ug-manual__close" onClick={() => setManual(false)} aria-label="ปิดคู่มือ">
+              <X size={20} />
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

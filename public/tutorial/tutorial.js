@@ -413,3 +413,13 @@ function reveal() {
   clear.innerHTML = icon("x", 14);
 })();
 document.querySelector(".brand__mark").innerHTML = icon("book-open", 18);
+
+/* เปิดอยู่ในแอป iPad (ซ้อนในหน้าต่างของระบบ) → "กลับเข้าระบบ" = ปิดคู่มือ แทนการเปิดระบบซ้อนข้างใน */
+if (window.parent !== window) {
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest && e.target.closest('a[href="../"]');
+    if (!a) return;
+    e.preventDefault();
+    window.parent.postMessage("tw-close-manual", "*");
+  });
+}
