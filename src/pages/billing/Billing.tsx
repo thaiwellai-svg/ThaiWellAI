@@ -455,7 +455,7 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
         return wide ? (
           <Workspace
             storageKey={hist ? "thaiwell.billing.history.layout" : "thaiwell.billing.layout"}
-            flexMin={0}
+            flexMin={460}
             className={clsx("bl3 bl3--ws", hist && "bl3--hist", solo && "is-solo")}
             panes={[
               // รายชื่อ: ล็อก 300px เหมือนหน้าผู้ป่วย
@@ -463,8 +463,6 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
               // รายละเอียดบิล: ลาก ••• ที่ขอบปรับความกว้างได้ (ค่าเริ่ม = เต็มพื้นที่ที่เหลือ) · ขยายเต็มจอได้
               {
                 id: "detail",
-                width: 2000,
-                min: 460,
                 actions: (
                   <button type="button" className="ws__icon" onClick={() => setSolo((v) => !v)} aria-label={solo ? "แสดงรายชื่อ" : "ขยายเต็มจอ"} title={solo ? "แสดงรายชื่อ" : "ขยายเต็มจอ"}>
                     {solo ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
@@ -473,7 +471,7 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
                 node: detailNode,
               },
               // ที่ว่างที่เหลือ (เห็นห้องด้านหลัง) เมื่อย่อแผงรายละเอียด
-              { id: "room", ghost: true, locked: true, node: <div /> },
+              { id: "room", ghost: true, width: 1, min: 1, max: 640, node: <div /> },
             ]}
           />
         ) : (

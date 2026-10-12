@@ -1100,3 +1100,10 @@
 .bl3--ws .bl3__due {
   padding-top: 14px;
 }
+/* ช่องว่างหลบ (ghost) ตอนแผงเต็ม ไม่กินระยะ gap เพิ่ม → ขอบขวาเท่าหน้าผู้ป่วย */
+.bl3--ws .ws__pane.is-ghost {
+  margin-left: -16px;
+}
+.bl3--ws .ws__pane.is-ghost > * {
+  visibility: hidden;
+}
