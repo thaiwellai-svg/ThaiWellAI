@@ -7,12 +7,9 @@ import { ELEMENTS, samuthan, type Factor } from "../data/samuthan";
 import type { Patient } from "../data/types";
 import { ElementIcon } from "./ElementIcon";
 import { ageFrom, thaiBirth } from "./BirthDateField";
-import { clsx } from "clsx";
-import dinArt from "../assets/elements/din.png";
+import { ElementDiorama } from "./ElementDiorama";
 import "./samuthan.css";
 
-/** ภาพประกอบธาตุ (Figma) — ยังมีเฉพาะธาตุดิน ธาตุอื่นใช้พื้นไล่สีตามธาตุ */
-const ART: Partial<Record<"ดิน" | "น้ำ" | "ลม" | "ไฟ", string>> = { ดิน: dinArt };
 
 const FICON: Record<Factor["key"], typeof Sun> = { birth: Sprout, age: CalendarClock, season: Sun, time: Clock3, place: MapPin };
 
@@ -49,15 +46,9 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
 
         <div className="tm__body">
           {/* ฮีโร่ธาตุเจ้าเรือน (Figma ThaiWell 225:36): ภาพธาตุ · วงกลมไอคอน · ชื่อธาตุ · มักพบ/รสยา · สมดุลวันนี้ */}
-          <div className={clsx("tm4", ART[prof.birth] && "has-art")} style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
-            {/* ภาพธาตุเด่นเต็มตา (ไม่มีไอคอนทับ) · ธาตุที่ยังไม่มีภาพ → ไอคอนแทนชั่วคราว */}
-            {ART[prof.birth] ? (
-              <img className="tm4__art" src={ART[prof.birth]} alt={`ธาตุ${prof.birth}`} />
-            ) : (
-              <span className="tm4__orb">
-                <ElementIcon element={prof.birth} size={44} strokeWidth={1.8} />
-              </span>
-            )}
+          <div className="tm4 has-art" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
+            {/* โมเดล 3D isometric ของธาตุ (ดิน ภูเขา · น้ำ สระน้ำ · ลม เมฆ · ไฟ กองไฟ) */}
+            <ElementDiorama element={prof.birth} className="tm4__model" />
             <div className="tm4__name">
               <b>ธาตุ{prof.birth}</b>
               <span>{born.trait}</span>

@@ -1077,3 +1077,20 @@
   mask-image: none;
   filter: drop-shadow(0 14px 18px rgb(70 50 30 / 16%));
 }
+/* โมเดล 3D isometric (ไม่มีเงา) */
+.tm4__model {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1.05;
+  margin: -12px 0 2px;
+  cursor: grab;
+  touch-action: pan-y;
+}
+.tm4__model:active {
+  cursor: grabbing;
+}
+.tm4__model canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
