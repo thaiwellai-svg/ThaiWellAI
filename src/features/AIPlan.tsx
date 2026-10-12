@@ -17,8 +17,8 @@ import { samuthan } from "../data/samuthan";
 import { bestForElement, outcomeRows } from "../data/outcomes";
 
 /** ธาตุเจ้าเรือน · อายุสมุฏฐาน · อุตุสมุฏฐาน of the patient */
-export function ElementCard({ p }: { p: Patient }) {
-  return <ThaiMedCard p={p} />;
+export function ElementCard({ p, open }: { p: Patient; open?: boolean }) {
+  return <ThaiMedCard p={p} open={open} />;
 }
 
 const STEPS = ["อ่านประวัติและอาการ", "ประเมินธาตุและเส้น", "เลือกบริการและความถี่", "ตรวจข้อห้าม"];

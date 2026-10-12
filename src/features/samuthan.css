@@ -610,3 +610,7 @@
 .tm__note {
   font-size: 12.5px;
 }
+/* วัดความกว้างจากการ์ดเอง (อยู่ในคอลัมน์ซ้ายของหน้าผู้ป่วย) */
+.pd__card.tm {
+  container-type: inline-size;
+}

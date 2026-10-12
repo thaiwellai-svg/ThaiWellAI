@@ -15,7 +15,7 @@ const FICON: Record<Factor["key"], typeof Sun> = { birth: Sprout, age: CalendarC
  * การแพทย์แผนไทย (หน้าผู้ป่วย): ธาตุเจ้าเรือน · ธาตุที่เสี่ยงวันนี้ (สมุฏฐาน 5 ด้าน + อาการ) · แนวทางดูแลวันนี้ · ผลจริงของคลินิก
  * ใช้ตอนแพทย์ประเมิน → พับไว้ หัวการ์ดบอกธาตุไว้แล้ว
  */
-export function ThaiMedCard({ p, time }: { p: Patient; /** HH:mm of the visit (defaults to now) */ time?: string }) {
+export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the visit (defaults to now) */ time?: string; /** เปิดไว้ตั้งแต่แรก */ open?: boolean }) {
   const store = useStore();
   const prof = elementProfile(p);
   const born = ELEMENT_INFO[prof.birth];
@@ -29,7 +29,7 @@ export function ThaiMedCard({ p, time }: { p: Patient; /** HH:mm of the visit (d
   ];
   return (
     <section className="pd__card pd__card--wide pd2 tm">
-      <details className="tm__fold">
+      <details className="tm__fold" open={open}>
         <summary className="pd2__h">
           <span className="pd2__i" style={{ ["--c" as string]: born.color }}>
             <ElementIcon element={prof.birth} size={15} />

@@ -304,31 +304,8 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               </details>
             )}
           </section>
-              <section className="pd__card pd2">
-            <h3 className="pd2__h">
-              <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
-                <History size={15} />
-              </span>
-              ประวัติการรักษา
-              <em>{doneCount ? `รักษาแล้ว ${doneCount} ครั้ง` : "ยังไม่เคยรักษา"}</em>
-            </h3>
-            {past.length ? (
-              <ol className="hx-hist">
-                {past.map((v) => (
-                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined} role="button" tabIndex={0} onClick={() => openAppt(v.id)}>
-                    <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
-                    <span className="hx-hist__body">
-                      <b>{store.serviceById(v.serviceId).short}</b>
-                      {v.status === "absent" || (v.status === "waiting" && v.date < todayISO()) ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
-                    </span>
-                    {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="pd2__muted">ยังไม่มีประวัติ</p>
-            )}
-          </section>
+              {/* การแพทย์แผนไทย (ธาตุ · สมุฏฐาน · แนวทางวันนี้) — สำคัญกว่าประวัติ จึงอยู่ตรงนี้ เปิดไว้ */}
+              <ElementCard p={p} open />
             </div>
             <div className="pd__col">
               {/* 1 แผนการรักษา */}
@@ -608,8 +585,34 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
           </div>
 
 
-          {/* ── element (wide, folded) ── */}
-          <ElementCard p={p} />
+          {/* ── ประวัติการรักษา (ล่างสุด) ── */}
+          <div className="pd__hist">
+              <section className="pd__card pd2">
+            <h3 className="pd2__h">
+              <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
+                <History size={15} />
+              </span>
+              ประวัติการรักษา
+              <em>{doneCount ? `รักษาแล้ว ${doneCount} ครั้ง` : "ยังไม่เคยรักษา"}</em>
+            </h3>
+            {past.length ? (
+              <ol className="hx-hist">
+                {past.map((v) => (
+                  <li key={v.id} className={v.status === "absent" ? "is-absent" : undefined} role="button" tabIndex={0} onClick={() => openAppt(v.id)}>
+                    <span className="hx-hist__date">{thaiDateShort(v.date)}</span>
+                    <span className="hx-hist__body">
+                      <b>{store.serviceById(v.serviceId).short}</b>
+                      {v.status === "absent" || (v.status === "waiting" && v.date < todayISO()) ? <small>ไม่มา</small> : v.diagnoses?.[0] ? <small>{v.diagnoses[0].name}</small> : <small>{stageMeta(v).label}</small>}
+                    </span>
+                    {v.status === "done" && v.painAfter !== undefined && <PainMini score={v.painAfter} label="หลัง" />}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="pd2__muted">ยังไม่มีประวัติ</p>
+            )}
+          </section>
+          </div>
         </div>
         </div>
       </motion.div>
