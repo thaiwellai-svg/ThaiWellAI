@@ -150,6 +150,7 @@ export function AppShell() {
             <Route path="/settings" element={<Page><Settings /></Page>} />
             <Route path="/visits" element={<Page><Visits /></Page>} />
             <Route path="/billing" element={<Page><Billing /></Page>} />
+            <Route path="/billing/history" element={<Page><Billing history /></Page>} />
             <Route path="/billing/close" element={<Page><DayClose /></Page>} />
             <Route path="/billing/commission" element={<Page><Commission /></Page>} />
             <Route path="/inventory" element={<Page><Inventory /></Page>} />

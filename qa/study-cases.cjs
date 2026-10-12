@@ -358,7 +358,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   // ===== CASHIER =====
   await check('C01', 'cashier', 'ผู้ป่วยรายครั้ง · จ่ายเงินสด', 'รับเงินสด + ทอน + ใบเสร็จ', async (p, ex) => {
     await go(p, '/billing', 1300);
-    const card = p.locator('.bl2-bill.is-counter, .bl2-bill.is-late').first();
+    const card = p.locator('.bl3-row.is-counter, .bl3-row.is-late').first();
     ex((await card.count()) > 0, 'มีบิลรอคิดเงิน');
     // 3 ส่วนในหน้าเดียว: แตะแถว → รายละเอียดบิลด้านขวา → รับชำระ
     await card.click(); await p.waitForTimeout(600);
@@ -409,10 +409,11 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   await check('C05', 'cashier', 'ผู้ป่วยขอคืนเงิน', 'ยกเลิกใบเสร็จ + คืนเงิน (รายละเอียดบิลด้านขวา)', async (p, ex) => {
     await go(p, '/billing', 1200);
-    await p.locator('button', { hasText: 'ประวัติการชำระ' }).first().click(); await p.waitForTimeout(500);
+    await p.locator('button', { hasText: 'ประวัติการชำระ' }).first().click(); await p.waitForTimeout(900);
+    ex(p.url().endsWith('/billing/history'), 'ปุ่มประวัติการชำระ (บนขวา) เปิดหน้าใหม่');
     await p.locator('button', { hasText: '30 วัน' }).first().click(); await p.waitForTimeout(500);
-    await p.locator('.bl2-rc', { hasText: '฿', hasNotText: 'สมศักดิ์' }).first().click(); await p.waitForTimeout(1200);
-    ex(p.url().endsWith('/billing') && (await p.locator('.bl3__detail [data-bill]').count()) === 1, 'รายละเอียดบิลขึ้นด้านขวา (ไม่เปลี่ยนหน้า)');
+    await p.locator('.bl3-rc', { hasText: 'บาท', hasNotText: 'สมศักดิ์' }).first().click(); await p.waitForTimeout(1200);
+    ex(p.url().endsWith('/billing/history') && (await p.locator('.bl3__detail [data-bill]').count()) === 1, 'รายละเอียดบิลขึ้นด้านขวา (ไม่เปลี่ยนหน้า)');
     const id = await p.locator('.bl3__detail [data-bill]').getAttribute('data-bill');
     await p.locator('.bl3__detail button[aria-label="เพิ่มเติม"]').click(); await p.waitForTimeout(300);
     await p.locator('.more button', { hasText: 'ดูใบเสร็จ' }).click(); await p.waitForTimeout(1000);
@@ -839,7 +840,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   await check('X01', 'reception', 'ทุกหน้า', 'เปิดได้ไม่มี error (แนวนอน + แนวตั้ง)', async (p, ex) => {
     const s = await state(p);
     const a = s.appointments.find((x) => x.payment);
-    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/commission', '/insights', '/tutorial/'];
+    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/history', '/billing/commission', '/insights', '/tutorial/'];
     for (const vp of [{ width: 1366, height: 1024 }, { width: 820, height: 1180 }]) {
       await p.setViewportSize(vp);
       for (const r of routes) {

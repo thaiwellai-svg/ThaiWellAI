@@ -2,10 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { visitPrice } from "../../data/domain";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
+import { BarChart3, History, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
-import { Avatar, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
+import { Avatar, Badge, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
+import { BackLead } from "../../layout/BackLead";
 import { WorkPage } from "../../layout/WorkPage";
 import { thaiDateShort } from "../../data/thaiDate";
 import { BillPanel } from "./BillDetail";
@@ -17,6 +18,7 @@ import { addISODays, baht, thaiDate, thaiDateLong, todayISO } from "../../data/t
 import type { Appointment, Payment, PaymentMethod } from "../../data/types";
 import "../appointments/appointments.css";
 import { ReportDialog, downloadCsv } from "../../features/ReportDialog";
+import "../patients/patients.css";
 import "./billing.css";
 import "../biz/biz.css";
 
@@ -26,11 +28,11 @@ const ICON: Record<PaymentMethod, typeof Banknote> = { cash: Banknote, promptpay
 const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
 /** ชำระเงิน — bills waiting at the counter, and the payment/receipt history. */
-export default function Billing() {
+export default function Billing({ history: hist = false }: { /** /billing/history: หน้าประวัติการชำระ */ history?: boolean } = {}) {
   const store = useStore();
   const navigate = useNavigate();
   const today = todayISO();
-  const [tab, setTab] = useState<Tab>("due");
+  const tab: Tab = hist ? "history" : "due";
   const [range, setRange] = useState<Range>("today");
   const [method, setMethod] = useState<PaymentMethod | "all">("all");
   const [query, setQuery] = useState("");
@@ -112,11 +114,17 @@ export default function Billing() {
   return (
     <WorkPage
       eyebrow="การเงิน"
-      title="ชำระเงิน"
+      title={hist ? "ประวัติการชำระ" : "ชำระเงิน"}
       bell={false}
+      lead={hist ? <BackLead eyebrow="ชำระเงิน" title="ประวัติการชำระ" onBack={() => navigate("/billing")} /> : undefined}
       actions={
         <>
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นชื่อ, HN, เลขใบเสร็จ" shortcut={false} />
+          {!hist && (
+            <Button variant="white" leading={<History size={16} />} onClick={() => navigate("/billing/history")}>
+              ประวัติการชำระ
+            </Button>
+          )}
           <Button variant="white" leading={<BarChart3 size={16} />} onClick={() => setReport(true)}>
             รายงาน
           </Button>
@@ -140,7 +148,8 @@ export default function Billing() {
         </>
       }
     >
-      <div className="appt bl3">
+      <div className={clsx("appt bl3", hist && "bl3--hist")}>
+        {!hist && (
         <aside className="appt__rail scroll-y bl2-rail">
           {/* today's income with a method donut */}
           <section className="bl2-card bl2-income">
@@ -259,14 +268,14 @@ export default function Billing() {
               <b>รอชำระ</b>
             </header>
             <div className="bl2-due">
-              <button type="button" onClick={() => setTab("due")}>
+              <button type="button" onClick={() => setSel(null)}>
                 <span className="bl-mi bl-mi--due">
                   <Wallet size={15} />
                 </span>
                 <b>{counterDue}</b>
                 <small>ที่เคาน์เตอร์</small>
               </button>
-              <button type="button" onClick={() => setTab("due")}>
+              <button type="button" onClick={() => setSel(null)}>
                 <span className="bl-mi bl-mi--app">
                   <Smartphone size={15} />
                 </span>
@@ -276,123 +285,112 @@ export default function Billing() {
             </div>
           </section>
         </aside>
+        )}
 
-        <div className="panel appt__main">
-          <div className="sheet">
-            <div className="appt__bar">
+        {/* รายชื่อบิล: แบบเดียวกับรายชื่อหน้าผู้ป่วย (แถวลอยบนพื้นห้อง) */}
+        <div className="panel plist bl3__list">
+          {tab === "history" && (
+            <div className="bl3__tools">
               <Segmented
                 tone="light"
-                label="มุมมอง"
-                value={tab}
-                onChange={(t) => (setTab(t), setSel(null))}
+                label="ช่วงเวลา"
+                value={range}
+                onChange={setRange}
                 options={[
-                  { value: "due", label: `รอชำระ (${due.length})` },
-                  { value: "history", label: "ประวัติการชำระ" },
+                  { value: "today", label: "วันนี้" },
+                  { value: "7", label: "7 วัน" },
+                  { value: "30", label: "30 วัน" },
                 ]}
               />
-              {tab === "history" && (
-                <div className="bl-filters">
-                  <Segmented
-                    tone="light"
-                    label="ช่วงเวลา"
-                    value={range}
-                    onChange={setRange}
-                    options={[
-                      { value: "today", label: "วันนี้" },
-                      { value: "7", label: "7 วัน" },
-                      { value: "30", label: "30 วัน" },
-                    ]}
-                  />
-                </div>
-              )}
-            </div>
-            {tab === "history" && (
               <div className="bl-chips">
                 {(["all", "cash", "promptpay", "app", "credit"] as const).map((m) => (
                   <button key={m} type="button" aria-pressed={method === m} onClick={() => setMethod(m)}>
                     {m === "all" ? "ทุกช่องทาง" : METHOD_LABEL[m]}
                   </button>
                 ))}
-                <span className="bl-sum">
-                  รวม <b>{baht(history.filter((e) => e.pay.status === "paid").reduce((n, e) => n + e.pay.amount, 0))}</b> บาท · {history.length} รายการ
-                </span>
               </div>
-            )}
-
-            <div className="bl-list scroll-y scroll-y--light">
-              {tab === "due" &&
-                (due.length ? (
+              <span className="bl-sum">
+                รวม <b>{baht(history.filter((e) => e.pay.status === "paid").reduce((n, e) => n + e.pay.amount, 0))}</b> บาท · {history.length} รายการ
+              </span>
+            </div>
+          )}
+          <div className="plist__items scroll-y">
+            {tab === "due" &&
+              (due.length ? (
                   due.map((a) => {
                     const p = store.patientById(a.patientId);
                     const s = store.serviceById(a.serviceId);
                     const pending = a.payment?.status === "pending";
+                    const st = pending ? (["รอชำระในแอป", "info"] as const) : stageOf(a) === "billing" ? (["รอชำระ", "warning"] as const) : (["ค้างชำระ", "danger"] as const);
                     return (
-                      <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late", shown === a.id && "is-sel")} role="button" tabIndex={0} onClick={() => openBill(a.id)}>
-                        <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" ring={pending ? "#7c5cc4" : stageOf(a) === "billing" ? "#d08a3c" : "#d23a2a"} />
-                        {/* บรรทัดบน: ชื่อ · ยอด | บรรทัดล่าง: บริการ วันเวลา · ป้ายสถานะ */}
-                        <span className="bl4">
-                          <span className="bl4__top">
-                            <b>{p.name}</b>
-                            <strong>
-                              {baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))} <small>฿</small>
-                            </strong>
-                          </span>
-                          <span className="bl4__sub">
-                            <small>
-                              {s.short} · {thaiDateShort(a.date)} {a.start} น.
-                            </small>
-                            <em>{pending ? "รอชำระในแอป" : stageOf(a) === "billing" ? "รอชำระ" : "ค้างชำระ"}</em>
+                      <button key={a.id} type="button" className={clsx("prow bl3-row", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")} aria-pressed={shown === a.id} onClick={() => openBill(a.id)}>
+                        {shown === a.id && <motion.span layoutId="bill-sel" className="prow__sel" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+                        <Avatar name={p.name} src={patientPhoto(p)} shape="squircle" />
+                        <span className="prow__id">
+                          <b>{p.name}</b>
+                          <small>
+                            {s.short} · {thaiDateShort(a.date)} {a.start} น.
+                          </small>
+                          <span className="prow__chips">
+                            <Badge tone={st[1]} compact>
+                              {st[0]}
+                            </Badge>
                           </span>
                         </span>
-                        <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={(e) => (e.stopPropagation(), setOpen(a.id))}>
-                          {pending ? "ดูบิล" : "รับชำระ"}
-                        </Button>
-                      </div>
+                        <span className="prow__meta">
+                          <span className="prow__next bl3__amt">
+                            {baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))}
+                            <small>บาท</small>
+                          </span>
+                        </span>
+                      </button>
                     );
                   })
-                ) : (
-                  <EmptyState icon={<Hourglass size={24} />} title="ไม่มีบิลรอชำระ" description="ผู้ป่วยที่นวดเสร็จจะแสดงที่นี่" />
-                ))}
-
-              {tab === "history" &&
-                (groups.length ? (
-                  groups.map(([d, list]) => (
-                    <section key={d} className="bl-group">
-                      <p className="bl-group__label">
-                        {d === today ? "วันนี้" : thaiDateLong(d)}
-                        <span>{baht(list.filter((e) => e.pay.status === "paid").reduce((n, e) => n + e.pay.amount, 0))} บาท</span>
-                      </p>
+              ) : (
+                <EmptyState onGlass icon={<Hourglass size={24} />} title="ไม่มีบิลรอชำระ" description="ผู้ป่วยที่นวดเสร็จจะแสดงที่นี่" />
+              ))}
+            {tab === "history" &&
+              (groups.length ? (
+                groups.map(([d, list]) => (
+                  <section key={d} className="bl3__group">
+                    <p className="bl3__day">
+                      {d === today ? "วันนี้" : thaiDateLong(d)}
+                      <span>{baht(list.filter((e) => e.pay.status === "paid").reduce((n, e) => n + e.pay.amount, 0))} บาท</span>
+                    </p>
                       {list.map(({ a, pay, key }) => {
                         const p = store.patientById(a.patientId);
                         const Ic = ICON[pay.method];
+                        const tone = pay.status === "void" ? "neutral" : pay.status === "pending" ? "info" : "success";
                         return (
-                          <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending", shown === a.id && "is-sel")} onClick={() => openBill(a.id)}>
-                            <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" ring={pay.status === "void" ? "#8a948d" : pay.status === "pending" ? "#7c5cc4" : "#2f9a5b"} />
-                            <span className="bl4">
-                              <span className="bl4__top">
-                                <b>{p.name}</b>
-                                <strong>{pay.method === "credit" ? "1 ครั้ง" : <>{baht(pay.amount)} <small>฿</small></>}</strong>
+                          <button key={key} type="button" className={clsx("prow bl3-row bl3-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending")} aria-pressed={shown === a.id} onClick={() => openBill(a.id)}>
+                            {shown === a.id && <motion.span layoutId="bill-sel" className="prow__sel" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+                            <Avatar name={p.name} src={patientPhoto(p)} shape="squircle" />
+                            <span className="prow__id">
+                              <b>{p.name}</b>
+                              <small>
+                                {store.serviceById(a.serviceId).short} · {time(pay.at)} น. · {pay.no}
+                              </small>
+                              <span className="prow__chips">
+                                <Badge tone={tone} compact>
+                                  <Ic size={11} /> {pay.status === "void" ? (pay.voided?.refund ? "ยกเลิก · คืนเงิน" : "ยกเลิก") : pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
+                                </Badge>
+                                {pay.slipSentAt && pay.status === "paid" && <CheckCheck size={13} className="bl3__sent" aria-label="ส่งสลิปเข้าแอปแล้ว" />}
                               </span>
-                              <span className="bl4__sub">
-                                <small>
-                                  {store.serviceById(a.serviceId).short} · {time(pay.at)} น. · {pay.no}
-                                </small>
-                                <em>
-                                  <Ic size={12} />
-                                  {pay.status === "void" ? (pay.voided?.refund ? "ยกเลิก · คืนเงิน" : "ยกเลิก") : pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
-                                  {pay.slipSentAt && pay.status === "paid" && <CheckCheck size={12} aria-label="ส่งสลิปเข้าแอปแล้ว" />}
-                                </em>
+                            </span>
+                            <span className="prow__meta">
+                              <span className="prow__next bl3__amt">
+                                {pay.method === "credit" ? "1" : baht(pay.amount)}
+                                <small>{pay.method === "credit" ? "ครั้ง" : "บาท"}</small>
                               </span>
                             </span>
                           </button>
                         );
                       })}
-                    </section>
-                  ))
-                ) : (
-                  <EmptyState icon={<ReceiptText size={24} />} title="ไม่มีรายการในช่วงนี้" description="ลองเปลี่ยนช่วงเวลาหรือช่องทาง" />
-                ))}
-            </div>
+                  </section>
+                ))
+              ) : (
+                <EmptyState onGlass icon={<ReceiptText size={24} />} title="ไม่มีรายการในช่วงนี้" description="ลองเปลี่ยนช่วงเวลาหรือช่องทาง" />
+              ))}
           </div>
         </div>
 
