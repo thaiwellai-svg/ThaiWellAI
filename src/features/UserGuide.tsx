@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ComponentType, SVGProps } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Activity, ChevronDown, GraduationCap, Lightbulb, MonitorPlay, PlayCircle, Search, Sparkles } from "lucide-react";
-import { AppointmentsIcon, BillingIcon, HomeIcon, InsightsIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
+import { AppointmentsIcon, BillingIcon, HomeIcon, PatientsIcon, PlannerIcon, SettingsIcon, VisitIcon } from "../design-system/icons";
 import { startTour } from "./Tour";
 import { DEMO } from "../data/mode";
 import "./user-guide.css";
@@ -97,6 +97,7 @@ const CHAPTERS: { id: string; title: string; color: string; Icon: Icon; intro: s
     intro: "ตารางผู้บำบัด ห้อง และเตียง",
     topics: [{ q: "กำหนดวันเวลาทำงาน", steps: ["เลือกผู้บำบัด", "กด “กำหนดตารางงาน” แล้วเลือกวันและช่วงเวลา", "ระบบจะไม่ให้จัดนัดนอกเวลางานของผู้บำบัด"] }],
   },
+/* ผลการรักษา: ซ่อนจากเมนูไว้ก่อน
   {
     id: "insights",
     title: "ผลการรักษา",
@@ -108,6 +109,7 @@ const CHAPTERS: { id: string; title: string; color: string; Icon: Icon; intro: s
       { q: "ส่งออกข้อมูลวิจัย", steps: ["เลือกช่วงเวลา", "กด “ส่งออกข้อมูลวิจัย” ได้ไฟล์ CSV", "ไฟล์ไม่มีชื่อ HN หรือเลขบัตร ผู้ป่วยถูกแทนด้วยรหัส P001, P002 …"] },
     ],
   },
+*/
   {
     id: "settings",
     title: "ตั้งค่า",

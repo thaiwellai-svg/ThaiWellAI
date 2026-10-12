@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { clsx } from "clsx";
 import { spring } from "../design-system";
-import { AppointmentsIcon, BillingIcon, VisitIcon, HomeIcon, InsightsIcon, PatientsIcon, PlannerIcon, SettingsIcon } from "../design-system/icons";
+import { AppointmentsIcon, BillingIcon, VisitIcon, HomeIcon, PatientsIcon, PlannerIcon, SettingsIcon } from "../design-system/icons";
 
 const NAV: { to: string; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>> }[] = [
   { to: "/", label: "หน้าหลัก", Icon: HomeIcon },
@@ -13,7 +13,8 @@ const NAV: { to: string; label: string; Icon: ComponentType<SVGProps<SVGSVGEleme
   { to: "/appointments", label: "ตารางนัด", Icon: AppointmentsIcon },
   { to: "/billing", label: "ชำระเงิน", Icon: BillingIcon },
   { to: "/planner", label: "จัดตารางงาน", Icon: PlannerIcon },
-  { to: "/insights", label: "ผลการรักษา", Icon: InsightsIcon },
+  // ผลการรักษา (/insights) ซ่อนจากเมนูไว้ก่อน — หน้ายังอยู่ เปิดกลับได้โดยใส่บรรทัดนี้คืน
+  // { to: "/insights", label: "ผลการรักษา", Icon: InsightsIcon },
   { to: "/settings", label: "ตั้งค่า", Icon: SettingsIcon },
 ];
 
