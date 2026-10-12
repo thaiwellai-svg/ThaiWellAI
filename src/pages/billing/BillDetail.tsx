@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Banknote, CalendarDays, CheckCheck, ClipboardList, History, Phone, QrCode, ReceiptText, Smartphone, Ticket, UserRound, Wallet } from "lucide-react";
+import { ChevronLeft, Banknote, CalendarDays, CheckCheck, ClipboardList, History, Phone, QrCode, ReceiptText, Smartphone, Ticket, UserRound, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { MoreMenu } from "../../features/MoreMenu";
 import { useStore } from "../../store/store";
@@ -78,6 +78,16 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
   const receipts = [...(pay ? [{ pay, key: a.id }] : []), ...(a.voidedPayments ?? []).map((x) => ({ pay: x, key: `${a.id}|${x.no}` }))];
   const money = (a.log ?? []).filter((l) => /ชำระ|ใบเสร็จ|เครดิต|บิล|สลิป|เงิน/.test(l.label));
 
+  // คอลัมน์ขวาหน้าชำระเงิน: กดรับชำระ → ขั้นชำระเงินแสดงในแผงนี้เลย (ไม่เปิดหน้าต่างซ้อน)
+  if (compact && paying)
+    return (
+      <div className="bd__inline">
+        <button type="button" className="bd__back" onClick={() => setPaying(false)}>
+          <ChevronLeft size={16} /> กลับไปรายละเอียดบิล
+        </button>
+        <AppointmentDrawer key={a.id} inline id={a.id} startPay onClose={() => setPaying(false)} />
+      </div>
+    );
   return (
     <>
       <div className={clsx("adp tw-panel", compact && "bd--compact")} data-bill={a.id}>
@@ -323,7 +333,7 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
       </div>
 
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
-      <AppointmentDrawer id={paying ? a.id : null} startPay onClose={() => setPaying(false)} />
+      {!compact && <AppointmentDrawer id={paying ? a.id : null} startPay onClose={() => setPaying(false)} />}
     </>
   );
 }

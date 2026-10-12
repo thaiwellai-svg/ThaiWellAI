@@ -1107,3 +1107,26 @@
 .bl3--ws .ws__pane.is-ghost > * {
   visibility: hidden;
 }
+/* รับชำระในแผงขวา (แทนหน้าต่างซ้อน) */
+.bd__inline {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.bd__inline > .tw-panel {
+  flex: 1;
+  min-height: 0;
+}
+.bd__back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 14px 0 0 18px;
+  padding: 6px 12px 6px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 600 13px/1 var(--font-sans);
+  color: var(--color-brand);
+}
