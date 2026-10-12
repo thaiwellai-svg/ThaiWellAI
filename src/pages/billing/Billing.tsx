@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { visitPrice } from "../../data/domain";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, ChevronDown, History, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
+import { BarChart3, ChevronDown, History, Maximize2, Minimize2, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
@@ -56,6 +56,7 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
   // บิลที่เปิดดูในคอลัมน์ขวา (จอแคบ → เปิดหน้ารายละเอียดเต็มแทน)
   const [sel, setSel] = useState<string | null>(null);
   const [allDue, setAllDue] = useState(false);
+  const [solo, setSolo] = useState(false);
   const wide = useWideBill();
   const openBill = (id: string) => (wide ? setSel(id) : navigate(`/billing/${id}`));
 
@@ -435,14 +436,17 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
         const detailNode = (
           <>
         {/* คอลัมน์ขวา: รายละเอียดบิลที่เลือก (ไม่ต้องเปิดหน้าใหม่) */}
-        <div className="bl3__detail">
-          {shown ? (
-            <BillPanel key={shown} id={shown} compact />
-          ) : (
-            <div className="sheet bl3__empty">
-              <EmptyState icon={<ReceiptText size={24} />} title="เลือกบิลทางซ้าย" description="รายละเอียดบิลจะแสดงที่นี่" />
-            </div>
-          )}
+        {/* 2 ชั้นแบบหน้าผู้ป่วย: กรอบกระจก (panel) → แผ่นขาว (sheet) */}
+        <div className="panel pdetail bl3__detail">
+          <div className="sheet">
+            {shown ? (
+              <BillPanel key={shown} id={shown} compact />
+            ) : (
+              <div className="bl3__empty">
+                <EmptyState icon={<ReceiptText size={24} />} title="เลือกบิลทางซ้าย" description="รายละเอียดบิลจะแสดงที่นี่" />
+              </div>
+            )}
+          </div>
         </div>
           </>
         );
@@ -451,11 +455,25 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
         return wide ? (
           <Workspace
             storageKey={hist ? "thaiwell.billing.history.layout" : "thaiwell.billing.layout"}
-            flexMin={420}
-            className={clsx("bl3 bl3--ws", hist && "bl3--hist")}
+            flexMin={0}
+            className={clsx("bl3 bl3--ws", hist && "bl3--hist", solo && "is-solo")}
             panes={[
-              { id: "list", width: 300, min: 260, max: 520, node: listNode },
-              { id: "detail", node: detailNode },
+              // รายชื่อ: ล็อก 300px เหมือนหน้าผู้ป่วย
+              ...(solo ? [] : [{ id: "list", width: 300, fixed: true, node: listNode }]),
+              // รายละเอียดบิล: ลาก ••• ที่ขอบปรับความกว้างได้ (ค่าเริ่ม = เต็มพื้นที่ที่เหลือ) · ขยายเต็มจอได้
+              {
+                id: "detail",
+                width: 2000,
+                min: 460,
+                actions: (
+                  <button type="button" className="ws__icon" onClick={() => setSolo((v) => !v)} aria-label={solo ? "แสดงรายชื่อ" : "ขยายเต็มจอ"} title={solo ? "แสดงรายชื่อ" : "ขยายเต็มจอ"}>
+                    {solo ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                  </button>
+                ),
+                node: detailNode,
+              },
+              // ที่ว่างที่เหลือ (เห็นห้องด้านหลัง) เมื่อย่อแผงรายละเอียด
+              { id: "room", ghost: true, locked: true, node: <div /> },
             ]}
           />
         ) : (
