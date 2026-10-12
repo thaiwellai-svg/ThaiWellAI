@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Banknote, CalendarDays, CheckCheck, ClipboardList, History, Phone, QrCode, ReceiptText, Smartphone, Ticket, UserRound, Wallet } from "lucide-react";
+import { Banknote, CalendarDays, CheckCheck, ClipboardList, History, Phone, QrCode, ReceiptText, Smartphone, Ticket, UserRound, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { MoreMenu } from "../../features/MoreMenu";
 import { useStore } from "../../store/store";
@@ -42,6 +42,13 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
   const [receipt, setReceipt] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const a = store.appointments.find((x) => x.id === id);
+  // รับชำระจากส่วนที่ฝังไว้ (payOnly) เสร็จ → ส่วนนั้นหายไป จึงเปิดใบเสร็จจากตรงนี้แทน
+  const paidNo = a?.payment?.status === "paid" ? a.payment.no : undefined;
+  const lastNo = useRef(paidNo);
+  useEffect(() => {
+    if (compact && paidNo && paidNo !== lastNo.current) setReceipt(id);
+    lastNo.current = paidNo;
+  }, [paidNo, compact, id]);
   if (!a)
     return (
       <div className="sheet ad__none">
@@ -78,16 +85,6 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
   const receipts = [...(pay ? [{ pay, key: a.id }] : []), ...(a.voidedPayments ?? []).map((x) => ({ pay: x, key: `${a.id}|${x.no}` }))];
   const money = (a.log ?? []).filter((l) => /ชำระ|ใบเสร็จ|เครดิต|บิล|สลิป|เงิน/.test(l.label));
 
-  // คอลัมน์ขวาหน้าชำระเงิน: กดรับชำระ → ขั้นชำระเงินแสดงในแผงนี้เลย (ไม่เปิดหน้าต่างซ้อน)
-  if (compact && paying)
-    return (
-      <div className="bd__inline">
-        <button type="button" className="bd__back" onClick={() => setPaying(false)}>
-          <ChevronLeft size={16} /> กลับไปรายละเอียดบิล
-        </button>
-        <AppointmentDrawer key={a.id} inline id={a.id} startPay onClose={() => setPaying(false)} />
-      </div>
-    );
   return (
     <>
       <div className={clsx("adp tw-panel", compact && "bd--compact")} data-bill={a.id}>
@@ -151,21 +148,19 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
                 )}
               </>
             )}
-            {payable &&
-              (compact ? (
-                // ปุ่มหลักแบบวงกลมสีเขียว เหมือน "จัดนัด" ในหัวหน้าผู้ป่วย
-                <button type="button" className="pd__ib is-primary" onClick={() => setPaying(true)} aria-label="รับชำระ" title="รับชำระ">
-                  <Wallet size={19} />
-                </button>
-              ) : (
-                <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
-                  รับชำระ
-                </Button>
-              ))}
+            {payable && !compact && (
+              <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
+                รับชำระ
+              </Button>
+            )}
           </div>
         </header>
 
         <div className="adp__body tw-panel__body scroll-y scroll-y--light">
+          {/* หน้าชำระเงิน: บิลที่ยังต้องเก็บเงิน → ส่วนรับชำระแสดงตรงนี้เลย (ไม่ต้องกดเปิด) */}
+          {compact && payable && <AppointmentDrawer key={a.id} payOnly id={a.id} startPay onClose={() => {}} />}
+          {!(compact && payable) && (
+          <>
           {/* hero: ยอดเงิน */}
           <section className="adp__hero bd__hero" style={{ ["--sc" as string]: status.color }}>
             <div className="bd__amount">
@@ -184,9 +179,13 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
             </div>
 
           </section>
+          </>
+          )}
 
           <div className="adp__grid">
             <div className="adp__col">
+              {!(compact && payable) && (
+              <>
               {/* line items */}
               <section className="adp__card">
                 <header>
@@ -235,6 +234,8 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
                 </div>
               </section>
 
+              </>
+              )}
               {/* who / when */}
               <section className="adp__card">
                 <header>

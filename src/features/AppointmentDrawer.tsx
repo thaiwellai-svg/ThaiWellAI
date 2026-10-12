@@ -75,6 +75,7 @@ export function AppointmentDrawer({
   onVoice,
   voiceOpen,
   startPay,
+  payOnly,
 }: {
   id: string | null;
   onClose: () => void;
@@ -89,6 +90,8 @@ export function AppointmentDrawer({
   voiceOpen?: boolean;
   /** เปิดจากปุ่ม "รับชำระ" (หน้าคิดเงิน) → นัดที่เสร็จแล้วแต่ค้างชำระ เปิดหน้าชำระเงินทันที */
   startPay?: boolean;
+  /** หน้าชำระเงิน: แสดงเฉพาะส่วนชำระเงิน (ไม่มีหัว กล่องคิว ขั้นตอน ผลประเมิน) ปุ่มรับชำระอยู่ท้ายส่วน */
+  payOnly?: boolean;
 }) {
   const store = useStore();
   const navigate = useNavigate();
@@ -357,7 +360,7 @@ export function AppointmentDrawer({
   else if (view === "billing")
     footer = (
       <>
-        {payNow && (
+        {payNow && !payOnly && (
           <Button variant="outline" size="lg" onClick={() => setPayNow(false)}>
             ไว้ทีหลัง
           </Button>
@@ -428,7 +431,8 @@ export function AppointmentDrawer({
   return (
     <>
       <Frame
-        inline={inline}
+        inline={inline || payOnly}
+        payOnly={payOnly}
         open={id !== null}
         onClose={onClose}
         leading={<Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={stageMeta(appt).color} pulse={view === "treating"} />}
@@ -458,7 +462,7 @@ export function AppointmentDrawer({
           </>
         }
       >
-        <div className="vs">
+        <div className={clsx("vs", payOnly && "is-payonly")}>
           {/* กล่องคิว: ชั้นบน คิว + เวลา · ชั้นล่าง บริการ | ผู้บำบัด | ค่าบริการ */}
           <section className="vs__summary vq2">
             <div className="vq2__top">
@@ -1118,9 +1122,16 @@ function BedPicker({ date, self, value, onChange }: { date: string; self: string
 }
 
 /** the visit UI either slides in as a drawer, or sits inline as the big pane of the รับบริการ page */
-function Frame(props: { inline?: boolean; open: boolean; onClose: () => void; leading: React.ReactNode; title: string; subtitle: string; footer: React.ReactNode; children: React.ReactNode; aside?: React.ReactNode }) {
-  const { inline, children, aside, ...rest } = props;
+function Frame(props: { inline?: boolean; payOnly?: boolean; open: boolean; onClose: () => void; leading: React.ReactNode; title: string; subtitle: string; footer: React.ReactNode; children: React.ReactNode; aside?: React.ReactNode }) {
+  const { inline, payOnly, children, aside, ...rest } = props;
   if (!inline) return <Drawer {...rest}>{children}</Drawer>;
+  if (payOnly)
+    return (
+      <div className="vsp vsp--payonly">
+        {children}
+        {props.footer && <div className="vsp__paybar">{props.footer}</div>}
+      </div>
+    );
   return (
     <div className="tw-panel vsp">
       <header className="tw-panel__head vsp__head">

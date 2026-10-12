@@ -1107,26 +1107,55 @@
 .bl3--ws .ws__pane.is-ghost > * {
   visibility: hidden;
 }
-/* รับชำระในแผงขวา (แทนหน้าต่างซ้อน) */
-.bd__inline {
-  flex: 1;
-  min-height: 0;
+/* ส่วนรับชำระฝังในรายละเอียดบิล (payOnly) */
+.bd--compact .vsp--payonly {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
 }
-.bd__inline > .tw-panel {
+.vs.is-payonly > .vs__summary,
+.vs.is-payonly > .vst,
+.vs.is-payonly > .vs__ctx,
+.vs.is-payonly > .cr,
+.vs.is-payonly .vs__ctx {
+  display: none !important;
+}
+.vs.is-payonly {
+  display: block;
+}
+.vsp__paybar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.vsp__paybar .vs__tool {
+  display: none;
+}
+.vsp__paybar .tw-btn {
   flex: 1;
-  min-height: 0;
 }
-.bd__back {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin: 14px 0 0 18px;
-  padding: 6px 12px 6px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--sage-50);
-  font: 600 13px/1 var(--font-sans);
-  color: var(--color-brand);
+.bd--compact .vsp.vsp--payonly {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+.vs.is-payonly {
+  height: auto !important;
+  overflow: visible;
+}
+.vs.is-payonly > .vs__log,
+.vsp__paybar .vs__tool {
+  display: none !important;
+}
+.vs.is-payonly > .vs__panel {
+  height: auto;
+  padding: 0;
+  background: none;
+  box-shadow: none;
 }

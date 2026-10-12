@@ -363,15 +363,15 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     // 3 ส่วนในหน้าเดียว: แตะแถว → รายละเอียดบิลด้านขวา → รับชำระ
     await card.click(); await p.waitForTimeout(600);
     ex((await p.locator('.bl3__detail [data-bill]').count()) === 1, 'รายละเอียดบิลขึ้นด้านขวา ไม่เปลี่ยนหน้า');
-    await p.locator('.bl3__detail').getByRole('button', { name: 'รับชำระ' }).click(); await p.waitForTimeout(1200);
+    ex((await p.locator('.bl3__detail .vsp--payonly').count()) === 1, 'ส่วนรับชำระแสดงในรายละเอียดบิลเลย ไม่ต้องกดเปิด');
     const credit = p.locator('.vs__credit-line input[type=checkbox]');
     if (await credit.count() && (await credit.isChecked())) await credit.click();
     await p.locator('button', { hasText: /^เงินสด/ }).first().click().catch(() => {});
     const cash = p.locator('.vs__cash input, input[inputmode="numeric"]').last();
     await cash.fill('1000').catch(() => {});
     await p.waitForTimeout(300);
-    ex((await p.locator('.tw-drawer').count()) === 0 && (await p.locator('.bd__inline').count()) === 1, 'ชำระเงินในแผงขวา ไม่เปิดหน้าต่างซ้อน');
-    const pay = p.locator('.bd__inline').getByRole('button', { name: /^รับชำระ$|หักเครดิต/ });
+    ex((await p.locator('.tw-drawer').count()) === 0, 'ไม่เปิดหน้าต่างซ้อน');
+    const pay = p.locator('.bl3__detail .vsp__paybar').getByRole('button', { name: /^รับชำระ$|หักเครดิต/ });
     await pay.click(); await p.waitForTimeout(1500);
     const s = await state(p);
     const paid = s.appointments.filter((a) => a.payment && a.payment.status === 'paid' && a.payment.at.slice(0, 10) === today());
