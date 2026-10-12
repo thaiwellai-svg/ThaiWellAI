@@ -463,3 +463,150 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ── ระยะห่าง/ขนาดตัวอักษรให้โล่ง อ่านง่าย ── */
+.tm__body {
+  gap: 26px;
+  margin-top: 18px;
+}
+.tm__sec {
+  gap: 12px;
+}
+.tm__sec > h4 {
+  font-size: 14.5px;
+}
+.tm2__sum {
+  gap: 28px;
+  padding: 22px 24px;
+}
+.tm2__born {
+  gap: 16px;
+}
+.tm2__born > div,
+.tm2__riskh {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tm2__born small,
+.tm2__riskh small {
+  font: 600 12.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.tm2__born b,
+.tm2__riskh b {
+  font: 700 24px/1.1 var(--font-sans);
+  color: var(--c);
+}
+.tm2__riskh b {
+  color: var(--rc);
+}
+.tm2__meta {
+  font: 500 13px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.tm2__born p {
+  margin: 6px 0 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+.tm2__born dl {
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(0 0 0 / 7%);
+}
+.tm2__born dl > div {
+  gap: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.tm2__born dt {
+  flex-basis: 56px;
+}
+.tm2__risk {
+  gap: 16px;
+  padding-left: 28px;
+}
+.tm2__risk .tm__bal {
+  gap: 12px;
+}
+.tm2__risk .tm__bal span {
+  font-size: 13.5px;
+}
+.tm2__risk .tm__bal b {
+  font-size: 13px;
+}
+.tm2__risk .tm__bal > div > i {
+  height: 8px;
+  border-radius: 4px;
+}
+.tm__plan {
+  gap: 12px;
+}
+.tm__plan > div {
+  gap: 10px;
+  padding: 16px;
+  border-radius: 16px;
+}
+.tm__plan small {
+  font-size: 12.5px;
+}
+.tm__plan p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.tm2__chips {
+  gap: 10px;
+}
+.tm2__chips li {
+  column-gap: 10px;
+  row-gap: 4px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+.tm2__chips li > svg {
+  margin-top: 2px;
+}
+.tm2__chips span {
+  gap: 4px;
+}
+.tm2__chips small {
+  font-size: 12px;
+  line-height: 1.3;
+}
+.tm2__chips b {
+  font-size: 15px;
+}
+.tm2__chips em {
+  font-size: 12.5px;
+  line-height: 1.4;
+  white-space: normal;
+}
+.tm2__chips li.is-top {
+  box-shadow: inset 0 0 0 1px var(--fc);
+}
+@container (min-width: 1000px) {
+  .tm2__chips {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.tm__ev {
+  gap: 12px;
+}
+.tm__plan {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tm__ev li {
+  padding: 12px 14px;
+}
+.tm__ev b {
+  font-size: 14px;
+}
+.tm__ev span {
+  font-size: 12.5px;
+}
+.tm__note {
+  font-size: 12.5px;
+}
