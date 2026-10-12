@@ -1002,3 +1002,11 @@
 .bd__pay .tw-btn {
   min-width: 140px;
 }
+/* ปุ่มวงกลมบนขวา: ห้ามถูกบีบ (หัวไม่ตัดบรรทัด → ปุ่มเคยหดเป็นวงรี) */
+.bd--compact .tw-panel__actions .tw-round {
+  flex: 0 0 42px;
+  min-width: 42px;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 50%;
+}
