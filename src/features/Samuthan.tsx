@@ -43,57 +43,49 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
         </summary>
 
         <div className="tm__body">
-          {/* สรุป: ธาตุเจ้าเรือน (ซ้าย) · วันนี้เสี่ยงธาตุไหน (ขวา) ในการ์ดเดียว */}
-          <div className="tm2__sum" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
-            <div className="tm2__born">
-              <span className="tm__badge">
-                <ElementIcon element={prof.birth} size={22} strokeWidth={2} />
+          {/* ฮีโร่: ธาตุเจ้าเรือน + สมดุลวันนี้ (แถบเดียว 4 สี) */}
+          <div className="tm3" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
+            <div className="tm3__id">
+              <span className="tm3__badge">
+                <ElementIcon element={prof.birth} size={26} strokeWidth={2} color="#fff" />
               </span>
               <div>
                 <small>ธาตุเจ้าเรือน</small>
                 <b>ธาตุ{prof.birth}</b>
-                <span className="tm2__meta">{p.birthDate ? `เกิด ${thaiBirth(p.birthDate)} · อายุ ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</span>
+                <span>{p.birthDate ? `เกิด ${thaiBirth(p.birthDate)} · ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</span>
               </div>
             </div>
-            <div className="tm2__trait">
-                <p>{born.trait}</p>
-                <dl>
-                  <div>
-                    <dt>มักพบ</dt>
-                    <dd>{born.risk}</dd>
-                  </div>
-                  <div>
-                    <dt>รสยา</dt>
-                    <dd>{born.taste}</dd>
-                  </div>
-                </dl>
+            <p className="tm3__trait">{born.trait}</p>
+            <div className="tm3__tags">
+              <span>
+                <small>มักพบ</small>
+                {born.risk}
+              </span>
+              <span>
+                <small>รสยา</small>
+                {born.taste}
+              </span>
             </div>
-            <div className="tm2__risk">
-              <div className="tm2__riskh">
-                <span className="tm__badge tm2__rbadge">
-                  <ElementIcon element={s.top} size={16} strokeWidth={2} />
-                </span>
-                <div>
-                  <small>เสี่ยงเสียสมดุลวันนี้</small>
-                  <b>ธาตุ{s.top}</b>
-                </div>
+            <div className="tm3__bal">
+              <div className="tm3__balh">
+                <small>สมดุลวันนี้</small>
                 <em>
-                  {s.why.length}/6 ปัจจัย{s.top === prof.birth ? " · ตรงธาตุเจ้าเรือน" : ""}
+                  เสี่ยง ธาตุ{s.top} · {s.why.length}/6 ปัจจัย
                 </em>
               </div>
-              <div className="tm__bal">
-                {ELEMENTS.map((e) => (
-                  <div key={e} className={e === s.top ? "is-top" : undefined} style={{ ["--bc" as string]: ELEMENT_INFO[e].color }}>
-                    <span>
-                      <ElementIcon element={e} size={13} /> {e}
-                    </span>
-                    <i>
-                      <i style={{ width: `${Math.round(s.share[e] * 100)}%` }} />
-                    </i>
-                    <b>{Math.round(s.share[e] * 100)}%</b>
-                  </div>
+              <div className="tm3__bar" role="img" aria-label={ELEMENTS.map((e) => `${e} ${Math.round(s.share[e] * 100)}%`).join(" ")}>
+                {ELEMENTS.filter((e) => s.share[e] > 0).map((e) => (
+                  <i key={e} className={e === s.top ? "is-top" : undefined} style={{ width: `${s.share[e] * 100}%`, ["--bc" as string]: ELEMENT_INFO[e].color }} />
                 ))}
               </div>
+              <ul className="tm3__legend">
+                {ELEMENTS.map((e) => (
+                  <li key={e} className={e === s.top ? "is-top" : undefined} style={{ ["--bc" as string]: ELEMENT_INFO[e].color }}>
+                    <i />
+                    {e} <b>{Math.round(s.share[e] * 100)}%</b>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
@@ -119,20 +111,20 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
             </div>
           </div>
 
-          {/* สมุฏฐาน 5 ด้าน + อาการ: แถวชิป (ที่มาของ "วันนี้เสี่ยง") */}
+          {/* สมุฏฐาน 5 ด้าน + อาการ: รายการ (ที่มาของ "สมดุลวันนี้") */}
           <div className="tm__sec">
             <h4>สมุฏฐานวินิจฉัย</h4>
-            <ul className="tm2__chips">
+            <ul className="tm3__list">
               {factors.map(({ key, Icon, title, el, label }) => {
                 const c = el ? ELEMENT_INFO[el as keyof typeof ELEMENT_INFO] : undefined;
                 return (
-                  <li key={key} className={el === s.top ? "is-top" : undefined} style={{ ["--fc" as string]: c?.color ?? "#8a948d", ["--ft" as string]: c?.tint ?? "var(--sage-50)" }} title={key === "sign" ? p.complaint || "" : label}>
-                    <Icon size={13} />
+                  <li key={key} className={el === s.top ? "is-top" : undefined} style={{ ["--fc" as string]: c?.color ?? "#8a948d", ["--ft" as string]: c?.tint ?? "var(--sage-50)" }}>
+                    <Icon size={15} />
                     <span>
-                      <small>{title}</small>
-                      <b>{el ? `ธาตุ${el}` : "—"}</b>
+                      <b>{title}</b>
+                      <small>{key === "sign" ? p.complaint || "—" : label}</small>
                     </span>
-                    <em>{key === "sign" ? p.complaint || "—" : label}</em>
+                    <em>{el ? `ธาตุ${el}` : "—"}</em>
                   </li>
                 );
               })}
