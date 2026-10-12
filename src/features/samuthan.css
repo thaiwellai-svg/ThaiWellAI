@@ -614,3 +614,137 @@
 .pd__card.tm {
   container-type: inline-size;
 }
+
+/* ── สรุปแบบ 2 การ์ด: ธาตุเจ้าเรือน (สีธาตุ) · เสี่ยงวันนี้ (การ์ดขาว) ── */
+.tm2__sum {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas: "born" "trait" "risk";
+  gap: 0;
+  padding: 0;
+  background: none;
+}
+.tm2__born {
+  grid-area: born;
+  align-items: center;
+  padding: 18px 20px 12px;
+  border-radius: 18px 18px 0 0;
+  background: var(--t);
+}
+.tm2__born > div {
+  gap: 3px;
+}
+.tm2__born b {
+  font-size: 22px;
+}
+.tm2__trait {
+  grid-area: trait;
+  padding: 0 20px 18px;
+  border-radius: 0 0 18px 18px;
+  background: var(--t);
+}
+.tm2__trait p {
+  margin: 0;
+  font: 500 14.5px/1.6 var(--font-sans);
+  color: var(--color-text);
+}
+.tm2__trait dl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid rgb(0 0 0 / 7%);
+}
+.tm2__trait dl > div {
+  display: flex;
+  gap: 14px;
+  font: 500 13.5px/1.5 var(--font-sans);
+}
+.tm2__trait dt {
+  flex: 0 0 56px;
+  color: var(--color-text-muted);
+}
+.tm2__trait dd {
+  margin: 0;
+  color: var(--color-text);
+}
+.tm2__risk {
+  grid-area: risk;
+  margin-top: 12px;
+  padding: 16px 18px;
+  gap: 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--sage-100);
+}
+.tm2__riskh {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.tm2__riskh > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tm2__riskh b {
+  font-size: 17px;
+}
+.tm2__riskh em {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-50);
+  font: 600 12px/1.2 var(--font-sans);
+  font-style: normal;
+  color: var(--color-text-muted);
+}
+.tm__badge.tm2__rbadge {
+  width: 34px;
+  height: 34px;
+  background: var(--rc);
+}
+.tm2__risk .tm__bal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 22px;
+  row-gap: 12px;
+}
+.tm2__risk .tm__bal > div {
+  grid-template-columns: 44px minmax(0, 1fr) 36px;
+}
+.tm2__risk .tm__bal > div > i {
+  background: var(--sage-50);
+}
+/* การ์ดกว้าง: ธาตุเจ้าเรือนซ้าย · เสี่ยงวันนี้ขวา */
+@container (min-width: 700px) {
+  .tm2__sum {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    grid-template-areas: "born risk" "trait risk";
+    column-gap: 14px;
+  }
+  .tm2__risk {
+    margin-top: 0;
+  }
+  .tm2__risk .tm__bal {
+    grid-template-columns: 1fr;
+  }
+}
+@container (max-width: 520px) {
+  .tm__plan {
+    grid-template-columns: 1fr;
+  }
+  .tm__plan > div {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .tm__plan small {
+    flex: 0 0 86px;
+  }
+}

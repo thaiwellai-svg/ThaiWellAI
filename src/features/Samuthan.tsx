@@ -53,6 +53,9 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
                 <small>ธาตุเจ้าเรือน</small>
                 <b>ธาตุ{prof.birth}</b>
                 <span className="tm2__meta">{p.birthDate ? `เกิด ${thaiBirth(p.birthDate)} · อายุ ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</span>
+              </div>
+            </div>
+            <div className="tm2__trait">
                 <p>{born.trait}</p>
                 <dl>
                   <div>
@@ -64,15 +67,19 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
                     <dd>{born.taste}</dd>
                   </div>
                 </dl>
-              </div>
             </div>
             <div className="tm2__risk">
               <div className="tm2__riskh">
-                <small>เสี่ยงเสียสมดุลวันนี้</small>
-                <b>ธาตุ{s.top}</b>
-                <span className="tm2__meta">
-                  {s.why.length} จาก 6 ปัจจัย{s.top === prof.birth ? " · ตรงกับธาตุเจ้าเรือน" : ""}
+                <span className="tm__badge tm2__rbadge">
+                  <ElementIcon element={s.top} size={16} strokeWidth={2} />
                 </span>
+                <div>
+                  <small>เสี่ยงเสียสมดุลวันนี้</small>
+                  <b>ธาตุ{s.top}</b>
+                </div>
+                <em>
+                  {s.why.length}/6 ปัจจัย{s.top === prof.birth ? " · ตรงธาตุเจ้าเรือน" : ""}
+                </em>
               </div>
               <div className="tm__bal">
                 {ELEMENTS.map((e) => (
