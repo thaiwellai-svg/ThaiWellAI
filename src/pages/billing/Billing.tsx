@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { BarChart3, ChevronDown, History, Maximize2, Minimize2, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
-import { Avatar, Badge, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
+import { Avatar, Badge, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
 import { BackLead } from "../../layout/BackLead";
 import { WorkPage } from "../../layout/WorkPage";
 import { Workspace } from "../../features/Workspace";
@@ -165,18 +165,18 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
       actions={
         <>
           <SearchField className="phead-search" value={query} onChange={setQuery} placeholder="ค้นชื่อ, HN, เลขใบเสร็จ" shortcut={false} />
+          {/* ปุ่มไอคอนวงกลมแบบหัวหน้าผู้ป่วย/รับบริการ */}
           {!hist && (
-            <Button variant="white" leading={<History size={16} />} onClick={() => navigate("/billing/history")}>
-              ประวัติการชำระ
-            </Button>
+            <IconButton label="ประวัติการชำระ" onClick={() => navigate("/billing/history")}>
+              <History size={20} strokeWidth={1.8} />
+            </IconButton>
           )}
-          <Button variant="white" leading={<BarChart3 size={16} />} onClick={() => setReport(true)}>
-            รายงาน
-          </Button>
+          <IconButton label="รายงาน" onClick={() => setReport(true)}>
+            <BarChart3 size={20} strokeWidth={1.8} />
+          </IconButton>
           {tab === "history" && (
             <IconButton
               label="ส่งออก Excel"
-              variant="white"
               onClick={() =>
                 downloadCsv(`thaiwell-receipts-${from}-${today}.csv`, [
                   ["เลขที่ใบเสร็จ", "วันที่", "เวลา", "HN", "ชื่อ", "บริการ", "ช่องทาง", "สถานะ", "ยอด (บาท)"],

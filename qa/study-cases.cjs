@@ -409,7 +409,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
 
   await check('C05', 'cashier', 'ผู้ป่วยขอคืนเงิน', 'ยกเลิกใบเสร็จ + คืนเงิน (รายละเอียดบิลด้านขวา)', async (p, ex) => {
     await go(p, '/billing', 1200);
-    await p.locator('button', { hasText: 'ประวัติการชำระ' }).first().click(); await p.waitForTimeout(900);
+    await p.locator('button[aria-label="ประวัติการชำระ"]').first().click(); await p.waitForTimeout(900);
     ex(p.url().endsWith('/billing/history'), 'ปุ่มประวัติการชำระ (บนขวา) เปิดหน้าใหม่');
     await p.locator('button', { hasText: '30 วัน' }).first().click(); await p.waitForTimeout(500);
     await p.locator('.bl3-rc', { hasText: 'บาท', hasNotText: 'สมศักดิ์' }).first().click(); await p.waitForTimeout(1200);
