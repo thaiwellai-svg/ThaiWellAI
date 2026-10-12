@@ -43,43 +43,32 @@ export function ThaiMedCard({ p, time }: { p: Patient; /** HH:mm of the visit (d
         </summary>
 
         <div className="tm__body">
-          {/* แถวบน: ธาตุเจ้าเรือน | ธาตุที่เสี่ยงวันนี้ */}
-          <div className="tm__top">
-            <div className="tm__box" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint }}>
-              <small className="tm__cap">ธาตุเจ้าเรือน</small>
-              <div className="tm__hero">
-                <span className="tm__badge">
-                  <ElementIcon element={prof.birth} size={22} strokeWidth={2} />
-                </span>
-                <div>
-                  <b>ธาตุ{prof.birth}</b>
-                  <span>{p.birthDate ? `เกิด ${thaiBirth(p.birthDate)} · อายุ ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</span>
-                </div>
+          {/* สรุป: ธาตุเจ้าเรือน (ซ้าย) · วันนี้เสี่ยงธาตุไหน (ขวา) ในการ์ดเดียว */}
+          <div className="tm2__sum" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
+            <div className="tm2__born">
+              <span className="tm__badge">
+                <ElementIcon element={prof.birth} size={22} strokeWidth={2} />
+              </span>
+              <div>
+                <small>ธาตุเจ้าเรือน · {p.birthDate ? `เกิด ${thaiBirth(p.birthDate)} · ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</small>
+                <b>ธาตุ{prof.birth}</b>
+                <p>{born.trait}</p>
+                <dl>
+                  <div>
+                    <dt>มักพบ</dt>
+                    <dd>{born.risk}</dd>
+                  </div>
+                  <div>
+                    <dt>รสยา</dt>
+                    <dd>{born.taste}</dd>
+                  </div>
+                </dl>
               </div>
-              <p className="tm__trait">{born.trait}</p>
-              <dl className="tm__kv">
-                <div>
-                  <dt>มักพบ</dt>
-                  <dd>{born.risk}</dd>
-                </div>
-                <div>
-                  <dt>รสยาที่เหมาะ</dt>
-                  <dd>{born.taste}</dd>
-                </div>
-              </dl>
             </div>
-
-            <div className="tm__box is-risk" style={{ ["--c" as string]: top.color, ["--t" as string]: top.tint }}>
-              <small className="tm__cap">เสี่ยงเสียสมดุลวันนี้</small>
-              <div className="tm__hero">
-                <span className="tm__badge">
-                  <ElementIcon element={s.top} size={22} strokeWidth={2} />
-                </span>
-                <div>
-                  <b>ธาตุ{s.top}</b>
-                  <span>{s.why.length} จาก 6 ปัจจัยชี้ไปที่ธาตุนี้</span>
-                </div>
-              </div>
+            <div className="tm2__risk">
+              <small>
+                วันนี้เสี่ยง <b>ธาตุ{s.top}</b> · {s.why.length}/6 ปัจจัย{s.top === prof.birth ? " · ตรงกับธาตุเจ้าเรือน" : ""}
+              </small>
               <div className="tm__bal">
                 {ELEMENTS.map((e) => (
                   <div key={e} className={e === s.top ? "is-top" : undefined} style={{ ["--bc" as string]: ELEMENT_INFO[e].color }}>
@@ -96,26 +85,7 @@ export function ThaiMedCard({ p, time }: { p: Patient; /** HH:mm of the visit (d
             </div>
           </div>
 
-          {/* สมุฏฐาน 5 ด้าน + อาการ */}
-          <div className="tm__sec">
-            <h4>สมุฏฐานวินิจฉัย</h4>
-            <ul className="tm__factors">
-              {factors.map(({ key, Icon, title, el, label }) => {
-                const c = el ? ELEMENT_INFO[el as keyof typeof ELEMENT_INFO] : undefined;
-                return (
-                  <li key={key} className={el === s.top ? "is-top" : undefined} style={{ ["--fc" as string]: c?.color ?? "#8a948d" }}>
-                    <small>
-                      <Icon size={12} /> {title}
-                    </small>
-                    <b>{el ? `ธาตุ${el}` : "—"}</b>
-                    <em>{key === "sign" ? p.complaint || "—" : label}</em>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* แนวทางดูแลวันนี้ */}
+          {/* แนวทางดูแลวันนี้ (ใช้ตอนรักษา) */}
           <div className="tm__sec">
             <h4>แนวทางดูแลวันนี้</h4>
             <div className="tm__plan">
@@ -135,6 +105,26 @@ export function ThaiMedCard({ p, time }: { p: Patient; /** HH:mm of the visit (d
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* สมุฏฐาน 5 ด้าน + อาการ: แถวชิป (ที่มาของ "วันนี้เสี่ยง") */}
+          <div className="tm__sec">
+            <h4>สมุฏฐานวินิจฉัย</h4>
+            <ul className="tm2__chips">
+              {factors.map(({ key, Icon, title, el, label }) => {
+                const c = el ? ELEMENT_INFO[el as keyof typeof ELEMENT_INFO] : undefined;
+                return (
+                  <li key={key} className={el === s.top ? "is-top" : undefined} style={{ ["--fc" as string]: c?.color ?? "#8a948d", ["--ft" as string]: c?.tint ?? "var(--sage-50)" }} title={key === "sign" ? p.complaint || "" : label}>
+                    <Icon size={13} />
+                    <span>
+                      <small>{title}</small>
+                      <b>{el ? `ธาตุ${el}` : "—"}</b>
+                    </span>
+                    <em>{key === "sign" ? p.complaint || "—" : label}</em>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           {evidence.length > 0 && (
