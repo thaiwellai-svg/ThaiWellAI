@@ -5,7 +5,7 @@ import { Button, Dialog, Segmented } from "../design-system";
 import { addISODays, baht, thaiDate, todayISO } from "../data/thaiDate";
 import { METHOD_LABEL } from "./billing";
 import type { Appointment, PaymentMethod } from "../data/types";
-import { dxCode, procCode } from "../data/codes";
+import { dxCode, tmCode, procCode } from "../data/codes";
 import "./report.css";
 
 type Period = "today" | "7" | "30" | "month";
@@ -75,11 +75,11 @@ export function ReportDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   const exportVisits = () =>
     downloadCsv(`thaiwell-visits-${from}-${today}.csv`, [
-      ["วันที่", "เวลา", "HN", "ชื่อ", "บริการ", "ผู้บำบัด", "วินิจฉัยหลัก", "ICD-10", "หัตถการ", "ICD-9-CM", "ปวดก่อนนวด", "ปวดหลังนวด", "เลขที่ใบเสร็จ", "ช่องทาง", "ยอดชำระ"],
+      ["วันที่", "เวลา", "HN", "ชื่อ", "บริการ", "ผู้บำบัด", "วินิจฉัยหลัก", "ICD-10-TM (แผนไทย)", "ICD-10", "หัตถการ", "ICD-9-CM", "ปวดก่อนนวด", "ปวดหลังนวด", "เลขที่ใบเสร็จ", "ช่องทาง", "ยอดชำระ"],
       ...r.done$.map((a) => {
         const p = store.patientById(a.patientId);
         const dx = a.diagnoses?.find((d) => d.kind === "principal") ?? a.diagnoses?.[0];
-        return [a.date, a.start, p.hn, p.name, store.serviceById(a.serviceId).name, store.therapistById(a.therapistId).name, dx?.name, dx ? (dx.code ?? dxCode(dx.name)?.code) : "", a.procedures?.map((x) => x.name).join(" / "), a.procedures?.map((x) => x.code ?? procCode(x.name)?.code).filter(Boolean).join(" / "), a.painBefore, a.painAfter, a.payment?.no, a.payment ? METHOD_LABEL[a.payment.method] : "", a.payment?.amount];
+        return [a.date, a.start, p.hn, p.name, store.serviceById(a.serviceId).name, store.therapistById(a.therapistId).name, dx?.name, dx ? (dx.tm ?? tmCode(dx.name)?.code ?? "") : "", dx ? (dx.code ?? dxCode(dx.name)?.code) : "", a.procedures?.map((x) => x.name).join(" / "), a.procedures?.map((x) => x.code ?? procCode(x.name)?.code).filter(Boolean).join(" / "), a.painBefore, a.painAfter, a.payment?.no, a.payment ? METHOD_LABEL[a.payment.method] : "", a.payment?.amount];
       }),
     ]);
   const exportSummary = () =>

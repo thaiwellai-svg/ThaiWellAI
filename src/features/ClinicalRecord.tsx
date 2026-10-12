@@ -8,7 +8,7 @@ import { useToast } from "../design-system";
 import { elementProfile } from "../data/elements";
 import type { Appointment, Diagnosis, Procedure } from "../data/types";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON } from "./ai";
-import { dxCode, procCode } from "../data/codes";
+import { tmCode, dxCode, procCode } from "../data/codes";
 import { baht } from "../data/thaiDate";
 import { inService, defaultProcPrice, extraTotal, unpricedProcs } from "./billing";
 import "./clinical.css";
@@ -24,6 +24,13 @@ export const DX_PICK = [
   "อัมพฤกษ์ อัมพาต",
   "ตะคริว",
   "นอนไม่หลับ / เครียดสะสม",
+  // เพิ่มจากตารางวินิจฉัย CPG 2568
+  "ลมปลายปัตคาดโค้งคอ (ตึงต้นคอ ปวดศีรษะ)",
+  "ตกหมอน / คอเคล็ด",
+  "ยอกหลัง (ปวดเอว เปลี่ยนท่าเจ็บ)",
+  "นิ้วไกปืน (นิ้วล็อก)",
+  "ลมปะกัง (ปวดศีรษะข้างเดียว)",
+  "ข้อเท้าแพลง",
 ];
 /** หัตถการตามเอกสาร (CPG 2568 · เกณฑ์มาตรฐาน · ตำราอ้างอิง) — data/knowledge.ts */
 export const PROC_PICK = PROCEDURES.map((p) => p.name);
@@ -235,6 +242,11 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
             </button>
             <div className="cr__item-main is-compact">
               <b>{d.name}</b>
+              {(d.tm ?? tmCode(d.name)?.code) && (
+                <span className="cr__tag is-tm" title={`รหัสแผนไทย ICD-10-TM · ${tmCode(d.name)?.en ?? ""}`}>
+                  {d.tm ?? tmCode(d.name)?.code}
+                </span>
+              )}
               {codeAt === `dx${i}` ? (
                 <input className="cr__codein" autoFocus value={d.code ?? ""} placeholder="ICD-10" onChange={(e) => setDx(i, { code: e.target.value.toUpperCase() })} onBlur={() => setCodeAt(null)} aria-label="รหัส ICD-10" />
               ) : (

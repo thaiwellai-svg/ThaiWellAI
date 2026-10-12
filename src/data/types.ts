@@ -252,6 +252,8 @@ export interface Diagnosis {
   name: string;
   /** ICD-10 code — auto-suggested from the name (data/codes.ts), editable */
   code?: string;
+  /** รหัสกลุ่มโรคแผนไทย ICD-10-TM (U-code) — ว่าง = ใช้ค่าตามชื่อ (tmCode) */
+  tm?: string;
   kind: "principal" | "secondary";
 }
 export interface Procedure {

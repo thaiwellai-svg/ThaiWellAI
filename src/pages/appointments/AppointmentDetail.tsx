@@ -1,3 +1,4 @@
+import { tmCode } from "../../data/codes";
 import { AppGuideCard } from "../../features/AppGuideCard";
 import { visitAssessment } from "../../data/intake";
 import { AssessHistory } from "../../features/AssessHistory";
@@ -255,6 +256,7 @@ export default function AppointmentDetail() {
                         {a.diagnoses.map((x) => (
                           <em key={x.name}>
                             {x.name}
+                            {(x.tm ?? tmCode(x.name)?.code) && <u>{x.tm ?? tmCode(x.name)?.code}</u>}
                             {x.code && <u>{x.code}</u>}
                           </em>
                         ))}

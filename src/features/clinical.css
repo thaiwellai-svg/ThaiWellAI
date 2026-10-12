@@ -637,3 +637,9 @@
 .cr__charge.is-need {
   box-shadow: inset 0 0 0 1.5px #f3c5bd;
 }
+/* รหัสแผนไทย ICD-10-TM (U-code) — คู่กับ ICD-10 */
+.cr__tag.is-tm {
+  cursor: default;
+  background: #f3ecdf;
+  color: #8a5a12;
+}

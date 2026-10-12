@@ -5,7 +5,7 @@ import { clsx } from "clsx";
 import { useStore } from "../store/store";
 import { THAI_MASSAGE_KNOWLEDGE, THAI_MED_VOCAB, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
-import { dxCode, procCode } from "../data/codes";
+import { dxCode, procCode, tmCode } from "../data/codes";
 import { defaultProcPrice, inService } from "./billing";
 import { samuthan } from "../data/samuthan";
 import { intakeOfVisit } from "../data/intake";
@@ -560,7 +560,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     const before = appt.painBefore;
     const rows: [string, string][] = [
       ["ตรวจพบ", l.findings.trim() || "—"],
-      ["วินิจฉัย", l.dx.map((d) => `${shortDx(d.name)}${d.code ? ` (${d.code})` : ""}`).join(", ") || "—"],
+      ["วินิจฉัย", l.dx.map((d) => `${shortDx(d.name)} (${[d.tm ?? tmCode(d.name)?.code, d.code].filter(Boolean).join(" · ")})`).join(", ") || "—"],
       ["หัตถการ", l.pr.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" · ")).join(", ") || "—"],
       ["ความปวด", l.skipPain ? "ให้ผู้ป่วยประเมินในแอป" : l.pain != null ? `${before ?? "?"} → ${l.pain}${before ? ` · ลดลง ${Math.round(((before - l.pain) / Math.max(1, before)) * 100)}%` : ""}` : "—"],
       ["คำแนะนำ", l.advice && l.advice !== "-" ? l.advice.replace(/\n/g, " ") : "—"],
