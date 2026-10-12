@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { visitPrice } from "../../data/domain";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { BarChart3, ChevronDown, History, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
@@ -8,6 +8,7 @@ import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
 import { BackLead } from "../../layout/BackLead";
 import { WorkPage } from "../../layout/WorkPage";
+import { Workspace } from "../../features/Workspace";
 import { thaiDateShort } from "../../data/thaiDate";
 import { BillPanel } from "./BillDetail";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
@@ -27,6 +28,19 @@ type Range = "today" | "7" | "30";
 const ICON: Record<PaymentMethod, typeof Banknote> = { cash: Banknote, promptpay: QrCode, app: Smartphone, credit: Ticket };
 const time = (iso: string) => new Date(iso).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
 
+/** จอกว้างพอสำหรับแผงปรับขนาดได้ (เหมือนหน้าผู้ป่วย) */
+function useWideBill() {
+  const q = "(min-width: 1000px)";
+  const [w, setW] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const on = () => setW(m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, []);
+  return w;
+}
+
 /** ชำระเงิน — bills waiting at the counter, and the payment/receipt history. */
 export default function Billing({ history: hist = false }: { /** /billing/history: หน้าประวัติการชำระ */ history?: boolean } = {}) {
   const store = useStore();
@@ -42,8 +56,8 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
   // บิลที่เปิดดูในคอลัมน์ขวา (จอแคบ → เปิดหน้ารายละเอียดเต็มแทน)
   const [sel, setSel] = useState<string | null>(null);
   const [allDue, setAllDue] = useState(false);
-  const wide = () => window.matchMedia("(min-width: 1000px)").matches;
-  const openBill = (id: string) => (wide() ? setSel(id) : navigate(`/billing/${id}`));
+  const wide = useWideBill();
+  const openBill = (id: string) => (wide ? setSel(id) : navigate(`/billing/${id}`));
 
   const match = (a: Appointment) => {
     const q = query.trim().toLowerCase();
@@ -178,8 +192,9 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
         </>
       }
     >
-      <div className={clsx("appt bl3", hist && "bl3--hist")}>
-        {!hist && (
+      {(() => {
+        const railNode = (
+
         <aside className="appt__rail scroll-y bl2-rail">
           {/* รายชื่อรอชำระ: บนสุด แสดง 5 คนแรก · เกินกด "ดูเพิ่มเติม" ขยายทั้งหมด */}
           <section className="bl3__due plist">
@@ -334,10 +349,10 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
             </div>
           </section>
         </aside>
-        )}
+        
+        );
+        const histNode = (
 
-        {/* รายชื่อบิล: แบบเดียวกับรายชื่อหน้าผู้ป่วย (แถวลอยบนพื้นห้อง) */}
-        {hist && (
         <div className="panel plist bl3__list">
           {tab === "history" && (
             <div className="bl3__tools">
@@ -415,8 +430,10 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
               ))}
           </div>
         </div>
-        )}
-
+        
+        );
+        const detailNode = (
+          <>
         {/* คอลัมน์ขวา: รายละเอียดบิลที่เลือก (ไม่ต้องเปิดหน้าใหม่) */}
         <div className="bl3__detail">
           {shown ? (
@@ -427,7 +444,27 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
             </div>
           )}
         </div>
-      </div>
+          </>
+        );
+        const listNode = hist ? histNode : railNode;
+        // จอกว้าง: ลาก ••• ปรับขนาด/ย้ายได้ เหมือนหน้าผู้ป่วย · จอแคบ: เรียงแบบเดิม
+        return wide ? (
+          <Workspace
+            storageKey={hist ? "thaiwell.billing.history.layout" : "thaiwell.billing.layout"}
+            flexMin={420}
+            className={clsx("bl3 bl3--ws", hist && "bl3--hist")}
+            panes={[
+              { id: "list", width: 300, min: 260, max: 520, node: listNode },
+              { id: "detail", node: detailNode },
+            ]}
+          />
+        ) : (
+          <div className={clsx("appt bl3", hist && "bl3--hist")}>
+            {listNode}
+            {detailNode}
+          </div>
+        );
+      })()}
 
       <AppointmentDrawer id={open} startPay onClose={() => setOpen(null)} />
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />

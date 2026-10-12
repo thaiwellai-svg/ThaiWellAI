@@ -1090,3 +1090,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* แผงปรับขนาดได้ (Workspace) */
+.bl3--ws .bl2-rail {
+  height: 100%;
+}
+.bl3--ws .bl3__detail {
+  height: 100%;
+}
+.bl3--ws .bl3__due {
+  padding-top: 14px;
+}
