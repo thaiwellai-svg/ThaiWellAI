@@ -747,14 +747,43 @@ export function AppointmentDrawer({
                       </div>
                       <div className="vs__pay-r">
                         <div className="vs__appwait">
-                          <span className="vs__appwait-ic">
-                            <Smartphone size={22} />
-                          </span>
-                          <b>รอผู้ป่วยชำระในแอป ThaiWell</b>
-                          <small>
-                            ส่งบิลเมื่อ {thaiDateShort(appt.payment.at.slice(0, 10))} {hm(appt.payment.at)} น.{appt.payment.no ? ` · ${appt.payment.no}` : ""}
-                          </small>
-                          <p>ผู้ป่วยจ่ายในแอปแล้วระบบจะเปลี่ยนเป็น “ชำระแล้ว” เอง · ถ้าได้รับเงินช่องทางอื่นแล้ว กด “ได้รับเงินแล้ว”</p>
+                          <div className="vs__appwait-head">
+                            <span className="vs__appwait-ic">
+                              <Smartphone size={22} />
+                            </span>
+                            <span>
+                              <b>รอชำระในแอป ThaiWell</b>
+                              <small>{appt.payment.no ?? "บิลในแอป"}</small>
+                            </span>
+                          </div>
+                          {/* ขั้นของบิลในแอป: ส่งแล้ว → รอผู้ป่วยจ่าย → ชำระแล้ว */}
+                          <ol className="vs__appsteps">
+                            <li className="is-done">
+                              <i>
+                                <Check size={12} strokeWidth={3} />
+                              </i>
+                              <span>
+                                <b>ส่งบิลเข้าแอปแล้ว</b>
+                                <small>
+                                  {thaiDateShort(appt.payment.at.slice(0, 10))} {hm(appt.payment.at)} น.
+                                </small>
+                              </span>
+                            </li>
+                            <li className="is-now">
+                              <i />
+                              <span>
+                                <b>รอผู้ป่วยชำระ</b>
+                                <small>จ่ายในแอปแล้วสถานะเปลี่ยนเอง</small>
+                              </span>
+                            </li>
+                            <li>
+                              <i />
+                              <span>
+                                <b>ชำระแล้ว · ส่งใบเสร็จ</b>
+                                <small>ได้เงินช่องทางอื่น กด “ได้รับเงินแล้ว”</small>
+                              </span>
+                            </li>
+                          </ol>
                         </div>
                       </div>
                     </>
