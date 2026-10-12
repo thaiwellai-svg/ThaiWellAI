@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Activity, AudioLines, Check, CircleCheck, CircleHelp, ClipboardList, FileAudio, Hand, MessageSquareHeart, Mic, Pencil, Send, SkipForward, Sparkles, Square, Stethoscope, Volume2, VolumeX, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../store/store";
-import { THAI_MASSAGE_KNOWLEDGE, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
+import { THAI_MASSAGE_KNOWLEDGE, THAI_MED_VOCAB, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
 import { dxCode, procCode } from "../data/codes";
 import { samuthan } from "../data/samuthan";
@@ -265,6 +265,32 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
       อาการสำคัญ: p.complaint,
       ปวดก่อนนวด: appt.painBefore,
       จุดที่ไม่ให้นวด: ik?.avoidAreas ?? [],
+      ผู้ป่วย: `${p.gender} ${p.age} ปี`,
+      โรคประจำตัว: p.conditions?.length ? p.conditions : "ไม่มี",
+      ...(() => {
+        // ประวัติ 3 ครั้งล่าสุด · แผน · คอร์ส · คัดกรองวันนี้ · ธาตุ → AI แนะนำได้ตรงคน (แต่ไม่ใช้เติมช่องที่ไม่ได้พูด)
+        const hist = store.appointments
+          .filter((a) => a.patientId === p.id && a.id !== appt.id && a.status === "done" && (a.diagnoses?.length || a.procedures?.length || a.findings))
+          .sort((a, b) => `${b.date}${b.start}`.localeCompare(`${a.date}${a.start}`))
+          .slice(0, 3)
+          .map((a) => ({
+            วันที่: a.date,
+            ตรวจพบ: a.findings ?? "",
+            วินิจฉัย: (a.diagnoses ?? []).map((d) => d.name),
+            หัตถการ: (a.procedures ?? []).map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" ")),
+            ปวด: `${a.painBefore ?? "?"} → ${a.painAfter ?? "?"}`,
+          }));
+        const plan = p.aiPlan;
+        const sc = p.screening && p.screening.at?.slice(0, 10) === appt.date ? p.screening : null;
+        const sm = samuthan(p, { time: appt.start });
+        return {
+          ประวัติการรักษาล่าสุด: hist.length ? hist : "มาครั้งแรก",
+          แผนการรักษา: plan ? { จำนวนครั้ง: plan.sessions, อนุมัติ: !!plan.approved, ระยะ: plan.phases.map((x) => `${x.title}: ${x.focus} · ${x.technique}`) } : null,
+          คอร์ส: p.course ? `${p.course.name} ใช้แล้ว ${p.course.used}/${p.course.total}` : null,
+          คัดกรองวันนี้: sc ? { ความดัน: sc.bpSys ? `${sc.bpSys}/${sc.bpDia}` : null, จุดปวด: sc.painAreas ?? [], ห้ามนวด: sc.avoid || null, แรงนวด: sc.pressure, ยาละลายลิ่มเลือด: sc.bloodThinner, ชา: sc.numbness } : null,
+          ธาตุที่เสี่ยง: sm.top,
+        };
+      })(),
       บันทึกตอนนี้: { ตรวจพบ: l.findings, วินิจฉัย: l.dx.map((d) => d.name), หัตถการ: l.pr.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" ")), ปวดหลังนวด: l.pain ?? null, คำแนะนำ: l.advice },
     };
   };
@@ -283,6 +309,8 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
 8) replace = ช่องที่เป็นการสั่งแก้/เปลี่ยน ("ไม่ใช่…", "เปลี่ยนเป็น…", "แก้…", "ลบ…") ใช้ชื่อช่อง finding|dx|proc|pain|advice
 9) unsure = ช่องที่ได้ยินไม่ชัด กำกวม หรือตีความได้หลายแบบ
 ถ้ากำลังถามช่องใดอยู่ (ช่องที่ถาม) และคำตอบสั้น ให้ตีความเป็นคำตอบของช่องนั้น
+ศัพท์ที่ต้องสะกดให้ถูก (คำที่ฟังคล้ายให้แก้เป็นคำนี้): ${THAI_MED_VOCAB.join(" ")}
+ข้อมูลผู้ป่วย/ประวัติ/แผนที่แนบมา ใช้เพื่อ "ตีความ" คำที่กำกวมเท่านั้น (เช่น "เหมือนครั้งก่อน" = หัตถการครั้งล่าสุด) ห้ามนำมาเติมช่องที่ไม่ได้พูดถึง
 ตอบ JSON เท่านั้น: {"fixed":"","findings":null,"diagnoses":null,"procedures":null,"painAfter":null,"skipPain":false,"advice":null,"replace":[],"unsure":[]}
 ${THAI_MASSAGE_KNOWLEDGE}`,
         JSON.stringify({ สิ่งที่พูด: text, ช่องที่ถาม: asking ? LABEL[asking] : null, ...context() }),
@@ -360,8 +388,8 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     try {
       const r = await chatJSON<{ items: { name: string; area?: string; minutes?: number | null }[] }>(
         f === "dx"
-          ? `คุณเป็นแพทย์แผนไทย เสนอการวินิจฉัยที่น่าจะเป็น 1–3 ข้อ จากสิ่งที่ตรวจพบวันนี้เป็นหลัก ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(DX_PICK)} ตอบ JSON {"items":[{"name":""}]}`
-          : `คุณเป็นแพทย์แผนไทย เสนอหัตถการ 1–2 ข้อ ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(PROC_PICK)} พร้อม area สั้น ๆ และ minutes (รวมไม่เกินเวลาบริการ) ห้ามเสนอตำแหน่งที่ไม่ให้นวด ตอบ JSON {"items":[{"name":"","area":"","minutes":0}]}`,
+          ? `คุณเป็นแพทย์แผนไทย เสนอการวินิจฉัยที่น่าจะเป็น 1–3 ข้อ จากสิ่งที่ตรวจพบวันนี้เป็นหลัก ประกอบกับประวัติการรักษาและแผนการรักษา (อาการเดิมต่อเนื่อง → วินิจฉัยเดิมมาก่อน) ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(DX_PICK)} ตอบ JSON {"items":[{"name":""}]}`
+          : `คุณเป็นแพทย์แผนไทย เสนอหัตถการ 1–2 ข้อ ใช้ชื่อจากรายการนี้เท่านั้น ${JSON.stringify(PROC_PICK)} พร้อม area สั้น ๆ และ minutes (รวมไม่เกินเวลาบริการ) ให้สอดคล้องกับแผนการรักษาและสิ่งที่ตรวจพบวันนี้ ดูประวัติว่าหัตถการไหนทำแล้วปวดลดได้ดี ห้ามเสนอตำแหน่งที่ไม่ให้นวด/ห้ามนวดจากคัดกรอง ตอบ JSON {"items":[{"name":"","area":"","minutes":0}]}`,
         JSON.stringify(context()),
       );
       const pick = f === "dx" ? DX_PICK : PROC_PICK;
@@ -375,7 +403,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     const sm = samuthan(p, { time: appt.start });
     try {
       const r = await chatJSON<{ advice: string }>(
-        `คุณเป็นแพทย์แผนไทย เขียน "คำแนะนำถึงผู้ป่วย" หลังรับบริการ ภาษาไทยสุภาพ 2–4 ข้อสั้น ๆ ขึ้นบรรทัดใหม่ทีละข้อ ขึ้นต้นด้วย "• " ให้สอดคล้องกับสิ่งที่ตรวจพบ วินิจฉัย และหัตถการวันนี้ ตอบ JSON {"advice":"..."}\n${THAI_MASSAGE_KNOWLEDGE}`,
+        `คุณเป็นแพทย์แผนไทย เขียน "คำแนะนำถึงผู้ป่วย" หลังรับบริการ ภาษาไทยสุภาพ 2–4 ข้อสั้น ๆ ขึ้นบรรทัดใหม่ทีละข้อ ขึ้นต้นด้วย "• " ให้สอดคล้องกับสิ่งที่ตรวจพบ วินิจฉัย หัตถการวันนี้ และแผนการรักษา (เช่น นัดครั้งถัดไป/ท่าฤาษีดัดตนตามแผน) คำนึงถึงโรคประจำตัวและผลคัดกรอง ตอบ JSON {"advice":"..."}\n${THAI_MASSAGE_KNOWLEDGE}`,
         JSON.stringify({ ...context(), ธาตุที่เสี่ยง: sm.top, แนวทางตามธาตุ: sm.plan, ปวดก่อนหลัง: `${appt.painBefore} → ${l.pain ?? "?"}` }),
       );
       return r.advice?.trim() || "";
