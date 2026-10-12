@@ -3,8 +3,8 @@ import * as THREE from "three";
 import type { Element } from "../data/elements";
 
 /**
- * โมเดล 3D isometric ของธาตุทั้ง 4 (low-poly บนแท่นดินเป็นชั้น · ไม่มีเงา · ไม่มีแอนิเมชัน · ลากหมุนดูได้)
- *  ดิน = ภูเขา · น้ำ = สระน้ำ + หยดน้ำ · ลม = เมฆ + สายลม + ใบไม้ · ไฟ = กองไฟบนวงหิน
+ * โมเดล 3D isometric ของธาตุทั้ง 4 (low-poly เฉพาะองค์ประกอบของธาตุ ไม่มีฐาน · ไม่มีเงา · ไม่มีแอนิเมชัน · ลากหมุนดูได้)
+ *  ดิน = ภูเขา · น้ำ = หยดน้ำ + ระลอกน้ำ · ลม = เมฆ + สายลม + ใบไม้ · ไฟ = เปลวไฟบนฟืน
  * โทนสีของธาตุดินตามภาพใน Figma (ThaiWell 225:36) · วาดครั้งเดียว (วาดใหม่เมื่อย่อ/ขยายหรือลาก)
  */
 
@@ -32,7 +32,7 @@ function ramp(stops: Stops, t: number, jitter = 0) {
 /** กรวย low-poly บิดสันด้วยค่าสุ่มคงที่ · สีต่อหน้าไล่ตามความสูง (flat shading) */
 function lowPolyCone(radius: number, height: number, seed: number, stops: Stops, opts: { sides?: number; rows?: number; wobble?: number } = {}) {
   const r = rng(seed);
-  const g = new THREE.ConeGeometry(radius, height, opts.sides ?? 9, opts.rows ?? 5, true).toNonIndexed();
+  const g = new THREE.ConeGeometry(radius, height, opts.sides ?? 9, opts.rows ?? 5, false).toNonIndexed();
   const pos = g.getAttribute("position") as THREE.BufferAttribute;
   const wob = opts.wobble ?? 0.32;
   const moved = new Map<string, [number, number, number]>();
@@ -56,70 +56,11 @@ function lowPolyCone(radius: number, height: number, seed: number, stops: Stops,
   g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   g.computeVertexNormals();
   g.translate(0, height / 2, 0);
-  return new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  return new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide }));
 }
-
-/** แท่นสี่เหลี่ยมเป็นชั้น (บนสุด = ผิวของธาตุ) */
-function base(layers: [number, string][]) {
-  const grp = new THREE.Group();
-  let y = 0;
-  layers.forEach(([h, c], i) => {
-    // ชั้นล่างหดเข้าเล็กน้อย = ดูเป็นแท่นมีมิติ · ชั้นบนสุดมีสันขอบนูน
-    const w = 5.2 - i * 0.06;
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), lambert(c));
-    y -= h / 2;
-    m.position.y = y;
-    y -= h / 2;
-    grp.add(m);
-  });
-  const top = new THREE.Color(layers[0][1]);
-  const lip = new THREE.Mesh(new THREE.BoxGeometry(5.28, 0.06, 5.28), lambert("#" + top.clone().offsetHSL(0, -0.02, 0.06).getHexString()));
-  lip.position.y = 0.0;
-  grp.add(lip);
-  return grp;
-}
-
-function pebbles(seed: number, colors: string[], spots: [number, number, number][]) {
-  const r = rng(seed);
-  const grp = new THREE.Group();
-  for (const [x, z, s] of spots) {
-    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), lambert(colors[Math.floor(r() * colors.length)]));
-    m.position.set(x, s * 0.45, z);
-    m.rotation.set(r() * 3, r() * 3, r() * 3);
-    grp.add(m);
-  }
-  return grp;
-}
-
-/** ต้นไม้ low-poly (กรวยซ้อน 2 ชั้น + ลำต้น) · lean = เอียงลู่ลม */
-function tree(x: number, z: number, s: number, colors: [string, string] = ["#7d9256", "#98ab6a"], lean = 0) {
-  const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.1 * s, 0.5 * s, 5), lambert("#7a5a3e"));
-  trunk.position.y = 0.25 * s;
-  g.add(trunk);
-  const low = new THREE.Mesh(new THREE.ConeGeometry(0.42 * s, 0.8 * s, 6), lambert(colors[0]));
-  low.position.y = 0.75 * s;
-  g.add(low);
-  const top = new THREE.Mesh(new THREE.ConeGeometry(0.3 * s, 0.62 * s, 6), lambert(colors[1]));
-  top.position.y = 1.12 * s;
-  top.rotation.y = 0.5;
-  g.add(top);
-  g.position.set(x, 0, z);
-  g.rotation.z = lean;
-  return g;
-}
-
-const SOIL: [number, string][] = [
-  [0.32, "#a3825c"],
-  [0.36, "#7d6248"],
-  [0.3, "#55473b"],
-];
 
 interface Scene3D {
   world: THREE.Group;
-  /** มุมมอง: ครึ่งความสูงที่เห็น · จุดที่กล้องมอง */
-  view: number;
-  look: number;
 }
 
 // ───────── ดิน: ภูเขา ─────────
@@ -133,39 +74,26 @@ const ROCK: Stops = [
 ];
 function earth(): Scene3D {
   const world = new THREE.Group();
-  world.add(base([[0.22, "#b9a274"], ...SOIL]));
-  world.add(lowPolyCone(2.2, 5.2, 7, ROCK));
-  const side = lowPolyCone(1.2, 2.6, 31, ROCK);
-  side.position.set(1.35, 0, 1.05);
+  world.add(lowPolyCone(2.2, 5.2, 7, ROCK, { wobble: 0.24 }));
+  // ยอดรองซ้อนชิดยอดหลัก (ไม่มีร่องว่าง)
+  const side = lowPolyCone(1.35, 2.8, 31, ROCK, { wobble: 0.22 });
+  side.position.set(0.95, 0, 0.8);
   world.add(side);
-  const back = lowPolyCone(1.05, 2.0, 53, ROCK);
-  back.position.set(-1.45, 0, -0.95);
+  const back = lowPolyCone(1.15, 2.2, 53, ROCK, { wobble: 0.22 });
+  back.position.set(-1.0, 0, -0.7);
   world.add(back);
-  world.add(pebbles(11, ["#6d5f53", "#9c8467"], [[-1.9, 1.7, 0.32], [1.9, -1.7, 0.26], [2.05, 0.2, 0.2], [-1.6, -2.0, 0.22], [0.2, 2.15, 0.18]]));
-  // ต้นไม้เชิงเขา
-  for (const [x, z, sc] of [[-2.0, 0.6, 0.85], [-1.7, 1.1, 0.65], [0.9, 2.0, 0.75], [1.6, 2.05, 0.55], [2.1, -0.7, 0.6]] as const) world.add(tree(x, z, sc, ["#7f8a55", "#9aa56a"]));
-  return { world, view: 3.55, look: 1.4 };
+  return { world };
 }
 
 // ───────── น้ำ: สระน้ำ + หยดน้ำลอย ─────────
 function water(): Scene3D {
   const world = new THREE.Group();
-  world.add(base([[0.22, "#d9ceb2"], ...SOIL]));
-  // ขอบสระ
-  const rim = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.25, 0.3, 10), lambert("#bfb398"));
-  rim.position.y = 0.12;
-  world.add(rim);
-  const pool = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.85, 0.12, 10, 1), lambert("#7fb6d6"));
-  pool.position.y = 0.24;
-  world.add(pool);
-  // ระลอกคลื่น
-  const ripples: THREE.Mesh[] = [];
-  for (let i = 0; i < 2; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.7 + i * 0.55, 0.05, 3, 10), lambert("#b9dbee"));
+  // ระลอกน้ำใต้หยดน้ำ
+  for (let i = 0; i < 3; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.75 + i * 0.5, 0.06 - i * 0.012, 3, 12), lambert(["#8cc0de", "#a9d1e8", "#c9e2f0"][i]));
     ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.31;
+    ring.position.y = 0.1;
     world.add(ring);
-    ripples.push(ring);
   }
   // หยดน้ำ (lathe low-poly)
   const pts: THREE.Vector2[] = [];
@@ -178,43 +106,12 @@ function water(): Scene3D {
   drop.scale.setScalar(0.85);
   drop.position.y = 2.7;
   world.add(drop);
-  world.add(pebbles(23, ["#9aa4a8", "#c8c0aa"], [[-2.1, 1.9, 0.26], [2.0, -1.9, 0.22], [2.15, 1.6, 0.18], [-1.9, -2.1, 0.2]]));
-  ripples[1].scale.setScalar(1.08);
-  // ใบบัว + ดอกบัว
-  for (const [x, z, sc, rot] of [[0.9, 0.7, 1, 0.4], [-0.8, 1.0, 0.8, 2.1], [0.4, -1.1, 0.7, 4.0]] as const) {
-    const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.34 * sc, 0.34 * sc, 0.04, 7, 1, false, 0, Math.PI * 1.75), lambert("#7fa66a"));
-    pad.position.set(x, 0.32, z);
-    pad.rotation.y = rot;
-    world.add(pad);
-  }
-  const lotus = new THREE.Group();
-  for (let i = 0; i < 6; i++) {
-    const petal = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.28, 4), lambert(i % 2 ? "#f2c6cf" : "#f8dde2"));
-    petal.position.set(Math.cos((i / 6) * Math.PI * 2) * 0.07, 0.12, Math.sin((i / 6) * Math.PI * 2) * 0.07);
-    petal.rotation.set(Math.sin((i / 6) * Math.PI * 2) * 0.5, 0, -Math.cos((i / 6) * Math.PI * 2) * 0.5);
-    lotus.add(petal);
-  }
-  lotus.position.set(0.9, 0.3, 0.7);
-  world.add(lotus);
-  // ต้นกก
-  for (const [x, z] of [[-2.0, -0.4], [-1.85, -0.7], [-2.1, -0.9], [1.9, 0.6], [2.05, 0.9]] as const) {
-    const reed = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 0.9, 4), lambert("#8aa264"));
-    reed.position.set(x, 0.45, z);
-    reed.rotation.z = (x > 0 ? -1 : 1) * 0.12;
-    world.add(reed);
-    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.22, 5), lambert("#8b6a48"));
-    tip.position.set(x + (x > 0 ? -0.05 : 0.05), 0.92, z);
-    world.add(tip);
-  }
-  return { world, view: 3.4, look: 0.95 };
+  return { world };
 }
 
 // ───────── ลม: เมฆลอย + สายลมวน + ใบไม้ปลิว ─────────
 function wind(): Scene3D {
   const world = new THREE.Group();
-  world.add(base([[0.22, "#bcc79f"], ...SOIL]));
-  // หญ้าเตี้ย ๆ
-  world.add(pebbles(5, ["#9fb27c", "#c3cfa4"], [[-1.8, 1.6, 0.3], [1.7, -1.5, 0.26], [1.9, 1.5, 0.22], [-1.5, -1.9, 0.24], [0.1, 0.2, 0.34]]));
   const r = rng(77);
   const cloud = (x: number, y: number, z: number, s: number) => {
     const g = new THREE.Group();
@@ -235,7 +132,7 @@ function wind(): Scene3D {
     world.add(g);
     return g;
   };
-  const clouds = [cloud(-0.4, 3.4, 0.3, 1.25), cloud(1.4, 2.4, -1.0, 0.85), cloud(-1.5, 2.1, 1.3, 0.7)];
+  const clouds = [cloud(-0.3, 3.3, 0.3, 1.55), cloud(1.45, 2.4, -1.0, 1.05), cloud(-1.55, 2.1, 1.3, 0.9)];
   // สายลม: ท่อโค้งรอบแกน
   const swirls: THREE.Mesh[] = [];
   for (let i = 0; i < 3; i++) {
@@ -261,11 +158,7 @@ function wind(): Scene3D {
     l.position.set(Math.cos(a) * rad, 1.1 + i * 0.32, Math.sin(a) * rad);
     l.rotation.set(i * 1.1, a, i * 0.7);
   });
-  // ต้นไม้ลู่ลม
-  world.add(tree(-1.9, -1.2, 0.95, ["#86a35f", "#a7bf78"], -0.18));
-  world.add(tree(-1.4, -1.8, 0.7, ["#86a35f", "#a7bf78"], -0.2));
-  world.add(tree(1.9, 1.9, 0.6, ["#86a35f", "#a7bf78"], -0.16));
-  return { world, view: 3.5, look: 1.35 };
+  return { world };
 }
 
 // ───────── ไฟ: กองไฟบนวงหิน ─────────
@@ -284,32 +177,23 @@ const FLAME_IN: Stops = [
 ];
 function fire(): Scene3D {
   const world = new THREE.Group();
-  world.add(base([[0.22, "#9b8b7c"], [0.32, "#8a6a52"], [0.36, "#6e5240"], [0.3, "#4c3d33"]]));
-  // วงหิน
-  const stones: [number, number, number][] = [];
-  for (let i = 0; i < 9; i++) {
-    const a = (i / 9) * Math.PI * 2;
-    stones.push([Math.cos(a) * 1.55, Math.sin(a) * 1.55, 0.32 + (i % 3) * 0.04]);
+  // เปลวไฟหลายลิ้น: กลางสูง + ลิ้นข้าง · ชั้นกลาง/ใน ส้ม-เหลืองซ้อนด้านใน
+  const glow = (m: THREE.Mesh, k = 0.35) => {
+    (m.material as THREE.MeshLambertMaterial).emissive = new THREE.Color("#a83a12");
+    (m.material as THREE.MeshLambertMaterial).emissiveIntensity = k;
+    world.add(m);
+    return m;
+  };
+  glow(lowPolyCone(0.95, 3.6, 13, FLAME_OUT, { sides: 7, rows: 4, wobble: 0.3 }));
+  for (const [x, z, h, r, seed] of [[0.62, 0.3, 2.2, 0.55, 17], [-0.55, 0.42, 1.8, 0.5, 19], [0.1, -0.62, 2.0, 0.5, 23], [-0.4, -0.35, 1.4, 0.42, 27]] as const) {
+    const t = glow(lowPolyCone(r, h, seed, FLAME_OUT, { sides: 6, rows: 3, wobble: 0.3 }));
+    t.position.set(x, 0, z);
+    t.rotation.set(z * 0.35, 0, -x * 0.35);
   }
-  world.add(pebbles(91, ["#7d746c", "#a39a90", "#5f5852"], stones));
-  // ฟืน
-  // ฟืนวางไขว้กันแบบกระโจม
-  for (let i = 0; i < 5; i++) {
-    const a = (i / 5) * Math.PI * 2;
-    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 1.9, 6), lambert(i % 2 ? "#7a5236" : "#93663f"));
-    log.position.set(Math.cos(a) * 0.45, 0.6, Math.sin(a) * 0.45);
-    log.rotation.set(Math.sin(a) * 0.55, 0, -Math.cos(a) * 0.55);
-    world.add(log);
-  }
-  const outer = lowPolyCone(1.0, 2.8, 13, FLAME_OUT, { sides: 7, rows: 4, wobble: 0.45 });
-  const mid = lowPolyCone(0.68, 2.1, 29, FLAME_MID, { sides: 7, rows: 3, wobble: 0.4 });
-  const inner = lowPolyCone(0.38, 1.3, 47, FLAME_IN, { sides: 6, rows: 2, wobble: 0.3 });
-  [outer, mid, inner].forEach((f) => {
-    f.position.y = 0.35;
-    (f.material as THREE.MeshLambertMaterial).emissive = new THREE.Color("#a83a12");
-    (f.material as THREE.MeshLambertMaterial).emissiveIntensity = 0.35;
-    world.add(f);
-  });
+  const mid = glow(lowPolyCone(0.68, 2.5, 29, FLAME_MID, { sides: 7, rows: 3, wobble: 0.25 }), 0.4);
+  const inner = glow(lowPolyCone(0.4, 1.5, 47, FLAME_IN, { sides: 6, rows: 2, wobble: 0.2 }), 0.45);
+  mid.position.set(0.12, 0, 0.32);
+  inner.position.set(0.18, 0, 0.5);
   mid.rotation.y = 0.6;
   inner.rotation.y = 1.1;
   // ถ่านแดงที่ฐาน
@@ -322,10 +206,7 @@ function fire(): Scene3D {
     sp.position.set(x, y, z);
     world.add(sp);
   }
-  // หินกับต้นไม้แห้งรอบ ๆ
-  world.add(tree(-2.0, 1.8, 0.7, ["#8c7a52", "#a8946a"]));
-  world.add(tree(1.95, -1.9, 0.6, ["#8c7a52", "#a8946a"]));
-  return { world, view: 3.4, look: 1.05 };
+  return { world };
 }
 
 const BUILD: Record<Element, () => Scene3D> = { ดิน: earth, น้ำ: water, ลม: wind, ไฟ: fire };
@@ -348,8 +229,13 @@ export function ElementDiorama({ element, className }: { element: Element; class
 
     const scene = new THREE.Scene();
     const sc = BUILD[element]();
-    sc.world.position.y = -1.4;
-    scene.add(sc.world);
+    // จัดกึ่งกลาง + ขนาดพอดีกรอบอัตโนมัติ (ไม่มีฐาน แต่ละธาตุขนาดไม่เท่ากัน)
+    const sphere = new THREE.Box3().setFromObject(sc.world).getBoundingSphere(new THREE.Sphere());
+    sc.world.position.sub(sphere.center);
+    const pivot = new THREE.Group();
+    pivot.add(sc.world);
+    scene.add(pivot);
+    const view = sphere.radius * 0.86;
 
     // แสงนุ่ม ฝั่งซ้ายสว่าง ฝั่งขวาเข้ม (ตามภาพอ้างอิง)
     scene.add(new THREE.HemisphereLight("#fffaf0", "#b49a7c", 2.4));
@@ -362,16 +248,17 @@ export function ElementDiorama({ element, className }: { element: Element; class
 
     // isometric: orthographic เอียง ~35° หมุน 45°
     const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
-    cam.position.set(10, 8.2 + sc.look - 1.3, 10);
-    cam.lookAt(0, sc.look - 1.4, 0);
+    cam.position.set(10, 8.2, 10);
+    cam.lookAt(0, 0, 0);
     const fit = () => {
       const w = el.clientWidth || 1;
       const h = el.clientHeight || 1;
       renderer.setSize(w, h, false);
-      cam.top = sc.view;
-      cam.bottom = -sc.view;
-      cam.left = (-sc.view * w) / h;
-      cam.right = (sc.view * w) / h;
+      const v = w < h ? (view * h) / w : view;
+      cam.top = v;
+      cam.bottom = -v;
+      cam.left = (-v * w) / h;
+      cam.right = (v * w) / h;
       cam.updateProjectionMatrix();
     };
     fit();
@@ -385,7 +272,7 @@ export function ElementDiorama({ element, className }: { element: Element; class
     let drag: number | null = null;
     let yaw = 0;
     const draw = () => {
-      sc.world.rotation.y = yaw;
+      pivot.rotation.y = yaw;
       renderer.render(scene, cam);
     };
     const down = (e: PointerEvent) => {
