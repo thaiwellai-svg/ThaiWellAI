@@ -7,7 +7,12 @@ import { ELEMENTS, samuthan, type Factor } from "../data/samuthan";
 import type { Patient } from "../data/types";
 import { ElementIcon } from "./ElementIcon";
 import { ageFrom, thaiBirth } from "./BirthDateField";
+import { clsx } from "clsx";
+import dinArt from "../assets/elements/din.png";
 import "./samuthan.css";
+
+/** ภาพประกอบธาตุ (Figma) — ยังมีเฉพาะธาตุดิน ธาตุอื่นใช้พื้นไล่สีตามธาตุ */
+const ART: Partial<Record<"ดิน" | "น้ำ" | "ลม" | "ไฟ", string>> = { ดิน: dinArt };
 
 const FICON: Record<Factor["key"], typeof Sun> = { birth: Sprout, age: CalendarClock, season: Sun, time: Clock3, place: MapPin };
 
@@ -43,30 +48,31 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
         </summary>
 
         <div className="tm__body">
-          {/* ฮีโร่: ธาตุเจ้าเรือน + สมดุลวันนี้ (แถบเดียว 4 สี) */}
-          <div className="tm3" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
-            <div className="tm3__id">
-              <span className="tm3__badge">
-                <ElementIcon element={prof.birth} size={26} strokeWidth={2} color="#fff" />
-              </span>
+          {/* ฮีโร่ธาตุเจ้าเรือน (Figma ThaiWell 225:36): ภาพธาตุ · วงกลมไอคอน · ชื่อธาตุ · มักพบ/รสยา · สมดุลวันนี้ */}
+          <div className={clsx("tm4", ART[prof.birth] && "has-art")} style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
+            {ART[prof.birth] && <img className="tm4__art" src={ART[prof.birth]} alt="" aria-hidden />}
+            <span className="tm4__orb">
+              <ElementIcon element={prof.birth} size={44} strokeWidth={1.8} />
+            </span>
+            <div className="tm4__name">
+              <b>ธาตุ{prof.birth}</b>
+              <span>{born.trait}</span>
+            </div>
+            <dl className="tm4__rows">
               <div>
-                <small>ธาตุเจ้าเรือน</small>
-                <b>ธาตุ{prof.birth}</b>
-                <span>{p.birthDate ? `เกิด ${thaiBirth(p.birthDate)} · ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</span>
+                <dt>เกิด</dt>
+                <dd>{p.birthDate ? `${thaiBirth(p.birthDate)} · อายุ ${ageFrom(p.birthDate) ?? p.age} ปี` : "ยังไม่ระบุวันเกิด"}</dd>
               </div>
-            </div>
-            <p className="tm3__trait">{born.trait}</p>
-            <div className="tm3__tags">
-              <span>
-                <small>มักพบ</small>
-                {born.risk}
-              </span>
-              <span>
-                <small>รสยา</small>
-                {born.taste}
-              </span>
-            </div>
-            <div className="tm3__bal">
+              <div>
+                <dt>มักพบ</dt>
+                <dd>{born.risk}</dd>
+              </div>
+              <div>
+                <dt>รสยา</dt>
+                <dd>{born.taste}</dd>
+              </div>
+            </dl>
+            <div className="tm4__bal">
               <div className="tm3__balh">
                 <small>สมดุลวันนี้</small>
                 <em>

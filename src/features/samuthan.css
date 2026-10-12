@@ -975,3 +975,88 @@
   justify-content: space-between;
   gap: 4px 10px;
 }
+
+/* ═════ ฮีโร่ธาตุ ตาม Figma (ThaiWell 225:36) ═════ */
+.tm4 {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 19% 16px 16px; /* วงกลมอยู่กลางภาพธาตุ: 120 / 630 */
+  border-radius: 24px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--t) 85%, #f6e9dc) 0%, color-mix(in srgb, var(--t) 35%, #fbf5ee) 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+.tm4:not(.has-art) {
+  padding-top: 28px;
+}
+.tm4__art {
+  position: absolute;
+  z-index: -1;
+  top: 16px;
+  left: 50%;
+  width: 76%; /* 478 / 630 */
+  transform: translateX(-50%);
+  pointer-events: none;
+  /* ให้ตัวหนังสือบนภาพอ่านง่าย: ภาพจางลงช่วงล่าง */
+  -webkit-mask-image: linear-gradient(180deg, #000 45%, rgb(0 0 0 / 18%) 78%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 45%, rgb(0 0 0 / 18%) 78%, transparent 100%);
+}
+.tm4__orb {
+  display: grid;
+  place-items: center;
+  width: clamp(88px, 19cqi, 120px);
+  height: clamp(88px, 19cqi, 120px);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--c);
+  box-shadow: 0 10px 30px rgb(60 40 20 / 14%);
+}
+.tm4__name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  text-align: center;
+}
+.tm4__name b {
+  font: 700 20px/1.2 var(--font-sans);
+  color: #2c3e2b;
+}
+.tm4__name span {
+  font: 400 14px/1.5 var(--font-sans);
+  color: #6e7e6b;
+}
+.tm4__rows {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+}
+.tm4__rows > div {
+  display: flex;
+  gap: 10px;
+  font: 500 12.5px/1.5 var(--font-sans);
+}
+.tm4__rows dt {
+  flex: 0 0 60px;
+  font-weight: 400;
+  color: #6e7e6b;
+}
+.tm4__rows dd {
+  margin: 0;
+  color: #111827;
+}
+.tm4__bal {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--white);
+}
