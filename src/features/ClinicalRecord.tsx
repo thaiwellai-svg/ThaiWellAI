@@ -10,8 +10,9 @@ import type { Appointment, Diagnosis, Procedure } from "../data/types";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON } from "./ai";
 import { dxCode, procCode } from "../data/codes";
 import { baht } from "../data/thaiDate";
-import { defaultProcPrice, extraTotal, unpricedProcs } from "./billing";
+import { inService, defaultProcPrice, extraTotal, unpricedProcs } from "./billing";
 import "./clinical.css";
+import { PROCEDURES } from "../data/knowledge";
 
 /** common Thai-traditional-medicine findings for quick picking (code is filled by the clinic's coder) */
 export const DX_PICK = [
@@ -24,16 +25,8 @@ export const DX_PICK = [
   "ตะคริว",
   "นอนไม่หลับ / เครียดสะสม",
 ];
-export const PROC_PICK = [
-  "นวดไทยเพื่อการรักษา",
-  "นวดไทยเพื่อสุขภาพ",
-  "ประคบสมุนไพร",
-  "อบไอน้ำสมุนไพร",
-  "นวดเท้าเพื่อสุขภาพ",
-  "กดจุดเส้นประธานสิบ",
-  "สอนท่าฤาษีดัดตน",
-  "พอกสมุนไพร",
-];
+/** หัตถการตามเอกสาร (CPG 2568 · เกณฑ์มาตรฐาน · ตำราอ้างอิง) — data/knowledge.ts */
+export const PROC_PICK = PROCEDURES.map((p) => p.name);
 
 /** อาการที่ตรวจพบ — free text, shared with the treatment assistant (appointment.findings) */
 export function FindingsField({ appt, n = 1 }: { appt: Appointment; n?: number }) {
@@ -99,14 +92,11 @@ export function ClinicalRecord({ appt, locked, embedded }: { appt: Appointment; 
 
   const save = (patch: Partial<Appointment>, log?: string) => store.dispatch({ type: "updateAppointment", id: appt.id, patch, log });
   /** หัตถการแรก = ตามบริการที่จอง (รวมในค่าบริการ) · ที่ทำเพิ่ม = คิดเงินเพิ่ม (ราคาที่เคยคิด / ราคาบริการชื่อเดียวกัน) */
-  const newProc = (name: string, index: number, area?: string): Procedure => ({
-    name,
-    code: procCode(name)?.code,
-    area,
-    minutes: index ? undefined : s.minutes,
-    included: index === 0,
-    price: index === 0 ? undefined : defaultProcPrice(name, store.services, store.settings.procedurePrices),
-  });
+  // หัตถการที่อยู่ในบริการที่จอง (เช่น นวด+ประคบ) = รวมในค่าบริการ · ไม่ตรงบริการเลย → หัตถการแรกรวมในบริการ
+  const newProc = (name: string, index: number, area?: string): Procedure => {
+    const included = inService(name, s) || (index === 0 && !pr.some((x) => inService(x.name, s)));
+    return { name, code: procCode(name)?.code, area, minutes: index ? undefined : s.minutes, included, price: included ? undefined : defaultProcPrice(name, store.services, store.settings.procedurePrices) };
+  };
   /** ตั้งราคาหัตถการ → จำไว้ใช้ครั้งต่อไป */
   const setPrice = (i: number, price: number | undefined, included = false) => {
     setPr(i, { included, price });

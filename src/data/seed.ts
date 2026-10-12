@@ -26,11 +26,11 @@ function mulberry32(seed: number) {
 }
 
 export const SERVICES: Service[] = [
-  { id: "s1", name: "นวดไทยเพื่อสุขภาพ", short: "นวดสุขภาพ", minutes: 60, price: 350 },
-  { id: "s2", name: "นวดไทยเพื่อการรักษา", short: "นวดรักษา", minutes: 60, price: 450 },
-  { id: "s3", name: "ประคบสมุนไพร", short: "ประคบ", minutes: 60, price: 300 },
-  { id: "s4", name: "นวดเท้าเพื่อสุขภาพ", short: "นวดเท้า", minutes: 60, price: 300 },
-  { id: "s5", name: "นวดไทยร่วมประคบสมุนไพร", short: "นวด+ประคบ", minutes: 90, price: 600 },
+  { id: "s1", name: "นวดไทยเพื่อสุขภาพ", short: "นวดสุขภาพ", minutes: 60, price: 350, kind: "สุขภาพ", procs: ["นวดไทยแบบเชลยศักดิ์"] },
+  { id: "s2", name: "นวดไทยเพื่อการรักษา", short: "นวดรักษา", minutes: 60, price: 450, kind: "รักษา", procs: ["นวดไทยแบบราชสำนัก", "กดจุดตามเส้นประธานสิบ"] },
+  { id: "s3", name: "ประคบสมุนไพร", short: "ประคบ", minutes: 60, price: 300, kind: "รักษา", procs: ["ประคบสมุนไพร"] },
+  { id: "s4", name: "นวดเท้าเพื่อสุขภาพ", short: "นวดเท้า", minutes: 60, price: 300, kind: "สุขภาพ", procs: ["นวดเท้า"] },
+  { id: "s5", name: "นวดไทยร่วมประคบสมุนไพร", short: "นวด+ประคบ", minutes: 90, price: 600, kind: "รักษา", procs: ["นวดไทยแบบราชสำนัก", "ประคบสมุนไพร"] },
 ];
 
 const sh = (days: number[], start: string, end: string, services: string[]) => ({ days, start, end, services });

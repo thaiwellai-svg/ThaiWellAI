@@ -7,6 +7,7 @@ import { baht } from "../data/thaiDate";
 import { promptpayPayload } from "../data/promptpay";
 import { DEMO } from "../data/mode";
 import type { Appointment, Payment, PaymentMethod, Service } from "../data/types";
+import { serviceRef } from "../data/knowledge";
 
 export const METHOD_LABEL: Record<PaymentMethod, string> = {
   cash: "เงินสด",
@@ -39,7 +40,12 @@ export const visitTotal = (s: Pick<Service, "price">, a: Pick<Appointment, "proc
 export const usesCredit = (pay?: Payment) => pay?.method === "credit" || !!pay?.credit;
 /** ราคาตั้งต้นของหัตถการ: ราคาที่เคยคิด → ราคาบริการชื่อเดียวกัน → ยังไม่มี */
 export const defaultProcPrice = (name: string, services: Service[], remembered?: Record<string, number>) =>
-  remembered?.[name] ?? services.find((s) => s.name === name || name.includes(s.name) || s.name.includes(name))?.price;
+  remembered?.[name] ??
+  // บริการที่มีหัตถการนี้อย่างเดียว (เช่น ประคบสมุนไพร) → ราคาบริการนั้น
+  services.find((s) => { const r = serviceRef(s).procs; return r.length === 1 && r[0] === name; })?.price ??
+  services.find((s) => s.name === name || name.includes(s.name) || s.name.includes(name))?.price;
+/** หัตถการนี้รวมอยู่ในค่าบริการที่จองหรือไม่ (ตามหัตถการในบริการ) */
+export const inService = (name: string, s: Pick<Service, "name" | "kind" | "procs">) => serviceRef(s).procs.includes(name);
 
 /** next running receipt number for this Buddhist year */
 export function makePayment(all: Appointment[], method: PaymentMethod, amount: number, received?: number): Payment {

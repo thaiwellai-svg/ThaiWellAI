@@ -7,6 +7,10 @@ export interface Service {
   short: string;
   minutes: number;
   price: number;
+  /** ประเภทตามกฎหมาย (ไม่ตั้ง = เดาจากชื่อ ดู data/knowledge serviceRef) */
+  kind?: "รักษา" | "สุขภาพ";
+  /** หัตถการในบริการนี้ ตามชื่อในเอกสาร (data/knowledge PROCEDURES) */
+  procs?: string[];
 }
 
 /** A recurring working block a therapist opens for bookings, e.g. Mon–Fri 08:00–12:00. */

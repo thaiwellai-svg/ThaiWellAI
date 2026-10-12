@@ -733,6 +733,21 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex((await warn.count()) === 1, 'ไม่เตือนซ้ำ');
   });
 
+  await check('N11', 'therapist', 'ราคาตรงบริการ', 'บริการ นวด+ประคบ บันทึก นวดราชสำนัก + ประคบ → รวมในค่าบริการ 600 (ไม่คิดประคบซ้ำ) · เพิ่มอบ → คิดเพิ่ม', async (p, ex) => {
+    await mutate(p, "const t=new Date(Date.now()+7*3600e3).toISOString().slice(0,10);const a=s.appointments.find(x=>x.date===t&&x.status==='active')||s.appointments.find(x=>x.date===t&&x.status==='waiting');a.status='active';a.serviceId='s5';a.startedAt=new Date().toISOString();a.endedAt=new Date().toISOString();a.calledAt=a.calledAt||new Date().toISOString();a.procedures=[];a.diagnoses=[];a.painAfter=undefined;a.recordedAt=undefined;s.__id=a.id;");
+    const id = (await state(p)).__id;
+    await openVisit(p, id); await p.waitForTimeout(1500);
+    await qrSend(p, 'บ่าตึง ลมปลายปัตคาดบ่า นวดรักษาบ่า 60 นาที ประคบสมุนไพร 30 นาที');
+    let a = (await state(p)).appointments.find((x) => x.id === id);
+    const names = (a.procedures ?? []).map((x) => x.name);
+    ex(names.includes('นวดไทยแบบราชสำนัก') && names.includes('ประคบสมุนไพร'), `ชื่อหัตถการตามเอกสาร (${names.join(', ')})`);
+    ex((a.procedures ?? []).every((x) => x.included !== false), 'ทั้งสองรวมในค่าบริการ นวด+ประคบ');
+    await qrSend(p, 'เพิ่มอบไอน้ำสมุนไพร 30 นาที');
+    a = (await state(p)).appointments.find((x) => x.id === id);
+    const ob = (a.procedures ?? []).find((x) => x.name === 'อบไอน้ำสมุนไพร');
+    ex(ob && ob.included === false, 'อบ (ไม่อยู่ในบริการ) = คิดเพิ่ม');
+  });
+
   await check('N03', 'therapist', 'เล่ารวดเดียว AI กรอกให้ครบ', 'พิมพ์ 1 ครั้ง → ตรวจพบ · วินิจฉัย(รหัส) · หัตถการ 45 นาที · ปวดหลัง 3 · คำแนะนำ → บันทึก', async (p, ex) => {
     const id = await qrOpen(p);
     ex((await p.locator('.vp__voice .qr').count()) === 1, 'ขั้นบันทึกการรักษาเปิดผู้ช่วยบันทึกด้านขวาเอง');

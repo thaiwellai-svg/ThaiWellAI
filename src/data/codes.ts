@@ -20,8 +20,8 @@ const DX: Rule[] = [
 ];
 
 const PROC: Rule[] = [
-  { kw: ["ฤาษีดัดตน", "ท่าบริหาร", "กายบริหาร"], code: "93.19", en: "Exercise, not elsewhere classified" },
-  { kw: ["ประคบ", "อบ", "พอก", "ไอน้ำ"], code: "93.35", en: "Other heat therapy" },
+  { kw: ["ฤาษีดัดตน", "ฤๅษีดัดตน", "ยืดเหยียด", "ท่าบริหาร", "กายบริหาร"], code: "93.19", en: "Exercise, not elsewhere classified" },
+  { kw: ["ประคบ", "อบ", "พอก", "ไอน้ำ", "หม้อเกลือ", "แช่"], code: "93.35", en: "Other heat therapy" },
   { kw: ["นวด", "กดจุด", "เส้นประธาน"], code: "93.39", en: "Other physical therapy" },
 ];
 

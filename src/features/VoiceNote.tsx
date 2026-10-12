@@ -6,6 +6,7 @@ import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { THAI_MASSAGE_KNOWLEDGE, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
+import { procByName, procsInText } from "../data/knowledge";
 import { dxCode, procCode } from "../data/codes";
 import { samuthan } from "../data/samuthan";
 import { intakeOfVisit } from "../data/intake";
@@ -44,10 +45,9 @@ export function parseLocal(text: string, serviceName: string): Extract {
     const words = (d.match(/\(([^)]+)\)/)?.[1] ?? "").split(" ");
     return t.includes(core) || words.some((w) => w.length > 1 && t.includes(w));
   }).slice(0, 2);
-  const procedures: Extract["procedures"] = PROC_PICK.filter((p) => t.includes(p) || (p.startsWith("ประคบ") && t.includes("ประคบ")) || (p.startsWith("กดจุด") && t.includes("กดจุด")) || (p.includes("ฤาษี") && t.includes("ฤาษี"))).map((name) => ({ name }));
-  const short: [string, string][] = [["นวดรักษา", "นวดไทยเพื่อการรักษา"], ["นวดสุขภาพ", "นวดไทยเพื่อสุขภาพ"], ["นวดเท้า", "นวดเท้าเพื่อสุขภาพ"], ["อบสมุนไพร", "อบไอน้ำสมุนไพร"], ["อบไอน้ำ", "อบไอน้ำสมุนไพร"], ["พอก", "พอกสมุนไพร"]];
-  for (const [k, name] of short) if (t.includes(k) && !procedures.some((p) => p.name === name)) procedures.unshift({ name });
-  if (!procedures.some((p) => p.name.startsWith("นวด")) && /นวด/.test(t)) procedures.unshift({ name: serviceName });
+  // ชื่อหัตถการตามเอกสาร (คำที่พูด เช่น "นวดรักษา" → นวดไทยแบบราชสำนัก)
+  const procedures: Extract["procedures"] = procsInText(t).map((p) => ({ name: p.name }));
+  if (!procedures.some((p) => p.name.startsWith("นวด")) && /นวด/.test(t)) procedures.unshift({ name: procByName(serviceName)?.name ?? PROC_PICK[0] });
   const adv = t.match(/(?:แนะนำ(?:ให้)?|ฝาก(?:ให้)?)(.+)$/)?.[1]?.trim() ?? "";
   return { diagnoses, procedures, painAfter: pain ?? null, advice: adv };
 }

@@ -1,3 +1,5 @@
+import { clsx } from "clsx";
+import { PROCEDURES, SERVICE_KIND, SERVICE_PRESETS, serviceRef, type ServiceKind } from "../../data/knowledge";
 import { useState } from "react";
 import { DEFAULT_SETTINGS } from "../../data/seed";
 import { resetBothSystems } from "../../sync/demo";
@@ -455,8 +457,9 @@ export default function Settings() {
                               <div className="st-row__text">
                                 <b>{s.name}</b>
                                 <small>
-                                  {s.minutes} นาที · {by.length ? `ผู้บำบัด ${by.length} คน` : "ยังไม่มีผู้บำบัด"}
+                                  {SERVICE_KIND[serviceRef(s).kind].label} · {s.minutes} นาที · {by.length ? `ผู้บำบัด ${by.length} คน` : "ยังไม่มีผู้บำบัด"}
                                 </small>
+                                <small className="svc-procs">{serviceRef(s).procs.join(" · ")}</small>
                               </div>
                               <span className="st-faces">
                                 {by.map((t) => (
@@ -745,7 +748,7 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
 
   const save = () => {
     if (!valid) return;
-    const service = { ...f, name: f.name.trim(), short: f.short.trim(), id: isNew ? store.nextId("s") : f.id };
+    const service = { ...f, name: f.name.trim(), short: f.short.trim(), id: isNew ? store.nextId("s") : f.id, kind: ref.kind, procs: ref.procs };
     store.dispatch({ type: "saveService", service });
     toast({ message: isNew ? `เพิ่มบริการ ${service.name} แล้ว` : `บันทึกบริการ ${service.name} แล้ว` });
     onSaved();
@@ -761,6 +764,8 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
 
   const by = current ? store.therapists.filter((t) => t.shifts.some((x) => x.services.includes(current.id))) : [];
   const step = (n: number) => setF({ ...f, price: Math.max(0, f.price + n) });
+  // ประเภท/หัตถการ: ที่ตั้งไว้ หรือเดาจากชื่อ (บริการเดิม)
+  const ref = serviceRef(f);
 
   return (
     <Dialog
@@ -791,6 +796,26 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
       }
     >
       <div className="svc">
+        {/* แม่แบบตามเอกสาร (เฉพาะเพิ่มใหม่) */}
+        {isNew && (
+          <div className="st-group">
+            <div className="st-group__head">
+              <h3>เริ่มจากแม่แบบ</h3>
+              <p>ตาม CPG 2568 · เกณฑ์มาตรฐาน · ตำราอ้างอิงด้านการแพทย์แผนไทย</p>
+            </div>
+            <div className="svc-presets">
+              {SERVICE_PRESETS.filter((x) => !store.services.some((y) => y.name === x.name)).map((x) => (
+                <button key={x.name} type="button" className={clsx(f.name === x.name && "is-on")} onClick={() => setF({ ...f, name: x.name, short: x.short, minutes: x.minutes, kind: x.kind, procs: x.procs })}>
+                  <b>{x.name}</b>
+                  <small>
+                    {x.minutes} นาที · {x.note}
+                  </small>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* name */}
         <div className="st-group">
           <div className="st-group__body svc__card">
@@ -807,6 +832,55 @@ function ServiceDialog({ id, onClose, onSaved }: { id: string | null; onClose: (
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ประเภทตามกฎหมาย */}
+        <div className="st-group">
+          <div className="st-group__head">
+            <h3>ประเภทบริการ</h3>
+            <p>{SERVICE_KIND[ref.kind].law}</p>
+          </div>
+          <div className="svc__seg svc__seg--2" role="radiogroup" aria-label="ประเภทบริการ">
+            {(Object.keys(SERVICE_KIND) as ServiceKind[]).map((k) => (
+              <button key={k} type="button" role="radio" aria-checked={ref.kind === k} onClick={() => setF({ ...f, kind: k })}>
+                <b>{SERVICE_KIND[k].label}</b>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* หัตถการในบริการ */}
+        <div className="st-group">
+          <div className="st-group__head">
+            <h3>หัตถการในบริการ</h3>
+            <p>ใช้เป็นตัวเลือกแรกตอนบันทึกการรักษา · ชื่อตามเอกสาร</p>
+          </div>
+          <div className="svc-procpick">
+            {PROCEDURES.map((x) => {
+              const on = ref.procs.includes(x.name);
+              return (
+                <button
+                  key={x.name}
+                  type="button"
+                  aria-pressed={on}
+                  className={clsx(on && "is-on")}
+                  title={x.guide ? `${x.guide} (${x.src})` : x.src}
+                  onClick={() => {
+                    const next = on ? ref.procs.filter((y) => y !== x.name) : [...ref.procs, x.name];
+                    setF({ ...f, procs: next.length ? next : ref.procs });
+                  }}
+                >
+                  {on && <Check size={13} strokeWidth={3} />}
+                  {x.name}
+                </button>
+              );
+            })}
+          </div>
+          {ref.procs.map((n) => PROCEDURES.find((x) => x.name === n)).filter((x) => x?.guide).map((x) => (
+            <p key={x!.name} className="svc-guide">
+              <b>{x!.name}</b> {x!.guide} <i>· {x!.src}</i>
+            </p>
+          ))}
         </div>
 
         {/* duration */}

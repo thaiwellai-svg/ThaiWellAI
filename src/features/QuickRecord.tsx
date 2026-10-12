@@ -6,9 +6,10 @@ import { useStore } from "../store/store";
 import { THAI_MASSAGE_KNOWLEDGE, THAI_MED_VOCAB, chatJSON, fileToWav, startMic, transcribe, type Mic as MicRec } from "./ai";
 import { DX_PICK, PROC_PICK } from "./ClinicalRecord";
 import { dxCode, procCode } from "../data/codes";
+import { defaultProcPrice, inService } from "./billing";
 import { samuthan } from "../data/samuthan";
 import { intakeOfVisit } from "../data/intake";
-import { MASSAGE_RULES, knowledgeFor, procCautions } from "../data/knowledge";
+import { MASSAGE_RULES, knowledgeFor, procByName, procCautions, procsInText, serviceRef } from "../data/knowledge";
 import { DEFAULT_CALL_VOICE, speak, stopSpeaking, unlockAudio } from "./tts";
 import { VoiceWave } from "./VoiceWave";
 import { RECORD_DRAFT, RECORD_SAVE, VOICE_FILL, parseLocal, type VoiceFill } from "./VoiceNote";
@@ -268,7 +269,16 @@ export function QuickRecord({ appt, mode = "panel" }: { appt: Appointment; bare?
     }
   };
   const toDx = (names: string[]) => names.map((n, i) => ({ name: n, code: dxCode(n)?.code, kind: (i ? "secondary" : "principal") as "principal" | "secondary" }));
-  const toPr = (xs: { name: string; area?: string | null; minutes?: number | null }[]) => xs.map((x, i) => ({ name: x.name, code: procCode(x.name)?.code, area: x.area || undefined, minutes: x.minutes ?? (i === 0 ? s.minutes : undefined) }));
+  // ค่าบริการ: หัตถการในบริการที่จอง = รวมในค่าบริการ · ที่ทำเพิ่ม = คิดเพิ่ม (ราคาที่เคยคิด/ราคาบริการ) · ของเดิมคงค่าที่ตั้งไว้
+  const toPr = (xs: { name: string; area?: string | null; minutes?: number | null }[]) => {
+    const any = xs.some((x) => inService(x.name, s));
+    return xs.map((x, i) => {
+      const prev = (appt.procedures ?? []).find((y) => y.name === x.name);
+      const included = prev?.included ?? (inService(x.name, s) || (i === 0 && !any));
+      const price = prev ? prev.price : included ? undefined : defaultProcPrice(x.name, store.services, store.settings.procedurePrices);
+      return { name: x.name, code: procCode(x.name)?.code, area: x.area || undefined, minutes: x.minutes ?? (i === 0 ? s.minutes : undefined), included, price };
+    });
+  };
 
   // ── AI: แยกข้อมูลจากที่พูด (ไม่เดา) ──
   const context = () => {
@@ -366,7 +376,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
       filled.push(`วินิจฉัย ${names.map(shortDx).join(", ")}`);
     }
     if (x.procedures?.length) {
-      const items = x.procedures.filter((q) => q?.name).map((q) => ({ ...q, name: matchPick(q.name, PROC_PICK) ?? q.name }));
+      const items = x.procedures.filter((q) => q?.name).map((q) => ({ ...q, name: procByName(q.name)?.name ?? matchPick(q.name, PROC_PICK) ?? q.name }));
       if (items.some((q) => !PROC_PICK.includes(q.name))) uns.add("proc");
       const merged = rep.has("proc") ? items : [...l.pr, ...items.filter((q) => !l.pr.some((y) => y.name === q.name))];
       npr = toPr(merged);
@@ -432,20 +442,23 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
   const procOptions = async (): Promise<NonNullable<Msg["opts"]>> => {
     const out: NonNullable<Msg["opts"]> = [];
     const add = (name: string | undefined, src: string, area?: string | null, minutes?: number | null) => {
-      const n = name ? (matchPick(name, PROC_PICK) ?? name) : "";
+      // ชื่อตามเอกสาร (ชื่อเดิม เช่น "นวดไทยเพื่อการรักษา" → นวดไทยแบบราชสำนัก)
+      const n = name ? (procByName(name)?.name ?? matchPick(name, PROC_PICK) ?? name) : "";
       if (!n || out.some((x) => x.name === n)) return;
       out.push({ name: n, area: area || null, minutes: minutes ?? null, src });
     };
-    const extrasOf = (text: string) => PROC_PICK.filter((x) => x !== s.name && !x.startsWith("นวด") && PROC_WORDS.some((w) => x.includes(w) && text.includes(w)));
+    /** หัตถการของบริการ + นาที (CPG: ประคบ/พอก 15–30 นาทีหลังนวด · อบ ~30 นาทีก่อนนวด → ที่เหลือเป็นเวลานวด) */
+    const svcProcs = (svc: { name: string; minutes: number; kind?: "รักษา" | "สุขภาพ"; procs?: string[] }, extra = "") => {
+      const names = [...new Set([...serviceRef(svc).procs, ...procsInText(extra).map((x) => x.name)])];
+      const side = (n: string) => (/ประคบ|อบ|พอก|แช่|หม้อเกลือ/.test(n) ? 30 : 0);
+      const sideSum = names.reduce((a, n) => a + side(n), 0);
+      return names.map((n) => ({ n, min: names.length === 1 ? svc.minutes : side(n) || Math.max(15, svc.minutes - sideSum) }));
+    };
     // 1) แผนการรักษา (ระยะของแผน: บริการ · จุดที่เน้น · เทคนิค)
-    for (const ph of p.aiPlan?.phases ?? []) {
-      const svc = store.serviceById(ph.serviceId);
-      add(svc.name.replace(/ร่วมประคบสมุนไพร$/, ""), "ตามแผน", ph.focus, svc.minutes);
-      for (const x of extrasOf(`${svc.name} ${ph.technique}`)) add(x, "ตามแผน", ph.focus);
-    }
+    for (const ph of p.aiPlan?.phases ?? []) for (const x of svcProcs(store.serviceById(ph.serviceId), ph.technique)) add(x.n, "ตามแผน", ph.focus, x.min);
     // 2) บริการของนัดนี้
-    add(s.name.replace(/ร่วมประคบสมุนไพร$/, ""), "นัดนี้", intakeOfVisit(appt, p)?.focusAreas?.join(" ") || null, s.minutes);
-    for (const x of extrasOf(s.name)) add(x, "นัดนี้");
+    const focus = intakeOfVisit(appt, p)?.focusAreas?.join(" ") || null;
+    for (const x of svcProcs(s)) add(x.n, "นัดนี้", focus, x.min);
     // 3) ครั้งก่อน
     const prev = store.appointments
       .filter((a) => a.patientId === p.id && a.id !== appt.id && a.status === "done" && a.procedures?.length)
@@ -625,7 +638,7 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
           {
             pr: toPr(
               lines.map((ln) => {
-                const name = PROC_PICK.find((x) => ln.startsWith(x)) ?? matchPick(ln.split(" ")[0], PROC_PICK) ?? ln;
+                const name = PROC_PICK.find((x) => ln.startsWith(x)) ?? procByName(ln)?.name ?? matchPick(ln.split(" ")[0], PROC_PICK) ?? ln;
                 const rest = ln.slice(name.length).trim();
                 const minutes = Number(/(\d+)\s*นาที/.exec(rest)?.[1]) || null;
                 return { name, area: rest.replace(/\d+\s*นาที/, "").trim() || null, minutes };
