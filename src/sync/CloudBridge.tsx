@@ -3,6 +3,7 @@ import { useStore } from "../store/store";
 import { useToast } from "../design-system";
 import { queueNumber } from "../features/AppointmentDrawer";
 import { todayISO } from "../data/thaiDate";
+import { appAnswers } from "./appAnswers";
 import type { Appointment, AssessRound, BookingRequest, Intake, Patient, Screening } from "../data/types";
 import { AVAILABILITY_KEY } from "../features/appBridge";
 import { DEMO } from "../data/mode";
@@ -79,16 +80,6 @@ const intakeOf = (row: CloudAppt, fallbackComplaint: string): Intake => {
 /** ลายเซ็นบิล (ไม่ขึ้นกับลำดับคีย์ของ jsonb) */
 const billKey = (b?: CloudAppt["bill"] | null) => (b ? `${b.status}|${b.amount}|${b.receipt_no ?? ""}|${(b.lines ?? []).map((l) => `${l.name}:${l.amount}`).join(",")}` : "");
 /** ลายเซ็นของการประเมิน (เปลี่ยน = มีรอบใหม่ / แจ้งเพิ่ม / ประเมินหลังนวด) */
-/** คำตอบจากแอปที่ยังไม่ได้รับ: ติดตามผลหลังนวด · เตือนนัด (ยืนยัน/ขอเลื่อน) — ใหม่ = เวลาตอบไม่ตรงกับที่เก็บไว้ */
-export function appAnswers(local: Pick<Appointment, "followUp" | "attend">, as?: CloudAppt["assessment"] | null) {
-  const fu = as?.followup;
-  const att = as?.attend;
-  return {
-    followUp: fu && typeof fu.pain === "number" && local.followUp?.at !== fu.at ? { pain: fu.pain, sleep: fu.sleep, issues: Array.isArray(fu.issues) ? fu.issues : [], worse: !!fu.worse, at: fu.at } : undefined,
-    attend: att && (att.answer === "confirm" || att.answer === "reschedule") && local.attend?.at !== att.at ? att : undefined,
-  };
-}
-
 const assessSig = (row: CloudAppt) => `${row.assessment?.rounds?.length ?? 0}|${row.assessment?.at ?? ""}|${row.assessment?.addenda?.length ?? 0}|${row.assessment?.after?.at ?? ""}|${row.assessment?.followup?.at ?? ""}|${row.assessment?.attend?.at ?? ""}`;
 
 /** what the clinic has done with a linked booking, as the shared status + the data the app needs */
