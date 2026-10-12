@@ -581,12 +581,7 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               <p className="pd2__muted">ยังไม่มีนัด</p>
             )}
               </section>
-            </div>
-          </div>
-
-
-          {/* ── ประวัติการรักษา (ล่างสุด) ── */}
-          <div className="pd__hist">
+              {/* 4 ประวัติการรักษา (ต่อจากนัด) */}
               <section className="pd__card pd2">
             <h3 className="pd2__h">
               <span className="pd2__i" style={{ ["--c" as string]: "#7c5cc4" }}>
@@ -612,7 +607,11 @@ export function PatientDetail({ id, onAdd, onEdit, onAIPlan, aiOpen, onHealth, h
               <p className="pd2__muted">ยังไม่มีประวัติ</p>
             )}
           </section>
+            </div>
           </div>
+
+
+
         </div>
         </div>
       </motion.div>
