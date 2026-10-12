@@ -118,6 +118,8 @@ export function PayPanel(props: {
   ];
   return (
     <>
+      {/* ซ้าย: รายละเอียดยอด (vs__pay-l) · ขวา: วิธีชำระ + รับเงิน (vs__pay-r) — หน้าชำระเงินแยก 2 ฝั่ง */}
+      <div className="vs__pay-l">
       <div className="vs__bill">
         <div>
           <span>{props.serviceName}</span>
@@ -148,6 +150,8 @@ export function PayPanel(props: {
       </div>
       {props.courseNote && <p className="vs__course-note">{props.courseNote}</p>}
       {!!props.unpriced && <p className="vs__course-note is-warn">หัตถการยังไม่ใส่ราคา {props.unpriced} รายการ · ใส่ราคาก่อนรับชำระ</p>}
+      </div>
+      <div className="vs__pay-r">
       {/* หักเครดิตแล้วมีหัตถการเพิ่ม → 2 แถว: แถวบน = ค่าบริการ · แถวล่าง = ค่าหัตถการเพิ่มเท่านั้น */}
       <p className="vs__methods-head">{payRest ? `จ่ายค่าบริการ ${baht(props.price)} ฿ ด้วย` : "วิธีชำระ"}</p>
       <div className={clsx("vs__methods", options.length === 4 && "is-4")} role="radiogroup" aria-label="วิธีชำระเงิน">
@@ -215,6 +219,7 @@ export function PayPanel(props: {
           )}
         </>
       )}
+      </div>
     </>
   );
 }

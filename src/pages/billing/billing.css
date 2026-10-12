@@ -1168,3 +1168,51 @@
   height: 44px;
   padding: 0 22px;
 }
+/* การ์ดชำระเงินแยก 2 ฝั่ง: ซ้าย ค่าบริการ + รายการ + ยอด · ขวา วิธีชำระ + รับเงิน + ปุ่ม */
+.vs.is-payonly > .vs__panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  column-gap: 20px;
+  row-gap: 12px;
+  align-items: start;
+}
+.vs.is-payonly > .vs__panel > * {
+  grid-column: 1 / -1;
+}
+.vs.is-payonly > .vs__panel > .vs__basis {
+  grid-column: 1;
+  grid-row: 2;
+}
+.vs.is-payonly > .vs__panel > .vs__pay-l {
+  grid-column: 1;
+  grid-row: 3;
+}
+.vs.is-payonly > .vs__panel > .vs__pay-r {
+  grid-column: 2;
+  grid-row: 2 / span 3;
+}
+.vs__pay-l,
+.vs__pay-r {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.vs.is-payonly .vs__pay-r .vs__methods {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+/* ปุ่มรับชำระอยู่ใต้ฝั่งขวา */
+.bd--compact .vsp--payonly {
+  position: relative;
+}
+@container (max-width: 640px) {
+  .vs.is-payonly > .vs__panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .vs.is-payonly > .vs__panel > .vs__basis,
+  .vs.is-payonly > .vs__panel > .vs__pay-l,
+  .vs.is-payonly > .vs__panel > .vs__pay-r {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
