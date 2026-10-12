@@ -1216,3 +1216,129 @@
     grid-row: auto;
   }
 }
+
+/* ═════ การ์ดชำระเงิน (หน้าชำระเงิน) — จัดใหม่ ═════ */
+.bd--compact .vsp--payonly {
+  padding: 20px;
+  border-radius: 22px;
+}
+.vs.is-payonly .vs__stephead {
+  display: none;
+}
+.vs.is-payonly > .vs__panel {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  column-gap: 22px;
+}
+.vs.is-payonly > .vs__panel > .vs__pay-l {
+  grid-column: 1;
+  grid-row: 1;
+}
+.vs.is-payonly > .vs__panel > .vs__pay-r {
+  grid-column: 2;
+  grid-row: 1;
+}
+/* ฝั่งซ้าย: การ์ดใบเสร็จสีอ่อน */
+.vs.is-payonly .vs__pay-l {
+  gap: 0;
+  padding: 18px;
+  border-radius: 18px;
+  background: var(--sage-50);
+}
+.vs.is-payonly .vs__pay-l .vs__basis {
+  padding: 0 0 14px;
+  border-radius: 0;
+  background: none;
+  border-bottom: 1px dashed var(--sage-200, #c9d3c9);
+}
+.vs.is-payonly .vs__pay-l .vs__basis > svg {
+  background: var(--white);
+}
+.vs.is-payonly .vs__pay-l .vs__bill {
+  gap: 10px;
+  padding: 14px 0 0;
+  background: none;
+}
+.vs.is-payonly .vs__pay-l .vs__bill > div {
+  font-size: 14px;
+}
+.vs.is-payonly .vs__pay-l .vs__total {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1.5px solid var(--color-text);
+}
+.vs.is-payonly .vs__pay-l .vs__total span {
+  font: 700 14px/1 var(--font-sans);
+}
+.vs.is-payonly .vs__pay-l .vs__total b {
+  font: 800 30px/1 var(--font-sans);
+  color: var(--color-brand);
+}
+.vs.is-payonly .vs__pay-l .vs__course-note {
+  margin: 10px 0 0;
+}
+/* ฝั่งขวา: วิธีชำระ */
+.vs.is-payonly .vs__methods-head {
+  margin: 0;
+  font: 700 13px/1 var(--font-sans);
+  color: var(--color-text);
+}
+.vs.is-payonly .vs__pay-r .vs__methods {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.vs.is-payonly .vs__methods button {
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 82px;
+  padding: 12px 8px;
+  text-align: center;
+}
+.vs.is-payonly .vs__methods button svg {
+  width: 22px;
+  height: 22px;
+}
+.vs.is-payonly .vs__methods b {
+  font-size: 13.5px;
+}
+.vs.is-payonly .vs__methods small {
+  font-size: 11px;
+}
+.vs.is-payonly .vs__cash {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vs.is-payonly .vs__cash label {
+  height: 60px;
+  background: var(--white);
+}
+.vs.is-payonly .vs__cash input {
+  font-size: 28px;
+}
+.vs.is-payonly .vs__notes button {
+  height: 34px;
+  padding: 0 16px;
+}
+.vs.is-payonly .vs__change {
+  margin: 0;
+  font: 600 12.5px/1.3 var(--font-sans);
+}
+/* ปุ่มรับชำระ: กว้างเท่าฝั่งขวา */
+.bd--compact .vsp--payonly .vsp__paybar {
+  margin-top: 4px;
+  padding-left: calc((100% - 22px) * 0.475 + 22px);
+}
+.bd--compact .vsp--payonly .vsp__paybar .tw-btn {
+  flex: 1;
+  width: 100%;
+  height: 48px;
+}
+@container (max-width: 640px) {
+  .vs.is-payonly > .vs__panel > .vs__pay-r {
+    grid-row: auto;
+  }
+  .bd--compact .vsp--payonly .vsp__paybar {
+    padding-left: 0;
+  }
+}

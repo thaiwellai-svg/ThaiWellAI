@@ -95,6 +95,8 @@ export function PayPanel(props: {
   unpriced?: number;
   /** why the patient's course can't be used for this service */
   courseNote?: string;
+  /** แสดงบนสุดของฝั่งซ้าย (หน้าชำระเงิน: ป้ายค่าบริการครั้งนี้) */
+  lead?: React.ReactNode;
 }) {
   const { settings } = useStore();
   const byCredit = !!props.course && props.useCredit;
@@ -120,6 +122,7 @@ export function PayPanel(props: {
     <>
       {/* ซ้าย: รายละเอียดยอด (vs__pay-l) · ขวา: วิธีชำระ + รับเงิน (vs__pay-r) — หน้าชำระเงินแยก 2 ฝั่ง */}
       <div className="vs__pay-l">
+      {props.lead}
       <div className="vs__bill">
         <div>
           <span>{props.serviceName}</span>
