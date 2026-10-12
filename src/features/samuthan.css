@@ -992,18 +992,6 @@
 .tm4:not(.has-art) {
   padding-top: 28px;
 }
-.tm4__art {
-  position: absolute;
-  z-index: -1;
-  top: 16px;
-  left: 50%;
-  width: 76%; /* 478 / 630 */
-  transform: translateX(-50%);
-  pointer-events: none;
-  /* ให้ตัวหนังสือบนภาพอ่านง่าย: ภาพจางลงช่วงล่าง */
-  -webkit-mask-image: linear-gradient(180deg, #000 45%, rgb(0 0 0 / 18%) 78%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 45%, rgb(0 0 0 / 18%) 78%, transparent 100%);
-}
 .tm4__orb {
   display: grid;
   place-items: center;
@@ -1059,38 +1047,4 @@
   padding: 18px;
   border-radius: 16px;
   background: var(--white);
-}
-/* ภาพธาตุเด่น: อยู่ในลำดับปกติ ไม่จาง ไม่มีอะไรทับ */
-.tm4.has-art {
-  padding-top: 12px;
-  gap: 14px;
-}
-.tm4.has-art .tm4__art {
-  position: static;
-  z-index: auto;
-  width: 82%;
-  max-width: 480px;
-  height: auto;
-  margin-bottom: -6px;
-  transform: none;
-  -webkit-mask-image: none;
-  mask-image: none;
-  filter: drop-shadow(0 14px 18px rgb(70 50 30 / 16%));
-}
-/* โมเดล 3D isometric (ไม่มีเงา) */
-.tm4__model {
-  width: 100%;
-  max-width: 520px;
-  aspect-ratio: 1.05;
-  margin: -12px 0 2px;
-  cursor: grab;
-  touch-action: pan-y;
-}
-.tm4__model:active {
-  cursor: grabbing;
-}
-.tm4__model canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
 }

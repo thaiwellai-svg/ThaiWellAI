@@ -7,7 +7,6 @@ import { ELEMENTS, samuthan, type Factor } from "../data/samuthan";
 import type { Patient } from "../data/types";
 import { ElementIcon } from "./ElementIcon";
 import { ageFrom, thaiBirth } from "./BirthDateField";
-import { ElementDiorama } from "./ElementDiorama";
 import "./samuthan.css";
 
 
@@ -46,9 +45,11 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
 
         <div className="tm__body">
           {/* ฮีโร่ธาตุเจ้าเรือน (Figma ThaiWell 225:36): ภาพธาตุ · วงกลมไอคอน · ชื่อธาตุ · มักพบ/รสยา · สมดุลวันนี้ */}
-          <div className="tm4 has-art" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
-            {/* โมเดล 3D isometric ของธาตุ (ดิน ภูเขา · น้ำ สระน้ำ · ลม เมฆ · ไฟ กองไฟ) */}
-            <ElementDiorama element={prof.birth} className="tm4__model" />
+          <div className="tm4" style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
+            {/* ไอคอนธาตุในวงกลมขาว */}
+            <span className="tm4__orb">
+              <ElementIcon element={prof.birth} size={48} strokeWidth={1.7} />
+            </span>
             <div className="tm4__name">
               <b>ธาตุ{prof.birth}</b>
               <span>{born.trait}</span>
