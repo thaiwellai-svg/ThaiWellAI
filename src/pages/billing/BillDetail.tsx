@@ -82,13 +82,21 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
     <>
       <div className={clsx("adp tw-panel", compact && "bd--compact")} data-bill={a.id}>
         {/* หัวตรึงแบบกลาง: รูป · ชื่อ · สถานะบิล · ปุ่ม */}
-        <header className="tw-panel__head adp__head">
+        <header className={compact ? "tw-panel__head" : "tw-panel__head adp__head"}>
           <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={status.color} />
           <div className="tw-panel__id">
             <h2>{p.name}</h2>
             <p>
               {p.hn} · {p.gender} {p.age} ปี
+              {/* แบบหัวหน้ารับบริการ/ผู้ป่วย: สถานะต่อท้ายบรรทัดเดียว ไม่มีแถวชิป */}
+              {compact && (
+                <span className="bd__st" style={{ ["--sc" as string]: status.color }}>
+                  {" · "}
+                  {status.label}
+                </span>
+              )}
             </p>
+            {!compact && (
             <div className="adp__chips">
               <span className="adp__status" style={{ ["--sc" as string]: status.color }}>
                 <i /> {status.label}
@@ -100,12 +108,12 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
                 </span>
               )}
             </div>
+            )}
           </div>
-          <div className="tw-panel__actions">
+          <div className={compact ? "tw-panel__actions pd__icons" : "tw-panel__actions"}>
             {compact ? (
               // คอลัมน์แคบ (หน้าชำระเงิน): เหมือนหัวหน้ารับบริการ/ผู้ป่วย = ปุ่มเพิ่มเติม (วงกลม) + ปุ่มหลัก
               <MoreMenu
-                className="tw-round"
                 items={[
                   ...(pay ? [{ label: "ดูใบเสร็จ", icon: <ReceiptText size={16} />, onClick: () => setReceipt(a.id) }] : []),
                   { label: "ข้อมูลผู้ป่วย", icon: <UserRound size={16} />, onClick: () => navigate(`/patients?id=${p.id}`) },
@@ -133,11 +141,17 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
                 )}
               </>
             )}
-            {payable && (
-              <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
-                รับชำระ
-              </Button>
-            )}
+            {payable &&
+              (compact ? (
+                // ปุ่มหลักแบบวงกลมสีเขียว เหมือน "จัดนัด" ในหัวหน้าผู้ป่วย
+                <button type="button" className="pd__ib is-primary" onClick={() => setPaying(true)} aria-label="รับชำระ" title="รับชำระ">
+                  <Wallet size={19} />
+                </button>
+              ) : (
+                <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
+                  รับชำระ
+                </Button>
+              ))}
           </div>
         </header>
 

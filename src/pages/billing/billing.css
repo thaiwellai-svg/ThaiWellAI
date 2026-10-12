@@ -730,24 +730,6 @@
     display: inline-flex;
   }
 }
-/* หัวรายละเอียดบิลในคอลัมน์แคบ: ชื่อบรรทัดแรก ปุ่มลงบรรทัดถัดไป */
-@container (max-width: 720px) {
-  .bl3__detail .tw-panel__head {
-    flex-wrap: wrap;
-    row-gap: 12px;
-  }
-  .bl3__detail .tw-panel__id {
-    flex: 1 1 calc(100% - 100px);
-    min-width: 0;
-  }
-  .bl3__detail .tw-panel__actions {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-  }
-  .bl3__detail .adp__chips {
-    flex-wrap: wrap;
-  }
-}
 
 /* ── รายชื่อบิล/ใบเสร็จ (2 บรรทัด: ชื่อ · ยอด | บริการ วันเวลา · ป้ายสถานะ) ── */
 .bl3 .bl2-bill,
@@ -864,22 +846,9 @@
 .bd--compact {
   position: relative;
 }
-.bd--compact .tw-panel__head {
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  gap: 14px;
-}
 .bd--compact .tw-panel__id {
   flex: 1;
   min-width: 0;
-}
-.bd--compact .tw-panel__actions {
-  flex: 0 0 auto;
-  gap: 6px;
-}
-.bd--compact .tw-panel__actions .tw-round {
-  width: 42px;
-  height: 42px;
 }
 .bd--compact .adp__body {
   padding-bottom: 96px; /* เว้นที่ให้แถบเมนูลอยด้านล่าง */
@@ -992,27 +961,20 @@
 .bd__pay .tw-btn {
   min-width: 140px;
 }
-/* ปุ่มวงกลมบนขวา: ห้ามถูกบีบ (หัวไม่ตัดบรรทัด → ปุ่มเคยหดเป็นวงรี) */
-.bd--compact .tw-panel__actions .tw-round {
-  flex: 0 0 42px;
-  min-width: 42px;
-  aspect-ratio: 1;
-  padding: 0;
-  border-radius: 50%;
+/* หัวรายละเอียดบิล = หัวมาตรฐานเดียวกับหน้ารับบริการ/ผู้ป่วย (tw-panel__head + pd__ib) */
+.bd__st {
+  font-weight: 700;
+  color: var(--sc);
 }
-/* หัวเหมือนหน้ารับบริการ/ผู้ป่วย: ชื่อยาวตัด … · ปุ่มเพิ่มเติม (วงกลม) + ปุ่มหลัก */
+.bd--compact .tw-panel__id {
+  flex: 1;
+  min-width: 0;
+}
 .bd--compact .tw-panel__id h2 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.bd--compact .tw-panel__actions {
-  align-self: center;
-  gap: 10px;
-}
-.bd--compact .tw-panel__actions .tw-round {
-  flex: 0 0 52px;
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
+.bd--compact .tw-panel__actions .pd__ib {
+  flex-shrink: 0;
 }
