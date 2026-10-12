@@ -685,7 +685,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await p.evaluate(() => document.querySelectorAll('details').forEach((d) => { if (d.querySelector('.tm__body')) d.open = true; }));
     await p.locator('.tm__body').scrollIntoViewIfNeeded();
     ex((await p.locator('.tm2__chips > li').count()) === 6, 'แสดงสมุฏฐาน 5 ด้าน + อาการวันนี้');
-    ex(/ธาตุ/.test(await p.locator('.tm2__risk small b').innerText()), 'สรุปธาตุที่เสี่ยงเสียสมดุล');
+    ex(/ธาตุ/.test(await p.locator('.tm2__riskh b').innerText()), 'สรุปธาตุที่เสี่ยงเสียสมดุล');
     ex((await p.locator('.tm__ev li').count()) > 0, 'แสดงบริการที่ได้ผลดีที่สุดกับธาตุเดียวกันจากข้อมูลคลินิก');
   });
 
