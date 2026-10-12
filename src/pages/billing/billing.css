@@ -1026,7 +1026,7 @@
 }
 /* หน้าประวัติการชำระ: รายชื่อ | รายละเอียดบิล */
 .appt.bl3.bl3--hist {
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
 }
 @media (max-width: 999px) {
   .appt.bl3.bl3--hist {
@@ -1040,7 +1040,8 @@
 
 /* ── หน้าหลัก: ซ้าย (รายชื่อรอชำระ + สรุป) | ขวา (รายละเอียดบิล) ── */
 .appt.bl3:not(.bl3--hist) {
-  grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.15fr);
+  /* กว้างเท่ารายชื่อหน้าผู้ป่วย (.pwrap 300px) */
+  grid-template-columns: 300px minmax(0, 1fr);
 }
 .bl3__due {
   display: flex;
@@ -1079,4 +1080,13 @@
   .appt.bl3:not(.bl3--hist) {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+.bl3-row .prow__id {
+  min-width: 0;
+}
+.bl3-row .prow__id small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
