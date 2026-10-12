@@ -399,7 +399,7 @@ export default function Billing() {
         {/* คอลัมน์ 3: รายละเอียดบิลที่เลือก (ไม่ต้องเปิดหน้าใหม่) */}
         <div className="bl3__detail">
           {shown ? (
-            <BillPanel key={shown} id={shown} />
+            <BillPanel key={shown} id={shown} compact />
           ) : (
             <div className="sheet bl3__empty">
               <EmptyState icon={<ReceiptText size={24} />} title="เลือกบิลทางซ้าย" description="รายละเอียดบิลจะแสดงที่นี่" />

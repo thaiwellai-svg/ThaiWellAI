@@ -35,7 +35,7 @@ export default function BillDetail() {
 }
 
 /** รายละเอียดบิล (ใช้ทั้งหน้าเต็ม /billing/:id และคอลัมน์ขวาของหน้าชำระเงิน) */
-export function BillPanel({ id }: { id: string }) {
+export function BillPanel({ id, compact }: { id: string; /** คอลัมน์ขวาของหน้าชำระเงิน: เรียงคอลัมน์เดียว ปุ่มรับชำระติดล่าง */ compact?: boolean }) {
   const store = useStore();
   const navigate = useNavigate();
   const [receipt, setReceipt] = useState<string | null>(null);
@@ -66,6 +66,7 @@ export function BillPanel({ id }: { id: string }) {
               ? { label: "ค้างชำระ", color: "#d23a2a" }
               : { label: "ยังไม่ถึงขั้นชำระ", color: "#8a948d" };
   const canPay = !pay || pay.status !== "paid";
+  const payable = canPay && a.status !== "cancelled" && (stageOf(a) === "billing" || a.status === "done");
   const Ic = pay ? ICON[pay.method] : Wallet;
   const credit = usesCredit(pay);
   const extras = pay?.items ? pay.items.slice(1) : extraLines(a);
@@ -78,7 +79,7 @@ export function BillPanel({ id }: { id: string }) {
 
   return (
     <>
-      <div className="adp tw-panel" data-bill={a.id}>
+      <div className={clsx("adp tw-panel", compact && "bd--compact")} data-bill={a.id}>
         {/* หัวตรึงแบบกลาง: รูป · ชื่อ · สถานะบิล · ปุ่ม */}
         <header className="tw-panel__head adp__head">
           <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={status.color} />
@@ -111,12 +112,17 @@ export function BillPanel({ id }: { id: string }) {
             <button type="button" className="tw-round" onClick={() => navigate(`/appointments/${a.id}`)} aria-label="รายละเอียดนัด" title="รายละเอียดนัด">
               <CalendarDays size={18} />
             </button>
-            {pay && (
-              <Button variant="outline" size="lg" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
-                ใบเสร็จ
-              </Button>
-            )}
-            {canPay && a.status !== "cancelled" && (stageOf(a) === "billing" || a.status === "done") && (
+            {pay &&
+              (compact ? (
+                <button type="button" className="tw-round" onClick={() => setReceipt(a.id)} aria-label="ใบเสร็จ" title="ใบเสร็จ">
+                  <ReceiptText size={18} />
+                </button>
+              ) : (
+                <Button variant="outline" size="lg" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
+                  ใบเสร็จ
+                </Button>
+              ))}
+            {!compact && payable && (
               <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
                 รับชำระ
               </Button>
@@ -141,6 +147,11 @@ export function BillPanel({ id }: { id: string }) {
                     : `${s.name} · ${thaiDateShort(a.date)} ${a.start} น.`}
               </p>
             </div>
+            {compact && payable && (
+              <Button size="lg" fill leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
+                {pay?.status === "pending" ? "รับชำระที่เคาน์เตอร์แทน" : "รับชำระ"}
+              </Button>
+            )}
           </section>
 
           <div className="adp__grid">
@@ -198,7 +209,7 @@ export function BillPanel({ id }: { id: string }) {
                 <header>
                   <CalendarDays size={15} /> ข้อมูลนัด
                 </header>
-                <div className="adp__facts">
+                <div className={compact ? "bd__kv" : "adp__facts"}>
                   <div>
                     <small>ผู้บำบัด</small>
                     <b className="adp__staff">
@@ -225,6 +236,7 @@ export function BillPanel({ id }: { id: string }) {
 
             <div className="adp__col">
               {/* receipts */}
+              {(!compact || receipts.length > 0) && (
               <section className="adp__card">
                 <header>
                   <ReceiptText size={15} /> ใบเสร็จ
@@ -260,8 +272,9 @@ export function BillPanel({ id }: { id: string }) {
                   <p className="adp__muted">ยังไม่มีใบเสร็จ</p>
                 )}
               </section>
-
+              )}
               {/* money activity */}
+              {(!compact || money.length > 0) && (
               <section className="adp__card">
                 <header>
                   <History size={15} /> ประวัติการเงิน
@@ -281,6 +294,8 @@ export function BillPanel({ id }: { id: string }) {
                   <p className="adp__muted">ยังไม่มีประวัติ</p>
                 )}
               </section>
+              )}
+              {compact && !receipts.length && !money.length && <p className="bd__none">ยังไม่มีใบเสร็จและประวัติการเงิน</p>}
             </div>
           </div>
         </div>
