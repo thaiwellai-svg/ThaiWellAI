@@ -1060,3 +1060,20 @@
   border-radius: 16px;
   background: var(--white);
 }
+/* ภาพธาตุเด่น: อยู่ในลำดับปกติ ไม่จาง ไม่มีอะไรทับ */
+.tm4.has-art {
+  padding-top: 12px;
+  gap: 14px;
+}
+.tm4.has-art .tm4__art {
+  position: static;
+  z-index: auto;
+  width: 82%;
+  max-width: 480px;
+  height: auto;
+  margin-bottom: -6px;
+  transform: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  filter: drop-shadow(0 14px 18px rgb(70 50 30 / 16%));
+}

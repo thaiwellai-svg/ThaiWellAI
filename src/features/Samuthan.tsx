@@ -50,10 +50,14 @@ export function ThaiMedCard({ p, time, open }: { p: Patient; /** HH:mm of the vi
         <div className="tm__body">
           {/* ฮีโร่ธาตุเจ้าเรือน (Figma ThaiWell 225:36): ภาพธาตุ · วงกลมไอคอน · ชื่อธาตุ · มักพบ/รสยา · สมดุลวันนี้ */}
           <div className={clsx("tm4", ART[prof.birth] && "has-art")} style={{ ["--c" as string]: born.color, ["--t" as string]: born.tint, ["--rc" as string]: top.color }}>
-            {ART[prof.birth] && <img className="tm4__art" src={ART[prof.birth]} alt="" aria-hidden />}
-            <span className="tm4__orb">
-              <ElementIcon element={prof.birth} size={44} strokeWidth={1.8} />
-            </span>
+            {/* ภาพธาตุเด่นเต็มตา (ไม่มีไอคอนทับ) · ธาตุที่ยังไม่มีภาพ → ไอคอนแทนชั่วคราว */}
+            {ART[prof.birth] ? (
+              <img className="tm4__art" src={ART[prof.birth]} alt={`ธาตุ${prof.birth}`} />
+            ) : (
+              <span className="tm4__orb">
+                <ElementIcon element={prof.birth} size={44} strokeWidth={1.8} />
+              </span>
+            )}
             <div className="tm4__name">
               <b>ธาตุ{prof.birth}</b>
               <span>{born.trait}</span>
