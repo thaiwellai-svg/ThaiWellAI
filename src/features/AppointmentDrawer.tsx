@@ -727,8 +727,43 @@ export function AppointmentDrawer({
               )}
               {view === "done" && (
                 <>
-                  <StepHead n={6} title="สรุปการรักษา" hint={appt.paid ? `ชำระแล้ว${appt.payment?.at ? ` ${hm(appt.payment.at)} น.` : ""}${appt.payment?.no ? ` · ${appt.payment.no}` : ""}` : appt.payment?.status === "pending" ? "รอผู้ป่วยชำระในแอป" : "ยังค้างชำระ"} />
-                  <VisitSummary appt={appt} courseNo={courseNo} courseTotal={credits?.total} courseLeft={credits?.remaining} amount={appt.payment?.amount ?? unitPrice + extraSum} />
+                  {payOnly && appt.payment?.status === "pending" ? (
+                    // หน้าชำระเงิน · บิลที่ส่งเข้าแอปแล้ว: ซ้าย = ยอดที่ส่ง · ขวา = สถานะรอชำระในแอป (ปุ่ม "ได้รับเงินแล้ว" อยู่ท้ายการ์ด)
+                    <>
+                      <div className="vs__pay-l">
+                        {basisEl}
+                        <div className="vs__bill">
+                          {(appt.payment.items?.length ? appt.payment.items : [{ name: s.name, amount: unitPrice }, ...extras]).map((l, i) => (
+                            <div key={`${l.name}${i}`}>
+                              <span>{l.name}</span>
+                              <b>{baht(l.amount)} ฿</b>
+                            </div>
+                          ))}
+                          <div className="vs__total">
+                            <span>ยอดชำระ</span>
+                            <b>{baht(appt.payment.amount)} ฿</b>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="vs__pay-r">
+                        <div className="vs__appwait">
+                          <span className="vs__appwait-ic">
+                            <Smartphone size={22} />
+                          </span>
+                          <b>รอผู้ป่วยชำระในแอป ThaiWell</b>
+                          <small>
+                            ส่งบิลเมื่อ {thaiDateShort(appt.payment.at.slice(0, 10))} {hm(appt.payment.at)} น.{appt.payment.no ? ` · ${appt.payment.no}` : ""}
+                          </small>
+                          <p>ผู้ป่วยจ่ายในแอปแล้วระบบจะเปลี่ยนเป็น “ชำระแล้ว” เอง · ถ้าได้รับเงินช่องทางอื่นแล้ว กด “ได้รับเงินแล้ว”</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <StepHead n={6} title="สรุปการรักษา" hint={appt.paid ? `ชำระแล้ว${appt.payment?.at ? ` ${hm(appt.payment.at)} น.` : ""}${appt.payment?.no ? ` · ${appt.payment.no}` : ""}` : appt.payment?.status === "pending" ? "รอผู้ป่วยชำระในแอป" : "ยังค้างชำระ"} />
+                      <VisitSummary appt={appt} courseNo={courseNo} courseTotal={credits?.total} courseLeft={credits?.remaining} amount={appt.payment?.amount ?? unitPrice + extraSum} />
+                    </>
+                  )}
                   {onNext && next && appt.paid && (
                     <button type="button" className="vs__next" onClick={() => onNext(next.id)}>
                       <span>

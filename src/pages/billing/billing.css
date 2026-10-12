@@ -1342,3 +1342,40 @@
     padding-left: 0;
   }
 }
+/* บิลที่ส่งเข้าแอปแล้ว: สถานะรอชำระ (ฝั่งขวา) */
+.vs__appwait {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 18px;
+  background: color-mix(in srgb, #7c5cc4 8%, var(--white));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #7c5cc4 22%, var(--white));
+}
+.vs__appwait-ic {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: var(--white);
+  color: #7c5cc4;
+}
+.vs__appwait b {
+  font: 700 16px/1.3 var(--font-sans);
+  color: #5b3fa3;
+}
+.vs__appwait small {
+  font: 500 12.5px/1.4 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vs__appwait p {
+  margin: 6px 0 0;
+  font: 500 12.5px/1.55 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.vs.is-payonly > .credits {
+  display: none;
+}
