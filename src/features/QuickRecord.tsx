@@ -50,6 +50,8 @@ type Msg = {
   note?: boolean;
   /** ข้อควรระวังตามแนวทาง (แสดงเป็นแถบเหลือง) */
   warn?: boolean;
+  /** สรุปก่อนบันทึก: รายการที่บันทึก + ข้อแนะนำจาก AI */
+  summary?: { rows: [string, string][]; tips: string[] };
   /** ตัวเลือกหัตถการ (เลือกได้หลายข้อ แล้วกดส่ง) พร้อมที่มา */
   opts?: { name: string; area?: string | null; minutes?: number | null; src: string }[];
 };
@@ -552,13 +554,53 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
     say("me", `ข้าม${LABEL[f]}`);
     void next();
   };
+  /** ครบทุกช่อง → AI สรุปการรักษา + ข้อแนะนำ (นัดติดตาม · ข้อควรระวัง · ท่ายืด) ก่อนกดบันทึก */
+  const summarize = async () => {
+    const l = latest.current;
+    const before = appt.painBefore;
+    const rows: [string, string][] = [
+      ["ตรวจพบ", l.findings.trim() || "—"],
+      ["วินิจฉัย", l.dx.map((d) => `${shortDx(d.name)}${d.code ? ` (${d.code})` : ""}`).join(", ") || "—"],
+      ["หัตถการ", l.pr.map((x) => [x.name, x.area, x.minutes && `${x.minutes} นาที`].filter(Boolean).join(" · ")).join(", ") || "—"],
+      ["ความปวด", l.skipPain ? "ให้ผู้ป่วยประเมินในแอป" : l.pain != null ? `${before ?? "?"} → ${l.pain}${before ? ` · ลดลง ${Math.round(((before - l.pain) / Math.max(1, before)) * 100)}%` : ""}` : "—"],
+      ["คำแนะนำ", l.advice && l.advice !== "-" ? l.advice.replace(/\n/g, " ") : "—"],
+    ];
+    // ข้อแนะนำในเครื่อง (สำรองเมื่อ AI ไม่ตอบ)
+    const sc = p.screening && p.screening.at?.slice(0, 10) === appt.date ? p.screening : null;
+    const local = [
+      ...procCautions(`${l.findings} ${intakeOfVisit(appt, p)?.complaint ?? ""}`, l.pr.map((x) => x.name), { bloodThinner: sc?.bloodThinner, diabetes: (p.conditions ?? []).some((c) => c.includes("เบาหวาน")), age: p.age }),
+      ...knowledgeFor(`${l.findings} ${p.complaint}`).ท่ายืดเหยียดที่เกี่ยวข้อง.map((x) => `แนะนำท่ายืด: ${x}`),
+      ...(p.course ? [`คอร์ส${p.course.name} ใช้แล้ว ${p.course.used}/${p.course.total} · นัดครั้งถัดไปตามแผน`] : []),
+    ];
+    setThinking(true);
+    let tips: string[] = [];
+    try {
+      const r = await chatJSON<{ tips: string[] }>(
+        `คุณเป็นแพทย์แผนไทยที่ตรวจบันทึกการรักษาก่อนบันทึก ให้ "ข้อแนะนำ" ถึงผู้บำบัด 2–4 ข้อ สั้น ข้อละไม่เกิน 1 บรรทัด เช่น นัดติดตาม/ความถี่ที่เหมาะ (ดูแผนและคอร์ส) ข้อควรระวังตามกติกาความปลอดภัย ท่ายืดเหยียดที่ควรสอนเพิ่ม (จาก ความรู้อ้างอิง) สิ่งที่บันทึกยังขาดหรือขัดกัน (เช่น วินิจฉัยไม่ตรงอาการ) · ห้ามแต่งเส้น/จุดสัญญาณเอง · ไม่ต้องสรุปซ้ำสิ่งที่บันทึก ตอบ JSON {"tips":["..."]}\n${MASSAGE_RULES}`,
+        JSON.stringify(context()),
+      );
+      tips = (r.tips ?? []).filter((x) => typeof x === "string" && x.trim()).slice(0, 4);
+    } catch {
+      /* ใช้ข้อแนะนำในเครื่อง */
+    }
+    setThinking(false);
+    if (!tips.length) tips = local.slice(0, 4);
+    const stretch = knowledgeFor(`${l.findings} ${p.complaint}`).ท่ายืดเหยียดที่เกี่ยวข้อง[0];
+    const chips: Chip[] = [
+      ...(stretch && !(l.advice ?? "").includes(stretch.split(" (")[0])
+        ? [{ label: "เพิ่มท่ายืดลงคำแนะนำ", tone: "ghost" as const, run: () => (saveAdvice([l.advice && l.advice !== "-" ? l.advice : "", `• ${stretch}`].filter(Boolean).join("\n")), say("me", "เพิ่มท่ายืดลงคำแนะนำ"), void summarize()) }]
+        : []),
+      { label: "บันทึกการรักษา", tone: "primary", run: () => window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_SAVE, { detail: { apptId: appt.id } })) },
+    ];
+    const q = "สรุปการรักษาวันนี้ค่ะ ตรวจแล้วกดบันทึกได้เลย";
+    say("ai", q, { summary: { rows, tips }, chips });
+    void voice(q);
+  };
   const next = async (prefix = "") => {
     const f = nextField();
     if (f) return askField(f, prefix);
     if (prefix.trim()) say("ai", prefix.trim(), { note: true });
-    const q = `ครบทั้ง 5 ช่องแล้วค่ะ ตรวจการ์ดด้านบนแล้วกดบันทึกได้เลย`;
-    say("ai", q, { chips: [{ label: "บันทึกการรักษา", tone: "primary", run: () => window.dispatchEvent(new CustomEvent<VoiceFill>(RECORD_SAVE, { detail: { apptId: appt.id } })) }] });
-    void voice(q);
+    await summarize();
   };
   const confirmField = (f: Field) => {
     setUns(f, false);
@@ -1150,6 +1192,30 @@ ${THAI_MASSAGE_KNOWLEDGE}`,
               <div className={clsx("qr-bub", m.note && "is-note", m.warn && "is-warn")}>
                 {m.note && !m.warn && <CircleCheck size={14} className="qr-note-ic" />}
                 <p>{m.text}</p>
+                {m.summary && (
+                  <div className="qr-sum">
+                    <dl>
+                      {m.summary.rows.map(([k, v]) => (
+                        <div key={k}>
+                          <dt>{k}</dt>
+                          <dd>{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {m.summary.tips.length > 0 && (
+                      <div className="qr-sum__tips">
+                        <small>
+                          <Sparkles size={13} /> ข้อแนะนำจาก AI
+                        </small>
+                        <ul>
+                          {m.summary.tips.map((t) => (
+                            <li key={t}>{t}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {m.chips && m.chips.length > 0 && m === msgs.filter((x) => x.role === "ai").slice(-1)[0] && (
                   <div className="qr-chips">
                     {m.chips.map((c) => (

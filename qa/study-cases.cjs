@@ -762,6 +762,9 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex((await p.locator('.qr-row.is-done, .qr-row.is-check').count()) === 5, 'ครบ 5 ช่อง');
     // ยืนยันช่องที่ AI ไม่แน่ใจ (ถ้ามี) แล้วบันทึก
     for (let i = 0; i < 5 && (await p.locator('.qr-acts .is-ok').count()); i++) { await p.locator('.qr-acts .is-ok').first().click(); await chatIdle(p); }
+    await chatIdle(p);
+    ex((await p.locator('.qr-sum').count()) >= 1 && (await p.locator('.qr-sum dl > div').count()) === 5, 'ครบแล้ว AI สรุป 5 รายการก่อนบันทึก');
+    ex((await p.locator('.qr-sum__tips li').count()) >= 1, 'มีข้อแนะนำจาก AI');
     await p.locator('.qr-chips button', { hasText: 'บันทึกการรักษา' }).last().click(); await p.waitForTimeout(1000);
     const b = (await state(p)).appointments.find((x) => x.id === id);
     ex(b.painAfter === 3 && /ประคบ/.test(b.advice ?? ''), 'กดบันทึก → Pain หลังนวดและคำแนะนำถูกบันทึก');

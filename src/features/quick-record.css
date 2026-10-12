@@ -947,3 +947,51 @@ button.qr-card__head {
   color: #8a5a12;
   font-weight: 600;
 }
+/* สรุปก่อนบันทึก + ข้อแนะนำจาก AI */
+.qr-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+.qr-sum dl {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 2px 12px;
+  border-radius: 12px;
+  background: var(--sage-50);
+}
+.qr-sum dl > div {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  font: 500 13px/1.45 var(--font-sans);
+}
+.qr-sum dl > div + div {
+  border-top: 1px solid var(--sage-100);
+}
+.qr-sum dt {
+  flex: 0 0 64px;
+  color: var(--color-text-muted);
+}
+.qr-sum dd {
+  margin: 0;
+  color: var(--color-text);
+}
+.qr-sum__tips small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font: 700 12.5px/1.2 var(--font-sans);
+  color: var(--color-brand);
+}
+.qr-sum__tips ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font: 500 13px/1.5 var(--font-sans);
+  color: var(--color-text);
+}
