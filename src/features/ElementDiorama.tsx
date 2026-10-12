@@ -3,9 +3,9 @@ import * as THREE from "three";
 import type { Element } from "../data/elements";
 
 /**
- * โมเดล 3D isometric ของธาตุทั้ง 4 (low-poly บนแท่นดินเป็นชั้น · ไม่มีเงา · แกว่งช้า ๆ ลากหมุนได้)
+ * โมเดล 3D isometric ของธาตุทั้ง 4 (low-poly บนแท่นดินเป็นชั้น · ไม่มีเงา · ไม่มีแอนิเมชัน · ลากหมุนดูได้)
  *  ดิน = ภูเขา · น้ำ = สระน้ำ + หยดน้ำ · ลม = เมฆ + สายลม + ใบไม้ · ไฟ = กองไฟบนวงหิน
- * โทนสีของธาตุดินตามภาพใน Figma (ThaiWell 225:36) · หยุดวาดเมื่อเลื่อนพ้นจอ
+ * โทนสีของธาตุดินตามภาพใน Figma (ThaiWell 225:36) · วาดครั้งเดียว (วาดใหม่เมื่อย่อ/ขยายหรือลาก)
  */
 
 // สุ่มแบบคงที่ (หน้าตาเดิมทุกครั้ง)
@@ -63,13 +63,19 @@ function lowPolyCone(radius: number, height: number, seed: number, stops: Stops,
 function base(layers: [number, string][]) {
   const grp = new THREE.Group();
   let y = 0;
-  for (const [h, c] of layers) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(5.2, h, 5.2), lambert(c));
+  layers.forEach(([h, c], i) => {
+    // ชั้นล่างหดเข้าเล็กน้อย = ดูเป็นแท่นมีมิติ · ชั้นบนสุดมีสันขอบนูน
+    const w = 5.2 - i * 0.06;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), lambert(c));
     y -= h / 2;
     m.position.y = y;
     y -= h / 2;
     grp.add(m);
-  }
+  });
+  const top = new THREE.Color(layers[0][1]);
+  const lip = new THREE.Mesh(new THREE.BoxGeometry(5.28, 0.06, 5.28), lambert("#" + top.clone().offsetHSL(0, -0.02, 0.06).getHexString()));
+  lip.position.y = 0.0;
+  grp.add(lip);
   return grp;
 }
 
@@ -85,6 +91,24 @@ function pebbles(seed: number, colors: string[], spots: [number, number, number]
   return grp;
 }
 
+/** ต้นไม้ low-poly (กรวยซ้อน 2 ชั้น + ลำต้น) · lean = เอียงลู่ลม */
+function tree(x: number, z: number, s: number, colors: [string, string] = ["#7d9256", "#98ab6a"], lean = 0) {
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.07 * s, 0.1 * s, 0.5 * s, 5), lambert("#7a5a3e"));
+  trunk.position.y = 0.25 * s;
+  g.add(trunk);
+  const low = new THREE.Mesh(new THREE.ConeGeometry(0.42 * s, 0.8 * s, 6), lambert(colors[0]));
+  low.position.y = 0.75 * s;
+  g.add(low);
+  const top = new THREE.Mesh(new THREE.ConeGeometry(0.3 * s, 0.62 * s, 6), lambert(colors[1]));
+  top.position.y = 1.12 * s;
+  top.rotation.y = 0.5;
+  g.add(top);
+  g.position.set(x, 0, z);
+  g.rotation.z = lean;
+  return g;
+}
+
 const SOIL: [number, string][] = [
   [0.32, "#a3825c"],
   [0.36, "#7d6248"],
@@ -93,8 +117,6 @@ const SOIL: [number, string][] = [
 
 interface Scene3D {
   world: THREE.Group;
-  /** ขยับทุกเฟรม (t = วินาที) */
-  tick?: (t: number) => void;
   /** มุมมอง: ครึ่งความสูงที่เห็น · จุดที่กล้องมอง */
   view: number;
   look: number;
@@ -120,7 +142,9 @@ function earth(): Scene3D {
   back.position.set(-1.45, 0, -0.95);
   world.add(back);
   world.add(pebbles(11, ["#6d5f53", "#9c8467"], [[-1.9, 1.7, 0.32], [1.9, -1.7, 0.26], [2.05, 0.2, 0.2], [-1.6, -2.0, 0.22], [0.2, 2.15, 0.18]]));
-  return { world, view: 4.0, look: 1.3 };
+  // ต้นไม้เชิงเขา
+  for (const [x, z, sc] of [[-2.0, 0.6, 0.85], [-1.7, 1.1, 0.65], [0.9, 2.0, 0.75], [1.6, 2.05, 0.55], [2.1, -0.7, 0.6]] as const) world.add(tree(x, z, sc, ["#7f8a55", "#9aa56a"]));
+  return { world, view: 3.55, look: 1.4 };
 }
 
 // ───────── น้ำ: สระน้ำ + หยดน้ำลอย ─────────
@@ -155,16 +179,34 @@ function water(): Scene3D {
   drop.position.y = 2.7;
   world.add(drop);
   world.add(pebbles(23, ["#9aa4a8", "#c8c0aa"], [[-2.1, 1.9, 0.26], [2.0, -1.9, 0.22], [2.15, 1.6, 0.18], [-1.9, -2.1, 0.2]]));
-  return {
-    world,
-    view: 4.0,
-    look: 1.2,
-    tick: (t) => {
-      drop.position.y = 2.7 + Math.sin(t * 1.6) * 0.18;
-      drop.rotation.y = t * 0.6;
-      ripples.forEach((r, i) => r.scale.setScalar(1 + ((t * 0.25 + i * 0.5) % 1) * 0.25));
-    },
-  };
+  ripples[1].scale.setScalar(1.08);
+  // ใบบัว + ดอกบัว
+  for (const [x, z, sc, rot] of [[0.9, 0.7, 1, 0.4], [-0.8, 1.0, 0.8, 2.1], [0.4, -1.1, 0.7, 4.0]] as const) {
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(0.34 * sc, 0.34 * sc, 0.04, 7, 1, false, 0, Math.PI * 1.75), lambert("#7fa66a"));
+    pad.position.set(x, 0.32, z);
+    pad.rotation.y = rot;
+    world.add(pad);
+  }
+  const lotus = new THREE.Group();
+  for (let i = 0; i < 6; i++) {
+    const petal = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.28, 4), lambert(i % 2 ? "#f2c6cf" : "#f8dde2"));
+    petal.position.set(Math.cos((i / 6) * Math.PI * 2) * 0.07, 0.12, Math.sin((i / 6) * Math.PI * 2) * 0.07);
+    petal.rotation.set(Math.sin((i / 6) * Math.PI * 2) * 0.5, 0, -Math.cos((i / 6) * Math.PI * 2) * 0.5);
+    lotus.add(petal);
+  }
+  lotus.position.set(0.9, 0.3, 0.7);
+  world.add(lotus);
+  // ต้นกก
+  for (const [x, z] of [[-2.0, -0.4], [-1.85, -0.7], [-2.1, -0.9], [1.9, 0.6], [2.05, 0.9]] as const) {
+    const reed = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 0.9, 4), lambert("#8aa264"));
+    reed.position.set(x, 0.45, z);
+    reed.rotation.z = (x > 0 ? -1 : 1) * 0.12;
+    world.add(reed);
+    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.22, 5), lambert("#8b6a48"));
+    tip.position.set(x + (x > 0 ? -0.05 : 0.05), 0.92, z);
+    world.add(tip);
+  }
+  return { world, view: 3.4, look: 0.95 };
 }
 
 // ───────── ลม: เมฆลอย + สายลมวน + ใบไม้ปลิว ─────────
@@ -211,21 +253,19 @@ function wind(): Scene3D {
     world.add(leaf);
     leaves.push(leaf);
   }
-  return {
-    world,
-    view: 4.0,
-    look: 1.5,
-    tick: (t) => {
-      clouds.forEach((c, i) => (c.position.y += Math.sin(t * 0.9 + i * 2) * 0.004));
-      swirls.forEach((s, i) => (s.rotation.y = t * (0.35 + i * 0.12)));
-      leaves.forEach((l, i) => {
-        const a = t * 0.8 + (i / leaves.length) * Math.PI * 2;
-        const rad = 1.7 + (i % 2) * 0.5;
-        l.position.set(Math.cos(a) * rad, 1.1 + i * 0.32 + Math.sin(t * 2 + i) * 0.12, Math.sin(a) * rad);
-        l.rotation.set(t * 2 + i, a, t + i);
-      });
-    },
-  };
+  void clouds;
+  swirls.forEach((s, i) => (s.rotation.y = i * 1.3));
+  leaves.forEach((l, i) => {
+    const a = (i / leaves.length) * Math.PI * 2 + 0.4;
+    const rad = 1.7 + (i % 2) * 0.5;
+    l.position.set(Math.cos(a) * rad, 1.1 + i * 0.32, Math.sin(a) * rad);
+    l.rotation.set(i * 1.1, a, i * 0.7);
+  });
+  // ต้นไม้ลู่ลม
+  world.add(tree(-1.9, -1.2, 0.95, ["#86a35f", "#a7bf78"], -0.18));
+  world.add(tree(-1.4, -1.8, 0.7, ["#86a35f", "#a7bf78"], -0.2));
+  world.add(tree(1.9, 1.9, 0.6, ["#86a35f", "#a7bf78"], -0.16));
+  return { world, view: 3.5, look: 1.35 };
 }
 
 // ───────── ไฟ: กองไฟบนวงหิน ─────────
@@ -253,11 +293,12 @@ function fire(): Scene3D {
   }
   world.add(pebbles(91, ["#7d746c", "#a39a90", "#5f5852"], stones));
   // ฟืน
-  for (let i = 0; i < 3; i++) {
-    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 2.1, 6), lambert(i % 2 ? "#7a5236" : "#93663f"));
-    log.rotation.z = Math.PI / 2;
-    log.rotation.y = (i / 3) * Math.PI;
-    log.position.y = 0.2 + i * 0.07;
+  // ฟืนวางไขว้กันแบบกระโจม
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 1.9, 6), lambert(i % 2 ? "#7a5236" : "#93663f"));
+    log.position.set(Math.cos(a) * 0.45, 0.6, Math.sin(a) * 0.45);
+    log.rotation.set(Math.sin(a) * 0.55, 0, -Math.cos(a) * 0.55);
     world.add(log);
   }
   const outer = lowPolyCone(1.0, 2.8, 13, FLAME_OUT, { sides: 7, rows: 4, wobble: 0.45 });
@@ -269,30 +310,22 @@ function fire(): Scene3D {
     (f.material as THREE.MeshLambertMaterial).emissiveIntensity = 0.35;
     world.add(f);
   });
-  // ประกายไฟ
-  const sparks: THREE.Mesh[] = [];
-  for (let i = 0; i < 4; i++) {
-    const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.08, 0), lambert("#f8c35c", { emissive: new THREE.Color("#f08a35"), emissiveIntensity: 0.6 }));
-    world.add(s);
-    sparks.push(s);
+  mid.rotation.y = 0.6;
+  inner.rotation.y = 1.1;
+  // ถ่านแดงที่ฐาน
+  const ember = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.12, 9), lambert("#b8482a", { emissive: new THREE.Color("#7a2410"), emissiveIntensity: 0.5 }));
+  ember.position.y = 0.06;
+  world.add(ember);
+  // ประกายไฟ (นิ่ง)
+  for (const [x, y, z, sc] of [[0.35, 3.3, 0.1, 1], [-0.3, 3.7, -0.2, 0.7], [0.1, 4.1, 0.3, 0.5]] as const) {
+    const sp = new THREE.Mesh(new THREE.OctahedronGeometry(0.09 * sc, 0), lambert("#f8c35c", { emissive: new THREE.Color("#f08a35"), emissiveIntensity: 0.6 }));
+    sp.position.set(x, y, z);
+    world.add(sp);
   }
-  return {
-    world,
-    view: 3.8,
-    look: 1.2,
-    tick: (t) => {
-      outer.scale.set(1 + Math.sin(t * 5) * 0.04, 1 + Math.sin(t * 3.7) * 0.07, 1 + Math.cos(t * 4.4) * 0.04);
-      mid.scale.set(1, 1 + Math.sin(t * 4.6 + 1) * 0.09, 1);
-      inner.scale.set(1, 1 + Math.sin(t * 6 + 2) * 0.1, 1);
-      outer.rotation.y = t * 0.4;
-      mid.rotation.y = -t * 0.6;
-      sparks.forEach((s, i) => {
-        const k = (t * 0.45 + i / sparks.length) % 1;
-        s.position.set(Math.sin(i * 2.1 + t) * 0.5 * k, 1.2 + k * 2.4, Math.cos(i * 1.7 + t) * 0.5 * k);
-        s.scale.setScalar(1 - k);
-      });
-    },
-  };
+  // หินกับต้นไม้แห้งรอบ ๆ
+  world.add(tree(-2.0, 1.8, 0.7, ["#8c7a52", "#a8946a"]));
+  world.add(tree(1.95, -1.9, 0.6, ["#8c7a52", "#a8946a"]));
+  return { world, view: 3.4, look: 1.05 };
 }
 
 const BUILD: Record<Element, () => Scene3D> = { ดิน: earth, น้ำ: water, ลม: wind, ไฟ: fire };
@@ -342,13 +375,19 @@ export function ElementDiorama({ element, className }: { element: Element; class
       cam.updateProjectionMatrix();
     };
     fit();
-    const ro = new ResizeObserver(fit);
+    const ro = new ResizeObserver(() => {
+      fit();
+      draw();
+    });
     ro.observe(el);
 
-    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    // ไม่มีแอนิเมชัน: วาดครั้งเดียว · วาดใหม่เมื่อย่อ/ขยาย หรือเมื่อลากหมุน
     let drag: number | null = null;
     let yaw = 0;
-    let spin = 0;
+    const draw = () => {
+      sc.world.rotation.y = yaw;
+      renderer.render(scene, cam);
+    };
     const down = (e: PointerEvent) => {
       drag = e.clientX;
       el.setPointerCapture(e.pointerId);
@@ -357,6 +396,7 @@ export function ElementDiorama({ element, className }: { element: Element; class
       if (drag === null) return;
       yaw += (e.clientX - drag) * 0.01;
       drag = e.clientX;
+      draw();
     };
     const up = () => (drag = null);
     el.addEventListener("pointerdown", down);
@@ -364,26 +404,10 @@ export function ElementDiorama({ element, className }: { element: Element; class
     el.addEventListener("pointerup", up);
     el.addEventListener("pointercancel", up);
 
-    let visible = true;
-    const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
-    io.observe(el);
-    let raf = 0;
-    const t0 = performance.now();
-    const loop = () => {
-      raf = requestAnimationFrame(loop);
-      if (!visible) return;
-      const t = still ? 0 : (performance.now() - t0) / 1000;
-      if (!still && drag === null) spin = Math.sin(t / 4.2) * 0.35;
-      sc.world.rotation.y = yaw + spin;
-      sc.tick?.(t);
-      renderer.render(scene, cam);
-    };
-    loop();
+    draw();
 
     return () => {
-      cancelAnimationFrame(raf);
       ro.disconnect();
-      io.disconnect();
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
