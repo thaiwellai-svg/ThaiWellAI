@@ -667,3 +667,84 @@
   justify-self: end;
 }
 
+
+/* ── 3 ส่วนในหน้าเดียว: สรุปรายรับ | รายการบิล | รายละเอียดบิล ── */
+.appt.bl3 {
+  grid-template-columns: 280px minmax(0, 0.95fr) minmax(0, 1.15fr);
+}
+.bl3__detail {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  container-type: inline-size;
+}
+.bl3__detail > .adp {
+  max-width: none;
+}
+.bl3__empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+/* คอลัมน์แคบ: รายละเอียดบิลเรียงคอลัมน์เดียว · ปุ่มหัวการ์ดย่อ */
+@container (max-width: 720px) {
+  .bl3__detail .adp__grid {
+    grid-template-columns: 1fr;
+  }
+  .bl3__detail .adp__facts {
+    grid-template-columns: 1fr;
+  }
+}
+/* แถวที่เลือกอยู่ */
+.bl2-bill.is-sel,
+.bl2-rc.is-sel {
+  box-shadow: inset 0 0 0 2px var(--color-brand);
+  background: var(--color-brand-tint);
+}
+@media (max-width: 999px) {
+  .appt.bl3 {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+  .bl3__detail {
+    display: none;
+  }
+}
+/* รายการในคอลัมน์กลาง: แถวกระชับ (ปุ่มรับชำระอยู่ในรายละเอียดบิลด้านขวาแล้ว) */
+.bl3 .appt__main {
+  container-type: inline-size;
+}
+.bl3 .bl2-bill {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.bl3 .bl2-bill > .tw-btn {
+  display: none;
+}
+.bl3 .bl2-bill__who b,
+.bl3 .bl2-bill__who small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 999px) {
+  .bl3 .bl2-bill > .tw-btn {
+    display: inline-flex;
+  }
+}
+/* หัวรายละเอียดบิลในคอลัมน์แคบ: ชื่อบรรทัดแรก ปุ่มลงบรรทัดถัดไป */
+@container (max-width: 720px) {
+  .bl3__detail .tw-panel__head {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+  .bl3__detail .tw-panel__id {
+    flex: 1 1 calc(100% - 100px);
+    min-width: 0;
+  }
+  .bl3__detail .tw-panel__actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+  .bl3__detail .adp__chips {
+    flex-wrap: wrap;
+  }
+}

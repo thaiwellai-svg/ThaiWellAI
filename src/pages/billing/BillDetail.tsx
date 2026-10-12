@@ -24,18 +24,28 @@ export default function BillDetail() {
   const { id } = useParams();
   const store = useStore();
   const navigate = useNavigate();
+  const a = store.appointments.find((x) => x.id === id);
+  const back = () => (window.history.length > 1 ? navigate(-1) : navigate("/billing"));
+  const p = a ? store.patientById(a.patientId) : undefined;
+  return (
+    <WorkPage eyebrow="ชำระเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow={p ? `ชำระเงิน · ${p.name}` : "ชำระเงิน"} title="รายละเอียดบิล" onBack={back} />}>
+      <BillPanel id={id ?? ""} />
+    </WorkPage>
+  );
+}
+
+/** รายละเอียดบิล (ใช้ทั้งหน้าเต็ม /billing/:id และคอลัมน์ขวาของหน้าชำระเงิน) */
+export function BillPanel({ id }: { id: string }) {
+  const store = useStore();
+  const navigate = useNavigate();
   const [receipt, setReceipt] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const a = store.appointments.find((x) => x.id === id);
-  const back = () => (window.history.length > 1 ? navigate(-1) : navigate("/billing"));
-
   if (!a)
     return (
-      <WorkPage eyebrow="ชำระเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow="ชำระเงิน" title="รายละเอียดบิล" onBack={back} />}>
-        <div className="sheet ad__none">
-          <EmptyState icon={<ReceiptText size={24} />} title="ไม่พบบิลนี้" description="รายการอาจถูกลบไปแล้ว" />
-        </div>
-      </WorkPage>
+      <div className="sheet ad__none">
+        <EmptyState icon={<ReceiptText size={24} />} title="ไม่พบบิลนี้" description="รายการอาจถูกลบไปแล้ว" />
+      </div>
     );
 
   const p = store.patientById(a.patientId);
@@ -67,8 +77,8 @@ export default function BillDetail() {
   const money = (a.log ?? []).filter((l) => /ชำระ|ใบเสร็จ|เครดิต|บิล|สลิป|เงิน/.test(l.label));
 
   return (
-    <WorkPage eyebrow="ชำระเงิน" title="รายละเอียดบิล" bell={false} lead={<BackLead eyebrow={`ชำระเงิน · ${p.name}`} title="รายละเอียดบิล" onBack={back} />}>
-      <div className="adp tw-panel">
+    <>
+      <div className="adp tw-panel" data-bill={a.id}>
         {/* หัวตรึงแบบกลาง: รูป · ชื่อ · สถานะบิล · ปุ่ม */}
         <header className="tw-panel__head adp__head">
           <Avatar name={p.name} src={patientPhoto(p)} size="card" shape="squircle" ring={status.color} />
@@ -278,6 +288,6 @@ export default function BillDetail() {
 
       <ReceiptDialog id={receipt} onClose={() => setReceipt(null)} />
       <AppointmentDrawer id={paying ? a.id : null} startPay onClose={() => setPaying(false)} />
-    </WorkPage>
+    </>
   );
 }

@@ -7,6 +7,7 @@ import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
+import { BillPanel } from "./BillDetail";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
 import { ReceiptDialog } from "../../features/Receipt";
 import { METHOD_LABEL, visitTotal } from "../../features/billing";
@@ -35,6 +36,10 @@ export default function Billing() {
   const [open, setOpen] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<string | null>(null);
   const [report, setReport] = useState(false);
+  // บิลที่เปิดดูในคอลัมน์ขวา (จอแคบ → เปิดหน้ารายละเอียดเต็มแทน)
+  const [sel, setSel] = useState<string | null>(null);
+  const wide = () => window.matchMedia("(min-width: 1000px)").matches;
+  const openBill = (id: string) => (wide() ? setSel(id) : navigate(`/billing/${id}`));
 
   const match = (a: Appointment) => {
     const q = query.trim().toLowerCase();
@@ -99,6 +104,8 @@ export default function Billing() {
     return { d, sum: paidOn(d), label: k === 6 ? "วันนี้" : new Date(d + "T00:00:00").toLocaleDateString("th-TH", { weekday: "narrow" }) };
   });
   const weekMax = Math.max(1, ...week.map((x) => x.sum));
+  const firstId = tab === "due" ? due[0]?.id : history[0]?.a.id;
+  const shown = sel && store.appointments.some((x) => x.id === sel) ? sel : (firstId ?? null);
   const yesterday = week[5].sum;
 
   return (
@@ -132,7 +139,7 @@ export default function Billing() {
         </>
       }
     >
-      <div className="appt">
+      <div className="appt bl3">
         <aside className="appt__rail scroll-y bl2-rail">
           {/* today's income with a method donut */}
           <section className="bl2-card bl2-income">
@@ -319,7 +326,7 @@ export default function Billing() {
                     const s = store.serviceById(a.serviceId);
                     const pending = a.payment?.status === "pending";
                     return (
-                      <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")} role="button" tabIndex={0} onClick={() => navigate(`/billing/${a.id}`)}>
+                      <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late", shown === a.id && "is-sel")} role="button" tabIndex={0} onClick={() => openBill(a.id)}>
                         <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" />
                         <span className="bl2-bill__who">
                           <b>{p.name}</b>
@@ -354,7 +361,7 @@ export default function Billing() {
                         const p = store.patientById(a.patientId);
                         const Ic = ICON[pay.method];
                         return (
-                          <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending")} onClick={() => navigate(`/billing/${a.id}`)}>
+                          <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending", shown === a.id && "is-sel")} onClick={() => openBill(a.id)}>
                             <span className={clsx("bl-mi", `bl-mi--${pay.method}`)}>
                               <Ic size={16} />
                             </span>
@@ -385,6 +392,17 @@ export default function Billing() {
                 ))}
             </div>
           </div>
+        </div>
+
+        {/* คอลัมน์ 3: รายละเอียดบิลที่เลือก (ไม่ต้องเปิดหน้าใหม่) */}
+        <div className="bl3__detail">
+          {shown ? (
+            <BillPanel key={shown} id={shown} />
+          ) : (
+            <div className="sheet bl3__empty">
+              <EmptyState icon={<ReceiptText size={24} />} title="เลือกบิลทางซ้าย" description="รายละเอียดบิลจะแสดงที่นี่" />
+            </div>
+          )}
         </div>
       </div>
 

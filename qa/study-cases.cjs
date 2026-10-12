@@ -360,7 +360,10 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     await go(p, '/billing', 1300);
     const card = p.locator('.bl2-bill.is-counter, .bl2-bill.is-late').first();
     ex((await card.count()) > 0, 'มีบิลรอคิดเงิน');
-    await card.getByRole('button', { name: 'รับชำระ' }).click(); await p.waitForTimeout(1200);
+    // 3 ส่วนในหน้าเดียว: แตะแถว → รายละเอียดบิลด้านขวา → รับชำระ
+    await card.click(); await p.waitForTimeout(600);
+    ex((await p.locator('.bl3__detail [data-bill]').count()) === 1, 'รายละเอียดบิลขึ้นด้านขวา ไม่เปลี่ยนหน้า');
+    await p.locator('.bl3__detail').getByRole('button', { name: 'รับชำระ' }).click(); await p.waitForTimeout(1200);
     const credit = p.locator('.vs__credit-line input[type=checkbox]');
     if (await credit.count() && (await credit.isChecked())) await credit.click();
     await p.locator('button', { hasText: /^เงินสด/ }).first().click().catch(() => {});
@@ -404,14 +407,14 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(!!a, 'บันทึกการชำระแบบพร้อมเพย์');
   });
 
-  await check('C05', 'cashier', 'ผู้ป่วยขอคืนเงิน', 'ยกเลิกใบเสร็จ + คืนเงิน (หน้ารายละเอียดบิล)', async (p, ex) => {
+  await check('C05', 'cashier', 'ผู้ป่วยขอคืนเงิน', 'ยกเลิกใบเสร็จ + คืนเงิน (รายละเอียดบิลด้านขวา)', async (p, ex) => {
     await go(p, '/billing', 1200);
     await p.locator('button', { hasText: 'ประวัติการชำระ' }).first().click(); await p.waitForTimeout(500);
     await p.locator('button', { hasText: '30 วัน' }).first().click(); await p.waitForTimeout(500);
     await p.locator('.bl2-rc', { hasText: '฿', hasNotText: 'สมศักดิ์' }).first().click(); await p.waitForTimeout(1200);
-    ex(p.url().includes('/billing/'), 'เปิดหน้ารายละเอียดบิล');
-    const id = p.url().split('/').pop();
-    await p.getByRole('button', { name: 'ใบเสร็จ', exact: true }).click(); await p.waitForTimeout(1000);
+    ex(p.url().endsWith('/billing') && (await p.locator('.bl3__detail [data-bill]').count()) === 1, 'รายละเอียดบิลขึ้นด้านขวา (ไม่เปลี่ยนหน้า)');
+    const id = await p.locator('.bl3__detail [data-bill]').getAttribute('data-bill');
+    await p.locator('.bl3__detail').getByRole('button', { name: 'ใบเสร็จ', exact: true }).click(); await p.waitForTimeout(1000);
     await p.locator('.rcx__btn--danger').click(); await p.waitForTimeout(500);
     await p.locator('.rcx button[aria-pressed]').first().click().catch(() => {});
     await p.getByRole('button', { name: /ยืนยันยกเลิกใบเสร็จ/ }).click(); await p.waitForTimeout(1000);
