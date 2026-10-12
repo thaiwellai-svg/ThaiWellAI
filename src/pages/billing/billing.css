@@ -869,19 +869,9 @@
   align-items: flex-start;
   gap: 14px;
 }
-.bd--compact .tw-panel__head .tw-avatar {
-  width: 60px !important;
-  height: 60px !important;
-}
 .bd--compact .tw-panel__id {
   flex: 1;
   min-width: 0;
-}
-.bd--compact .tw-panel__id h2 {
-  font-size: 19px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .bd--compact .tw-panel__actions {
   flex: 0 0 auto;
@@ -1009,4 +999,20 @@
   aspect-ratio: 1;
   padding: 0;
   border-radius: 50%;
+}
+/* หัวเหมือนหน้ารับบริการ/ผู้ป่วย: ชื่อยาวตัด … · ปุ่มเพิ่มเติม (วงกลม) + ปุ่มหลัก */
+.bd--compact .tw-panel__id h2 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bd--compact .tw-panel__actions {
+  align-self: center;
+  gap: 10px;
+}
+.bd--compact .tw-panel__actions .tw-round {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
 }

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Banknote, CalendarDays, CheckCheck, ClipboardList, History, Phone, QrCode, ReceiptText, Smartphone, Ticket, UserRound, Wallet } from "lucide-react";
 import { clsx } from "clsx";
+import { MoreMenu } from "../../features/MoreMenu";
 import { useStore } from "../../store/store";
 import { Avatar, Button, EmptyState } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
@@ -101,28 +102,38 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
             </div>
           </div>
           <div className="tw-panel__actions">
-            {p.phone && (
-              <a className="tw-round" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`} title={p.phone}>
-                <Phone size={18} />
-              </a>
-            )}
-            <button type="button" className="tw-round" onClick={() => navigate(`/patients?id=${p.id}`)} aria-label="ข้อมูลผู้ป่วย" title="ข้อมูลผู้ป่วย">
-              <UserRound size={18} />
-            </button>
-            <button type="button" className="tw-round" onClick={() => navigate(`/appointments/${a.id}`)} aria-label="รายละเอียดนัด" title="รายละเอียดนัด">
-              <CalendarDays size={18} />
-            </button>
-            {pay &&
-              (compact ? (
-                <button type="button" className="tw-round" onClick={() => setReceipt(a.id)} aria-label="ใบเสร็จ" title="ใบเสร็จ">
-                  <ReceiptText size={18} />
+            {compact ? (
+              // คอลัมน์แคบ (หน้าชำระเงิน): เหมือนหัวหน้ารับบริการ/ผู้ป่วย = ปุ่มเพิ่มเติม (วงกลม) + ปุ่มหลัก
+              <MoreMenu
+                className="tw-round"
+                items={[
+                  ...(pay ? [{ label: "ดูใบเสร็จ", icon: <ReceiptText size={16} />, onClick: () => setReceipt(a.id) }] : []),
+                  { label: "ข้อมูลผู้ป่วย", icon: <UserRound size={16} />, onClick: () => navigate(`/patients?id=${p.id}`) },
+                  { label: "รายละเอียดนัด", icon: <CalendarDays size={16} />, onClick: () => navigate(`/appointments/${a.id}`) },
+                  ...(p.phone ? [{ label: `โทร ${p.phone}`, icon: <Phone size={16} />, onClick: () => (window.location.href = `tel:${p.phone}`) }] : []),
+                ]}
+              />
+            ) : (
+              <>
+                {p.phone && (
+                  <a className="tw-round" href={`tel:${p.phone}`} aria-label={`โทร ${p.phone}`} title={p.phone}>
+                    <Phone size={18} />
+                  </a>
+                )}
+                <button type="button" className="tw-round" onClick={() => navigate(`/patients?id=${p.id}`)} aria-label="ข้อมูลผู้ป่วย" title="ข้อมูลผู้ป่วย">
+                  <UserRound size={18} />
                 </button>
-              ) : (
-                <Button variant="outline" size="lg" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
-                  ใบเสร็จ
-                </Button>
-              ))}
-            {!compact && payable && (
+                <button type="button" className="tw-round" onClick={() => navigate(`/appointments/${a.id}`)} aria-label="รายละเอียดนัด" title="รายละเอียดนัด">
+                  <CalendarDays size={18} />
+                </button>
+                {pay && (
+                  <Button variant="outline" size="lg" leading={<ReceiptText size={16} />} onClick={() => setReceipt(a.id)}>
+                    ใบเสร็จ
+                  </Button>
+                )}
+              </>
+            )}
+            {payable && (
               <Button size="lg" leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
                 รับชำระ
               </Button>
@@ -147,11 +158,7 @@ export function BillPanel({ id, compact }: { id: string; /** คอลัมน�
                     : `${s.name} · ${thaiDateShort(a.date)} ${a.start} น.`}
               </p>
             </div>
-            {compact && payable && (
-              <Button size="lg" fill leading={<Wallet size={16} />} onClick={() => setPaying(true)}>
-                {pay?.status === "pending" ? "รับชำระที่เคาน์เตอร์แทน" : "รับชำระ"}
-              </Button>
-            )}
+
           </section>
 
           <div className="adp__grid">
