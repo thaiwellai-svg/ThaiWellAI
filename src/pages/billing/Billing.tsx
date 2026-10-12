@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { visitPrice } from "../../data/domain";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, History, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
+import { BarChart3, ChevronDown, History, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Badge, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
@@ -41,6 +41,7 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
   const [report, setReport] = useState(false);
   // บิลที่เปิดดูในคอลัมน์ขวา (จอแคบ → เปิดหน้ารายละเอียดเต็มแทน)
   const [sel, setSel] = useState<string | null>(null);
+  const [allDue, setAllDue] = useState(false);
   const wide = () => window.matchMedia("(min-width: 1000px)").matches;
   const openBill = (id: string) => (wide() ? setSel(id) : navigate(`/billing/${id}`));
 
@@ -107,6 +108,35 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
     return { d, sum: paidOn(d), label: k === 6 ? "วันนี้" : new Date(d + "T00:00:00").toLocaleDateString("th-TH", { weekday: "narrow" }) };
   });
   const weekMax = Math.max(1, ...week.map((x) => x.sum));
+  const dueRow = (a: Appointment) => {
+                    const p = store.patientById(a.patientId);
+                    const s = store.serviceById(a.serviceId);
+                    const pending = a.payment?.status === "pending";
+                    const st = pending ? (["รอชำระในแอป", "info"] as const) : stageOf(a) === "billing" ? (["รอชำระ", "warning"] as const) : (["ค้างชำระ", "danger"] as const);
+                    return (
+                      <button key={a.id} type="button" className={clsx("prow bl3-row", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")} aria-pressed={shown === a.id} onClick={() => openBill(a.id)}>
+                        {shown === a.id && <motion.span layoutId="bill-sel" className="prow__sel" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
+                        <Avatar name={p.name} src={patientPhoto(p)} shape="squircle" />
+                        <span className="prow__id">
+                          <b>{p.name}</b>
+                          <small>
+                            {s.short} · {thaiDateShort(a.date)} {a.start} น.
+                          </small>
+                          <span className="prow__chips">
+                            <Badge tone={st[1]} compact>
+                              {st[0]}
+                            </Badge>
+                          </span>
+                        </span>
+                        <span className="prow__meta">
+                          <span className="prow__next bl3__amt">
+                            {baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))}
+                            <small>บาท</small>
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  };
   const firstId = tab === "due" ? due[0]?.id : history[0]?.a.id;
   const shown = sel && store.appointments.some((x) => x.id === sel) ? sel : (firstId ?? null);
   const yesterday = week[5].sum;
@@ -151,6 +181,25 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
       <div className={clsx("appt bl3", hist && "bl3--hist")}>
         {!hist && (
         <aside className="appt__rail scroll-y bl2-rail">
+          {/* รายชื่อรอชำระ: บนสุด แสดง 5 คนแรก · เกินกด "ดูเพิ่มเติม" ขยายทั้งหมด */}
+          <section className="bl3__due plist">
+            <p className="bl3__day">
+              รอชำระ {due.length} คน
+              {due.length > 0 && <span>{baht(due.reduce((n, a) => n + (a.payment?.amount ?? visitTotal({ price: visitPrice(store.patientById(a.patientId), a, store.serviceById(a.serviceId)) }, a)), 0))} บาท</span>}
+            </p>
+            {due.length ? (
+              <div className="bl3__rows">{(allDue ? due : due.slice(0, 5)).map(dueRow)}</div>
+            ) : (
+              <EmptyState onGlass icon={<Hourglass size={24} />} title="ไม่มีบิลรอชำระ" description="ผู้ป่วยที่นวดเสร็จจะแสดงที่นี่" />
+            )}
+            {due.length > 5 && (
+              <button type="button" className="bl3__more" onClick={() => setAllDue((v) => !v)}>
+                {allDue ? "ย่อรายการ" : `ดูเพิ่มเติม (อีก ${due.length - 5} คน)`}
+                <ChevronDown size={15} className={allDue ? "is-up" : undefined} />
+              </button>
+            )}
+          </section>
+
           {/* today's income with a method donut */}
           <section className="bl2-card bl2-income">
             <header>
@@ -288,6 +337,7 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
         )}
 
         {/* รายชื่อบิล: แบบเดียวกับรายชื่อหน้าผู้ป่วย (แถวลอยบนพื้นห้อง) */}
+        {hist && (
         <div className="panel plist bl3__list">
           {tab === "history" && (
             <div className="bl3__tools">
@@ -317,35 +367,7 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
           <div className="plist__items scroll-y">
             {tab === "due" &&
               (due.length ? (
-                  due.map((a) => {
-                    const p = store.patientById(a.patientId);
-                    const s = store.serviceById(a.serviceId);
-                    const pending = a.payment?.status === "pending";
-                    const st = pending ? (["รอชำระในแอป", "info"] as const) : stageOf(a) === "billing" ? (["รอชำระ", "warning"] as const) : (["ค้างชำระ", "danger"] as const);
-                    return (
-                      <button key={a.id} type="button" className={clsx("prow bl3-row", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late")} aria-pressed={shown === a.id} onClick={() => openBill(a.id)}>
-                        {shown === a.id && <motion.span layoutId="bill-sel" className="prow__sel" transition={{ type: "spring", stiffness: 500, damping: 40 }} />}
-                        <Avatar name={p.name} src={patientPhoto(p)} shape="squircle" />
-                        <span className="prow__id">
-                          <b>{p.name}</b>
-                          <small>
-                            {s.short} · {thaiDateShort(a.date)} {a.start} น.
-                          </small>
-                          <span className="prow__chips">
-                            <Badge tone={st[1]} compact>
-                              {st[0]}
-                            </Badge>
-                          </span>
-                        </span>
-                        <span className="prow__meta">
-                          <span className="prow__next bl3__amt">
-                            {baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))}
-                            <small>บาท</small>
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })
+                  due.map(dueRow)
               ) : (
                 <EmptyState onGlass icon={<Hourglass size={24} />} title="ไม่มีบิลรอชำระ" description="ผู้ป่วยที่นวดเสร็จจะแสดงที่นี่" />
               ))}
@@ -393,8 +415,9 @@ export default function Billing({ history: hist = false }: { /** /billing/histor
               ))}
           </div>
         </div>
+        )}
 
-        {/* คอลัมน์ 3: รายละเอียดบิลที่เลือก (ไม่ต้องเปิดหน้าใหม่) */}
+        {/* คอลัมน์ขวา: รายละเอียดบิลที่เลือก (ไม่ต้องเปิดหน้าใหม่) */}
         <div className="bl3__detail">
           {shown ? (
             <BillPanel key={shown} id={shown} compact />
