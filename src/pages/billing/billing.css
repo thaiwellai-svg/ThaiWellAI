@@ -1159,3 +1159,12 @@
   background: none;
   box-shadow: none;
 }
+/* ปุ่มรับชำระท้ายการ์ด: ขนาดปกติ ชิดขวา (ไม่เต็มความกว้าง) */
+.vsp__paybar .tw-btn,
+.vsp__paybar .tw-btn.tw-btn--fill {
+  flex: none;
+  width: auto;
+  min-width: 150px;
+  height: 44px;
+  padding: 0 22px;
+}
