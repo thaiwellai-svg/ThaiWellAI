@@ -2149,6 +2149,12 @@
     flex-basis: 100%;
     margin-left: 0;
   }
+  /* บริการ | ผู้บำบัด ยังเรียงข้างกัน → เส้นคั่นแนวตั้ง (ไม่ใช่เส้นบนหัวผู้บำบัด) */
+  .vq2__top .vq2__meta > span + span {
+    border-top: 0;
+    padding-top: 0;
+    border-left: 1px solid var(--sage-100);
+  }
 }
 .vs__timer small .vs__timer-end {
   font-size: inherit;
