@@ -1000,3 +1000,12 @@
 .clash-panel .clash-list--stacked {
   padding-bottom: var(--space-2);
 }
+/* คำตอบเตือนนัดจากแอป */
+.dblock__tag.is-ok {
+  background: #e3f3e8;
+  color: #2f8a52;
+}
+.dblock__tag.is-move {
+  background: #fdecea;
+  color: #c0392b;
+}

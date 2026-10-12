@@ -18,11 +18,12 @@ import { Workspace } from "../../features/Workspace";
 import { WorkPage } from "../../layout/WorkPage";
 import usersIcon from "../../assets/figma/users-outline.svg";
 import chevron from "../../assets/figma/chevron-down.svg";
+import { followRows, needsCall } from "../../data/followups";
 import "./dashboard.css";
 
 const STAT_ORDER: AppointmentStatus[] = ["done", "waiting", "active", "absent"];
 
-type WidgetId = "patients" | "done" | "credits" | "revenue" | "requests" | "staff" | "calendar";
+type WidgetId = "patients" | "done" | "credits" | "followups" | "revenue" | "requests" | "staff" | "calendar";
 type Size = "half" | "full";
 type WidgetLayout = { order: WidgetId[]; hidden: WidgetId[]; size: Partial<Record<WidgetId, Size>> };
 
@@ -30,13 +31,14 @@ const WIDGETS: Record<WidgetId, { label: string; size: Size; sizes: Size[] }> = 
   patients: { label: "ผู้ป่วยวันนี้", size: "full", sizes: ["full"] },
   done: { label: "นัดที่เสร็จแล้ว", size: "half", sizes: ["half", "full"] },
   credits: { label: "เครดิตคงเหลือ", size: "half", sizes: ["half", "full"] },
+  followups: { label: "ติดตามผลหลังนวด", size: "half", sizes: ["half", "full"] },
   revenue: { label: "รายได้วันนี้", size: "full", sizes: ["half", "full"] },
   requests: { label: "คำขอจองใหม่", size: "full", sizes: ["full"] },
   staff: { label: "ผู้บำบัดวันนี้", size: "full", sizes: ["full"] },
   calendar: { label: "ตารางงาน", size: "full", sizes: ["full"] },
 };
 const ALL = Object.keys(WIDGETS) as WidgetId[];
-const DEFAULT_WIDGETS: WidgetLayout = { order: ["patients", "done", "credits", "revenue", "calendar", "requests", "staff"], hidden: ["staff"], size: {} };
+const DEFAULT_WIDGETS: WidgetLayout = { order: ["patients", "done", "credits", "followups", "revenue", "calendar", "requests", "staff"], hidden: ["staff"], size: {} };
 const WKEY = "thaiwell.dash.widgets";
 
 function useWidgetLayout() {
@@ -184,6 +186,25 @@ export default function Dashboard() {
             <p className="tw-caption">{kpi.pct}% ของนัดวันนี้</p>
           </Card>
         );
+      case "followups": {
+        const rows = followRows(store.appointments, store.patientById, store.settings.followUpHours ?? 48);
+        const call = rows.filter(needsCall);
+        const worse = call.filter((r) => r.state === "worse").length;
+        return (
+          <Card elevated className="kpi--link" onClick={() => navigate("/followups")}>
+            <div className="kpi__head">
+              <p className="tw-label">ติดตามผลหลังนวด</p>
+            </div>
+            <div className="tw-figure">
+              <span className="tw-figure__value">
+                <AnimatedNumber value={call.length} />
+              </span>
+              <span className="tw-figure__unit">คนต้องโทร</span>
+            </div>
+            <p className="tw-caption">{worse ? `อาการแย่ลง ${worse} คน · ` : ""}ตอบในแอปแล้ว {rows.filter((r) => r.a.followUp).length} คน</p>
+          </Card>
+        );
+      }
       case "credits":
         return (
           <Card elevated>

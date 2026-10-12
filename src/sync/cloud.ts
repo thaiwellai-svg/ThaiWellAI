@@ -77,6 +77,10 @@ export interface CloudAssessment {
   therapistId?: string;
   /** ผู้ป่วยประเมินความปวดหลังนวดเองในแอป (คลินิกข้ามไว้) */
   after?: { pain: number; at: string; note?: string };
+  /** ติดตามผลหลังนวด (แอปเตือน 48 ชม.) */
+  followup?: { pain: number; sleep?: number; issues: string[]; worse: boolean; at: string };
+  /** เตือนนัด 1 วันก่อน: ยืนยันมาตามนัด / ขอเลื่อน */
+  attend?: { answer: "confirm" | "reschedule"; at: string; note?: string };
   /** แบบคัดกรองก่อนนวดของครั้งนี้ (นัดตามคอร์ส) */
   previsit?: { adverse?: string; risk?: string; red?: boolean };
   /** แนวทางการรักษาที่แอปแนะนำ */

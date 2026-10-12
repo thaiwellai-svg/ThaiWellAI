@@ -754,6 +754,21 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
     ex(ob && ob.included === false, 'อบ (ไม่อยู่ในบริการ) = คิดเพิ่ม');
   });
 
+  await check('F01', 'reception', 'ติดตามผลหลังนวด', 'ผลจากแอป (แย่ลง) · ไม่ตอบเกินกำหนด · ไม่ใช้แอป → รายการต้องโทร · บันทึกว่าโทรแล้ว · การ์ดหน้าหลัก', async (p, ex) => {
+    await mutate(p, "const old=new Date(Date.now()-5*864e5).toISOString();const d=old.slice(0,10);const done=s.appointments.filter(x=>x.status==='done').slice(0,3);done.forEach(a=>{a.date=d;a.recordedAt=old;delete a.followUp;delete a.followCall;});done[0].cloudId='qa-fu-0';done[0].painAfter=3;done[0].followUp={pain:7,issues:['ปวดมากขึ้น'],worse:true,at:new Date().toISOString()};done[1].cloudId='qa-fu-1';delete done[2].cloudId;s.__ids=done.map(a=>a.id);");
+    await go(p, '/followups', 1500);
+    ex((await p.locator('.fu__row.is-worse').count()) >= 1, 'อาการแย่ลงขึ้นบนสุดในรายการต้องโทร');
+    ex((await p.locator('.fu__row.is-overdue').count()) >= 1, 'ไม่ตอบเกินกำหนดขึ้นให้โทร');
+    ex((await p.locator('.fu__row.is-noapp').count()) >= 1, 'ไม่ใช้แอปขึ้นให้โทรติดตาม');
+    const before = await p.locator('.fu__row').count();
+    await p.locator('.fu__row.is-worse button[aria-label="บันทึกว่าโทรแล้ว"]').first().click(); await p.waitForTimeout(500);
+    ex((await p.locator('.fu__row').count()) === before - 1, 'กดโทรแล้ว → ออกจากรายการต้องโทร');
+    const s1 = await state(p);
+    ex(!!s1.appointments.find((a) => a.id === s1.__ids[0]).followCall, 'บันทึกการโทรไว้ที่นัด');
+    await go(p, '/', 1500);
+    ex((await p.locator('.kpi--link', { hasText: 'ติดตามผลหลังนวด' }).count()) === 1, 'การ์ดติดตามผลบนหน้าหลัก');
+  });
+
   await check('N03', 'therapist', 'เล่ารวดเดียว AI กรอกให้ครบ', 'พิมพ์ 1 ครั้ง → ตรวจพบ · วินิจฉัย(รหัส) · หัตถการ 45 นาที · ปวดหลัง 3 · คำแนะนำ → บันทึก', async (p, ex) => {
     const id = await qrOpen(p);
     ex((await p.locator('.vp__voice .qr').count()) === 1, 'ขั้นบันทึกการรักษาเปิดผู้ช่วยบันทึกด้านขวาเอง');
@@ -841,7 +856,7 @@ async function openVisit(p, apptId) { await go(p, '/visits?id=' + apptId, 1500);
   await check('X01', 'reception', 'ทุกหน้า', 'เปิดได้ไม่มี error (แนวนอน + แนวตั้ง)', async (p, ex) => {
     const s = await state(p);
     const a = s.appointments.find((x) => x.payment);
-    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/history', '/billing/commission', '/insights', '/tutorial/'];
+    const routes = ['/', '/visits', '/patients', '/patients/new', '/appointments', '/appointments/' + a.id, '/billing', '/billing/' + a.id, '/planner', '/requests', '/settings', '/inventory', '/packages', '/billing/close', '/billing/history', '/billing/commission', '/insights', '/followups', '/tutorial/'];
     for (const vp of [{ width: 1366, height: 1024 }, { width: 820, height: 1180 }]) {
       await p.setViewportSize(vp);
       for (const r of routes) {

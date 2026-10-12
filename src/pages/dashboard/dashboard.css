@@ -756,3 +756,4 @@
   font: 700 12px/1 var(--font-sans);
   color: var(--color-brand);
 }
+.kpi--link { cursor: pointer; }

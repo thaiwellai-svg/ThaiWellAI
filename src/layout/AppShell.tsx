@@ -41,6 +41,7 @@ const Packages = lazy(() => import("../pages/biz/Packages"));
 const Commission = lazy(() => import("../pages/biz/Commission"));
 const DayClose = lazy(() => import("../pages/biz/DayClose"));
 const Insights = lazy(() => import("../pages/insights/Insights"));
+const FollowUps = lazy(() => import("../pages/followups/FollowUps"));
 const Flow = lazy(() => import("../pages/flow/Flow"));
 const Requests = lazy(() => import("../pages/requests/Requests"));
 const Login = lazy(() => import("../pages/login/Login"));
@@ -159,6 +160,7 @@ export function AppShell() {
             {/* หน้า Flow (แอปจำลอง + รีเซ็ตข้อมูลสาธิต) มีเฉพาะโหมดสาธิต */}
             {DEMO && <Route path="/flow" element={<Page><Flow /></Page>} />}
             <Route path="/insights" element={<Page><Insights /></Page>} />
+            <Route path="/followups" element={<Page><FollowUps /></Page>} />
             <Route path="/requests" element={<Page><Requests /></Page>} />
             <Route path="/design-system" element={<Page><DesignSystem /></Page>} />
             <Route path="*" element={<Page><Dashboard /></Page>} />

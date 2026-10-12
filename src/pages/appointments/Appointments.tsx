@@ -647,6 +647,8 @@ function DayView({ date, appts, therapistFilter, onOpen }: { date: string; appts
                   <span className="dblock__name">{n > 1 ? bareName(p.name) : p.name}</span>
                   <span className="dblock__meta">{n > 1 ? s.short : `${s.name} · ${s.minutes} นาที`}</span>
                   {a.type === "walkin" && <span className="dblock__tag">วอล์กอิน</span>}
+                  {/* เตือนนัดในแอป: ผู้ป่วยยืนยันมา / ขอเลื่อน */}
+                  {a.attend && a.status === "waiting" && <span className={clsx("dblock__tag", a.attend.answer === "confirm" ? "is-ok" : "is-move")}>{a.attend.answer === "confirm" ? "✓ ยืนยันมา" : "ขอเลื่อน"}</span>}
                 </motion.button>
               );
             })}

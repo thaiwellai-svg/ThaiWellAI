@@ -1,0 +1,84 @@
+/* ติดตามผลหลังนวด */
+.fu {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  max-width: 980px;
+}
+.fu__hint {
+  margin: 0;
+  font: 500 13px/1.5 var(--font-sans);
+  color: var(--white);
+  text-shadow: 0 1px 6px rgb(0 0 0 / 25%);
+}
+.fu__list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-bottom: calc(var(--dock-height, 80px) + 12px);
+}
+.fu__row {
+  cursor: default;
+  align-items: center;
+}
+.fu__row.is-worse {
+  box-shadow: inset 4px 0 0 #d23a2a;
+}
+.fu__pain {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.fu__pain i {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 46px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: var(--sage-50);
+  font: 800 17px/1.1 var(--font-sans);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.fu__pain small {
+  font: 600 10.5px/1.2 var(--font-sans);
+  color: var(--color-text-muted);
+}
+.fu__pain i.is-now {
+  background: var(--color-brand-tint);
+  color: var(--color-brand);
+}
+.fu__pain i.is-bad {
+  background: #fdecea;
+  color: #c0392b;
+}
+.fu__issues {
+  flex-shrink: 1;
+  max-width: 180px;
+  font: 600 12px/1.35 var(--font-sans);
+  font-style: normal;
+  color: #b4541f;
+}
+.fu__acts {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.fu__done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-brand);
+  font: 700 13.5px/1 var(--font-sans);
+  color: var(--white);
+}

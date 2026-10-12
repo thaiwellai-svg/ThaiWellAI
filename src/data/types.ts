@@ -246,6 +246,12 @@ export interface Appointment {
   voidedPayments?: Payment[];
   /** what happened, in order — shown as the visit timeline */
   log?: { at: string; label: string }[];
+  /** ติดตามผลหลังนวดจากแอป (แจ้งเตือน 48 ชม.) */
+  followUp?: { pain: number; sleep?: number; issues: string[]; worse: boolean; at: string };
+  /** คลินิกโทรติดตามผลแล้ว */
+  followCall?: { at: string; by: string; note?: string };
+  /** เตือนนัด: ผู้ป่วยยืนยันมาตามนัด / ขอเลื่อนนัด (จากแอป) */
+  attend?: { answer: "confirm" | "reschedule"; at: string; note?: string };
 }
 
 export interface Diagnosis {
