@@ -2,11 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { visitPrice } from "../../data/domain";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { BarChart3, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, ChevronRight, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
+import { BarChart3, Boxes, HandCoins, Landmark, ShoppingBag, FileSpreadsheet, Banknote, CheckCheck, Hourglass, QrCode, ReceiptText, Smartphone, Ticket, Wallet } from "lucide-react";
 import { clsx } from "clsx";
 import { useStore } from "../../store/store";
 import { Avatar, Button, EmptyState, IconButton, SearchField, Segmented } from "../../design-system";
 import { WorkPage } from "../../layout/WorkPage";
+import { thaiDateShort } from "../../data/thaiDate";
 import { BillPanel } from "./BillDetail";
 import { AppointmentDrawer, stageOf } from "../../features/AppointmentDrawer";
 import { ReceiptDialog } from "../../features/Receipt";
@@ -283,7 +284,7 @@ export default function Billing() {
                 tone="light"
                 label="มุมมอง"
                 value={tab}
-                onChange={setTab}
+                onChange={(t) => (setTab(t), setSel(null))}
                 options={[
                   { value: "due", label: `รอชำระ (${due.length})` },
                   { value: "history", label: "ประวัติการชำระ" },
@@ -327,17 +328,21 @@ export default function Billing() {
                     const pending = a.payment?.status === "pending";
                     return (
                       <div key={a.id} className={clsx("bl2-bill", pending ? "is-app" : stageOf(a) === "billing" ? "is-counter" : "is-late", shown === a.id && "is-sel")} role="button" tabIndex={0} onClick={() => openBill(a.id)}>
-                        <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" />
-                        <span className="bl2-bill__who">
-                          <b>{p.name}</b>
-                          <small>
-                            {s.name} · {thaiDate(a.date)} {a.start} น.
-                          </small>
-                          <em>{pending ? "รอชำระในแอป" : stageOf(a) === "billing" ? "รอชำระที่เคาน์เตอร์" : "ค้างชำระ"}</em>
-                        </span>
-                        <span className="bl2-bill__amt">
-                          <b>{baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))}</b>
-                          <small>บาท</small>
+                        <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" ring={pending ? "#7c5cc4" : stageOf(a) === "billing" ? "#d08a3c" : "#d23a2a"} />
+                        {/* บรรทัดบน: ชื่อ · ยอด | บรรทัดล่าง: บริการ วันเวลา · ป้ายสถานะ */}
+                        <span className="bl4">
+                          <span className="bl4__top">
+                            <b>{p.name}</b>
+                            <strong>
+                              {baht(a.payment?.amount ?? visitTotal({ price: visitPrice(p, a, s) }, a))} <small>฿</small>
+                            </strong>
+                          </span>
+                          <span className="bl4__sub">
+                            <small>
+                              {s.short} · {thaiDateShort(a.date)} {a.start} น.
+                            </small>
+                            <em>{pending ? "รอชำระในแอป" : stageOf(a) === "billing" ? "รอชำระ" : "ค้างชำระ"}</em>
+                          </span>
                         </span>
                         <Button size="md" variant={pending ? "outline" : "primary"} leading={<Wallet size={15} />} onClick={(e) => (e.stopPropagation(), setOpen(a.id))}>
                           {pending ? "ดูบิล" : "รับชำระ"}
@@ -362,26 +367,23 @@ export default function Billing() {
                         const Ic = ICON[pay.method];
                         return (
                           <button key={key} type="button" className={clsx("bl2-rc", pay.status === "void" && "is-void", pay.status === "pending" && "is-pending", shown === a.id && "is-sel")} onClick={() => openBill(a.id)}>
-                            <span className={clsx("bl-mi", `bl-mi--${pay.method}`)}>
-                              <Ic size={16} />
+                            <Avatar name={p.name} src={patientPhoto(p)} size="md" shape="squircle" ring={pay.status === "void" ? "#8a948d" : pay.status === "pending" ? "#7c5cc4" : "#2f9a5b"} />
+                            <span className="bl4">
+                              <span className="bl4__top">
+                                <b>{p.name}</b>
+                                <strong>{pay.method === "credit" ? "1 ครั้ง" : <>{baht(pay.amount)} <small>฿</small></>}</strong>
+                              </span>
+                              <span className="bl4__sub">
+                                <small>
+                                  {store.serviceById(a.serviceId).short} · {time(pay.at)} น. · {pay.no}
+                                </small>
+                                <em>
+                                  <Ic size={12} />
+                                  {pay.status === "void" ? (pay.voided?.refund ? "ยกเลิก · คืนเงิน" : "ยกเลิก") : pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
+                                  {pay.slipSentAt && pay.status === "paid" && <CheckCheck size={12} aria-label="ส่งสลิปเข้าแอปแล้ว" />}
+                                </em>
+                              </span>
                             </span>
-                            <span className="bl2-rc__who">
-                              <b>{p.name}</b>
-                              <small>
-                                {store.serviceById(a.serviceId).short} · {time(pay.at)} น.
-                              </small>
-                            </span>
-                            <span className="bl2-rc__no">{pay.no}</span>
-                            <span className="bl2-rc__st">
-                              {pay.status === "void" ? (pay.voided?.refund ? "ยกเลิก · คืนเงิน" : "ยกเลิก") : pay.status === "pending" ? "รอชำระในแอป" : METHOD_LABEL[pay.method]}
-                              {pay.slipSentAt && pay.status === "paid" && (
-                                <i title="ส่งสลิปเข้าแอปแล้ว">
-                                  <CheckCheck size={12} />
-                                </i>
-                              )}
-                            </span>
-                            <b className="bl2-rc__amt">{pay.method === "credit" ? <span className="bl2-rc__cr">1 ครั้ง</span> : `${baht(pay.amount)} ฿`}</b>
-                            <ChevronRight size={16} className="bl-chev" />
                           </button>
                         );
                       })}
