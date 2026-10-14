@@ -21,6 +21,10 @@
         <p class="hero__eyebrow">คู่มือการใช้งาน</p>
         <h1>ทุกฟีเจอร์ของ ThaiWell<br /><span>รวมไว้ในที่เดียว</span></h1>
         <p class="hero__lead">วิธีใช้ทุกฟีเจอร์ แยกตามเมนูของแอพ ทุกขั้นตอนมีภาพเคลื่อนไหวสาธิตว่าต้องกดตรงไหน</p>
+        <button class="hero__play" id="playPromo" type="button">
+          <span class="hero__playic"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor" /></svg></span>
+          ดูวิดีโอแนะนำ ThaiWell <small>แอปผู้ป่วย × ระบบคลินิก · 2 นาที</small>
+        </button>
         <div class="hsearch">
           <label class="hsearch__box">
             <span id="hqi"></span>
@@ -42,6 +46,13 @@
       <button class="lightbox__x" aria-label="ปิด">✕</button>
       <img alt="" />
       <p></p>
+    </div>
+
+    <div class="promo" id="promo" hidden>
+      <button class="lightbox__x" type="button" aria-label="ปิดวิดีโอ">✕</button>
+      <video id="promoVideo" controls playsinline preload="none" poster="media/promo-poster.jpg">
+        <source src="media/promo-1080.mp4" type="video/mp4" />
+      </video>
     </div>
 
     <script src="icons.js"></script>

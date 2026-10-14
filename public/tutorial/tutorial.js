@@ -423,3 +423,18 @@ if (window.parent !== window) {
     window.parent.postMessage("tw-close-manual", "*");
   });
 }
+
+// วิดีโอแนะนำระบบ (โปรโมท)
+(() => {
+  const box = $("#promo"), v = $("#promoVideo");
+  if (!box) return;
+  const close = () => { v.pause(); box.classList.remove("is-open"); setTimeout(() => (box.hidden = true), 250); };
+  $("#playPromo").addEventListener("click", () => {
+    box.hidden = false;
+    requestAnimationFrame(() => box.classList.add("is-open"));
+    v.play().catch(() => {});
+  });
+  box.querySelector(".lightbox__x").addEventListener("click", close);
+  box.addEventListener("click", (e) => e.target === box && close());
+  addEventListener("keydown", (e) => e.key === "Escape" && !box.hidden && close());
+})();
