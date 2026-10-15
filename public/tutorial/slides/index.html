@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ThaiWell AI · สไลด์นำเสนอ</title>
+<meta name="description" content="สไลด์นำเสนอระบบ ThaiWell AI — แอปผู้ป่วยและระบบคลินิกนวดไทยที่ทำงานร่วมกัน" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --ink: #0d1712; --muted: #5b6e63; --line: rgba(13, 23, 18, 0.08); --g1: #0fa36b; --g2: #12a6c9; --g3: #7b61ff; --card: rgba(255, 255, 255, 0.78); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #eef3f0; color: var(--ink); font-family: "Inter", "Noto Sans Thai", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  #viewport { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(60% 70% at 15% 10%, #d3f1e3 0%, transparent 60%), radial-gradient(60% 70% at 90% 20%, #dbe9ff 0%, transparent 60%), radial-gradient(70% 70% at 70% 100%, #ebe4ff 0%, transparent 60%), #f3f6f4; }
+  #deck { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 50% 50%; }
+  .slide { position: absolute; inset: 0; padding: 110px 130px; opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
+  .slide.on { opacity: 1; pointer-events: auto; }
+  .a { opacity: 0; transform: translateY(34px); filter: blur(10px); transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), filter 0.8s ease; }
+  .slide.on .a { opacity: 1; transform: none; filter: none; }
+  .slide.on .a.d1 { transition-delay: 0.08s; } .slide.on .a.d2 { transition-delay: 0.18s; } .slide.on .a.d3 { transition-delay: 0.28s; } .slide.on .a.d4 { transition-delay: 0.38s; } .slide.on .a.d5 { transition-delay: 0.48s; } .slide.on .a.d6 { transition-delay: 0.58s; } .slide.on .a.d7 { transition-delay: 0.68s; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 12px; padding: 10px 20px; border-radius: 99px; background: rgba(255, 255, 255, 0.7); box-shadow: 0 0 0 1px var(--line) inset; font: 600 24px/1 "Inter", "Noto Sans Thai"; color: var(--muted); letter-spacing: 0.02em; }
+  .eyebrow i { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--g1), var(--g2)); }
+  h1 { margin: 0; font: 800 150px/1.02 "Inter", "Noto Sans Thai"; letter-spacing: -0.045em; }
+  h2 { margin: 26px 0 0; font: 800 88px/1.12 "Inter", "Noto Sans Thai"; letter-spacing: -0.035em; }
+  .lead { margin: 26px 0 0; font: 500 36px/1.45 "Noto Sans Thai", "Inter"; color: var(--muted); max-width: 900px; }
+  .g { background: linear-gradient(95deg, var(--g1), var(--g2) 55%, var(--g3)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 0.08em; }
+  .dev { position: absolute; filter: drop-shadow(0 40px 60px rgba(20, 50, 35, 0.22)) drop-shadow(0 8px 16px rgba(20, 50, 35, 0.12)); }
+  .float { animation: float 7s ease-in-out infinite; }
+  .float2 { animation: float 8s ease-in-out -3s infinite; }
+  @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -14px; } }
+  .cards { display: grid; gap: 26px; margin-top: 56px; }
+  .card { padding: 34px 36px; border-radius: 34px; background: var(--card); box-shadow: 0 24px 60px rgba(20, 50, 35, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset; backdrop-filter: blur(20px); }
+  .card .ic { width: 64px; height: 64px; border-radius: 20px; display: grid; place-items: center; font-size: 32px; background: linear-gradient(135deg, #e2f7ee, #e3efff); }
+  .card b { display: block; margin-top: 22px; font: 700 34px/1.3 "Noto Sans Thai", "Inter"; }
+  .card p { margin: 10px 0 0; font: 500 26px/1.5 "Noto Sans Thai", "Inter"; color: var(--muted); }
+  .list { margin: 44px 0 0; padding: 0; list-style: none; display: grid; gap: 22px; }
+  .list li { display: flex; gap: 20px; align-items: flex-start; font: 600 32px/1.4 "Noto Sans Thai", "Inter"; }
+  .list li::before { content: ""; flex: none; width: 34px; height: 34px; margin-top: 6px; border-radius: 50%; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center/60% no-repeat, linear-gradient(135deg, var(--g1), var(--g2)); }
+  .list li small { display: block; font: 500 25px/1.45 "Noto Sans Thai"; color: var(--muted); margin-top: 4px; }
+  .chip { display: inline-flex; align-items: center; gap: 14px; padding: 18px 28px; border-radius: 26px; background: #fff; box-shadow: 0 18px 44px rgba(20, 50, 35, 0.1); font: 800 44px/1 "Inter"; }
+  .chip small { font: 600 22px/1.2 "Noto Sans Thai"; color: var(--muted); }
+  .num { font: 800 120px/1 "Inter"; letter-spacing: -0.04em; }
+  .steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 22px; margin-top: 70px; position: relative; }
+  .steps::before { content: ""; position: absolute; left: 6%; right: 6%; top: 44px; height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3)); opacity: 0.35; }
+  .step { position: relative; text-align: center; }
+  .step .n { width: 92px; height: 92px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 16px 40px rgba(20, 50, 35, 0.14), 0 0 0 6px rgba(255, 255, 255, 0.7); font-size: 40px; }
+  .step b { display: block; margin-top: 26px; font: 700 32px/1.3 "Noto Sans Thai"; }
+  .step p { margin: 10px 0 0; font: 500 23px/1.45 "Noto Sans Thai"; color: var(--muted); }
+  .step .who { display: inline-block; margin-top: 14px; padding: 6px 14px; border-radius: 99px; font: 600 18px/1 "Noto Sans Thai"; }
+  .who.app { background: #e2f7ee; color: #0b7a52; } .who.clinic { background: #e6edff; color: #3a55c7; }
+  .sync { position: absolute; display: flex; flex-direction: column; gap: 18px; }
+  .sync span { display: inline-flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 99px; background: #fff; box-shadow: 0 14px 34px rgba(20, 50, 35, 0.12); font: 600 26px/1 "Noto Sans Thai"; white-space: nowrap; }
+  .pulse { position: absolute; height: 4px; border-radius: 4px; background: linear-gradient(90deg, transparent, var(--g1), var(--g2), transparent); background-size: 200% 100%; animation: flow 1.8s linear infinite; }
+  @keyframes flow { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  .tag { position: absolute; padding: 12px 20px; border-radius: 18px; background: rgba(13, 23, 18, 0.86); color: #fff; font: 600 22px/1.2 "Noto Sans Thai"; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18); }
+  .dark { color: #fff; }
+  .dark .lead { color: #c9dcd2; }
+  #bgDark { position: absolute; inset: 0; background: radial-gradient(70% 80% at 50% 45%, #15392c 0%, #0a1712 60%, #050b08 100%); opacity: 0; transition: opacity 0.8s ease; pointer-events: none; }
+  video { border-radius: 30px; box-shadow: 0 50px 120px rgba(0, 0, 0, 0.45); background: #000; }
+  /* chrome */
+  #bar { position: fixed; left: 0; top: 0; height: 5px; background: linear-gradient(90deg, var(--g1), var(--g2), var(--g3)); transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1); z-index: 5; }
+  #ctl { position: fixed; right: max(18px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; z-index: 5; font: 600 14px/1 "Inter"; color: #5b6e63; }
+  #ctl button, #ctl a { display: grid; place-items: center; height: 40px; min-width: 40px; padding: 0 12px; border: 0; border-radius: 99px; background: rgba(255, 255, 255, 0.82); box-shadow: 0 6px 18px rgba(20, 50, 35, 0.12); color: #0d1712; font: 600 14px/1 "Inter", "Noto Sans Thai"; text-decoration: none; cursor: pointer; backdrop-filter: blur(12px); }
+  #ctl span { padding: 0 6px; min-width: 56px; text-align: center; }
+  body.isdark #ctl { color: #b8ccc1; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="ig" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0fa36b"/><stop offset=".55" stop-color="#12a6c9"/><stop offset="1" stop-color="#7b61ff"/></linearGradient></defs></svg>
+<div id="bar"></div>
+<div id="viewport"><div id="bgDark"></div><div id="deck">
+
+  <!-- 1 cover -->
+  <section class="slide" data-dark="0">
+    <div class="eyebrow a"><i></i>แอปผู้ป่วย × ระบบคลินิก × AI</div>
+    <h1 class="a d1" style="margin-top:40px">ThaiWell <span class="g">AI</span></h1>
+    <p class="lead a d2" style="font-size:44px;max-width:780px">นวดไทย ในแบบที่ฉลาดกว่าเดิม</p>
+    <p class="lead a d3" style="max-width:700px">ระบบดูแลผู้ป่วยแพทย์แผนไทยครบวงจร ตั้งแต่ประเมินอาการด้วย AI จนถึงติดตามผลหลังนวด</p>
+    <img class="dev a d3 float2" src="img/c-home.webp" style="right:20px;top:330px;width:880px" alt="" />
+    <img class="dev a d4 float" src="img/p-home.webp" style="right:700px;top:420px;width:300px" alt="" />
+  </section>
+
+  <!-- 2 problem -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>โจทย์</div>
+    <h2 class="a d1">คลินิกนวดไทยวันนี้<br /><span class="g">ยังทำงานแบบเดิม</span></h2>
+    <div class="cards" style="grid-template-columns:repeat(4,1fr)">
+      <div class="card a d2"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg></div><b>ไม่รู้อาการก่อนผู้ป่วยมาถึง</b><p>ต้องซักประวัติใหม่ทุกครั้งที่หน้าเคาน์เตอร์</p></div>
+      <div class="card a d3"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div><b>บันทึกการรักษาใช้เวลานาน</b><p>เขียนมือ ใส่รหัสโรคเอง เสี่ยงตกหล่น</p></div>
+      <div class="card a d4"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div><b>ข้อมูลกระจายหลายช่องทาง</b><p>โทร · LINE · กระดาษ ไม่เชื่อมกัน</p></div>
+      <div class="card a d5"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/></svg></div><b>ไม่รู้ผลหลังนวด</b><p>ไม่มีระบบติดตามอาการ ไม่รู้ว่าใครควรโทรหา</p></div>
+    </div>
+  </section>
+
+  <!-- 3 solution -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>ทางออก</div>
+    <h2 class="a d1">สองระบบ <span class="g">หนึ่งการดูแล</span></h2>
+    <p class="lead a d2">แอปของผู้ป่วยและระบบของคลินิกคุยกันแบบเรียลไทม์ ข้อมูลไหลถึงกันโดยไม่ต้องกรอกซ้ำ</p>
+    <img class="dev a d3 float" src="img/p-chat.webp" style="left:170px;top:500px;width:280px" alt="" />
+    <img class="dev a d4 float2" src="img/c-request.webp" style="right:120px;top:470px;width:810px" alt="" />
+    <div class="pulse a d5" style="left:500px;top:760px;width:430px"></div>
+    <div class="sync a d5" style="left:540px;top:640px"><span>➜ คำขอจอง + ผลประเมิน</span></div>
+    <div class="sync a d6" style="left:540px;top:810px"><span>⟵ นัด · บิล · ใบเสร็จ · คำแนะนำ</span></div>
+    <div class="tag a d6" style="left:170px;top:450px">แอปผู้ป่วย (iPhone)</div>
+    <div class="tag a d6" style="right:150px;top:420px">ระบบคลินิก (iPad)</div>
+  </section>
+
+  <!-- 4 journey -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>เส้นทางผู้ป่วย</div>
+    <h2 class="a d1">ครบทุกขั้น <span class="g">ในที่เดียว</span></h2>
+    <div class="steps">
+      <div class="step a d2"><div class="n"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><b>ประเมินกับ AI</b><p>เล่าอาการ ชี้จุดปวดบนหุ่น 3D</p><span class="who app">แอป</span></div>
+      <div class="step a d3"><div class="n"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><b>จองนัด</b><p>คำขอพร้อมผลประเมินถึงคลินิก</p><span class="who clinic">คลินิก</span></div>
+      <div class="step a d4"><div class="n"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 8a5 5 0 0 1 0 8M19 5a9 9 0 0 1 0 14"/></svg></div><b>เช็กอิน · เรียกคิว</b><p>ประกาศคิวด้วยเสียง จัดเตียง</p><span class="who clinic">คลินิก</span></div>
+      <div class="step a d5"><div class="n"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0M12 19v3"/></svg></div><b>บันทึกด้วยเสียง</b><p>AI กรอกบันทึก + รหัสวินิจฉัย</p><span class="who clinic">คลินิก</span></div>
+      <div class="step a d6"><div class="n"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><b>จ่ายในแอป</b><p>บิลเข้าแอป ใบเสร็จกลับทันที</p><span class="who app">แอป</span></div>
+      <div class="step a d7"><div class="n"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg></div><b>ติดตามผล</b><p>ถามอาการ 48 ชม. ท่าบริหาร</p><span class="who app">แอป</span></div>
+    </div>
+  </section>
+
+  <!-- 5 patient app -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>แอปผู้ป่วย</div>
+    <h2 class="a d1">ผู้ช่วย <span class="g">AI</span><br />ในมือผู้ป่วย</h2>
+    <ul class="list" style="max-width:720px">
+      <li class="a d2"><span>สัมภาษณ์อาการแบบผู้เชี่ยวชาญ<small>ถามต่อจนครบ ตำแหน่ง · ร้าว · ความปวด · ระยะเวลา · สาเหตุ</small></span></li>
+      <li class="a d3"><span>หุ่น 3D ชี้จุดปวด<small>ระบายสีบนผิวตามตำแหน่งที่ปวดจริง</small></span></li>
+      <li class="a d4"><span>คัดกรองความปลอดภัยทุกครั้ง<small>Safety Rule Engine ตรวจข้อห้ามก่อนนวด</small></span></li>
+      <li class="a d5"><span>แนะนำแนวทางรักษาแผนไทย<small>อ้างอิง Knowledge Hub แล้วจองนัดได้ทันที</small></span></li>
+    </ul>
+    <img class="dev a d3 float" src="img/p-chat.webp" style="right:610px;top:150px;width:330px" alt="" />
+    <img class="dev a d4 float2" src="img/p-pain.webp" style="right:330px;top:230px;width:330px" alt="" />
+    <img class="dev a d5 float" src="img/p-plan.webp" style="right:50px;top:310px;width:330px" alt="" />
+  </section>
+
+  <!-- 6 clinic requests -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>ระบบคลินิก · คำขอจอง</div>
+    <h2 class="a d1">รู้ทุกอย่าง<br /><span class="g">ก่อนผู้ป่วยมาถึง</span></h2>
+    <ul class="list" style="max-width:640px">
+      <li class="a d2"><span>ผลประเมินจากแอปครบทุกข้อ<small>ความปวด · จุดปวดบนหุ่น · ข้อห้าม · แรงนวด</small></span></li>
+      <li class="a d3"><span>แนวทางการรักษาตามธาตุ<small>อาการแผนไทย · วิธีรักษา · อ้างอิง CPG</small></span></li>
+      <li class="a d4"><span>อนุมัติ + จัดคิวในหน้าเดียว<small>เลือกผู้บำบัด · เวลา · เตียง เห็นคิวว่างทันที</small></span></li>
+    </ul>
+    <img class="dev a d3 float2" src="img/c-approve.webp" style="right:40px;top:300px;width:1080px" alt="" />
+  </section>
+
+  <!-- 7 queue -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>หน้ารับบริการ</div>
+    <h2 class="a d1">เช็กอิน · <span class="g">เรียกคิวด้วยเสียง</span></h2>
+    <p class="lead a d2">ทุกขั้นตอนในจอเดียว ตั้งแต่เรียกคิว จัดเตียง จับเวลารับบริการ ไปจนถึงชำระเงิน</p>
+    <img class="dev a d3 float2" src="img/c-queue.webp" style="left:50%;margin-left:-560px;top:420px;width:1120px" alt="" />
+    <div class="tag a d5" style="left:250px;top:520px">“ขอเชิญ คุณสมศักดิ์ หมายเลขคิว A009 ค่ะ”</div>
+  </section>
+
+  <!-- 8 AI record -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>ผู้ช่วยบันทึกการรักษา</div>
+    <h2 class="a d1">พูดครั้งเดียว<br /><span class="g">AI บันทึกครบ</span></h2>
+    <p class="lead a d2" style="max-width:640px">ผู้บำบัดพูดสรุปหลังนวด AI แยกเป็นตรวจพบ วินิจฉัย หัตถการ ความปวด และคำแนะนำ พร้อมใส่รหัสให้อัตโนมัติ</p>
+    <div class="a d3" style="display:flex;flex-direction:column;gap:20px;margin-top:46px;align-items:flex-start">
+      <div class="chip"><span class="g">U57.20</span><small>ICD-10-TM · ลมปลายปัตคาด</small></div>
+      <div class="chip"><span class="g">M79.1</span><small>ICD-10 · ปวดกล้ามเนื้อ</small></div>
+      <div class="chip"><span class="g">CPG 2568</span><small>แนวทางเวชปฏิบัติการแพทย์แผนไทย</small></div>
+    </div>
+    <img class="dev a d4 float2" src="img/c-record.webp" style="right:40px;top:260px;width:1040px" alt="" />
+  </section>
+
+  <!-- 9 payment -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>ชำระเงิน</div>
+    <h2 class="a d1">จ่ายในแอป · <span class="g">ใบเสร็จกลับทันที</span></h2>
+    <p class="lead a d2">คลินิกกด “ส่งบิลเข้าแอป” ผู้ป่วยแตะจ่ายได้เลย ใบเสร็จออกทั้งสองฝั่งพร้อมกัน</p>
+    <img class="dev a d3 float2" src="img/c-summary.webp" style="left:120px;top:420px;width:860px" alt="" />
+    <img class="dev a d4 float" src="img/p-pay.webp" style="right:430px;top:330px;width:330px" alt="" />
+    <img class="dev a d5 float2" src="img/p-receipt.webp" style="right:120px;top:380px;width:330px" alt="" />
+  </section>
+
+  <!-- 10 follow-up -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>หลังนวด</div>
+    <h2 class="a d1">ติดตามผล<br /><span class="g">อัตโนมัติ</span></h2>
+    <ul class="list" style="max-width:660px">
+      <li class="a d2"><span>แจ้งเตือนถามอาการ 48 ชม.<small>ผู้ป่วยตอบในแอปไม่ถึง 1 นาที ผลส่งเข้าคลินิก</small></span></li>
+      <li class="a d3"><span>รู้ว่าต้องโทรหาใคร<small>อาการแย่ลง · ไม่ตอบ · ไม่ใช้แอป ขึ้นรายการ “ต้องโทร”</small></span></li>
+      <li class="a d4"><span>ท่าบริหารส่งตรงถึงมือ<small>การ์ดท่ายืดตามคำแนะนำ แตะดูวิธีทำได้</small></span></li>
+      <li class="a d5"><span>เตือนนัด 1 วันก่อน<small>ยืนยันมาตามนัด หรือขอเลื่อนนัด ส่งถึงคลินิกทันที</small></span></li>
+    </ul>
+    <img class="dev a d3 float" src="img/p-followup.webp" style="right:440px;top:200px;width:340px" alt="" />
+    <img class="dev a d4 float2" src="img/p-stretch.webp" style="right:120px;top:300px;width:340px" alt="" />
+  </section>
+
+  <!-- 11 insights -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>ข้อมูลเชิงลึก</div>
+    <h2 class="a d1">วัดผลการรักษา<br /><span class="g">ได้จริง</span></h2>
+    <div class="a d2" style="display:flex;align-items:flex-end;gap:30px;margin-top:50px">
+      <div><div class="num">4.9</div><p class="lead" style="margin-top:8px;font-size:26px">ปวดก่อนนวด</p></div>
+      <div class="num g" style="font-size:90px;padding-bottom:40px">→</div>
+      <div><div class="num g">2.6</div><p class="lead" style="margin-top:8px;font-size:26px">ปวดหลังนวด</p></div>
+    </div>
+    <p class="lead a d3" style="max-width:640px;font-size:28px">ติดตามผลแยกตามโรคและหัตถการ ส่งออกข้อมูลเพื่องานวิจัยได้<br /><small style="font-size:20px;opacity:.8">* ตัวเลขจากข้อมูลสาธิตในระบบ</small></p>
+    <img class="dev a d4 float2" src="img/c-insights.webp" style="right:40px;top:250px;width:1040px" alt="" />
+  </section>
+
+  <!-- 12 standards & trust -->
+  <section class="slide">
+    <div class="eyebrow a"><i></i>มาตรฐานและความปลอดภัย</div>
+    <h2 class="a d1">ตามหลัก<span class="g">แพทย์แผนไทย</span></h2>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card a d2"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.2-6"/></svg></div><b>ธาตุเจ้าเรือน · สมุฏฐาน</b><p>วินิจฉัยตามหลักการแพทย์แผนไทย ควบคู่ข้อมูลจริง</p></div>
+      <div class="card a d3"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.3 9.3a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7" cy="7" r="1.5"/></svg></div><b>ICD-10-TM · CPG 2568</b><p>รหัสวินิจฉัยมาตรฐาน อ้างอิงแนวทางเวชปฏิบัติ</p></div>
+      <div class="card a d4"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.6 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.6 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9 12l2 2 4-4"/></svg></div><b>คัดกรองความปลอดภัย</b><p>ตรวจข้อห้ามนวดก่อนเริ่มทุกครั้ง ทั้งในแอปและหน้าคลินิก</p></div>
+      <div class="card a d5"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><b>ยินยอมก่อนใช้ข้อมูล</b><p>ขอความยินยอมตาม PDPA · ล็อกแอปด้วย Face ID</p></div>
+      <div class="card a d6"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></svg></div><b>เชื่อมต่อผ่านคลาวด์</b><p>แอปและคลินิกซิงก์ข้อมูลกันแบบเรียลไทม์</p></div>
+      <div class="card a d7"><div class="ic"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="url(#ig)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="13" height="16" rx="2"/><rect x="17" y="8" width="5" height="12" rx="1"/></svg></div><b>iPhone · iPad · เว็บ</b><p>แอปผู้ป่วยบนมือถือ ระบบคลินิกบน iPad และเบราว์เซอร์</p></div>
+    </div>
+  </section>
+
+  <!-- 13 video -->
+  <section class="slide" data-dark="1">
+    <div class="dark" style="text-align:center">
+      <div class="eyebrow a" style="background:rgba(255,255,255,.1);color:#cfe3d8;box-shadow:none"><i></i>ดูการทำงานจริง</div>
+      <h2 class="a d1" style="margin-top:18px;font-size:64px">ThaiWell AI ใน <span class="g">2 นาที</span></h2>
+    </div>
+    <video class="a d2" id="vid" src="../media/promo-1080.mp4" poster="../media/promo-poster.jpg" controls playsinline preload="none" style="position:absolute;left:50%;top:300px;width:1280px;height:720px;margin-left:-640px"></video>
+  </section>
+
+  <!-- 14 closing -->
+  <section class="slide" data-dark="1">
+    <div class="dark" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <img class="a" src="img/logo.png" style="width:150px;height:150px;border-radius:36px;box-shadow:0 30px 90px rgba(80,230,170,.35)" alt="" />
+      <h1 class="a d1" style="margin-top:36px;font-size:120px">ThaiWell <span style="font-weight:300;color:#9fb8ab">AI</span></h1>
+      <p class="lead a d2" style="font-size:42px;margin-top:20px">นวดไทย ในแบบที่ฉลาดกว่าเดิม</p>
+      <p class="a d3" style="margin-top:56px;font:600 22px/1 Inter;letter-spacing:.16em;color:#7f978a">PATIENT APP × CLINIC SYSTEM</p>
+    </div>
+  </section>
+
+</div></div>
+<div id="ctl">
+  <a href="../" title="กลับไปคู่มือ">← คู่มือ</a>
+  <button id="prev" aria-label="สไลด์ก่อนหน้า">‹</button>
+  <span id="cnt">1 / 14</span>
+  <button id="next" aria-label="สไลด์ถัดไป">›</button>
+  <button id="fs" aria-label="เต็มจอ" title="เต็มจอ (F)">⛶</button>
+</div>
+<script>
+  const slides = [...document.querySelectorAll('.slide')], deck = document.getElementById('deck');
+  let i = 0;
+  const fit = () => { const s = Math.min(innerWidth / 1920, innerHeight / 1080); deck.style.transform = `translate(-50%,-50%) scale(${s})`; };
+  addEventListener('resize', fit); fit();
+  function go(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides[i].classList.remove('on'); i = n; slides[i].classList.add('on');
+    const dark = slides[i].dataset.dark === '1';
+    document.getElementById('bgDark').style.opacity = dark ? 1 : 0; document.body.classList.toggle('isdark', dark);
+    document.getElementById('cnt').textContent = `${i + 1} / ${slides.length}`;
+    document.getElementById('bar').style.width = `${((i + 1) / slides.length) * 100}%`;
+    const v = document.getElementById('vid'); if (slides[i].contains(v)) { v.play().catch(() => {}); } else { v.pause(); }
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
+  }
+  document.getElementById('next').onclick = () => go(i + 1);
+  document.getElementById('prev').onclick = () => go(i - 1);
+  document.getElementById('fs').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.());
+  addEventListener('keydown', (e) => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    else if (e.key === 'Home') go(0); else if (e.key === 'End') go(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') document.getElementById('fs').click();
+  });
+  document.getElementById('viewport').addEventListener('click', (e) => { if (e.target.closest('video, a, button')) return; go(e.clientX > innerWidth / 3 ? i + 1 : i - 1); });
+  let sx = null; addEventListener('touchstart', (e) => (sx = e.touches[0].clientX), { passive: true });
+  addEventListener('touchend', (e) => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 50) go(dx < 0 ? i + 1 : i - 1); sx = null; });
+  go(Math.max(0, (parseInt(location.hash.slice(1)) || 1) - 1));
+</script>
+</body>
+</html>

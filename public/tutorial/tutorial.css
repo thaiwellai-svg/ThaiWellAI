@@ -759,6 +759,7 @@ img {
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
+.hero__slides { margin-left: 10px; text-decoration: none; }
 .hero__play:hover {
   background: rgba(255, 255, 255, 0.22);
   transform: translateY(-1px);
